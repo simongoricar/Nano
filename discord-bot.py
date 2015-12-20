@@ -4,77 +4,120 @@ __version__ = '0.2'
 
 import discord
 from random import randint
+import reprlib
 #import logging
 #logging.basicConfig(level=logging.DEBUG)
 client = discord.Client()
 def runme():
     client.run()
 def loginme():
-    client.login('mymail@gmail.com', 'mypass')
+    client.login('mail, 'password')
 def logmeout():
     client.logout()
 def deletemsg(message):
     client.delete_message(message)
 loginme()
 
-helpmsg = "Help: \n!help to display this message \n!hello bot says \"hello\" \n!roll to get random number between 0 and 100.\n!game bot asks if anyone wants to play games.\n" \
-          "\n!who - to be implemented\n!credits - version info, author and API\n\n Type !help 2 for fun commands."
-creditsmsg = "**DiscordBot 0.2** \nMade by *DefaltSimon* with the help of \"discord.py\" API(on github).\n"
-jokemsg = "!ayy - ayy lmao\n!moreayy - even more ayy lmao mit dem lenny face\n!wot - u wot m8\n!synagoge - synagogß\n!thecakeisalie - want it?\n!cyka - russians"
+helpmsg1 = ("""\
+Help:
+!help 1 to display help message
+!help 2 to display available funny messages
+!hello bot says hi to you :)
+!roll to get random number between 0 and 100
+!game bot asks if anyone wants to play games
+!who - to be implemented
+!credits - version info, author and API
+""")
+creditsmsg = ("""\
+**DiscordBot 0.2**
+Made by *DefaltSimon* with the help of \"discord.py\" API(on github).
+""")
+jokemsg = ("""\
+**Help, page 2:**
+!ayy - ayy lmao
+!moreayy - even more ayy lmao mit dem lenny face
+!wot - u wot m8
+!synagoge - much joke, such doge
+!thecakeisalie - want it?
+!cyka - russian
+""")
 
 @client.event
 def on_message(message):
     try:
+        #1
+        disauthor = message.author
+        msgstr = str(message)
         if message.content.startswith('!hello'):
-            client.send_message(message.channel, "Hi m8!")
-            print("!hello was executed")
-        elif message.content.startswith('!help'):
-            client.send_message(message.channel, helpmsg)
-            print("!help was executed")
+            deletemsg(message)
+            client.send_message(message.channel, 'Hi, @{id}'.format(id=disauthor))
+            print(str("{msg} was executed".format(msg=msgstr)))
+        elif message.content.startswith('!help 1'):
+            client.send_message(message.channel, helpmsg1)
+            print("!help 1 was executed")
         elif message.content.startswith("!help 2"):
-            client.send_message(message.channel,jokemsg)
+            client.send_message(message.channel, jokemsg)
+            print("!help 2 was exectuted")
         elif message.content.startswith('!roll'):
-            client.send_message(message.channel, "Rolled: " + str(randint(0, 100)))
-            print("!roll was executed")
+            notworkyet = "@{user}, this function does not fully work yet."
+            client.send_message(message.channel, notworkyet.format(user=message.author))
+            client.send_message(message.channel, randint(0,100))
+            print('{msg} was executed'.format(msgstr))
         elif message.content.startswith('!game'):
+            deletemsg(message)
             client.send_message(message.channel, "@everyone Anyone wants to play games?", mentions="@everyone")
             print("!game was executed")
+        elif message.content.startswith("!johncena"):
+            deletemsg(message)
+            client.send_message(message.channel, "O_O https://www.youtube.com/watch?v=58mah_0Y8TU")
+            print("!johncena was executed")
         elif message.content.startswith("!credits"):
             client.send_message(message.channel, creditsmsg)
             print("!credits was executed")
         elif message.content.startswith("!rickrolled"):
-            client.send_message(message.channel, "DiscordBot shutting down. **U FAGS**")
+            deletemsg(message)
+            client.send_message(message.channel, "*@{user}* DiscordBot shutting down.".format(user=disauthor))
             exit(-420)
         elif message.content.startswith('!ayy'):
+            deletemsg(message)
             client.send_message(message.channel, "Ayyyyy lmao!")
             print("!ayy was executed")
         elif message.content.startswith('!moreayy'):
+            deletemsg(message)
             client.send_message(message.channel, "Ayyyyyyyyyy lmao! ( ͡° ͜ʖ ͡°) 👾 ")
             print("!moreayy was executed")
         elif message.content.startswith('!wot'):
+            deletemsg(message)
             client.send_message(message.channel, "U wot m8 ")
             print("!wot was executed")
         elif message.content.startswith('!synagoge'):
+            deletemsg(message)
             client.send_message(message.channel, "DIE ALTEEH-SYNAGOGE")
             print("!synagoge was executed")
         elif message.content.startswith("!thecakeisalie"):
-            client.send_message(message.channel, "Roll'd https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+            deletemsg(message)
+            client.send_message(message.channel, "@{usr} : Rick roll'd https://www.youtube.com/watch?v=dQw4w9WgXcQ".format(usr=disauthor))
         elif message.content.startswith("!who"):
-            client.send_message(message.channel, "*You.*")
+            client.send_message(message.channel, "@{user} Can't manipulate strings. Not yet. Soon.".format(user=disauthor))
         elif message.content.startswith("!cyka"):
-            client.send_message(message.channel, "Cyka Blyat!")
+            deletemsg(message)
+            client.send_message(message.channel, "@{usr} Cyka Blyat!".format(usr=disauthor))
+            print("!cyka was executed")
+        #2
         elif message.content.startswith("!listmembers"):
+            client.send_message(message.channel, "**Current members:**")
             count = 0
-            members = []
+            members = ''
             for mem in client.get_all_members():
                 count = count + 1
-                members.append(mem)
-#                client.send_message(message.channel, mem)
-            final = "**Done, Total :",count,"members.**"
-            client.send_message(message.channel, (str(members),final))
+                mem = str(mem)
+                if count != 1:
+                    members += ', '
+                members += mem
+            final = "**Total : {count1} members.**".format(count1=count)
+            client.send_message(message.channel, members)
+            client.send_message(message.channel, final)
             print("!listmembers was executed")
-        elif message.content.startswith("!"):
-            client.send_message(message.channel, "The command was not recognised.")
     except discord.InvalidArgument:
         print("Error -3 : InvalidArgument")
         client.send_message(message.channel, "Error -3 : InvalidArgument")
@@ -96,8 +139,8 @@ def on_message(message):
         client.send_message(message.channel, "Error -2 : HTTPException")
         client.send_message(message.channel, "Restarting, hold on...")
         print("Restarting with runme(), hold on...")
-        logmeout()
-        loginme()
+#        logmeout()
+#        loginme()
         runme()
 @client.event
 def on_ready():
