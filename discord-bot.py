@@ -1,6 +1,10 @@
 __title__ = 'DiscordBot'
 __author__ = 'DefaltSimon with discord.py api'
-__version__ = '0.2'
+__version__ = '0.3'
+
+# discord.py API is required
+# install with :
+# pip install discord.py
 
 import discord
 from random import randint
@@ -11,7 +15,7 @@ client = discord.Client()
 def runme():
     client.run()
 def loginme():
-    client.login('mail, 'password')
+    client.login('mail', 'pass')
 def logmeout():
     client.logout()
 def deletemsg(message):
@@ -52,6 +56,8 @@ def on_message(message):
             deletemsg(message)
             client.send_message(message.channel, 'Hi, @{id}'.format(id=disauthor))
             print(str("{msg} was executed".format(msg=msgstr)))
+        elif message.content.startswith("!help"):
+            client.send_message(message.channel, helpmsg1)
         elif message.content.startswith('!help 1'):
             client.send_message(message.channel, helpmsg1)
             print("!help 1 was executed")
@@ -69,26 +75,29 @@ def on_message(message):
             print("!game was executed")
         elif message.content.startswith("!johncena"):
             deletemsg(message)
-            client.send_message(message.channel, "O_O https://www.youtube.com/watch?v=58mah_0Y8TU")
+            client.send_message(message.channel, "@{usr} O_O https://www.youtube.com/watch?v=58mah_0Y8TU".format(usr=disauthor))
             print("!johncena was executed")
         elif message.content.startswith("!credits"):
             client.send_message(message.channel, creditsmsg)
             print("!credits was executed")
+        elif message.content.startswith("!allstar"):
+            deletemsg(message)
+            client.send_message(message.channel, "@{usr} https://www.youtube.com/watch?v=L_jWHffIx5E".format(usr=disauthor))
         elif message.content.startswith("!rickrolled"):
             deletemsg(message)
             client.send_message(message.channel, "*@{user}* DiscordBot shutting down.".format(user=disauthor))
             exit(-420)
         elif message.content.startswith('!ayy'):
             deletemsg(message)
-            client.send_message(message.channel, "Ayyyyy lmao!")
+            client.send_message(message.channel, "@{usr} Ayyyyy lmao!".format(usr=disauthor))
             print("!ayy was executed")
         elif message.content.startswith('!moreayy'):
             deletemsg(message)
-            client.send_message(message.channel, "Ayyyyyyyyyy lmao! ( ͡° ͜ʖ ͡°) 👾 ")
+            client.send_message(message.channel, "@{usr} Ayyyyyyyyyy lmao! ( ͡° ͜ʖ ͡°) 👾 ".format(usr=disauthor))
             print("!moreayy was executed")
         elif message.content.startswith('!wot'):
             deletemsg(message)
-            client.send_message(message.channel, "U wot m8 ")
+            client.send_message(message.channel, "U wot @{usr} ".format(usr=disauthor))
             print("!wot was executed")
         elif message.content.startswith('!synagoge'):
             deletemsg(message)
@@ -105,7 +114,9 @@ def on_message(message):
             print("!cyka was executed")
         #2
         elif message.content.startswith("!listmembers"):
+            client.send_message(message.channel, "@{usr} -".format(usr=disauthor))
             client.send_message(message.channel, "**Current members:**")
+            deletemsg(message)
             count = 0
             members = ''
             for mem in client.get_all_members():
