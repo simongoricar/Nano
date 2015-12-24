@@ -1,0 +1,4 @@
+here you store your filtered words, each in one line:
+one
+two
+etc.
