@@ -1,6 +1,6 @@
 __title__ = 'DiscordBot'
 __author__ = 'DefaltSimon with discord.py api'
-__version__ = '0.4'
+__version__ = '0.5'
 
 import discord
 import time
@@ -20,8 +20,11 @@ def logmeout():
     client.logout()
 def deletemsg(message):
     client.delete_message(message)
+def disinvite(message):
+    client.create_invite(message.server,max_age=86400)
+def printout(message,disauthor):
+    print('{msg} was executed by {usr}'.format(msg=str(message.content),usr=disauthor))
 loginme()
-
 # TIME
 start_time = time.time()
 def Gettime(time_elapsed):
@@ -55,6 +58,21 @@ def checkspam(message):
         client.send_message(message.channel, "@{usr} Spam is not allowed. **Deal with it** ( ͡° ͜ʖ ͡°)".format(usr=message.author))
         print("A message by {usr} was filtered - spam".format(usr=message.author))
 
+things = {
+    "!hello" : "Hi, @{usr}",
+    "!test" : "@{usr} Ayy test works!",
+    "!johncena" : "@{usr} O_O https://www.youtube.com/watch?v=58mah_0Y8TU",
+    "!allstar" : "@{usr} https://www.youtube.com/watch?v=L_jWHffIx5E",
+    "!game" : "@everyone Does anyone want to play games?",
+    "!ayy" : "@{usr} Ayyyyy lmao!",
+    "!moreayy" : "@{usr} Ayyyyyyyyyy lmao! ( ͡° ͜ʖ ͡°) 👾 ",
+    "!wot" : "U wot @{usr}",
+    "!synagoge" : "DIE ALTEE-SYNAGOGE",
+    "!thecakeisalie" : "@{usr} : Rick roll'd https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    "!cyka" : "@{usr} Cyka Blyat!",
+    "!who" : "@{user} Can't manipulate strings. Not yet. Soon."
+}
+
 helpmsg1 = ("""\
 Help:
 !help 1 to display help message
@@ -65,6 +83,8 @@ Help:
 !who - to be implemented
 !uptime tells you the uptime
 !cats - so cute
+!getinvite - will work in the future
+!listmembers lists all members in this server
 !credits - version info, author and API
 """)
 creditsmsg = ("""\
@@ -76,7 +96,7 @@ jokemsg = ("""\
 !ayy - ayy lmao
 !moreayy - even more ayy lmao mit dem lenny face
 !wot - u wot m8
-!synagoge - much joke, such doge
+!synagoge - much joke, such laugh
 !allstar just try it ( ͡° ͜ʖ ͡°)
 !johncena dis too ( ͡° ͜ʖ ͡°)
 !thecakeisalie - want it?
@@ -86,52 +106,44 @@ jokemsg = ("""\
 @client.event
 def on_message(message):
     try:
-        #1
         disauthor = message.author
+        # Spam and swearing check
         checkwords(message)
         checkspam(message)
-        if message.content.startswith('!hello'):
-            deletemsg(message)
-            client.send_message(message.channel, 'Hi, @{id}'.format(id=disauthor))
-            print('{msg} was executed by {usr}'.format(msg=str(message.content),usr=disauthor))
-        elif message.content.startswith("!help"):
+        # Dict check (fun commands)
+        for onething in things.keys():
+            if message.content.startswith(onething):
+                deletemsg(message)
+                second = things.get(str(message.content))
+                printout(message,disauthor)
+                client.send_message(message.channel, second.format(usr=disauthor))
+        # Help
+        if message.content.startswith("!help"):
             client.send_message(message.channel, helpmsg1)
         elif message.content.startswith('!help 1'):
             client.send_message(message.channel, helpmsg1)
-            print('{msg} was executed by {usr}'.format(msg=str(message.content),usr=disauthor))
+            print('{msg} - {usr}'.format(msg=str(message.content),usr=disauthor))
         elif message.content.startswith("!help 2"):
             client.send_message(message.channel, jokemsg)
-            print('{msg} was executed by {usr}'.format(msg=str(message.content),usr=disauthor))
+            print('{msg} - {usr}'.format(msg=str(message.content),usr=disauthor))
+        # They see me rollin' // kinda works
         elif message.content.startswith('!roll'):
-            notworkyet = "@{user}, this function does not fully work yet."
-            client.send_message(message.channel, notworkyet.format(user=message.author))
-            dis = ""
-            msg2 = str(message.content)
-            for c in msg2:
-                if c == "!" or "r" or "o" or "l" or " ":
-                    continue
-                else:
-                    dis = dis + c
-                    dis = int(dis)
-                    print(dis)
+            client.send_message(message.channel, "@{user}, this function does not fully work yet.".format(user=message.author))
+#            dis = ""
+#            for char in str(message.content):
+#                if char == "!" or "r" or "o" or "l" or " ":
+#                    break
+#                else:
+#                    dis = dis + str(char)
+#            print(dis)
             client.send_message(message.channel, randint(0,100))
-            print('{msg} was executed by {usr}'.format(msg=str(message.content),usr=disauthor))
-        elif message.content.startswith('!game'):
-            deletemsg(message)
-            client.send_message(message.channel, "@everyone Anyone wants to play games?", mentions="@everyone")
-            print('{msg} was executed by {usr}'.format(msg=str(message.content),usr=disauthor))
-        elif message.content.startswith("!johncena"):
-            deletemsg(message)
-            client.send_message(message.channel, "@{usr} O_O https://www.youtube.com/watch?v=58mah_0Y8TU".format(usr=disauthor))
-            print('{msg} was executed by {usr}'.format(msg=str(message.content),usr=disauthor))
+            printout(message,disauthor)
+        # Credits.
         elif message.content.startswith("!credits"):
             client.send_message(message.channel, creditsmsg)
-            print('{msg} was executed by {usr}'.format(msg=str(message.content),usr=disauthor))
-        elif message.content.startswith("!allstar"):
-            deletemsg(message)
-            client.send_message(message.channel, "@{usr} https://www.youtube.com/watch?v=L_jWHffIx5E".format(usr=disauthor))
-            print('{msg} was executed by {usr}'.format(msg=str(message.content),usr=disauthor))
-        elif message.content.startswith("!rickrolled"):
+            printout(message,disauthor)
+        # Shut down.
+        elif message.content.startswith("!adminshutdown"):
             deletemsg(message)
             print(clientchannel.permissions_for(disauthor))
             if clientchannel.permissions_for(disauthor) == "serveradmin":
@@ -143,38 +155,13 @@ def on_message(message):
             client.send_message(message.channel, "*@{user}* DiscordBot shutting down.".format(user=disauthor))
             print('{msg} was executed by {usr}, quitting'.format(msg=str(message.content),usr=disauthor))
             exit(-420)
-        elif message.content.startswith('!ayy'):
-            deletemsg(message)
-            client.send_message(message.channel, "@{usr} Ayyyyy lmao!".format(usr=disauthor))
-            print('{msg} was executed by {usr}'.format(msg=str(message.content),usr=disauthor))
-        elif message.content.startswith('!moreayy'):
-            deletemsg(message)
-            client.send_message(message.channel, "@{usr} Ayyyyyyyyyy lmao! ( ͡° ͜ʖ ͡°) 👾 ".format(usr=disauthor))
-            print('{msg} was executed by {usr}'.format(msg=str(message.content),usr=disauthor))
-        elif message.content.startswith('!wot'):
-            deletemsg(message)
-            client.send_message(message.channel, "U wot @{usr} ".format(usr=disauthor))
-            print('{msg} was executed by {usr}'.format(msg=str(message.content),usr=disauthor))
+            printout(message,disauthor)
+        # Cats are cute
         elif message.content.startswith("!cats"):
             deletemsg(message)
             client.send_file(message.channel,"cattypo.gif")
-            print('{msg} was executed by {usr}'.format(msg=str(message.content),usr=disauthor))
-        elif message.content.startswith('!synagoge'):
-            deletemsg(message)
-            client.send_message(message.channel, "DIE ALTEE-SYNAGOGE")
-            print('{msg} was executed by {usr}'.format(msg=str(message.content),usr=disauthor))
-        elif message.content.startswith("!thecakeisalie"):
-            deletemsg(message)
-            client.send_message(message.channel, "@{usr} : Rick roll'd https://www.youtube.com/watch?v=dQw4w9WgXcQ".format(usr=disauthor))
-            print('{msg} was executed by {usr}'.format(msg=str(message.content),usr=disauthor))
-        elif message.content.startswith("!who"):
-            client.send_message(message.channel, "@{user} Can't manipulate strings. Not yet. Soon.".format(user=disauthor))
-            print('{msg} was executed by {usr}'.format(msg=str(message.content),usr=disauthor))
-        elif message.content.startswith("!cyka"):
-            deletemsg(message)
-            client.send_message(message.channel, "@{usr} Cyka Blyat!".format(usr=disauthor))
-            print('{msg} was executed by {usr}'.format(msg=str(message.content),usr=disauthor))
-        #2
+            printout(message,disauthor)
+        # Lists all members is current server
         elif message.content.startswith("!listmembers"):
             client.send_message(message.channel, "@{usr} **Current members:**".format(usr=disauthor))
             deletemsg(message)
@@ -189,20 +176,20 @@ def on_message(message):
             final = "**Total : {count1} members.**".format(count1=count)
             client.send_message(message.channel, members)
             client.send_message(message.channel, final)
-            print('{msg} was executed by {usr}'.format(msg=str(message.content),usr=disauthor))
+            printout(message,disauthor)
+        # Uptime
         elif message.content.startswith("!uptime"):
             deletemsg(message)
             time_elapsed = time.time() - start_time
             converted = Gettime(time_elapsed)
             client.send_message(message.channel, "@{usr} **Uptime: {uptime} **".format(usr=disauthor,uptime=converted))
-            print('{msg} was executed by {usr}'.format(msg=str(message.content),usr=disauthor))
+            printout(message,disauthor)
+        # Gets you an invite // doesnt work yet
         elif message.content.startswith("!getinvite"):
             deletemsg(message)
-            def disinvite(message):
-                client.create_invite(message.server,max_age=86400)
-#            dis = client.create_invite(message.server, max_age=86400)
             client.send_message(message.channel, "@{usr}, here is your code : {code} that expires in 24 hrs.".format(usr=disauthor,code=str(disinvite(message))))
-            print('{msg} was executed by {usr}'.format(msg=str(message.content),usr=disauthor))
+            printout(message,disauthor)
+        ####End of commands###
     except discord.InvalidArgument:
         print("Error -3 : InvalidArgument")
         client.send_message(message.channel, "Error -3 : InvalidArgument")
@@ -224,8 +211,8 @@ def on_message(message):
         client.send_message(message.channel, "Error -2 : HTTPException")
         client.send_message(message.channel, "Restarting, hold on...")
         print("Restarting with runme(), hold on...")
-#        logmeout()
-#        loginme()
+        logmeout()
+        loginme()
         runme()
 @client.event
 def on_ready():
