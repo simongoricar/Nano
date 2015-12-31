@@ -1,0 +1,2 @@
+FilterWords: yes
+FilterSpam: yes

@@ -1,13 +1,12 @@
 __title__ = 'DiscordBot'
 __author__ = 'DefaltSimon with discord.py api'
-__version__ = '0.5'
+__version__ = '0.6'
 
 import discord
 import time
 from random import randint
 from datetime import datetime, timedelta
 import os
-
 # import logging
 
 # logging.basicConfig(level=logging.DEBUG)
@@ -67,6 +66,20 @@ def checkspam(message):
                             "@{usr} Spam is not allowed. **Deal with it** ( ͡° ͜ʖ ͡°)".format(usr=message.author))
         print("A message by {usr} was filtered - spam".format(usr=message.author))
 
+def checksettings(parm):
+    with open('settings.txt') as a:
+        appsettings = [line.rstrip('\n') for line in a]
+    if parm == 1:
+        if appsettings[0] == "FilterWords: yes":
+            return 1
+        else:
+            return 0
+    if parm == 2:
+        if appsettings[1] == "FilterSpam: yes":
+            return 1
+        else:
+            return 0
+
 things = {
     "!hello": "Hi, @{usr}",
     "!test": "@{usr} Ayy test works!",
@@ -116,10 +129,14 @@ jokemsg = ("""\
 @client.event
 def on_message(message):
     try:
+        filterset = checksettings(parm=1)
+        spamset = checksettings(parm=2)
         disauthor = message.author
-        # Spam and swearing check
-        checkwords(message)
-        checkspam(message)
+        # Spam and swearing check / with settings.txt check in checksettings(parm=1 or 2)
+        if filterset == 1:
+            checkwords(message)
+        if spamset == 1:
+            checkspam(message)
         #clearing check
         if time.time() - start_time > 10800:
             #Depends on your system: clear(linux, etc.) or cls(windows)
@@ -144,12 +161,19 @@ def on_message(message):
             print('{msg} - {usr}'.format(msg=str(message.content), usr=disauthor))
             printout(message, disauthor)
         # They see me rollin' // kinda works
+        elif message.content.startswith("!restart"):
+            client.send_message(message.channel, "@{usr} Restarting...".format(usr=disauthor))
+            client.logout()
+            loginme()
+            runme()
+            os.system('clear')
+            print("Should be properly restarted.")
         elif message.content.startswith('!roll'):
             client.send_message(message.channel,
                                 "@{user}, this function does not fully work yet.".format(user=message.author))
             msgstr = str(message.content)
             dis = ''.join(filter(lambda x: x.isdigit(), msgstr))
-            client.send_message(message.channel, randint(0, int(dis)))
+            client.send_message(message.channel, randint(0, 100))
             printout(message, disauthor)
         # Credits.
         elif message.content.startswith("!credits"):
