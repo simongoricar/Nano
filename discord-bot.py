@@ -6,6 +6,7 @@ import discord
 import time
 from random import randint
 from datetime import datetime, timedelta
+import os
 
 # import logging
 
@@ -13,12 +14,11 @@ from datetime import datetime, timedelta
 client = discord.Client()
 clientchannel = discord.Channel()
 
-
 def runme():
     client.run()
 
 def loginme():
-    client.login('mail', 'password')
+    client.login('mail', 'pass')
 
 def logmeout():
     client.logout()
@@ -120,6 +120,10 @@ def on_message(message):
         # Spam and swearing check
         checkwords(message)
         checkspam(message)
+        #clearing check
+        if time.time() - start_time > 10800:
+            #Depends on your system: clear(linux, etc.) or cls(windows)
+            os.system('clear')
         # Dict check (fun commands)
         for onething in things.keys():
             if message.content.startswith(onething):
