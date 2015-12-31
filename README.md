@@ -5,7 +5,8 @@ made by DefaltSimon, with [discord.py api](https://github.com/Rapptz/discord.py)
 - Spam filter
 - Swearing filter (add words to filterwords.txt)
 - many commands (easy to add your own - look for variable "things")
-- settings (see settings.txt)
+- settings (see settings.txt)  
+I know that everything is pretty basic, I learn as I do new things for this bot.
 
 1.1 - Commands:  
 ```
@@ -35,4 +36,5 @@ made by DefaltSimon, with [discord.py api](https://github.com/Rapptz/discord.py)
 ```
 !who <person> - tells you "everything" about the person  
 !roll <number> - right now it works only 0 to 100, will add custom number  
+- many other things
 ```
