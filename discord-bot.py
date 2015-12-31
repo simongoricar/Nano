@@ -47,7 +47,7 @@ def checkwords(message):
     with open('filterwords.txt') as f:
         mylist = [line.rstrip('\n') for line in f]
     for bads in mylist:
-        if bads in cmsg:
+        if bads in cmsg and message.author != "AyyBot":
             client.send_message(message.channel, "@{usr}, watch it!".format(usr=message.author))
 
 def checkspam(message):
