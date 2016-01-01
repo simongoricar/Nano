@@ -16,6 +16,7 @@ I know that everything is pretty basic, I learn as I do new things for this bot 
 !help 2 - funny commands  
 !hello - says hi  
 !roll - random number between 0 and 100  
+!dice - like roll but 0 - 6  
 !listmembers - displays all members on the server  
 !uptime - displays bot uptime  
 !getinvite - returns an invite for the server/channel  
@@ -41,7 +42,6 @@ Please dont be offended, you can change it :P
 ```
 !who <person> - tells you "everything" about the person  
 !roll <number> - right now it works only 0 to 100, will add custom number  
-!dice - similar to roll
-- plugins
-- many other things
+- plugins  
+- many other things  
 ```
