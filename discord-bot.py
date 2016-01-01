@@ -1,17 +1,19 @@
-__title__ = 'DiscordBot'
+__title__ = 'DiscordieBot'
 __author__ = 'DefaltSimon with discord.py api'
-__version__ = '0.6'
+__version__ = '0.7'
 
 import discord
 import time
 from random import randint
 from datetime import datetime, timedelta
+from time import strftime
 import os
 # import logging
 
 # logging.basicConfig(level=logging.DEBUG)
 client = discord.Client()
 clientchannel = discord.Channel()
+botvs = "0.5"
 
 def runme():
     client.run()
@@ -80,6 +82,18 @@ def checksettings(parm):
         else:
             return 0
 
+with open('log.txt','a') as file:
+    file.write("\n-------------Logs-------------\n".format(vs=botvs))
+
+def logdis(message):
+    with open('log.txt',"a") as file:
+        one = str(strftime("%Y-%m-%d %H:%M:%S", ))
+        str2 = one + str(" : {msg} by {usr}\n".format(msg=message.content,usr=message.author))
+        print(str2)
+        file.write(str2)
+
+
+
 things = {
     "!hello": "Hi, @{usr}",
     "!test": "@{usr} Ayy test works!",
@@ -93,8 +107,8 @@ things = {
     "!thecakeisalie": "@{usr} : Rick roll'd https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     "!cyka": "@{usr} Cyka Blyat!",
     "!who": "@{user} Can't manipulate strings. Not yet. Soon.",
-    "!servers" : "Servers:\nGMod server: <ip>",
-    "!gmod" : "Our GMod server: <ip>"
+    "!servers" : "Servers:\nGMod server: nope",
+    "!gmod" : "Our GMod server: nope"
 }
 helpmsg1 = ("""\
 Help:
@@ -129,38 +143,32 @@ jokemsg = ("""\
 @client.event
 def on_message(message):
     try:
-        filterset = checksettings(parm=1)
-        spamset = checksettings(parm=2)
         disauthor = message.author
         # Spam and swearing check / with settings.txt check in checksettings(parm=1 or 2)
-        if filterset == 1:
+        if checksettings(parm=1) == 1:
             checkwords(message)
-        if spamset == 1:
+        if checksettings(parm=2) == 1:
             checkspam(message)
-        #clearing check
-        if time.time() - start_time > 10800:
-            #Depends on your system: clear(linux, etc.) or cls(windows)
-            os.system('clear')
         # Dict check (fun commands)
         for onething in things.keys():
             if message.content.startswith(onething):
                 deletemsg(message)
                 second = things.get(str(message.content))
-                printout(message, disauthor)
+                logdis(message)
                 client.send_message(message.channel, second.format(usr=disauthor))
         # Help
         if message.content.startswith("!help"):
             client.send_message(message.channel, helpmsg1)
-            printout(message, disauthor)
+#            printout(message, disauthor)
+            logdis(message)
         elif message.content.startswith('!help 1'):
             client.send_message(message.channel, helpmsg1)
             print('{msg} - {usr}'.format(msg=str(message.content), usr=disauthor))
-            printout(message, disauthor)
+            logdis(message)
         elif message.content.startswith("!help 2"):
             client.send_message(message.channel, jokemsg)
             print('{msg} - {usr}'.format(msg=str(message.content), usr=disauthor))
-            printout(message, disauthor)
-        # They see me rollin' // kinda works
+            logdis(message)
         elif message.content.startswith("!restart"):
             client.send_message(message.channel, "@{usr} Restarting...".format(usr=disauthor))
             client.logout()
@@ -168,27 +176,22 @@ def on_message(message):
             runme()
             os.system('clear')
             print("Should be properly restarted.")
+            logdis(message)
+        # They see me rollin' // kinda works
         elif message.content.startswith('!roll'):
-            client.send_message(message.channel,
-                                "@{user}, this function does not fully work yet.".format(user=message.author))
-            msgstr = str(message.content)
-            dis = ''.join(filter(lambda x: x.isdigit(), msgstr))
+            client.send_message(message.channel,"@{user}, this function does not fully work yet.".format(user=message.author))
             client.send_message(message.channel, randint(0, 100))
-            printout(message, disauthor)
+            logdis(message)
         # Credits.
         elif message.content.startswith("!credits"):
             client.send_message(message.channel, creditsmsg)
-            printout(message, disauthor)
-        # Shut down.
+            logdis(message)
+        # Shut down. // to do : add check for permissions.
         elif message.content.startswith("!shutmedown"):
             deletemsg(message)
-            perms2 = discord.Permissions()
-#            if perms2.can_manage_server(disauthor):
-#                print('{msg} was executed by {usr}, quitting'.format(msg=str(message.content), usr=disauthor))
             client.send_message(message.channel, "@{usr}, DiscordieBot shutting down.".format(usr=disauthor))
             exit(-420)
-#            else:
-#                print('{msg} was executed by {usr}, but he/she didnt have enough permissions'.format(msg=str(message.content), usr=disauthor))
+            logdis(message)
         # Cats are cute
         elif message.content.startswith("!cats"):
             deletemsg(message)
@@ -209,14 +212,14 @@ def on_message(message):
             final = "**Total : {count1} members.**".format(count1=count)
             client.send_message(message.channel, members)
             client.send_message(message.channel, final)
-            printout(message, disauthor)
+            logdis(message)
         # Uptime
         elif message.content.startswith("!uptime"):
             deletemsg(message)
             time_elapsed = time.time() - start_time
             converted = Gettime(time_elapsed)
             client.send_message(message.channel, "@{usr} **Uptime: {uptime} **".format(usr=disauthor, uptime=converted))
-            printout(message, disauthor)
+            logdis(message)
         # Gets you an invite // doesnt work yet
         elif message.content.startswith("!getinvite"):
             deletemsg(message)
@@ -224,7 +227,7 @@ def on_message(message):
                                 "@{usr}, here is your code : {code} that expires in 24 hrs.".format(usr=disauthor,
                                                                                                     code=str(disinvite(
                                                                                                             message))))
-            printout(message, disauthor)
+            logdis(message)
             ####End of commands###
     except discord.InvalidArgument:
         print("Error -3 : InvalidArgument")
@@ -261,5 +264,6 @@ def on_ready():
 def on_member_join(member):
     server = member.server
     client.send_message(server, 'Welcome to the server, {0}'.format(member.mention()))
+    logdis("{one} joined the server".format(one=member))
 
 runme()
