@@ -6,7 +6,7 @@ from datetime import timedelta, datetime
 import time
 import configparser
 
-__title__ = 'DiscordieBot'
+__title__ = 'AyyBot'
 __author__ = 'DefaltSimon with discord.py api'
 __version__ = '0.9'
 
@@ -93,7 +93,7 @@ Help:
 !credits - author, etc.
 """)
 creditsmsg = ("""\
-**DiscordBot 0.9**
+**AyyBot 0.9**
 Made by *DefaltSimon* with the help of \"discord.py\" API(on github).
 """)
 jokemsg = ("""\
