@@ -15,7 +15,7 @@ I know that everything is pretty basic, I learn as I do new things for this bot 
 - [discord.py api](https://github.com/Rapptz/discord.py) (install with ```pip install discord.py```)
 
   *Starting the bot:*  
-   execute ```python discord-bot.py```(next update - ayybot.py)
+   execute ```python ayybot.py```
 
 **1.1** - Commands:  
 ```
