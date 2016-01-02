@@ -17,7 +17,7 @@ I know that everything is pretty basic, I learn as I do new things for this bot 
   *Starting the bot:*  
    execute ```python ayybot.py```
 
-**1.1** - Commands:  
+**1.2** - Commands:  
 ```
 !help 1 - displays available commads (almost all)  
 !help 2 - funny commands  
@@ -31,7 +31,7 @@ I know that everything is pretty basic, I learn as I do new things for this bot 
 !restart - restarts the bot  
 !credits - author, etc.  
 ```
-**1.2** - Fun Commands:  
+**1.3** - Fun Commands:  
 ```
 !johncena - meme  
 !allstar - all star song  
@@ -45,7 +45,7 @@ I know that everything is pretty basic, I learn as I do new things for this bot 
 ```
 Please dont be offended, you can change it :P  
   
-**1.3** - TO-DO:
+**1.4** - TO-DO:
 ```
 !info <person> - tells you "everything" about the person  
 !roll <number> - right now it works only 0 to 100, will add custom number  
