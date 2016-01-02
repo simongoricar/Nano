@@ -1,14 +1,21 @@
-# DiscordieBot
+# DiscordieBot (python)
 made by DefaltSimon, with [discord.py api](https://github.com/Rapptz/discord.py) .
 
 **1** Features:
 - Spam filter
 - Swearing filter (add words to filterwords.txt)
-- many commands ("easy to add your own" - scommands.txt)
-- settings (see settings.txt)  
+- many commands ("easy to add your own" - config.py)
+- settings (see settings.ini)  
 - logging with timestamp (logs.txt)  
 
-I know that everything is pretty basic, I learn as I do new things for this bot :)
+I know that everything is pretty basic, I learn as I do new things for this bot :)  
+
+**1.1** Requirements and installing:
+- Python 3.3+
+- [discord.py api](https://github.com/Rapptz/discord.py) (install with ```pip install discord.py```)
+
+  *Starting the bot:*  
+   execute ```python discord-bot.py```(next update - ayybot.py)
 
 **1.1** - Commands:  
 ```
@@ -40,8 +47,9 @@ Please dont be offended, you can change it :P
   
 **1.3** - TO-DO:
 ```
-!who <person> - tells you "everything" about the person  
+!info <person> - tells you "everything" about the person  
 !roll <number> - right now it works only 0 to 100, will add custom number  
 - plugins  
 - many other things  
 ```
+Enjoy!
