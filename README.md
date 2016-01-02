@@ -3,7 +3,7 @@ made by DefaltSimon, with [discord.py api](https://github.com/Rapptz/discord.py)
 
 **1** Features:
 - Spam filter
-- Swearing filter (add words to filterwords.txt)
+- Swearing filter (add words to filterwords.txt) -> temporarily disabled
 - many commands ("easy to add your own" - config.py)
 - settings (see settings.ini)  
 - logging with timestamp (logs.txt)  
@@ -13,42 +13,45 @@ I know that everything is pretty basic, I learn as I do new things for this bot 
 **1.1** Requirements and installing:
 - Python 3.3+
 - [discord.py api](https://github.com/Rapptz/discord.py) (install with ```pip install discord.py```)
+- giphypop - ```pip install giphypop```
 
   *Starting the bot:*  
    execute ```python ayybot.py```
 
-**1.2** - Commands:  
+**1.2** - Useful Commands:  
 ```
-!help 1 - displays available commads (almost all)  
-!help 2 - funny commands  
+!help useful - displays available commands  
+!help fun - funny commands  
 !hello - says hi  
-!roll - random number between 0 and 100  
-!dice - like roll but 0 - 6  
 !listmembers - displays all members on the server  
 !uptime - displays bot uptime  
 !getinvite - returns an invite for the server/channel  
-!avatar ""@<usr>"" or "me" - returns a link to your/mentioned person's avatar  
+!avatar ""@<usr>"" returns a link to mentioned person's avatar or yours if there is no mention  
+!user @mention - returns info about the user  
 !restart - restarts the bot  
-!credits - author, etc.  
+!credits - author, etc.   
 ```
 **1.3** - Fun Commands:  
 ```
-!johncena - meme  
-!allstar - all star song  
-!game - mentions everyone and asks about playing a game  
+!gif <name> - returns a gif from Giphy  
+!roll <number> - random number  
+!dice - like !roll but 0 - 6  
+!decide word word - decides between two words  
+```
+**1.4** - Meme Commands:
+```
 !ayy - ayy lmao  
-!moreayy - even more ayy with lenny  
-!wot - idk why I added this  
-!synagoge - just a friend's joke  
-!thecakeisalie - get rick roll'd  
-!cats - aren't they cute?  
+!moreayy - even more ayy lmao with lenny face  
+!wot - u wot m8  
+!allstar just try it ( ͡° ͜ʖ ͡°)  
+!johncena dis too ( ͡° ͜ʖ ͡°)  
+!thecakeisalie - want it?  
+!cats - cuz they are cute  
 ```
 Please dont be offended, you can change it :P  
-  
 **1.4** - TO-DO:
 ```
-!info <person> - tells you "everything" about the person  
-!roll <number> - right now it works only 0 to 100, will add custom number  
+!youtube,!urban and !wiki
 - plugins  
 - many other things  
 ```
