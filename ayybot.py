@@ -1,21 +1,21 @@
 import discord
-import os
 from random import randint
 from config import things,eightball,helpmsg1,creditsmsg,jokemsg,memelist
 from datetime import timedelta, datetime
 import time
 import configparser
 from giphypop import translate
+import wordfilter
 
 __title__ = 'DiscordieBot'
 __author__ = 'DefaltSimon with discord.py api'
-__version__ = '0.10'
+__version__ = '0.11'
 
 # import logging
 # logging.basicConfig(level=logging.DEBUG)
 client = discord.Client()
 clientchannel = discord.Channel()
-botvs = "0.10"
+botvs = "0.11"
 parser = configparser.ConfigParser()
 parser.read("settings.ini")
 
@@ -35,7 +35,7 @@ def deletemsg(message):
 def printout(message, disauthor):
     print('{msg} was executed by {usr}'.format(msg=str(message.content), usr=disauthor))
 
-def Gettime(time_elapsed):
+def gettime(time_elapsed):
     sec = timedelta(seconds=time_elapsed)
     d = datetime(1, 1, 1) + sec
     this = "%d:%d:%d:%d" % (d.day - 1, d.hour, d.minute, d.second)
@@ -50,14 +50,13 @@ def logdis(message):
             file2.write(str2)
 
 
-#def checkwords(message):
-#    cmsg = str(message.content).split()
-#    with open('filterwords.txt') as f:
-#        mylist = [line.rstrip('\n') for line in f]
-#    for cmsg2 in cmsg:
-#        for bads in mylist:
-#            if cmsg2 == bads and message.author != "AyyBot":
-#                client.send_message(message.channel, "@{usr}, watch it!".format(usr=message.author))
+def checkwords(message):
+    cmsg = str(message.content).lower()
+    with open('filterwords.txt') as f:
+        mylist = [line.rstrip('\n') for line in f]
+    wordfilter.add_words(mylist)
+    if wordfilter.blacklisted(cmsg) and message.author != "AyyBot":
+        client.send_message(message.channel, "@{usr}, watch it!".format(usr=message.author))
 
 
 def checkspam(message):
@@ -86,8 +85,8 @@ def on_message(message):
         disauthor = message.author
         messagestr = str(message.content).lower()
         # Spam and swearing check / with settings.txt check in config.checksettings(parm=1 or 2)
-#        if parser.getboolean("SettingsOne", "FilterWords") == 1:
-#            checkwords(message)
+        if parser.getboolean("SettingsOne", "FilterWords") == 1:
+            checkwords(message)
         if parser.getboolean("SettingsOne", "FilterSpam") == 1:
             checkspam(message)
         # commands imported from config.py
@@ -98,35 +97,27 @@ def on_message(message):
                 print(str("{msg} by {usr}".format(msg=message.content,usr=message.author)))
                 logdis(message)
                 client.send_message(message.channel, second.format(usr=disauthor.id))
-        # Help
         if messagestr.startswith("!help"):
-            client.send_message(message.channel, helpmsg1)
+            deletemsg(message)
+            if messagestr.startswith("!help useful") or messagestr == "!help":
+                client.send_message(message.channel, helpmsg1)
+            elif messagestr.startswith("!help fun"):
+                client.send_message(message.channel, jokemsg)
+            elif messagestr.startswith("!help meme") or messagestr.startswith("!help memes"):
+                client.send_message(message.channel, memelist)
             print(str("{msg} by {usr}".format(msg=message.content,usr=message.author)))
             logdis(message)
-        elif messagestr.startswith('!help useful'):
-            client.send_message(message.channel, helpmsg1)
-            print(str("{msg} by {usr}".format(msg=message.content,usr=message.author)))
-            logdis(message)
-        elif messagestr.startswith("!help fun"):
-            client.send_message(message.channel, jokemsg)
-            print(str("{msg} by {usr}".format(msg=message.content,usr=message.author)))
-            logdis(message)
-        elif messagestr.startswith("!help memes"):
-            client.send_message(message.channel, memelist)
-            print(str("{msg} by {usr}".format(msg=message.content,usr=message.author)))
         # Restart // will add permission check
         elif messagestr.startswith("!restart"):
             deletemsg(message)
+            print(str("{msg} by {usr}".format(msg=message.content,usr=message.author)))
             client.send_message(message.channel, "<@" + disauthor.id + "> Restarting...")
-#            client.logout()
-#            loginme()
-#            runme()
             logdis(message)
-            os.system('./startbot.sh')
-            exit(-420)
-#            print("Should be properly restarted.")
-#            print(str("{msg} by {usr}".format(msg=message.content,usr=message.author)))
-        # They see me rollin' // kinda works
+            client.logout()
+            loginme()
+            runme()
+            print("Should be properly restarted.")
+        # They see me rollin'
         elif messagestr.startswith('!roll'):
             deletemsg(message)
             msg5 = message.content.lower()[6:]
@@ -178,7 +169,7 @@ def on_message(message):
         elif messagestr.startswith("!uptime"):
             deletemsg(message)
             time_elapsed = time.time() - start_time
-            converted = Gettime(time_elapsed)
+            converted = gettime(time_elapsed)
             client.send_message(message.channel, "<@" + disauthor.id + "> **Uptime: {upt} **".format(upt=converted))
             print(str("{msg} by {usr}".format(msg=message.content,usr=message.author)))
             logdis(message)
@@ -203,6 +194,7 @@ def on_message(message):
                 client.send_message(message.channel,"<@" + disauthor.id + ">'s avatar: " + user2.avatar_url())
             print(str("{msg} by {usr}".format(msg=message.content,usr=message.author)))
             logdis(message)
+        # Decides between two or more words
         elif messagestr.startswith("!decide"):
             deletemsg(message)
             msg3 = str(message.content.lower()[7:]).split()
@@ -211,27 +203,30 @@ def on_message(message):
             else:
                 client.send_message(message.channel, "<@" + disauthor.id + "> I have decided: " + msg3[1])
                 logdis(message)
+        # Answers your question - 8ball style
         elif messagestr.startswith("!8ball"):
             deletemsg(message)
             msg6 = str(message.content[6:])
             answer = eightball[randint(1,len(eightball))]
             client.send_message(message.channel,"<@" + disauthor.id + "> asked : " + msg6 + "\n**" + answer + "**")
             logdis(message)
+        # Returns a gif matching the name from Giphy (!gif <name>)
         elif messagestr.startswith("!gif"):
             deletemsg(message)
             msg2 = str(message.content.lower()[4:])
             img = str(translate(msg2))
-            client.send_message(message.channel, "<@" + disauthor.id + ">" + img)
+            client.send_message(message.channel, "<@" + disauthor.id + "> " + img)
+        # Returns user info (name,id,discriminator and avatar url)
         elif messagestr.startswith("!user"):
             deletemsg(message)
             if len(message.mentions) > 0:
                 for user in message.mentions:
                     name = user.name
-                    id = user.id
+                    uid = user.id
                     discrim = user.discriminator
                     avatar = user.avatar_url()
-                    final = "`Name: " + name + "\nId: " + id + "\nDiscriminator: " + discrim + "\nAvatar url: " + avatar + "`"
-                    client.send_message(message.channel,"<@" + disauthor.id + ">\n" + final)
+                    final = "`Name: " + name + "\nId: " + uid + "\nDiscriminator: " + discrim + "\nAvatar url: " + avatar + "`"
+                    client.send_message(message.channel,final)
             else:
                 client.send_message(message.channel, "Please mention someone to display their info")
     except discord.InvalidArgument:

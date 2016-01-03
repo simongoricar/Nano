@@ -2,7 +2,7 @@ __name__ = "AyyBot simple commands list"
 
 things = {
     "!hello": "Hi, <@{usr}>",
-    "!test": "<@{usr}> Ayy test works!",
+    "!ping": "Pong!",
     "!johncena": "<@{usr}> O_O https://www.youtube.com/watch?v=58mah_0Y8TU",
     "!allstar": "<@{usr}> https://www.youtube.com/watch?v=L_jWHffIx5E",
     "!game": "@everyone Does anyone want to play games?",
@@ -11,34 +11,33 @@ things = {
     "!wot": "U wot <@{usr}>",
     "!synagoge": "DIE ALTEE-SYNAGOGE",
     "!thecakeisalie": "<@{usr}> : Rick roll'd https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    "!who": "<@{usr}> Can't manipulate strings. Not yet. Soon."
 }
-'''
-settings.ini :
 
-FilterWords: 1 or 0 (filters words in filterwords.txt)
-FilterSpam: 1 or 0 (filters spam)
-WriteLogs: 1 or 0 (writes logs to log.txt)
-
-
-Adding commands:
-
-Just add them with the help of a template:
-
-"<yourtriggercommand>": "<whatYouWantToPrint>",
-                                              ^ everywhere except the last line
-
-The second can include <@{usr}> to mention the author.
-Use \n anywhere for new line in the same message.
-'''
+# settings.ini :
+#
+# FilterWords: 1 or 0 (filters words in filterwords.txt)
+# FilterSpam: 1 or 0 (filters spam)
+# WriteLogs: 1 or 0 (writes logs to log.txt)
+#
+#
+# Adding commands:
+#
+# Just add them with the help of a template:
+#
+# "<yourtriggercommand>": "<whatYouWantToPrint>",
+#                                               ^ everywhere except the last line
+#
+# The second can include <@{usr}> to mention the author.
+# Use \n anywhere for new line in the same message.
+#
 
 eightball = [
     "It is certain","It is surely so","Without a doubt","You may rely on it","Most likely","Yes",
     "Ask again later","Cannot predict now","Concentrate and ask again","I would say yes","JUST DO IT",
-    "My replay is no","My sources say no","Signs point to yes"]
+    "My reply is no","My sources say no","Signs point to yes"]
 
 helpmsg1 = ("""\
-Help:
+**Help, useful commands:**
 !help useful - displays available commands
 !help fun - funny commands
 !hello - says hi
@@ -50,10 +49,12 @@ Help:
 !restart - restarts the bot
 !credits - author, etc.
 """)
+
 creditsmsg = ("""\
-**DiscordBot 0.9**
-Made by *DefaltSimon* with the help of \"discord.py\" API(on github).
+**DiscordBot 0.11**
+Made by *DefaltSimon* with the help of discord.py API
 """)
+
 jokemsg = ("""\
 **Help, fun commands:**
 !gif <name> - returns a gif from Giphy
