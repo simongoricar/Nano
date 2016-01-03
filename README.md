@@ -3,7 +3,7 @@ made by DefaltSimon, with [discord.py api](https://github.com/Rapptz/discord.py)
 
 **1** Features:
 - Spam filter
-- Swearing filter (add words to filterwords.txt) -> temporarily disabled
+- Swearing filter (add words to filterwords.txt)
 - many commands ("easy to add your own" - config.py)
 - settings (see settings.ini)  
 - logging with timestamp (logs.txt)  
@@ -14,6 +14,7 @@ I know that everything is pretty basic, I learn as I do new things for this bot 
 - Python 3.3+
 - [discord.py api](https://github.com/Rapptz/discord.py) (install with ```pip install discord.py```)
 - giphypop - ```pip install giphypop```
+- wordfilter - ```pip install wordfilter```
 
   *Starting the bot:*  
    execute ```python ayybot.py```
@@ -28,6 +29,7 @@ I know that everything is pretty basic, I learn as I do new things for this bot 
 !getinvite - returns an invite for the server/channel  
 !avatar ""@<usr>"" returns a link to mentioned person's avatar or yours if there is no mention  
 !user @mention - returns info about the user  
+!ping Pong!
 !restart - restarts the bot  
 !credits - author, etc.   
 ```
