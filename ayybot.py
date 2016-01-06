@@ -1,21 +1,22 @@
 import discord
 from random import randint
-from config import things,eightball,helpmsg1,creditsmsg,jokemsg,memelist
+from config import username,password,things,eightball,helpmsg1,creditsmsg,jokemsg,memelist,quotes
 from datetime import timedelta, datetime
 import time
 import configparser
 from giphypop import translate
 import wordfilter
+import os
 
-__title__ = 'DiscordieBot'
+__title__ = 'AyyBot'
 __author__ = 'DefaltSimon with discord.py api'
-__version__ = '0.11'
+__version__ = '0.12'
 
 # import logging
 # logging.basicConfig(level=logging.DEBUG)
 client = discord.Client()
 clientchannel = discord.Channel()
-botvs = "0.11"
+botvs = "0.12"
 parser = configparser.ConfigParser()
 parser.read("settings.ini")
 
@@ -23,7 +24,7 @@ def runme():
     client.run()
 
 def loginme():
-    client.login('mail', 'pass')
+    client.login(username,password)
 loginme()
 
 def logmeout():
@@ -58,7 +59,6 @@ def checkwords(message):
     if wordfilter.blacklisted(cmsg) and message.author != "AyyBot":
         client.send_message(message.channel, "@{usr}, watch it!".format(usr=message.author))
 
-
 def checkspam(message):
     spamword = ""
     another = 0
@@ -75,9 +75,6 @@ def checkspam(message):
         client.send_message(message.channel,
                             "@{usr} Spam is not allowed. **Deal with it** ( ͡° ͜ʖ ͡°)".format(usr=message.author))
         print("A message by {usr} was filtered - spam".format(usr=message.author))
-
-# TIME
-start_time = time.time()
 
 @client.event
 def on_message(message):
@@ -109,14 +106,18 @@ def on_message(message):
             logdis(message)
         # Restart // will add permission check
         elif messagestr.startswith("!restart"):
-            deletemsg(message)
-            print(str("{msg} by {usr}".format(msg=message.content,usr=message.author)))
-            client.send_message(message.channel, "<@" + disauthor.id + "> Restarting...")
-            logdis(message)
-            client.logout()
-            loginme()
-            runme()
-            print("Should be properly restarted.")
+            role1 = discord.utils.find(lambda role: role.name == 'serveradmins', message.channel.server.roles)
+            role2 = discord.utils.find(lambda role: role.name == 'mods', message.channel.server.roles)
+            role3 = discord.utils.find(lambda role: role.name == 'developers', message.channel.server.roles)
+            if message.author.id == message.channel.server.owner.id or role1 or role2 or role3:
+                deletemsg(message)
+                client.send_message(message.channel, "<@" + disauthor.id + "> Restarting...")
+                print(str("{msg} by {usr}, restarting".format(msg=message.content,usr=message.author)))
+                logdis(message)
+                os.system("python launchbot.py")
+            else:
+                logdis(message)
+                print(str("{msg} by {usr}, but incorrect permissions".format(msg=message.content,usr=message.author)))
         # They see me rollin'
         elif messagestr.startswith('!roll'):
             deletemsg(message)
@@ -137,11 +138,16 @@ def on_message(message):
             logdis(message)
         # Shut down. // to do : add check for permissions.
         elif messagestr.startswith("!shutmedown"):
-            deletemsg(message)
-            client.send_message(message.channel, "<@" + disauthor.id + ">, DiscordieBot shutting down.")
-            print(str("{msg} by {usr}".format(msg=message.content,usr=message.author)))
-            logdis(message)
-            exit(-420)
+            role1 = discord.utils.find(lambda role: role.name == 'serveradmins', message.channel.server.roles)
+            if message.author.id == message.channel.server.owner.id or role1:
+                deletemsg(message)
+                client.send_message(message.channel, "<@" + disauthor.id + ">, DiscordieBot shutting down.")
+                print(str("{msg} by {usr}, quitting".format(msg=message.content,usr=message.author)))
+                logdis(message)
+                exit(-420)
+            else:
+                logdis(message)
+                print(str("{msg} by {usr}, but incorrect permissions".format(msg=message.content,usr=message.author)))
         # Cats are cute
         elif messagestr.startswith("!cats"):
             deletemsg(message)
@@ -203,6 +209,7 @@ def on_message(message):
             else:
                 client.send_message(message.channel, "<@" + disauthor.id + "> I have decided: " + msg3[1])
                 logdis(message)
+            print(str("{msg} by {usr}".format(msg=message.content,usr=message.author)))
         # Answers your question - 8ball style
         elif messagestr.startswith("!8ball"):
             deletemsg(message)
@@ -210,12 +217,15 @@ def on_message(message):
             answer = eightball[randint(1,len(eightball))]
             client.send_message(message.channel,"<@" + disauthor.id + "> asked : " + msg6 + "\n**" + answer + "**")
             logdis(message)
+            print(str("{msg} by {usr}".format(msg=message.content,usr=message.author)))
         # Returns a gif matching the name from Giphy (!gif <name>)
         elif messagestr.startswith("!gif"):
             deletemsg(message)
             msg2 = str(message.content.lower()[4:])
             img = str(translate(msg2))
             client.send_message(message.channel, "<@" + disauthor.id + "> " + img)
+            logdis(message)
+            print(str("{msg} by {usr}".format(msg=message.content,usr=message.author)))
         # Returns user info (name,id,discriminator and avatar url)
         elif messagestr.startswith("!user"):
             deletemsg(message)
@@ -229,30 +239,56 @@ def on_message(message):
                     client.send_message(message.channel,final)
             else:
                 client.send_message(message.channel, "Please mention someone to display their info")
+            logdis(message)
+            print(str("{msg} by {usr}".format(msg=message.content,usr=message.author)))
+        # Returns a random quote
+        elif messagestr.startswith("!quote"):
+            deletemsg(message)
+            answer = quotes[randint(1,len(quotes))]
+            client.send_message(message.channel,answer)
+            logdis(message)
+            print(str("{msg} by {usr}".format(msg=message.content,usr=message.author)))
+        # For managing roles
+        elif messagestr.startswith("!role"):
+            for dis in message.mentions:
+                user = discord.utils.find(lambda member: member.name == dis.name, message.channel.server.members)
+                splitcmd = message.content.split()
+                if "mod" in splitcmd:
+                    role = discord.utils.find(lambda role: role.name == 'mods', message.channel.server.roles)
+                    if role is not None:
+                        client.replace_roles(user, role)
+                        print('Changed a user to mod.')
+                        logdis(message)
+                        client.send_message(message.channel,'Successfully added ' + user.name + ' to mods.')
+                elif "removemod" in splitcmd:
+                    role = discord.utils.find(lambda role: role.name == 'mods', message.channel.server.roles)
+                    if role or role2 or role3 or role4 is not None:
+                        client.remove_roles(user,role)
+                        print("Removed permissions")
+                        logdis(message)
+                        client.send_message(message.channel,'Successfully removed ' + user.name + ' from mods')
+                elif "members" in splitcmd:
+                    role = discord.utils.find(lambda role: role.name == "members", message.channel.server.roles)
+                    if role is not None:
+                        client.replace_roles(user,role)
+                        print("Changed permissions to member.")
+                        logdis(message)
+                        client.send_message(message.channel,"Changed " + user.name + "'s permissions to member.")
     except discord.InvalidArgument:
         print("Error -3 : InvalidArgument")
         client.send_message(message.channel, "Error -3 : InvalidArgument")
         client.send_message(message.channel, "Restarting, hold on...")
-        print("Restarting with runme(), hold on...")
-        logmeout()
-        loginme()
-        runme()
+        os.system("python launchbot.py")
     except discord.ClientException:
         print("Error -1 : ClientException")
         print("Restarting with runme(), hold on...")
         client.send_message(message.channel, "Error -1 : ClientException")
-        client.send_message(message.channel, "Restarting, hold on...")
-        logmeout()
-        loginme()
-        runme()
+        os.system("python launchbot.py")
     except discord.HTTPException:
         print("Error -2 : HTTPException")
         client.send_message(message.channel, "Error -2 : HTTPException")
         client.send_message(message.channel, "Restarting, hold on...")
-        print("Restarting with runme(), hold on...")
-        logmeout()
-        loginme()
-        runme()
+        os.system("python launchbot.py")
 
 @client.event
 def on_ready():
@@ -266,6 +302,10 @@ def on_member_join(member):
     client.send_message(server, 'Welcome to the server, {0}'.format(member.mention()))
     logdis("{one} joined the server".format(one=member))
 
+
+# TIME
+start_time = time.time()
+# Write logs
 if parser.getboolean("SettingsOne","WriteLogs") == 1:
     with open('log.txt','a') as file:
         file.write("\n------------------------------\n".format(vs=botvs))
