@@ -1,6 +1,6 @@
 __name__ = "AyyBot simple commands list"
 
-#Mail and password
+# Mail and password
 username = "mail"
 password = "pass"
 
@@ -51,6 +51,7 @@ helpmsg1 = ("""\
 !getinvite - returns an invite for the server/channel
 !avatar ""@<usr>"" returns a link to mentioned person's avatar or yours if there is no mention
 !user @mention - returns info about the user
+!role mod/removemod/members @mentions - modifies roles
 !role - mod/removemod/members @mentions
 !restart - restarts the bot
 !credits - author, etc.
@@ -67,6 +68,7 @@ jokemsg = ("""\
 !roll <number> - random number
 !dice - like !roll but 0 - 6
 !decide word word - decides between two words
+!quote - returns a random quote
 """)
 
 memelist = ("""\
