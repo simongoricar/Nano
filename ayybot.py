@@ -1,6 +1,6 @@
 import discord
 from random import randint
-from config import username,password,things,eightball,helpmsg1,creditsmsg,jokemsg,memelist,quotes
+from config import mail,password,things,eightball,helpmsg1,creditsmsg,jokemsg,memelist,quotes
 from datetime import timedelta, datetime
 import time
 import configparser
@@ -20,15 +20,14 @@ botvs = "0.12"
 parser = configparser.ConfigParser()
 parser.read("settings.ini")
 
+with open("status.txt","w+") as file:
+    file.write("state_sleep=0")
+
 def runme():
     client.run()
 
 def loginme():
-    client.login(username,password)
-loginme()
-
-def logmeout():
-    client.logout()
+    client.login(mail,password)
 
 def deletemsg(message):
     client.delete_message(message)
@@ -42,14 +41,12 @@ def gettime(time_elapsed):
     this = "%d:%d:%d:%d" % (d.day - 1, d.hour, d.minute, d.second)
     return this
 
-
 def logdis(message):
     if parser.getboolean("SettingsOne", "WriteLogs") == 1:
         with open('log.txt',"a") as file2:
             one = str(time.strftime("%Y-%m-%d %H:%M:%S", ))
             str2 = one + str(" : {msg} by {usr}\n".format(msg=message.content,usr=message.author))
             file2.write(str2)
-
 
 def checkwords(message):
     cmsg = str(message.content).lower()
@@ -79,8 +76,26 @@ def checkspam(message):
 @client.event
 def on_message(message):
     try:
-        disauthor = message.author
+        state_sleep = (open("status.txt","r").read()).split()[0]
         messagestr = str(message.content).lower()
+        disauthor = message.author
+        # check for !manage before (possibly) quiting out of def
+        if messagestr.startswith("!manage"):
+            msg6 = str(message.content[8:])
+            print(msg6)
+            if msg6 == "sleep":
+                if state_sleep == 1:
+                    client.send_message(message.channel,"No need m8, I was already sleeping.")
+                open("status.txt","w+").write("state_sleep=1")
+                client.send_message(message.channel,"Now sleeping...")
+                print("Saved sleeping")
+            elif msg6 == "wake":
+                open("status.txt","w+").write("state_sleep=0")
+                client.send_message(message.channel,"Returned from winter sleep.")
+                print("Returned to normal")
+        if state_sleep == "state_sleep=1":
+            print("Sleeping...")
+            return
         # Spam and swearing check / with settings.txt check in config.checksettings(parm=1 or 2)
         if parser.getboolean("SettingsOne", "FilterWords") == 1:
             checkwords(message)
@@ -94,6 +109,7 @@ def on_message(message):
                 print(str("{msg} by {usr}".format(msg=message.content,usr=message.author)))
                 logdis(message)
                 client.send_message(message.channel, second.format(usr=disauthor.id))
+                return
         if messagestr.startswith("!help"):
             deletemsg(message)
             if messagestr.startswith("!help useful") or messagestr == "!help":
@@ -104,8 +120,8 @@ def on_message(message):
                 client.send_message(message.channel, memelist)
             print(str("{msg} by {usr}".format(msg=message.content,usr=message.author)))
             logdis(message)
-        # Restart // will add permission check
-        elif messagestr.startswith("!restart"):
+        # Restart
+        elif messagestr.startswith("ayybot.reboot"):
             role1 = discord.utils.find(lambda role: role.name == 'serveradmins', message.channel.server.roles)
             role2 = discord.utils.find(lambda role: role.name == 'mods', message.channel.server.roles)
             role3 = discord.utils.find(lambda role: role.name == 'developers', message.channel.server.roles)
@@ -118,6 +134,18 @@ def on_message(message):
             else:
                 logdis(message)
                 print(str("{msg} by {usr}, but incorrect permissions".format(msg=message.content,usr=message.author)))
+        # Shut down
+        elif messagestr.startswith("ayybot.kill"):
+            role1 = discord.utils.find(lambda role: role.name == 'serveradmins', message.channel.server.roles)
+            if message.author.id == message.channel.server.owner.id or role1:
+                deletemsg(message)
+                client.send_message(message.channel, "**DED**")
+                print(str("{msg} by {usr}, quitting".format(msg=message.content,usr=message.author)))
+                logdis(message)
+                exit(-420)
+            else:
+                logdis(message)
+                print(str("{msg} by {usr}, but incorrect permissions".format(msg=message.content,usr=message.author)))
         # They see me rollin'
         elif messagestr.startswith('!roll'):
             deletemsg(message)
@@ -125,29 +153,18 @@ def on_message(message):
             client.send_message(message.channel, "<@" + disauthor.id + "> rolled :" + str(randint(0, int(msg5))))
             print(str("{msg} by {usr}".format(msg=message.content,usr=message.author)))
             logdis(message)
+        # Dice - 1 - 6
         elif messagestr.startswith("!dice"):
             deletemsg(message)
-            client.send_message(message.channel, "<@" + disauthor.id + "> You got: " + str(randint(0,6)) + "!")
+            client.send_message(message.channel, "<@" + disauthor.id + "> You got: " + str(randint(1,6)) + "!")
             print(str("{msg} by {usr}".format(msg=message.content,usr=message.author)))
             logdis(message)
-        # Credits.
+        # Credits
         elif messagestr.startswith("!credits"):
             deletemsg(message)
             client.send_message(message.channel, creditsmsg)
             print(str("{msg} by {usr}".format(msg=message.content,usr=message.author)))
             logdis(message)
-        # Shut down. // to do : add check for permissions.
-        elif messagestr.startswith("!shutmedown"):
-            role1 = discord.utils.find(lambda role: role.name == 'serveradmins', message.channel.server.roles)
-            if message.author.id == message.channel.server.owner.id or role1:
-                deletemsg(message)
-                client.send_message(message.channel, "<@" + disauthor.id + ">, DiscordieBot shutting down.")
-                print(str("{msg} by {usr}, quitting".format(msg=message.content,usr=message.author)))
-                logdis(message)
-                exit(-420)
-            else:
-                logdis(message)
-                print(str("{msg} by {usr}, but incorrect permissions".format(msg=message.content,usr=message.author)))
         # Cats are cute
         elif messagestr.startswith("!cats"):
             deletemsg(message)
@@ -179,7 +196,7 @@ def on_message(message):
             client.send_message(message.channel, "<@" + disauthor.id + "> **Uptime: {upt} **".format(upt=converted))
             print(str("{msg} by {usr}".format(msg=message.content,usr=message.author)))
             logdis(message)
-        # Gets you an invite // doesnt work yet
+        # Gets you an invite / todo fix this
         elif messagestr.startswith("!getinvite"):
             disinvite = client.create_invite(message.server)
             deletemsg(message)
@@ -250,30 +267,35 @@ def on_message(message):
             print(str("{msg} by {usr}".format(msg=message.content,usr=message.author)))
         # For managing roles
         elif messagestr.startswith("!role"):
-            for dis in message.mentions:
-                user = discord.utils.find(lambda member: member.name == dis.name, message.channel.server.members)
-                splitcmd = message.content.split()
-                if "mod" in splitcmd:
-                    role = discord.utils.find(lambda role: role.name == 'mods', message.channel.server.roles)
-                    if role is not None:
-                        client.replace_roles(user, role)
-                        print('Changed a user to mod.')
-                        logdis(message)
-                        client.send_message(message.channel,'Successfully added ' + user.name + ' to mods.')
-                elif "removemod" in splitcmd:
-                    role = discord.utils.find(lambda role: role.name == 'mods', message.channel.server.roles)
-                    if role or role2 or role3 or role4 is not None:
-                        client.remove_roles(user,role)
-                        print("Removed permissions")
-                        logdis(message)
-                        client.send_message(message.channel,'Successfully removed ' + user.name + ' from mods')
-                elif "members" in splitcmd:
-                    role = discord.utils.find(lambda role: role.name == "members", message.channel.server.roles)
-                    if role is not None:
-                        client.replace_roles(user,role)
-                        print("Changed permissions to member.")
-                        logdis(message)
-                        client.send_message(message.channel,"Changed " + user.name + "'s permissions to member.")
+            role1 = discord.utils.find(lambda role: role.name == 'serveradmins', message.channel.server.roles)
+            if message.author.id == message.channel.server.owner.id or role1:
+                for dis in message.mentions:
+                    user = discord.utils.find(lambda member: member.name == dis.name, message.channel.server.members)
+                    splitcmd = message.content.split()
+                    if "mod" in splitcmd:
+                        role = discord.utils.find(lambda role: role.name == 'mods', message.channel.server.roles)
+                        if role is not None:
+                            client.replace_roles(user, role)
+                            print('Changed a user to mod.')
+                            logdis(message)
+                            client.send_message(message.channel,'Successfully added ' + user.name + ' to mods.')
+                    elif "removemod" in splitcmd:
+                        role = discord.utils.find(lambda role: role.name == 'mods', message.channel.server.roles)
+                        if role is not None:
+                            client.remove_roles(user,role)
+                            print("Removed permissions.")
+                            logdis(message)
+                            client.send_message(message.channel,'Successfully removed ' + user.name + ' from mods')
+                    elif "member" in splitcmd:
+                        role = discord.utils.find(lambda role: role.name == "members", message.channel.server.roles)
+                        if role is not None:
+                            client.replace_roles(user,role)
+                            print("Changed permissions to member.")
+                            logdis(message)
+                            client.send_message(message.channel,"Changed " + user.name + "'s permissions to member.")
+            else:
+                logdis(message)
+                print(str("{msg} by {usr}, but incorrect permissions".format(msg=message.content,usr=message.author)))
     except discord.InvalidArgument:
         print("Error -3 : InvalidArgument")
         client.send_message(message.channel, "Error -3 : InvalidArgument")
@@ -281,7 +303,7 @@ def on_message(message):
         os.system("python launchbot.py")
     except discord.ClientException:
         print("Error -1 : ClientException")
-        print("Restarting with runme(), hold on...")
+        print("Restarting, hold on...")
         client.send_message(message.channel, "Error -1 : ClientException")
         os.system("python launchbot.py")
     except discord.HTTPException:

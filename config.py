@@ -1,7 +1,7 @@
 __name__ = "AyyBot simple commands list"
 
 # Mail and password
-username = "mail"
+mail = "mail"
 password = "pass"
 
 things = {
@@ -10,8 +10,8 @@ things = {
     "!johncena": "O_O https://www.youtube.com/watch?v=58mah_0Y8TU",
     "!allstar": "https://www.youtube.com/watch?v=L_jWHffIx5E",
     "!game": "@everyone Does anyone want to play games?",
+    "!ayylmao" : "Ayyyyyyyyyy lmao! ( ͡° ͜ʖ ͡°) 👾 ",
     "!ayy": "Ayyyyy lmao!",
-    "!moreayy": "Ayyyyyyyyyy lmao! ( ͡° ͜ʖ ͡°) 👾 ",
     "!wot": "U wot <@{usr}>",
     "!synagoge": "DIE ALTEE-SYNAGOGE",
     "!thecakeisalie": "<@{usr}> : Rick roll'd https://www.youtube.com/watch?v=dQw4w9WgXcQ",
@@ -52,13 +52,14 @@ helpmsg1 = ("""\
 !avatar ""@<usr>"" returns a link to mentioned person's avatar or yours if there is no mention
 !user @mention - returns info about the user
 !role mod/removemod/members @mentions - modifies roles
-!role - mod/removemod/members @mentions
-!restart - restarts the bot
+!manage sleep/wake - self explanatory
+ayybot.reboot - restarts the bot
+ayybot.kill - stops the bot
 !credits - author, etc.
 """)
 
 creditsmsg = ("""\
-**DiscordBot 0.11**
+**DiscordBot 0.13**
 Made by *DefaltSimon* with the help of discord.py API
 """)
 
@@ -74,7 +75,7 @@ jokemsg = ("""\
 memelist = ("""\
 **Help, meme list:**
 !ayy - ayy lmao
-!moreayy - even more ayy lmao with lenny face
+!ayylmao - even more ayy lmao with lenny face
 !wot - u wot m8
 !allstar just try it ( ͡° ͜ʖ ͡°)
 !johncena dis too ( ͡° ͜ʖ ͡°)
@@ -106,5 +107,4 @@ quotes = [
     "You can’t use up creativity.  The more you use, the more you have. –Maya Angelou",
     "Do what you can, where you are, with what you have. –Teddy Roosevelt",
     "You may be disappointed if you fail, but you are doomed if you don’t try. –Beverly Sills",
-
 ]
