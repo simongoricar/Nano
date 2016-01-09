@@ -332,4 +332,5 @@ if parser.getboolean("SettingsOne","WriteLogs") == 1:
     with open('log.txt','a') as file:
         file.write("\n------------------------------\n".format(vs=botvs))
 
+loginme()
 runme()
