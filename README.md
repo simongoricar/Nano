@@ -4,7 +4,7 @@ made by DefaltSimon, with [discord.py api](https://github.com/Rapptz/discord.py)
 **1** Features:
 - Spam filter
 - Swearing filter (add words to filterwords.txt)
-- many commands ("easy to add your own" - config.py)
+- "many" commands ("easy to add your own" - config.py)
 - settings (see settings.ini)  
 - logging with timestamp (logs.txt)  
 
@@ -12,9 +12,9 @@ I know that everything is pretty basic, I learn as I do new things for this bot 
 
 **1.1** Requirements and installing:
 - Python 3.3+
-- [discord.py api](https://github.com/Rapptz/discord.py) (install with ```pip install discord.py```)
-- giphypop - ```pip install giphypop```
-- wordfilter - ```pip install wordfilter```
+- [discord.py api](https://github.com/Rapptz/discord.py) (install with ```pip install discord.py```)  
+- giphypop - ```pip install giphypop```  
+- wordfilter - ```pip install wordfilter```  
 
   *Starting the bot:*  
    execute ```python ayybot.py```
@@ -30,20 +30,22 @@ I know that everything is pretty basic, I learn as I do new things for this bot 
 !avatar ""@<usr>"" returns a link to mentioned person's avatar or yours if there is no mention  
 !user @mention - returns info about the user  
 !ping Pong!
-!restart - restarts the bot  
+ayybot.reboot - restarts the bot 
+ayybot.kill - shuts down the bot  
+!manage sleep/wake - self explanatory
 !credits - author, etc.   
 ```
 **1.3** - Fun Commands:  
 ```
 !gif <name> - returns a gif from Giphy  
 !roll <number> - random number  
-!dice - like !roll but 0 - 6  
+!dice - 1 - 6 random  
 !decide word word - decides between two words  
 ```
 **1.4** - Meme Commands:
 ```
 !ayy - ayy lmao  
-!moreayy - even more ayy lmao with lenny face  
+!ayylmao - even more ayy lmao with lenny face  
 !wot - u wot m8  
 !allstar just try it ( ͡° ͜ʖ ͡°)  
 !johncena dis too ( ͡° ͜ʖ ͡°)  
@@ -53,7 +55,11 @@ I know that everything is pretty basic, I learn as I do new things for this bot 
 Please dont be offended, you can change it :P  
 **1.4** - TO-DO:
 ```
+!votestart
 !youtube,!urban and !wiki
+!join server (maybe)  
+- rate limit
+- a way to !add commands
 - plugins  
 - many other things  
 ```
