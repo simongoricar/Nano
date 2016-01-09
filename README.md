@@ -12,9 +12,9 @@ I know that everything is pretty basic, I learn as I do new things for this bot 
 
 **1.1** Requirements and installing:
 - Python 3.3+
-- [discord.py api](https://github.com/Rapptz/discord.py) (install with ```pip install discord.py```)  
-- giphypop - ```pip install giphypop```  
-- wordfilter - ```pip install wordfilter```  
+- [discord.py api](https://github.com/Rapptz/discord.py) (install with ```pip install discord.py```)
+- giphypop - ```pip install giphypop```
+- wordfilter - ```pip install wordfilter```
 
   *Starting the bot:*  
    execute ```python ayybot.py```
