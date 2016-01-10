@@ -56,7 +56,7 @@ Please dont be offended, you can change it :P
 **1.4** - TO-DO:
 ```
 !votestart
-!youtube,!urban and !wiki
+!youtube
 !join server (maybe)  
 - rate limit
 - a way to !add commands
