@@ -4,26 +4,21 @@ __name__ = "AyyBot simple commands list"
 mail = "mail"
 password = "pass"
 
-things = {
+useful = {
     "!hello": "Hi, <@{usr}>",
-    "!ping": "Pong!",
+    "!ping": "Pong!"
+}
+meme = {
     "!johncena": "O_O https://www.youtube.com/watch?v=58mah_0Y8TU",
     "!allstar": "https://www.youtube.com/watch?v=L_jWHffIx5E",
-    "!game": "@everyone Does anyone want to play games?",
-    "!ayylmao" : "Ayyyyyyyyyy lmao! ( ͡° ͜ʖ ͡°) 👾 ",
+    "!ayylmao" : "Ayy lmao! ( ͡° ͜ʖ ͡°) 👾 ",
     "!ayy": "Ayyyyy lmao!",
-    "!wot": "U wot <@{usr}>",
+    "!wot": "<@{usr}> U wot m8?",
     "!synagoge": "DIE ALTEE-SYNAGOGE",
     "!thecakeisalie": "<@{usr}> : Rick roll'd https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     "!butwait" : "*But wait, there's more!*"
 }
 
-# settings.ini :
-#
-# FilterWords: 1 or 0 (filters words in filterwords.txt)
-# FilterSpam: 1 or 0 (filters spam)
-# WriteLogs: 1 or 0 (writes logs to log.txt)
-#
 #
 # Adding commands:
 #
@@ -32,9 +27,15 @@ things = {
 # "<yourtriggercommand>": "<whatYouWantToPrint>",
 #                                               ^ everywhere except the last line
 #
-# The second can include <@{usr}> to mention the author.
+# <whatYouWantToPrint> can include <@{usr}> to mention the author.
 # Use \n anywhere for new line in the same message.
 #
+
+filterwords = [
+    "beeyotch","biatch","bitch","chink","crip","cunt","dago","daygo","dego","dick","dyke","fag","fatass","fatso","gash",
+    "gimp","golliwog","gook","homo","hooker","kike","kraut","lame","lesbo","negro","nigga","nigger","pussy","retard",
+    "skank","slut","spade","spic","spook","tard","tits","titt","tranny","twat","wetback","whore","wop","jebi se",
+    "fuck off"]
 
 eightball = [
     "It is certain","It is surely so","Without a doubt","You may rely on it","Most likely","Yes",
@@ -52,15 +53,15 @@ helpmsg1 = ("""\
 !avatar ""@<usr>"" returns a link to mentioned person's avatar or yours if there is no mention
 !user @mention - returns info about the user
 !role mod/removemod/members @mentions - modifies roles
-!manage sleep/wake - self explanatory
+ayybot.sleep/wake - self explanatory, isn't it?
 ayybot.reboot - restarts the bot
 ayybot.kill - stops the bot
 !credits - author, etc.
 """)
 
 creditsmsg = ("""\
-**DiscordBot 0.13**
-Made by *DefaltSimon* with the help of discord.py API
+**DiscordBot {bot}**
+Made by *DefaltSimon* with the discord.py API
 """)
 
 jokemsg = ("""\
