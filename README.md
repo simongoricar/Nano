@@ -23,16 +23,17 @@ I know that everything is pretty basic, I learn as I do new things for this bot 
 ```
 !help useful - displays available commands  
 !help fun - funny commands  
+!help memes - memes
+!help all - all of the above in one message
 !hello - says hi  
-!listmembers - displays all members on the server  
+!members - displays all members on the server  
 !uptime - displays bot uptime  
-!getinvite - returns an invite for the server/channel  
 !avatar ""@<usr>"" returns a link to mentioned person's avatar or yours if there is no mention  
 !user @mention - returns info about the user  
 !ping Pong!
 ayybot.reboot - restarts the bot 
 ayybot.kill - shuts down the bot  
-!manage sleep/wake - self explanatory
+ayybot.sleep/wake - self explanatory
 !credits - author, etc.   
 ```
 **1.3** - Fun Commands:  
