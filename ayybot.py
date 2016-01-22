@@ -1,21 +1,23 @@
 import discord
+import time,configparser,wordfilter,wikipedia,requests
 from random import randint
-from config import mail,password,useful,meme,eightball,helpmsg1,creditsmsg,jokemsg,memelist,quotes,filterwords
+from config import useful,meme,eightball,helpmsg1,creditsmsg,jokemsg,memelist,quotes,filterwords
 from datetime import timedelta, datetime
-import time,configparser,os,wordfilter,wikipedia,requests
 from giphypop import translate
 from bs4 import BeautifulSoup
 
 __title__ = 'AyyBot'
 __author__ = 'DefaltSimon with discord.py api'
-__version__ = '0.15'
+__version__ = '0.16'
 
 # import logging
 # logging.basicConfig(level=logging.DEBUG)
 
 client = discord.Client()
 clientchannel = discord.Channel()
-botvs = "0.15"
+botvs = "0.16"
+
+
 
 parser = configparser.ConfigParser()
 parser.read("settings.ini")
@@ -23,11 +25,8 @@ parser.set("Settings","state_sleep","0")
 with open('settings.ini', 'w') as configfile:
     parser.write(configfile)
 
-def runme():
-    client.run()
-
-def loginme():
-    client.login(mail,password)
+def login():
+    client.login(parser.get("Credentials","username"),parser.get("Credentials","password"))
 
 def deletemsg(message):
     client.delete_message(message)
@@ -40,7 +39,7 @@ def gettime(time_elapsed):
 
 def logdis(message):
     if parser.getboolean("Settings", "WriteLogs") == 1:
-        with open('log.txt',"a") as file2:
+        with open('data/log.txt',"a") as file2:
             one = str(time.strftime("%Y-%m-%d %H:%M:%S", ))
             str2 = one + str(" : {msg} by {usr}\n".format(msg=message.content,usr=message.author))
             file2.write(str2)
@@ -74,28 +73,28 @@ def on_message(message):
         state_sleep = int(parser.getboolean("Settings","state_sleep"))
         messagestr = str(message.content).lower()
         disauthor = message.author
-        # check for !manage before (possibly) quiting out of def
-        if messagestr.startswith("ayybot."):
-            msg6 = str(message.content[7:])
-            if msg6 == "sleep":
-                if state_sleep == 1:
-                    client.send_message(message.channel,"No need m8, I was already sleeping.")
-                    return
-                parser.set("Settings","state_sleep","1")
-                with open('settings.ini', 'w') as configfile:
-                    parser.write(configfile)
-                client.send_message(message.channel,"Now sleeping...")
-                print("Saved sleeping")
-            elif msg6 == "wake":
-                parser.set("Settings","state_sleep","0")
-                with open('settings.ini', 'w') as configfile:
-                    parser.write(configfile)
-                client.send_message(message.channel,"Returned from winter sleep.")
-                print("Returned to normal")
+        # check for ayybot.sleep/wake before (possibly) quiting out of on_message
+        if message.author.id == message.channel.server.owner.id:
+            if messagestr.startswith("ayybot."):
+                msg6 = str(message.content[7:])
+                if msg6 == "sleep":
+                    if state_sleep == 1:
+                        client.send_message(message.channel,"No need m8, I was already sleeping.")
+                        return
+                    parser.set("Settings","state_sleep","1")
+                    with open('settings.ini', 'w') as configfile2:
+                        parser.write(configfile2)
+                    client.send_message(message.channel,"Now sleeping...")
+                    print("Saved sleeping")
+                elif msg6 == "wake":
+                    parser.set("Settings","state_sleep","0")
+                    with open('settings.ini', 'w') as configfile3:
+                        parser.write(configfile3)
+                    client.send_message(message.channel,"Returned from winter sleep.")
+                    print("Returned to normal")
         if state_sleep == 1:
-            print("Sleeping...")
             return
-        # Spam and swearing check / with settings.txt check in config.checksettings(parm=1 or 2)
+        # Spam and swearing check / with settings.ini
         if parser.getboolean("Settings", "filterwords") == 1:
             checkwords(message)
         if parser.getboolean("Settings", "filterspam") == 1:
@@ -116,21 +115,28 @@ def on_message(message):
                 logdis(message)
                 client.send_message(message.channel, second.format(usr=disauthor.id))
                 return
+        # Check for commands in data/customcmds.txt
+        with open("data/customcmds.txt","r") as disone:
+            for disonea in disone.readlines():
+                if disonea.strip() == "":
+                    continue
+                if messagestr.startswith((disonea.strip().split(':'))[0]):
+                    client.send_message(message.channel,disonea.strip().split(':')[1])
         if messagestr.startswith("!help"):
             if messagestr.startswith("!help useful") or messagestr == "!help":
-                client.send_message(message.channel, helpmsg1)
+                client.send_message(message.channel, "**Help, useful commands:**\n" + helpmsg1)
             elif messagestr.startswith("!help fun"):
-                client.send_message(message.channel, jokemsg)
+                client.send_message(message.channel, "**Help, fun commands:**\n" + jokemsg)
             elif messagestr.startswith("!help meme") or messagestr.startswith("!help memes"):
-                client.send_message(message.channel, memelist)
+                client.send_message(message.channel, "**Help, meme list:**\n" + memelist)
             elif messagestr.startswith("!help all"):
-                client.send_message(message.channel, helpmsg1 + jokemsg + memelist)
+                client.send_message(message.channel, "**Help:**\n*1. Useful commands*\n" + helpmsg1 + "*2. Fun commands*\n" + jokemsg + "*3. Meme commands*\n" + memelist)
             print(str("{} by {}".format(message.content,message.author)))
             logdis(message)
         # Shut down
         elif messagestr.startswith("ayybot.kill"):
-            role1 = discord.utils.find(lambda role: role.name == 'serveradmins', message.channel.server.roles)
-            if message.author.id == message.channel.server.owner.id or role1:
+#            role1 = discord.utils.find(lambda role: role.name == 'serveradmins', message.channel.server.roles)
+            if message.author.id == message.channel.server.owner.id:
                 client.send_message(message.channel, "**DED**")
                 print(str("{msg} by {usr}, quitting".format(msg=message.content,usr=message.author)))
                 logdis(message)
@@ -140,21 +146,19 @@ def on_message(message):
                 print(str("{msg} by {usr}, but incorrect permissions".format(msg=message.content,usr=message.author)))
         # They see me rollin'
         elif messagestr.startswith('!roll'):
-            deletemsg(message)
             msg5 = message.content.lower()[6:]
             client.send_message(message.channel, "<@" + disauthor.id + "> rolled :" + str(randint(0, int(msg5))))
             print(str("{} by {}".format(message.content,message.author)))
             logdis(message)
         # Dice - 1 - 6
         elif messagestr.startswith("!dice"):
-            deletemsg(message)
             client.send_message(message.channel, "<@" + disauthor.id + "> You got: " + str(randint(1,6)) + "!")
             print(str("{} by {}".format(message.content,message.author)))
             logdis(message)
         # Game
         elif messagestr.startswith("!game"):
             deletemsg(message)
-            msgcut = messagestr[5:]
+            msgcut = messagestr[6:]
             print(msgcut)
             client.send_message(message.channel,"@everyone Does anyone want to play {}? ({})".format(str(msgcut),disauthor))
         # Credits
@@ -165,7 +169,7 @@ def on_message(message):
             logdis(message)
         # Cats are cute
         elif messagestr.startswith("!cats"):
-            client.send_file(message.channel, "images/cattypo.gif")
+            client.send_file(message.channel, "data/images/cattypo.gif")
             print(str("{} by {}".format(message.content,message.author)))
             logdis(message)
         # Lists all members in current server
@@ -174,6 +178,8 @@ def on_message(message):
             count = 0
             members = ''
             for mem in client.get_all_members():
+                if mem in members:
+                    break
                 count += 1
                 mem = str(mem)
                 if count != 1:
@@ -209,9 +215,6 @@ def on_message(message):
             client.send_message(message.channel, "<@" + disauthor.id + "> **Uptime: {upt} **".format(upt=converted))
             print(str("{} by {}".format(message.content,message.author)))
             logdis(message)
-        # Says something
-        elif messagestr.startswith("ayybot say"):
-            msgcut = messagestr
         # Returns mentioned user's avatar, or if no mention present, yours.
         elif messagestr.startswith("!avatar"):
             deletemsg(message)
@@ -228,7 +231,6 @@ def on_message(message):
             logdis(message)
         # Decides between two or more words
         elif messagestr.startswith("!decide"):
-            deletemsg(message)
             msg3 = str(message.content.lower()[7:]).split()
             if randint(1,2) == 1:
                 client.send_message(message.channel, "<@" + disauthor.id + "> I have decided: " + msg3[0])
@@ -275,32 +277,34 @@ def on_message(message):
             print(str("{} by {}".format(message.content,message.author)))
         # For managing roles
         elif messagestr.startswith("!role"):
-            role1 = discord.utils.find(lambda role: role.name == 'serveradmins', message.channel.server.roles)
-            if message.author.id == message.channel.server.owner.id or role1:
+            if message.author.id == message.channel.server.owner.id:
                 for dis in message.mentions:
                     user = discord.utils.find(lambda member: member.name == dis.name, message.channel.server.members)
-                    splitcmd = message.content.split()
-                    if "mod" in splitcmd:
-                        role = discord.utils.find(lambda role: role.name == 'mods', message.channel.server.roles)
-                        if role is not None:
-                            client.replace_roles(user, role)
-                            print('Changed a user to mod.')
-                            logdis(message)
-                            client.send_message(message.channel,'Successfully added ' + user.name + ' to mods.')
-                    elif "removemod" in splitcmd:
-                        role = discord.utils.find(lambda role: role.name == 'mods', message.channel.server.roles)
-                        if role is not None:
-                            client.remove_roles(user,role)
-                            print("Removed permissions.")
-                            logdis(message)
-                            client.send_message(message.channel,'Successfully removed ' + user.name + ' from mods')
-                    elif "member" in splitcmd:
-                        role = discord.utils.find(lambda role: role.name == "members", message.channel.server.roles)
-                        if role is not None:
-                            client.replace_roles(user,role)
-                            print("Changed permissions to member.")
-                            logdis(message)
-                            client.send_message(message.channel,"Changed " + user.name + "'s permissions to member.")
+                splitcmd = str(message.content)
+                if splitcmd.startswith("!role member") or splitcmd.startswith("!role members"):
+                    role = discord.utils.find(lambda role: role.name == "members", message.channel.server.roles)
+                    client.add_roles(user,role)
+                    print("Changed permissions to member.")
+                    logdis(message)
+                    client.send_message(message.channel,"Changed " + user.name + "'s permissions to member.")
+                elif splitcmd.startswith("!role mod") or splitcmd.startswith("!role mods"):
+                    role = discord.utils.find(lambda role: role.name == 'mods', message.channel.server.roles)
+                    client.add_roles(user, role)
+                    print('Changed a user to mod.')
+                    logdis(message)
+                    client.send_message(message.channel,'Successfully added ' + user.name + ' to mods.')
+                elif splitcmd.startswith("!role member") or splitcmd.startswith("!role members"):
+                    role = discord.utils.find(lambda role: role.name == 'mods', message.channel.server.roles)
+                    client.remove_roles(user,role)
+                    print("Removed permissions.")
+                    logdis(message)
+                    client.send_message(message.channel,'Successfully removed ' + user.name + ' from mods')
+                elif splitcmd.startswith("!role admin") or splitcmd.startswith("!role admins"):
+                    role = discord.utils.find(lambda role: role.name == 'admins', message.channel.server.roles)
+                    client.remove_roles(user,role)
+                    print("Changed a user to admin.")
+                    logdis(message)
+                    client.send_message(message.channel,'Successfully added ' + user.name + ' to admins.')
             else:
                 logdis(message)
                 print(str("{msg} by {usr}, but incorrect permissions".format(msg=message.content,usr=message.author)))
@@ -311,25 +315,61 @@ def on_message(message):
             except wikipedia.exceptions.PageError:
                 client.send_message(message.channel,"No definitions for " + messagestr[6:] + " were found")
         elif messagestr.startswith("!urban"):
-            query = messagestr[6:]
+            query = messagestr[7:]
             define = requests.get("http://www.urbandictionary.com/define.php?term={}".format(query))
             purehtml = BeautifulSoup(define.content, "html.parser")
-            client.send_message(message.channel,"*Urban definition for* **" + messagestr[6:] + "** *:*" + purehtml.find("div",attrs={"class":"meaning"}).text)
+            convertedhtml = purehtml.find("div",attrs={"class":"meaning"}).text
+            if convertedhtml == None or str(convertedhtml).startswith("There"):
+                client.send_message(message.channel,"There are no *urban* definitions for {}".format(query))
+            client.send_message(message.channel,"*Urban definition for* **" + messagestr[7:] + "** *:*" + convertedhtml)
+        # Adds custom commands on the fly
+        elif messagestr.startswith("!cmd"):
+            if message.author.id == message.channel.server.owner.id:
+                if messagestr.startswith("!cmd add"):
+                    cutstr = messagestr.split()
+                    processed = str("!{}:{}".format(cutstr[2],cutstr[3]))
+                    route = []
+                    for line in open('data/customcmds.txt', 'r'):
+                        if line == "":
+                            continue
+                        route.append(line.strip())
+                    if processed in route:
+                        return
+                    # now writing
+                    with open("data/customcmds.txt","a") as file:
+                        file.write("\n" + processed)
+                elif messagestr.startswith("!cmd list"):
+                    thatlist = []
+                    for line in open('data/customcmds.txt', 'r'):
+                        if line in ['\n', '\r\n']:
+                            continue
+                        thatlist.append(line.strip().split(':'))
+                    completelist = ""
+                    for this in thatlist:
+                        completelist += this[0] + ", "
+                    client.send_message(message.channel,"<@" + message.author.id + "> *Current custom commands:*\n{}".format(completelist))
+                elif messagestr.startswith("!cmd remove"):
+                        deletelist = messagestr[12:]
+                        with open("data/customcmds.txt","r+") as f:
+                            d = f.readlines()
+                            f.seek(0)
+                            for i in d:
+                                if i.startswith(deletelist) is not True:
+                                    f.write(i)
+                            f.truncate()
+        elif messagestr.startswith("!welcome"):
+            deletemsg(message)
+            for mentions in message.mentions:
+                client.send_message(message.channel,"Welcome to the server, <@" + mentions.id + ">")
     except discord.InvalidArgument:
         print("Error -3 : InvalidArgument")
         client.send_message(message.channel, "Error -3 : InvalidArgument")
-        client.send_message(message.channel, "Restarting, hold on...")
-        os.system("python launchbot.py")
     except discord.ClientException:
         print("Error -1 : ClientException")
-        print("Restarting, hold on...")
         client.send_message(message.channel, "Error -1 : ClientException")
-        os.system("python launchbot.py")
     except discord.HTTPException:
         print("Error -2 : HTTPException")
         client.send_message(message.channel, "Error -2 : HTTPException")
-        client.send_message(message.channel, "Restarting, hold on...")
-        os.system("python launchbot.py")
 
 @client.event
 def on_ready():
@@ -341,15 +381,37 @@ def on_ready():
 def on_member_join(member):
     server = member.server
     client.send_message(server, 'Welcome to the server, {0}'.format(member.mention()))
-    logdis("{one} joined the server".format(one=member))
+    print("{} joined the server".format(member.name))
 
+@client.event
+def on_message_delete(message):
+    messagestr = str(message.content)
+    channel = discord.utils.find(lambda channel: channel.name == "logs", message.channel.server.channels)
+    if message.channel == channel:
+        return
+    if messagestr.startswith("!"):
+        return
+    client.send_message(channel,"```User {} deleted his/her message:\n{}\nin channel: #{}```".format(message.author,messagestr,message.channel.name))
 
-# TIME
-start_time = time.time()
+@client.event
+def on_message_edit(before,after):
+    if before.author.name == "AyyBot":
+        return
+    msgbefore = str(before.content)
+    msgafter = str(after.content)
+    channel = discord.utils.find(lambda channel: channel.name == "logs", before.channel.server.channels)
+    if before.channel == channel:
+        return
+    if msgbefore.startswith("!") or msgafter.startswith("!"):
+        return
+    client.send_message(channel,"```User {} edited his message:\nBefore: {}\nAfter: {}\nin channel: #{}```".format(before.author,msgbefore,msgafter,before.channel.name))
+
 # Write log line ----
 if parser.getboolean("Settings","WriteLogs") == 1:
     with open('log.txt','a') as file:
-        file.write("\n------------------------------\n".format(vs=botvs))
+        file.write("\n------------------------------\n")
 
-loginme()
-runme()
+# For !uptime
+start_time = time.time()
+login()
+client.run()

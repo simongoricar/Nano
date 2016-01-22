@@ -1,12 +1,6 @@
-__name__ = "AyyBot simple commands list"
-
-# Mail and password
-mail = "mail"
-password = "pass"
-
 useful = {
     "!hello": "Hi, <@{usr}>",
-    "!ping": "Pong!"
+    "!ping": "Pong!",
 }
 meme = {
     "!johncena": "O_O https://www.youtube.com/watch?v=58mah_0Y8TU",
@@ -35,7 +29,7 @@ filterwords = [
     "beeyotch","biatch","bitch","chink","crip","cunt","dago","daygo","dego","dick","dyke","fag","fatass","fatso","gash",
     "gimp","golliwog","gook","homo","hooker","kike","kraut","lame","lesbo","negro","nigga","nigger","pussy","retard",
     "skank","slut","spade","spic","spook","tard","tits","titt","tranny","twat","wetback","whore","wop","jebi se",
-    "fuck off"]
+    "fuck off",""]
 
 eightball = [
     "It is certain","It is surely so","Without a doubt","You may rely on it","Most likely","Yes",
@@ -43,7 +37,6 @@ eightball = [
     "My reply is no","My sources say no","Signs point to yes"]
 
 helpmsg1 = ("""\
-**Help, useful commands:**
 !help useful - displays available commands
 !help fun - funny commands
 !hello - says hi
@@ -65,7 +58,6 @@ Made by *DefaltSimon* with the discord.py API
 """)
 
 jokemsg = ("""\
-**Help, fun commands:**
 !gif <name> - returns a gif from Giphy
 !roll <number> - random number
 !dice - like !roll but 0 - 6
@@ -74,7 +66,6 @@ jokemsg = ("""\
 """)
 
 memelist = ("""\
-**Help, meme list:**
 !ayy - ayy lmao
 !ayylmao - even more ayy lmao with lenny face
 !wot - u wot m8

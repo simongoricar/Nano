@@ -1,0 +1,27 @@
+﻿!help useful - displays available commands
+!help fun - funny commands
+!hello - says hi
+!listmembers - displays all members on the server
+!uptime - displays bot uptime
+!getinvite - returns an invite for the server/channel
+!avatar ""@<usr>"" returns a link to mentioned person's avatar or yours if there is no mention
+!user @mention - returns info about the user
+!role mod/removemod/members @mentions - modifies roles
+ayybot.sleep/wake - self explanatory, isn't it?
+ayybot.reboot - restarts the bot
+ayybot.kill - stops the bot
+!credits - author, etc.
+
+!gif <name> - returns a gif from Giphy
+!roll <number> - random number
+!dice - like !roll but 0 - 6
+!decide word word - decides between two words
+!quote - random quote
+
+!ayy - ayy lmao
+!ayylmao - even more ayy lmao with lenny face
+!wot - u wot m8
+!allstar just try it ( ͡° ͜ʖ ͡°)
+!johncena dis too ( ͡° ͜ʖ ͡°)
+!thecakeisalie - want it?
+!cats - cuz they are cute
