@@ -4,7 +4,7 @@ made by DefaltSimon, with [discord.py api](https://github.com/Rapptz/discord.py)
 **1** Features:
 - Spam filter
 - Swearing filter (add words to filterwords.txt)
-- "many" commands ("easy to add your own" - config.py)
+- "many" commands ("easy to add your own" - config.py, also !cmd add <> <> to add commands on the fly)
 - settings (see settings.ini)  
 - logging with timestamp (logs.txt)  
 
@@ -33,7 +33,10 @@ I know that everything is pretty basic, I learn as I do new things for this bot 
 !ping Pong!
 ayybot.reboot - restarts the bot 
 ayybot.kill - shuts down the bot  
-ayybot.sleep/wake - self explanatory
+ayybot.sleep/wake - self explanatory  
+!cmd add <trigger> <response>  
+!cmd list  
+!cmd remove !<name>  
 !credits - author, etc.   
 ```
 **1.3** - Fun Commands:  
@@ -60,7 +63,6 @@ Please dont be offended, you can change it :P
 !youtube
 !join server (maybe)  
 - rate limit
-- a way to !add commands
 - plugins  
 - many other things  
 ```
