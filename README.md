@@ -2,8 +2,7 @@
 made by DefaltSimon, with [discord.py api](https://github.com/Rapptz/discord.py) .
 
 **1** Features:
-- Spam filter
-- Swearing filter (add words to filterwords.txt)
+- Spam and swearing filter
 - "many" commands ("easy to add your own" - config.py, also !cmd add <> <> to add commands on the fly)
 - settings (see settings.ini)  
 - logging with timestamp (logs.txt)  
@@ -25,7 +24,7 @@ I know that everything is pretty basic, I learn as I do new things for this bot 
 !help fun - funny commands  
 !help memes - memes
 !help all - all of the above in one message
-!hello - says hi  
+!hello <user>/empty- says hi  
 !members - displays all members on the server  
 !uptime - displays bot uptime  
 !avatar ""@<usr>"" returns a link to mentioned person's avatar or yours if there is no mention  
@@ -55,6 +54,7 @@ ayybot.sleep/wake - self explanatory
 !johncena dis too ( ͡° ͜ʖ ͡°)  
 !thecakeisalie - want it?  
 !cats - cuz they are cute  
+!kappa - kappa
 ```
 Please dont be offended, you can change it :P  
 **1.4** - TO-DO:
@@ -62,7 +62,6 @@ Please dont be offended, you can change it :P
 !votestart
 !youtube
 !join server (maybe)  
-- rate limit
 - plugins  
 - many other things  
 ```
