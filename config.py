@@ -1,5 +1,4 @@
 useful = {
-    "!hello": "Hi, <@{usr}>",
     "!ping": "Pong!",
 }
 meme = {
@@ -23,6 +22,8 @@ meme = {
 #
 # <whatYouWantToPrint> can include <@{usr}> to mention the author.
 # Use \n anywhere for new line in the same message.
+#
+# OR JUST SIMPLY USE !cmd add <name> <content> while the bot is running
 #
 
 filterwords = [
@@ -49,12 +50,15 @@ helpmsg1 = ("""\
 ayybot.sleep/wake - self explanatory, isn't it?
 ayybot.reboot - restarts the bot
 ayybot.kill - stops the bot
+!cmd add <trigger> <response>
+!cmd list
+!cmd remove !<name>
 !credits - author, etc.
 """)
 
 creditsmsg = ("""\
-**DiscordBot {bot}**
-Made by *DefaltSimon* with the discord.py API
+**DiscordBot {__version__}**
+Made by *DefaltSimon* with discord.py API
 """)
 
 jokemsg = ("""\
@@ -72,6 +76,7 @@ memelist = ("""\
 !allstar just try it ( ͡° ͜ʖ ͡°)
 !johncena dis too ( ͡° ͜ʖ ͡°)
 !thecakeisalie - want it?
+!kappa - kappa
 """)
 
 quotes = [

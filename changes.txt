@@ -1,3 +1,12 @@
+0.17
+- Fixed missing cmds in !help
+- Added some missing logdis(message)
+- Added !hi @<user> for a bot so say to someone
+- Added rate limit for !help, might add global rate limit in the future
+- Added customizable number of !wiki sentences to settings.ini
+- Added "multiple definitions found" for !wiki
+-
+
 0.16
 - Moved some code
 - Some !role "fixes" and changes

@@ -25,3 +25,4 @@ ayybot.kill - stops the bot
 !johncena dis too ( ͡° ͜ʖ ͡°)
 !thecakeisalie - want it?
 !cats - cuz they are cute
+!kappa - kappa

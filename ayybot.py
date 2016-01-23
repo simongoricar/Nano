@@ -8,20 +8,21 @@ from bs4 import BeautifulSoup
 
 __title__ = 'AyyBot'
 __author__ = 'DefaltSimon with discord.py api'
-__version__ = '0.16'
+__version__ = '0.17'
 
 # import logging
 # logging.basicConfig(level=logging.DEBUG)
 
 client = discord.Client()
 clientchannel = discord.Channel()
-botvs = "0.16"
 
-
+# For !uptime
+start_time = time.time()
 
 parser = configparser.ConfigParser()
 parser.read("settings.ini")
 parser.set("Settings","state_sleep","0")
+parser.set("Settings","lasttime",str(int(start_time)))
 with open('settings.ini', 'w') as configfile:
     parser.write(configfile)
 
@@ -90,7 +91,7 @@ def on_message(message):
                     parser.set("Settings","state_sleep","0")
                     with open('settings.ini', 'w') as configfile3:
                         parser.write(configfile3)
-                    client.send_message(message.channel,"Returned from winter sleep.")
+                    client.send_message(message.channel,"**I'm BACK MFS**")
                     print("Returned to normal")
         if state_sleep == 1:
             return
@@ -122,15 +123,26 @@ def on_message(message):
                     continue
                 if messagestr.startswith((disonea.strip().split(':'))[0]):
                     client.send_message(message.channel,disonea.strip().split(':')[1])
+                    logdis(message)
         if messagestr.startswith("!help"):
+            if int(time.time()) - int(parser.get("Settings","lasttime")) < 10:
+                return
+            def dothis():
+                parser.set("Settings","lasttime",str(int(time.time())))
+                with open('settings.ini', 'w') as configfile:
+                    parser.write(configfile)
             if messagestr.startswith("!help useful") or messagestr == "!help":
                 client.send_message(message.channel, "**Help, useful commands:**\n" + helpmsg1)
+                dothis()
             elif messagestr.startswith("!help fun"):
                 client.send_message(message.channel, "**Help, fun commands:**\n" + jokemsg)
+                dothis()
             elif messagestr.startswith("!help meme") or messagestr.startswith("!help memes"):
                 client.send_message(message.channel, "**Help, meme list:**\n" + memelist)
+                dothis()
             elif messagestr.startswith("!help all"):
                 client.send_message(message.channel, "**Help:**\n*1. Useful commands*\n" + helpmsg1 + "*2. Fun commands*\n" + jokemsg + "*3. Meme commands*\n" + memelist)
+                dothis()
             print(str("{} by {}".format(message.content,message.author)))
             logdis(message)
         # Shut down
@@ -144,6 +156,12 @@ def on_message(message):
             else:
                 logdis(message)
                 print(str("{msg} by {usr}, but incorrect permissions".format(msg=message.content,usr=message.author)))
+        elif messagestr.startswith("!hello"):
+            if len(message.mentions) > 0:
+                client.send_message(message.channel,"Hi, <@" + message.author.id + ">")
+            for dis in message.mentions:
+                client.send_message(message.channel,"Hi, <@" + dis.id + ">")
+            logdis(message)
         # They see me rollin'
         elif messagestr.startswith('!roll'):
             msg5 = message.content.lower()[6:]
@@ -164,13 +182,16 @@ def on_message(message):
         # Credits
         elif messagestr.startswith("!credits"):
             deletemsg(message)
-            client.send_message(message.channel, creditsmsg.format(bot=str(botvs)))
+            client.send_message(message.channel, creditsmsg.format(bot=str(__version__)))
             print(str("{} by {}".format(message.content,message.author)))
             logdis(message)
         # Cats are cute
         elif messagestr.startswith("!cats"):
             client.send_file(message.channel, "data/images/cattypo.gif")
             print(str("{} by {}".format(message.content,message.author)))
+            logdis(message)
+        elif messagestr.startswith("!kappa"):
+            client.send_file(message.channel,"data/images/kappa.png")
             logdis(message)
         # Lists all members in current server
         elif messagestr.startswith("!members"):
@@ -308,12 +329,16 @@ def on_message(message):
             else:
                 logdis(message)
                 print(str("{msg} by {usr}, but incorrect permissions".format(msg=message.content,usr=message.author)))
+        # Gets something from Wikipedia
         elif messagestr.startswith("!wiki"):
             try:
-                wikipage = wikipedia.summary(str(messagestr[5:]),sentences=2)
+                wikipage = wikipedia.summary(str(messagestr[6:]),sentences=parser.get("Settings","wikisentences"))
                 client.send_message(message.channel,"*Wikipedia definition for* **" + messagestr[6:] + "** *:*\n" + wikipage)
             except wikipedia.exceptions.PageError:
                 client.send_message(message.channel,"No definitions for " + messagestr[6:] + " were found")
+            except wikipedia.exceptions.DisambiguationError:
+                client.send_message(message.channel,"There are multiple definitions of {}, please be more specific".format(str(messagestr[6:])))
+        # Gets urban dictionary term
         elif messagestr.startswith("!urban"):
             query = messagestr[7:]
             define = requests.get("http://www.urbandictionary.com/define.php?term={}".format(query))
@@ -338,6 +363,7 @@ def on_message(message):
                     # now writing
                     with open("data/customcmds.txt","a") as file:
                         file.write("\n" + processed)
+                    client.send_message(message.channel,"<@" + message.author.id + "> Command {} has been added.".format("!" + cutstr[2]))
                 elif messagestr.startswith("!cmd list"):
                     thatlist = []
                     for line in open('data/customcmds.txt', 'r'):
@@ -347,7 +373,10 @@ def on_message(message):
                     completelist = ""
                     for this in thatlist:
                         completelist += this[0] + ", "
-                    client.send_message(message.channel,"<@" + message.author.id + "> *Current custom commands:*\n{}".format(completelist))
+                    if thatlist is not False:
+                        client.send_message(message.channel,"<@" + message.author.id + "> *Current custom commands:*\n{}".format(completelist))
+                    else:
+                        client.send_message(message.channel,"<@" + message.author.id + "> There are currently no custom commands")
                 elif messagestr.startswith("!cmd remove"):
                         deletelist = messagestr[12:]
                         with open("data/customcmds.txt","r+") as f:
@@ -357,10 +386,10 @@ def on_message(message):
                                 if i.startswith(deletelist) is not True:
                                     f.write(i)
                             f.truncate()
-        elif messagestr.startswith("!welcome"):
-            deletemsg(message)
-            for mentions in message.mentions:
-                client.send_message(message.channel,"Welcome to the server, <@" + mentions.id + ">")
+                        if (deletelist is not False) or deletelist != "" or " ":
+                            client.send_message(message.channel,"<@" + message.author.id + "> Command {} successfully removed")
+                        else:
+                            client.send_message(message.channel,"<@" + message.author.id + "> Failed to delete command, it does not exist")
     except discord.InvalidArgument:
         print("Error -3 : InvalidArgument")
         client.send_message(message.channel, "Error -3 : InvalidArgument")
@@ -387,9 +416,7 @@ def on_member_join(member):
 def on_message_delete(message):
     messagestr = str(message.content)
     channel = discord.utils.find(lambda channel: channel.name == "logs", message.channel.server.channels)
-    if message.channel == channel:
-        return
-    if messagestr.startswith("!"):
+    if message.channel == channel or messagestr.startswith("!"):
         return
     client.send_message(channel,"```User {} deleted his/her message:\n{}\nin channel: #{}```".format(message.author,messagestr,message.channel.name))
 
@@ -406,12 +433,11 @@ def on_message_edit(before,after):
         return
     client.send_message(channel,"```User {} edited his message:\nBefore: {}\nAfter: {}\nin channel: #{}```".format(before.author,msgbefore,msgafter,before.channel.name))
 
-# Write log line ----
+# Write log line ---- (will change in the future)
 if parser.getboolean("Settings","WriteLogs") == 1:
     with open('log.txt','a') as file:
         file.write("\n------------------------------\n")
 
-# For !uptime
-start_time = time.time()
 login()
+# Starts the bot (blocking call)
 client.run()
