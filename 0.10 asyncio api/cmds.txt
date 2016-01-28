@@ -1,14 +1,13 @@
 ﻿!help useful - displays available commands
 !help fun - funny commands
 !hello - says hi
-!listmembers - displays all members on the server
+!members - displays all members on the server
 !uptime - displays bot uptime
 !getinvite - returns an invite for the server/channel
 !avatar ""@<usr>"" returns a link to mentioned person's avatar or yours if there is no mention
 !user @mention - returns info about the user
 !role mod/removemod/members @mentions - modifies roles
 ayybot.sleep/wake - self explanatory, isn't it?
-ayybot.reboot - restarts the bot
 ayybot.kill - stops the bot
 !credits - author, etc.
 

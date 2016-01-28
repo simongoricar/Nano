@@ -1,5 +1,5 @@
 useful = {
-    "!ping": "Pong!",
+    "!ping": "Pong!"
 }
 meme = {
     "!johncena": "O_O https://www.youtube.com/watch?v=58mah_0Y8TU",
@@ -43,12 +43,10 @@ helpmsg1 = ("""\
 !hello - says hi
 !listmembers - displays all members on the server
 !uptime - displays bot uptime
-!getinvite - returns an invite for the server/channel
 !avatar ""@<usr>"" returns a link to mentioned person's avatar or yours if there is no mention
 !user @mention - returns info about the user
 !role mod/removemod/members @mentions - modifies roles
 ayybot.sleep/wake - self explanatory, isn't it?
-ayybot.reboot - restarts the bot
 ayybot.kill - stops the bot
 !cmd add <trigger> <response>
 !cmd list
