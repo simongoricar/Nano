@@ -11,7 +11,7 @@ made by DefaltSimon, with [discord.py api](https://github.com/Rapptz/discord.py)
 I know that everything is pretty basic, I learn as I do new things for this bot :)  
 
 **1.1** Requirements and installing:
-- Python 3.5+ (requred for asyncio)
+- Python 3.5+ (required for asyncio)
 - [discord.py api](https://github.com/Rapptz/discord.py) (install with ```pip install git+https://github.com/Rapptz/discord.py@async```)
 - giphypop - ```pip install giphypop```
 - wordfilter - ```pip install wordfilter```
