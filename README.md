@@ -1,17 +1,18 @@
-# DiscordieBot (python)
+# AyyBot (python)
 made by DefaltSimon, with [discord.py api](https://github.com/Rapptz/discord.py) .
 
 **1** Features:
 - Spam and swearing filter
 - "many" commands ("easy to add your own" - config.py, also !cmd add <> <> to add commands on the fly)
 - settings (see settings.ini)  
-- logging with timestamp (logs.txt)  
+- logging with timestamp (data/logs.txt)  
+- whitelist (data/whitelist.txt)
 
 I know that everything is pretty basic, I learn as I do new things for this bot :)  
 
 **1.1** Requirements and installing:
-- Python 3.3+
-- [discord.py api](https://github.com/Rapptz/discord.py) (install with ```pip install discord.py```)
+- Python 3.5+ (requred for asyncio)
+- [discord.py api](https://github.com/Rapptz/discord.py) (install with ```pip install git+https://github.com/Rapptz/discord.py@async```)
 - giphypop - ```pip install giphypop```
 - wordfilter - ```pip install wordfilter```
 
@@ -24,13 +25,12 @@ I know that everything is pretty basic, I learn as I do new things for this bot 
 !help fun - funny commands  
 !help memes - memes
 !help all - all of the above in one message
-!hello <user>/empty- says hi  
+!hello <user>/empty - says hi  
 !members - displays all members on the server  
 !uptime - displays bot uptime  
-!avatar ""@<usr>"" returns a link to mentioned person's avatar or yours if there is no mention  
+!avatar @<usr> returns a link to mentioned person's avatar or yours if there is no mention  
 !user @mention - returns info about the user  
 !ping Pong!
-ayybot.reboot - restarts the bot 
 ayybot.kill - shuts down the bot  
 ayybot.sleep/wake - self explanatory  
 !cmd add <trigger> <response>  
@@ -56,7 +56,7 @@ ayybot.sleep/wake - self explanatory
 !cats - cuz they are cute  
 !kappa - kappa
 ```
-Please dont be offended, you can change it :P  
+Plz dont be offended, you can change the commands :P  
 **1.4** - TO-DO:
 ```
 !votestart
