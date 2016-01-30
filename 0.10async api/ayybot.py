@@ -1,4 +1,4 @@
-import discord
+import discord,asyncio
 import time,configparser,wordfilter,wikipedia,requests
 from random import randint
 from config import useful,meme,eightball,helpmsg1,creditsmsg,jokemsg,memelist,quotes,filterwords
@@ -8,23 +8,29 @@ from bs4 import BeautifulSoup
 
 __title__ = 'AyyBot'
 __author__ = 'DefaltSimon with discord.py api'
-__version__ = '1.1'
+__version__ = '1.2async'
 
 # import logging
 # logging.basicConfig(level=logging.DEBUG)
 
 client = discord.Client()
 clientchannel = discord.Channel()
-
 # For !uptime
 start_time = time.time()
-
+# Other
 parser = configparser.ConfigParser()
 parser.read("settings.ini")
 parser.set("Settings","state_sleep","0")
 parser.set("Settings","lasttime",str(int(start_time)))
 with open('settings.ini', 'w') as configfile:
     parser.write(configfile)
+
+class SetStatus:
+    def __init__(self):
+        pass
+    async def set(self):
+        game = discord.Game(name=str(parser.get("Settings","status")))
+        loop.create_task(client.change_status(game=game))
 
 def deletemsg(message):
     client.delete_message(message)
@@ -81,9 +87,8 @@ async def on_message(message):
         state_sleep = int(parser.getboolean("Settings","state_sleep"))
         messagestr = str(message.content).lower()
         disauthor = message.author
-        userId = message.author.id
         # check for ayybot.sleep/wake before (possibly) quiting out of on_message
-        if (message.author.id == message.channel.server.owner.id) or checkwhitelist(name=disauthor):
+        if (message.author.id == message.channel.server.owner.id) or checkwhitelist(name=message.author.name):
             if messagestr.startswith("ayybot."):
                 msg6 = str(message.content[7:])
                 if msg6 == "sleep":
@@ -134,7 +139,7 @@ async def on_message(message):
                     logdis(message)
                     return
         if messagestr.startswith("!help"):
-            if int(time.time()) - int(parser.get("Settings","lasttime")) < 10:
+            if (int(time.time()) - int(parser.get("Settings","lasttime")) < 10) and message.author.id != message.channel.server.owner.id:
                 return
             def dothis():
                 parser.set("Settings","lasttime",str(int(time.time())))
@@ -154,9 +159,14 @@ async def on_message(message):
                 dothis()
             print(str("{} by {}".format(message.content,message.author)))
             logdis(message)
+        elif messagestr.startswith("!test"):
+            if (message.author.id == message.channel.server.owner.id) or checkwhitelist(name=message.author.name):
+                await client.send_message(message.channel,"success")
+            else:
+                await client.send_message(message.channel,"you failed")
         # Shut down
         elif messagestr.startswith("ayybot.kill"):
-            if (message.author.id == message.channel.server.owner.id) or checkwhitelist(name=disauthor):
+            if (message.author.id == message.channel.server.owner.id) or checkwhitelist(name=message.author.name):
                 await client.send_message(message.channel, "**DED**")
                 print(str("{msg} by {usr}, quitting".format(msg=message.content,usr=message.author)))
                 logdis(message)
@@ -289,7 +299,9 @@ async def on_message(message):
             print(str("{} by {}".format(message.content,message.author)))
         # For managing roles
         elif messagestr.startswith("!role"):
-            if (message.author.id == message.channel.server.owner.id) or checkwhitelist(name=disauthor):
+            if (message.author.id == message.channel.server.owner.id) or checkwhitelist(name=message.author.name):
+                if len(message.mentions) == 0:
+                    client.send_message(message.channel,"Please mention someone to add permissions")
                 for dis in message.mentions:
                     user = discord.utils.find(lambda member: member.name == dis.name, message.channel.server.members)
                 if messagestr.startswith("!role member") or messagestr.startswith("!role members"):
@@ -297,14 +309,14 @@ async def on_message(message):
                     await client.add_roles(user,role)
                     print("Changed permissions to member.")
                     logdis(message)
-                    await client.send_message(message.channel,"Changed " + user.name + "'s permissions to member.")
+                    await client.send_message(message.channel,"Changed " + user.name + "'s permissions to member")
                 elif messagestr.startswith("!role mod") or messagestr.startswith("!role mods"):
                     print("ok")
                     roles = discord.utils.find(lambda m: m.name == 'mods', message.channel.server.roles)
                     await client.add_roles(user, roles)
                     print('Changed a user to mod.')
                     logdis(message)
-                    await client.send_message(message.channel,'Successfully added ' + user.name + ' to mods.')
+                    await client.send_message(message.channel,'Successfully added ' + user.name + ' to mods')
                 elif messagestr.startswith("!role member") or messagestr.startswith("!role members"):
                     role = discord.utils.find(lambda role: role.name == 'mods', message.channel.server.roles)
                     await client.remove_roles(user,role)
@@ -316,12 +328,12 @@ async def on_message(message):
                     await client.remove_roles(user,role)
                     print("Changed a user to admin.")
                     logdis(message)
-                    await client.send_message(message.channel,'Successfully added ' + user.name + ' to admins.')
+                    await client.send_message(message.channel,'Successfully added ' + user.name + ' to admins')
             else:
                 logdis(message)
                 print(str("{msg} by {usr}, but incorrect permissions".format(msg=message.content,usr=message.author)))
         # Gets something from Wikipedia
-        elif messagestr.startswith("!wiki"):
+        elif messagestr.startswith("!wiki") or messagestr.startswith("!define"):
             try:
                 wikipage = wikipedia.summary(str(messagestr[6:]),sentences=parser.get("Settings","wikisentences"))
                 await client.send_message(message.channel,"*Wikipedia definition for* **" + messagestr[6:] + "** *:*\n" + wikipage)
@@ -342,7 +354,7 @@ async def on_message(message):
             logdis(message)
         # Adds custom commands on the fly
         elif messagestr.startswith("!cmd"):
-            if (message.author.id == message.channel.server.owner.id) or checkwhitelist(name=disauthor):
+            if (message.author.id == message.channel.server.owner.id) or checkwhitelist(name=message.author.name):
                 if messagestr.startswith("!cmd add"):
                     cutstr = (messagestr.replace("\n"," ")).split(maxsplit=3)
                     print(cutstr)
@@ -390,6 +402,7 @@ async def on_message(message):
                         else:
                             await client.send_message(message.channel,"<@" + message.author.id + "> Failed to delete command, it does not exist")
             logdis(message)
+        # Maybe, in the future
 #        elif messagestr.startswith("!whitelist"):
 #            if message.author.id == message.channel.server.owner.id:
 #                if messagestr.startswith("!whitelist add"):
@@ -422,6 +435,12 @@ async def on_ready():
     print("Username:", client.user.name)
     print("ID:", client.user.id)
     print('------------------')
+    # sets status
+    try:
+        status = SetStatus()
+        await status.set()
+    except AssertionError:
+        pass
 
 @client.async_event
 async def on_member_join(member):
@@ -453,10 +472,21 @@ async def on_message_edit(before,after):
     except discord.errors.InvalidArgument:
         print("No 'logs' channel")
 
-# Write log line ---- (will change in the future)
+# Write two newlines
 if parser.getboolean("Settings","WriteLogs") == 1:
     with open('data/log.txt','a') as file:
-        file.write("\n------------------------------\n")
+        file.write("\n\n")
 
-# Starts the bot (blocking call)
-client.run(parser.get("Credentials","username"),parser.get("Credentials","password"))
+# Starts the bot
+@asyncio.coroutine
+def main_task():
+    yield from client.login(parser.get("Credentials","mail"),parser.get("Credentials","password"))
+    yield from client.connect()
+
+loop = asyncio.get_event_loop()
+try:
+    loop.run_until_complete(main_task())
+except:
+    loop.run_until_complete(client.logout())
+finally:
+    loop.close()

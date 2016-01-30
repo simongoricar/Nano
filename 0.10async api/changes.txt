@@ -1,9 +1,17 @@
+1.2async
+- Added status (configurable in settings.ini)
+- Fixed whitelist
+- Changed logging - instead of --- there are two newlines
+- Fixed !credits
+- Added !define which is the same as !wiki
+
 1.1async
 - UPDATED TO ASYNC API (0.10 version)
 - Bugfixes
 - Added whitelist (commands to be added)
 - Fixed logging to 'logs' showing unchanged messages with links
 - Added customization for the name of log channel
+- Fixed !hello
 
 0.17
 - Fixed missing cmds in !help

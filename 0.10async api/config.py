@@ -12,7 +12,6 @@ meme = {
     "!butwait" : "*But wait, there's more!*"
 }
 
-#
 # Adding commands:
 #
 # Just add them with the help of a template:
@@ -41,29 +40,33 @@ helpmsg1 = ("""\
 !help useful - displays available commands
 !help fun - funny commands
 !hello - says hi
-!listmembers - displays all members on the server
+!ping - Pong!
+!members - displays all members on the server
 !uptime - displays bot uptime
 !avatar ""@<usr>"" returns a link to mentioned person's avatar or yours if there is no mention
 !user @mention - returns info about the user
+!wiki or !define <word> - defines a word
+!urban <term> - like !wiki, but from urbandictionary.com
+*Owner/whitelisted users only:*
 !role mod/removemod/members @mentions - modifies roles
-ayybot.sleep/wake - self explanatory, isn't it?
-ayybot.kill - stops the bot
 !cmd add <trigger> <response>
 !cmd list
 !cmd remove !<name>
 !credits - author, etc.
+ayybot.sleep/wake - pauses/resumes the bot
+ayybot.kill - stops the bot
 """)
 
 creditsmsg = ("""\
-**DiscordBot {__version__}**
+**DiscordBot {bot}**
 Made by *DefaltSimon* with discord.py API
 """)
 
 jokemsg = ("""\
 !gif <name> - returns a gif from Giphy
-!roll <number> - random number
-!dice - like !roll but 0 - 6
-!decide word word - decides between two words
+!roll <number> - random number from 0 to <number>
+!dice - just like !roll but 0 - 6
+!decide word word - decides between two or more words
 !quote - returns a random quote
 """)
 

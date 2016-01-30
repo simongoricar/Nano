@@ -1,15 +1,21 @@
 ﻿!help useful - displays available commands
 !help fun - funny commands
 !hello - says hi
+!ping - Pong!
 !members - displays all members on the server
 !uptime - displays bot uptime
-!getinvite - returns an invite for the server/channel
 !avatar ""@<usr>"" returns a link to mentioned person's avatar or yours if there is no mention
 !user @mention - returns info about the user
+!wiki or !define <word> - defines a word
+!urban <term> - like !wiki, but from urbandictionary.com
+*Owner/whitelisted users only:*
 !role mod/removemod/members @mentions - modifies roles
-ayybot.sleep/wake - self explanatory, isn't it?
-ayybot.kill - stops the bot
+!cmd add <trigger> <response>
+!cmd list
+!cmd remove !<name>
 !credits - author, etc.
+ayybot.sleep/wake - pauses/resumes the bot
+ayybot.kill - stops the bot
 
 !gif <name> - returns a gif from Giphy
 !roll <number> - random number
