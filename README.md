@@ -7,6 +7,7 @@ made by DefaltSimon, with [discord.py api](https://github.com/Rapptz/discord.py)
 - settings (see settings.ini)  
 - logging with timestamp (data/logs.txt)  
 - whitelist (data/whitelist.txt)
+- status display (settings.ini)
 
 I know that everything is pretty basic, I learn as I do new things for this bot :)  
 
@@ -23,20 +24,21 @@ I know that everything is pretty basic, I learn as I do new things for this bot 
 ```
 !help useful - displays available commands  
 !help fun - funny commands  
-!help memes - memes
-!help all - all of the above in one message
-!hello <user>/empty - says hi  
+!hello - says hi  
 !members - displays all members on the server  
 !uptime - displays bot uptime  
-!avatar @<usr> returns a link to mentioned person's avatar or yours if there is no mention  
+!avatar ""@<usr>"" returns a link to mentioned person's avatar or yours if there is no mention  
 !user @mention - returns info about the user  
-!ping Pong!
-ayybot.kill - shuts down the bot  
-ayybot.sleep/wake - self explanatory  
+!wiki or !define <word> - defines a word  
+!urban <term> - like !wiki, but from urbandictionary.com  
+*Owner/whitelisted users only:*  
+!role mod/removemod/members @mentions - modifies roles  
 !cmd add <trigger> <response>  
 !cmd list  
 !cmd remove !<name>  
-!credits - author, etc.   
+!credits - author, etc.  
+ayybot.sleep/wake - pauses/resumes the bot  
+ayybot.kill - stops the bot   
 ```
 **1.3** - Fun Commands:  
 ```
