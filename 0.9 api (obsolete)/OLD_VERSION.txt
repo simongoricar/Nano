@@ -1,4 +1,0 @@
-This is an "old" version of AyyBot, running on 0.9 api, which is usable, but 0.10 is preferred for asyncio.
-0.9 is compatible with older versions than 0.10 because of asyncio.
-
-I'm no longer going to "maintain" 0.9 version.
