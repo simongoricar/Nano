@@ -1,7 +1,4 @@
-useful = {
-    "!ping": "Pong!"
-}
-meme = {
+customcmd = {
     "!johncena": "O_O https://www.youtube.com/watch?v=58mah_0Y8TU",
     "!allstar": "https://www.youtube.com/watch?v=L_jWHffIx5E",
     "!ayylmao" : "Ayy lmao! ( ͡° ͜ʖ ͡°) 👾 ",
@@ -9,7 +6,8 @@ meme = {
     "!wot": "<@{usr}> U wot m8?",
     "!synagoge": "DIE ALTEE-SYNAGOGE",
     "!thecakeisalie": "<@{usr}> : Rick roll'd https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    "!butwait" : "*But wait, there's more!*"
+    "!butwait" : "*But wait, there's more!*",
+    "!ping": "Pong!"
 }
 
 # Adding commands:
@@ -25,11 +23,19 @@ meme = {
 # OR JUST SIMPLY USE !cmd add <name> <content> while the bot is running
 #
 
+conversation = {
+    "are you real":"you think?",
+    "die":"nope.avi",
+    "do you want to build a snowman":"Come on lets go and play!",
+    "hi":"hi",
+    "hello":":wave:",
+    "stop":"Nein, nein, nein."}
+
 filterwords = [
     "beeyotch","biatch","bitch","chink","crip","cunt","dago","daygo","dego","dick","dyke","fag","fatass","fatso","gash",
     "gimp","golliwog","gook","homo","hooker","kike","kraut","lame","lesbo","negro","nigga","nigger","pussy","retard",
     "skank","slut","spade","spic","spook","tard","tits","titt","tranny","twat","wetback","whore","wop","jebi se",
-    "fuck off",""]
+    "fuck off","dickhead"]
 
 eightball = [
     "It is certain","It is surely so","Without a doubt","You may rely on it","Most likely","Yes",
@@ -39,6 +45,7 @@ eightball = [
 helpmsg1 = ("""\
 !help useful - displays available commands
 !help fun - funny commands
+!help meme - memes
 !hello - says hi
 !ping - Pong!
 !members - displays all members on the server
@@ -49,6 +56,7 @@ helpmsg1 = ("""\
 !urban <term> - like !wiki, but from urbandictionary.com
 *Owner/whitelisted users only:*
 !role mod/removemod/members @mentions - modifies roles
+!playing <name> - changes status
 !cmd add <trigger> <response>
 !cmd list
 !cmd remove !<name>
@@ -58,7 +66,7 @@ ayybot.kill - stops the bot
 """)
 
 creditsmsg = ("""\
-**DiscordBot {bot}**
+**AyyBot {bot}**
 Made by *DefaltSimon* with discord.py API
 """)
 

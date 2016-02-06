@@ -1,5 +1,6 @@
 ﻿!help useful - displays available commands
 !help fun - funny commands
+!help meme - memes
 !hello - says hi
 !ping - Pong!
 !members - displays all members on the server
@@ -10,6 +11,7 @@
 !urban <term> - like !wiki, but from urbandictionary.com
 *Owner/whitelisted users only:*
 !role mod/removemod/members @mentions - modifies roles
+!playing <name> - changes status
 !cmd add <trigger> <response>
 !cmd list
 !cmd remove !<name>
