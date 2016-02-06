@@ -12,7 +12,7 @@ made by DefaltSimon, with [discord.py api](https://github.com/Rapptz/discord.py)
 I know that everything is pretty basic, I learn as I do new things for this bot :)  
 
 **1.1** Requirements and installing:
-- Python 3.5+ (required for asyncio)
+- Python 3.5+ (required for async def)
 - [discord.py api](https://github.com/Rapptz/discord.py) (install with ```pip install git+https://github.com/Rapptz/discord.py@async```)
 - giphypop - ```pip install giphypop```
 - wordfilter - ```pip install wordfilter```
@@ -58,13 +58,10 @@ ayybot.kill - stops the bot
 !cats - cuz they are cute  
 !kappa - kappa
 ```
-Plz dont be offended, you can change the commands :P  
 **1.4** - TO-DO:
 ```
-!votestart
 !youtube
 !join server (maybe)  
 - plugins  
-- many other things  
 ```
 Enjoy!
