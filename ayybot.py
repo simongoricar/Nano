@@ -7,7 +7,7 @@ from giphypop import translate
 from bs4 import BeautifulSoup
 
 __author__ = 'DefaltSimon'
-__version__ = '1.3 n. 20'
+__version__ = '1.4 n. 21'
 
 class SetStatus:
     def __init__(self):
@@ -71,7 +71,7 @@ class Vote:
         self.votesgot4 = 0
         self.votesgot5 = 0
     def getcontent(self):
-        if self.votecontent == []:
+        if not self.votecontent:
             return None
         else:
             return self.votecontent
@@ -202,7 +202,7 @@ class AyyBot:
             for disonea in disone.readlines():
                 if disonea.strip() == "":
                     continue
-                if messagestr.startswith((disonea.strip().split(':'))[0]):
+                if messagestr.startswith((disonea.strip().split(':',maxsplit=2))[0]):
                     await client.send_message(message.channel,disonea.strip().split(':')[1])
                     logdis(message,type="message")
                     return
@@ -381,51 +381,45 @@ class AyyBot:
         elif messagestr.startswith(prefix+"role"):
             if (message.author.id == ownerid) or checkwhitelist(name=message.author.name):
                 if len(message.mentions) == 0:
-                    client.send_message(message.channel,"Please mention someone to add permissions")
+                    await client.send_message(message.channel,"Please mention someone to add permissions")
+                elif len(message.mentions) >= 2:
+                    await client.send_message(message.channel, "Please mention only one person at a time")
                 for dis in message.mentions:
                     user = discord.utils.find(lambda member: member.name == dis.name, message.channel.server.members)
-                if messagestr.startswith("role member") or messagestr.startswith("!role members"):
-                    role = discord.utils.find(lambda role: role.name == "members", message.channel.server.roles)
-                    await client.add_roles(user,role)
-                    print("Changed permissions to member.")
-                    logdis(message,type="message")
-                    await client.send_message(message.channel,"Changed " + user.name + "'s permissions to member")
-                elif messagestr.startswith(prefix+"role mod") or messagestr.startswith("!role mods"):
-                    print("ok")
-                    roles = discord.utils.find(lambda m: m.name == 'mods', message.channel.server.roles)
-                    await client.add_roles(user, roles)
-                    print("Changed a user to mod.")
-                    logdis(message,type="message")
-                    await client.send_message(message.channel,'Successfully added ' + user.name + ' to mods')
-                elif messagestr.startswith(prefix+"role member") or messagestr.startswith("!role members"):
-                    role = discord.utils.find(lambda role: role.name == 'mods', message.channel.server.roles)
-                    await client.remove_roles(user,role)
-                    print("Removed permissions.")
-                    logdis(message,type="message")
-                    await client.send_message(message.channel,'Successfully removed ' + user.name + ' from mods')
-                elif messagestr.startswith(prefix+"role admin") or messagestr.startswith("!role admins"):
-                    role = discord.utils.find(lambda role: role.name == 'admins', message.channel.server.roles)
-                    await client.remove_roles(user,role)
-                    print("Changed a user to admin.")
-                    logdis(message,type="message")
-                    await client.send_message(message.channel,'Successfully added ' + user.name + ' to admins')
+                roles = []
+                for role in message.server.roles:
+                    roles.append(role.name)
+                for this1 in roles:
+                    if messagestr.startswith(prefix+"role " +  "add " + this1):
+                        role = discord.utils.find(lambda role: role.name == this1, message.channel.server.roles)
+                        await client.add_roles(user,role)
+                        await client.send_message(message.channel,'Successfully added ' + user.name + " to " + this1)
+                    elif messagestr.startswith(prefix+"role " +  "remove " + this1):
+                        role = discord.utils.find(lambda role: role.name == this1, message.channel.server.roles)
+                        await client.remove_roles(user,role)
+                        await client.send_message(message.channel,'Successfully removed ' + user.name + " from " + this1)
+                    elif messagestr.startswith(prefix+"role " +  "replacewith " + this1):
+                        role = discord.utils.find(lambda role: role.name == this1, message.channel.server.roles)
+                        await client.replace_roles(user,role)
+                        await client.send_message(message.channel,'Successfully replaced all ' + user.name + "'s roles : " + this1)
             else:
                 logdis(message,type="message")
                 print(str("{msg} by {usr}, but incorrect permissions".format(msg=message.content,usr=message.author)))
         # Gets something from Wikipedia
         elif messagestr.startswith(prefix+"wiki") or messagestr.startswith(prefix+"define"):
+            cut = str(messagestr[6:])
             try:
-                wikipage = wikipedia.summary(str(messagestr[6:]),sentences=parser.get("Settings","wikisentences"))
-                await client.send_message(message.channel,"*Wikipedia definition for* **" + messagestr[6:] + "** *:*\n" + wikipage)
+                wikipage = wikipedia.summary(cut,sentences=parser.get("Settings","wikisentences"))
+                await client.send_message(message.channel,"*Wikipedia definition for* **" + cut + "** *:*\n" + wikipage)
             except wikipedia.exceptions.PageError:
-                await client.send_message(message.channel,"No definitions for " + messagestr[6:] + " were found")
+                await client.send_message(message.channel,"No definitions for " + cut + " were found")
             except wikipedia.exceptions.DisambiguationError:
-                await client.send_message(message.channel,"There are multiple definitions of {}, please be more specific".format(str(messagestr[6:])))
+                await client.send_message(message.channel,"There are multiple definitions of {}, please be more specific".format(cut))
             logdis(message,type="message")
             print(str("{} by {}".format(message.content,message.author)))
         # Gets urban dictionary term
         elif messagestr.startswith(prefix+"urban"):
-            query = messagestr[7:]
+            query = str(messagestr[7:])
             define = requests.get("http://www.urbandictionary.com/define.php?term={}".format(query))
             purehtml = BeautifulSoup(define.content, "html.parser")
             convertedhtml = purehtml.find("div",attrs={"class":"meaning"}).text
@@ -487,7 +481,7 @@ class AyyBot:
             print(str("{} by {}".format(message.content,message.author)))
         elif messagestr.startswith(prefix+"playing"):
             if (message.author.id == ownerid) or checkwhitelist(name=message.author.name):
-                cutstr = messagestr[9:]
+                cutstr = message.content[9:]
                 try:
                     status = SetStatus()
                     await status.set(cutstr)

@@ -1,3 +1,11 @@
+1.4
+- Fixes
+- Changed !role command:
+    !role add <role name> @mention - adds roles
+    !role remove <role name> @mention - removes roles
+    !role replacewith <role name> @mention - replaces all roles with <role name>
+  Now supports all roles present on the server.
+
 1.3
 - Fixes and "optimizations"
 - Added !playing <game> - to change "playing" status

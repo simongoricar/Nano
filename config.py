@@ -55,7 +55,7 @@ helpmsg1 = ("""\
 !wiki or !define <word> - defines a word
 !urban <term> - like !wiki, but from urbandictionary.com
 *Owner/whitelisted users only:*
-!role mod/removemod/members @mentions - modifies roles
+!role add/remove/replacewith <role name> @mentions - modifies roles
 !playing <name> - changes status
 !cmd add <trigger> <response>
 !cmd list

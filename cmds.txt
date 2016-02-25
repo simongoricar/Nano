@@ -5,12 +5,12 @@
 !ping - Pong!
 !members - displays all members on the server
 !uptime - displays bot uptime
-!avatar ""@<usr>"" returns a link to mentioned person's avatar or yours if there is no mention
+!avatar @mention returns a link to mentioned person's avatar or yours if there is no mention
 !user @mention - returns info about the user
 !wiki or !define <word> - defines a word
 !urban <term> - like !wiki, but from urbandictionary.com
 *Owner/whitelisted users only:*
-!role mod/removemod/members @mentions - modifies roles
+!role add/remove/replacewith <role name> @mentions - modifies roles
 !playing <name> - changes status
 !cmd add <trigger> <response>
 !cmd list
