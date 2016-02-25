@@ -7,9 +7,7 @@ made by DefaltSimon, with [discord.py api](https://github.com/Rapptz/discord.py)
 - settings (see settings.ini)  
 - logging with timestamp (data/logs.txt)  
 - whitelist (data/whitelist.txt)
-- status display (settings.ini)
-
-I know that everything is pretty basic, I learn as I do new things for this bot :)  
+- status display (settings.ini and !playing command)
 
 **1.1** Requirements and installing:
 - Python 3.5+ (required for async def)
@@ -23,20 +21,21 @@ I know that everything is pretty basic, I learn as I do new things for this bot 
 **1.2** - Useful Commands:  
 ```
 !help useful - displays available commands  
-!help fun - funny commands  
+!help fun - funny commands 
+!help meme
 !hello - says hi  
 !members - displays all members on the server  
 !uptime - displays bot uptime  
-!avatar ""@<usr>"" returns a link to mentioned person's avatar or yours if there is no mention  
+!avatar @mention returns a link to mentioned person's avatar or yours if there is no mention  
 !user @mention - returns info about the user  
 !wiki or !define <word> - defines a word  
 !urban <term> - like !wiki, but from urbandictionary.com  
 *Owner/whitelisted users only:*  
-!role mod/removemod/members @mentions - modifies roles  
-!cmd add <trigger> <response>  
+!role add/remove/replacewith @mention - modifies roles  
+!cmd add <trigger> <response>  - adds a command (into data/customcommands.txt)
 !cmd list  
 !cmd remove !<name>  
-!credits - author, etc.  
+!credits - version, author, ...
 ayybot.sleep/wake - pauses/resumes the bot  
 ayybot.kill - stops the bot   
 ```
@@ -44,7 +43,7 @@ ayybot.kill - stops the bot
 ```
 !gif <name> - returns a gif from Giphy  
 !roll <number> - random number  
-!dice - 1 - 6 random  
+!dice - 1 -> 6 random number  
 !decide word word - decides between two words  
 ```
 **1.4** - Meme Commands:
@@ -61,7 +60,7 @@ ayybot.kill - stops the bot
 **1.4** - TO-DO:
 ```
 !youtube
-!join server (maybe)  
-- plugins  
+!join server
+- plugins  (?)
 ```
 Enjoy!
