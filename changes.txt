@@ -1,3 +1,12 @@
+1.5
+- Fixed no join message, can now also be disabled in settings.ini
+- Fixed !cmd list not working
+- You can now shut down the bot, even if in sleep mode
+- Optimized !role command
+- Added ayybot.config.reload, which reloads settings.ini
+- Added ayybot.whitelist.reload, which reloads the whitelist
+- Added comments in settings.ini for better understanding
+
 1.4
 - Fixes
 - Changed !role command:

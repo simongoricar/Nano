@@ -1,5 +1,5 @@
 import discord,asyncio
-import time,configparser,wordfilter,wikipedia,requests
+import time,configparser,wikipedia,requests
 from random import randint
 from config import customcmd,eightball,helpmsg1,creditsmsg,jokemsg,memelist,quotes,filterwords,conversation
 from datetime import timedelta, datetime
@@ -7,7 +7,7 @@ from giphypop import translate
 from bs4 import BeautifulSoup
 
 __author__ = 'DefaltSimon'
-__version__ = '1.4 n. 21'
+__version__ = '1.5'
 
 class SetStatus:
     def __init__(self):
@@ -39,9 +39,8 @@ class TimeUtil:
         return int(self.lasttime)
     def setlast(self):
         self.lasttime = time.time()
-        pass
-    def gettime(self,time_elapsed):
-        sec = timedelta(seconds=time_elapsed)
+    def gettime(self,timeelapsed):
+        sec = timedelta(seconds=timeelapsed)
         d = datetime(1, 1, 1) + sec
         this = "%d:%d:%d:%d" % (d.day - 1, d.hour, d.minute, d.second)
         return this
@@ -55,6 +54,7 @@ class Vote:
         self.votesgot3 = 0
         self.votesgot4 = 0
         self.votesgot5 = 0
+        self.initiator = None
     def create(self,author,vote):
         self.hm = 0
         for this in str(vote).split('""'):
@@ -104,13 +104,15 @@ parser.read("settings.ini")
 ownerid = str(parser.get("Settings","ownerid"))
 prefix = str(parser.get("Settings","prefix"))
 
+
+
 # Write two newlines to data/log.txt
-if parser.getboolean("Settings","WriteLogs") == 1:
+if bool(parser.getboolean("Settings","WriteLogs")) is True:
     with open('data/log.txt','a') as file:
         file.write("\n-----------------------\n")
 
 def logdis(message,type):
-    if parser.getboolean("Settings", "WriteLogs") == 1:
+    if bool(parser.getboolean("Settings","WriteLogs")) is True:
         if type == "message":
             with open('data/log.txt',"a") as file2:
                 one = str(time.strftime("%Y-%m-%d %H:%M:%S", ))
@@ -123,13 +125,13 @@ def logdis(message,type):
                 file2.write(str2)
 
 def checkwords(message):
-    wordfilter.add_words(filterwords)
     cmsg = str(message.content).lower()
-    if wordfilter.blacklisted(cmsg) and message.author != "AyyBot":
-        return True
+    for word in cmsg:
+        if word in filterwords and message.author != "AyyBot":
+            return True
 
 
-# Temporary, its shit
+# Temporary, its sh*t
 def checkspam(message):
     if message.author.name == "AyyBot":
         return
@@ -152,17 +154,43 @@ def checkwhitelist(name):
         lines = list(line for line in lines if line)
     return bool(name in lines)
 
+def getwhitelist():
+    with open("data/whitelist.txt","r") as file:
+        lines = (line.rstrip() for line in file)
+        lines = list(line for line in lines if line)
+    return lines
 
-# ALL commands
+# Commands
 class AyyBot:
     def __init__(self):
-        pass
+        self.whitelist = getwhitelist()
     async def on_message(self,message):
         if message.author.id == client.user.id:
             return
         messagestr = str(message.content).lower()
+        # Shut down, even if in sleep mode
+        if messagestr.startswith("ayybot.kill"):
+            if (message.author.id == ownerid) or (message.author.name in self.whitelist):
+                await client.send_message(message.channel, "**DED**")
+                print(str("{msg} by {usr}, quitting".format(msg=message.content,usr=message.author)))
+                logdis(message,type="message")
+                exit()
+            else:
+                logdis(message,type="message")
+                print(str("{msg} by {usr}, but incorrect permissions".format(msg=message.content,usr=message.author)))
+        # Reloads settings.ini
+        elif messagestr.startswith("ayybot.config.reload"):
+            if (message.author.id == ownerid) or (message.author.name in self.whitelist):
+                parser.read("settings.ini")
+                logdis("Successfully reloaded configuration.",type="write")
+                await client.send_message(message.channel, "Successfully reloaded config.")
+        # Reloads whitelist
+        elif messagestr.startswith("ayybot.whitelist.reload"):
+            self.whitelist = getwhitelist()
+            logdis("Successfully reloaded whitelist.",type="write")
+            await client.send_message(message.channel, "Successfully reloaded whitelist.")
         # check for ayybot.sleep/wake before (possibly) quiting out of on_message
-        if (message.author.id == ownerid) or checkwhitelist(name=message.author.name):
+        elif (message.author.id == ownerid) or (message.author.name in self.whitelist):
             if messagestr.startswith("ayybot."):
                 msg6 = str(message.content[7:])
                 if msg6 == "sleep":
@@ -172,13 +200,13 @@ class AyyBot:
                     BotSleep.sleep()
                     await client.send_message(message.channel,"Now sleeping...")
                     print("Saved sleeping")
-                elif msg6 == "wake":
+                elif msg6 == "wake" and BotSleep.getstate() is not False:
                     BotSleep.wake()
                     await client.send_message(message.channel,"**I'm BACK MFS**")
                     print("Returned to normal")
         if BotSleep.getstate() is True:
             return
-        # Spam and swearing check / with settings.ini
+        # Spam and swearing check
         if parser.getboolean("Settings", "filterwords") == 1:
             if (checkwords(message) is True) and message.channel.name != str(parser.get("Settings","logchannel")):
                 await client.send_message(message.channel, "<@" + message.author.id + ">, watch it!".format(usr=message.author))
@@ -207,7 +235,7 @@ class AyyBot:
                     logdis(message,type="message")
                     return
         for dis in message.mentions:
-            if dis.name == "AyyBot":
+            if dis.id == client.user.id:
                 cutmsg = message.content[(len(client.user.id) + 4):]
                 # 1.
                 for thing in conversation:
@@ -236,7 +264,7 @@ class AyyBot:
             elif messagestr.startswith(prefix+"help fun"):
                 await client.send_message(message.channel, "**Help, fun commands:**\n" + jokemsg.replace("!",prefix))
                 Timeutil.setlast()
-            elif messagestr.startswith(prefix+"help meme") or messagestr.startswith("!help memes"):
+            elif messagestr.startswith(prefix+"help meme") or messagestr.startswith(prefix+"help memes"):
                 await client.send_message(message.channel, "**Help, meme list:**\n" + memelist.replace("!",prefix))
                 Timeutil.setlast()
             elif messagestr.startswith(prefix+"help all"):
@@ -244,16 +272,6 @@ class AyyBot:
                 Timeutil.setlast()
             print(str("{} by {}".format(message.content,message.author)))
             logdis(message,type="message")
-        # Shut down
-        elif messagestr.startswith("ayybot.kill"):
-            if (message.author.id == ownerid) or checkwhitelist(name=message.author.name):
-                await client.send_message(message.channel, "**DED**")
-                print(str("{msg} by {usr}, quitting".format(msg=message.content,usr=message.author)))
-                logdis(message,type="message")
-                exit(-420)
-            else:
-                logdis(message,type="message")
-                print(str("{msg} by {usr}, but incorrect permissions".format(msg=message.content,usr=message.author)))
         elif messagestr.startswith(prefix+"hello"):
             if len(message.mentions) == 0:
                 await client.send_message(message.channel,"Hi, <@" + message.author.id + ">")
@@ -263,11 +281,11 @@ class AyyBot:
             logdis(message,type="message")
         # They see me rollin'
         elif messagestr.startswith(prefix+"roll"):
-            msg5 = message.content.lower()[6:]
+            msg5 = message.content.lower()[len(prefix)+len("roll")+1:]
             await client.send_message(message.channel, "<@" + message.author.id + "> rolled :" + str(randint(0, int(msg5))))
             print(str("{} by {}".format(message.content,message.author)))
             logdis(message,type="message")
-        # Dice - 1 - 6
+        # Dice 1 - 6
         elif messagestr.startswith(prefix+"dice"):
             await client.send_message(message.channel, "<@" + message.author.id + "> You got: " + str(randint(1,6)) + "!")
             print(str("{} by {}".format(message.content,message.author)))
@@ -275,9 +293,9 @@ class AyyBot:
         # Game
         elif messagestr.startswith(prefix+"game"):
             client.delete_message(message)
-            msgcut = message.content[6:]
+            msgcut = message.content[len(prefix)+len("game")+1:]
             print(msgcut)
-            await client.send_message(message.channel,"@everyone Does anyone want to play {}? ({})".format(str(msgcut),message.author))
+            await client.send_message(message.channel,"@everyone Does anyone want to play {}? ({})".format(msgcut,message.author))
         # Credits
         elif messagestr.startswith(prefix+"credits"):
             client.delete_message(message)
@@ -294,7 +312,8 @@ class AyyBot:
             logdis(message,type="message")
         # Lists all members in current server
         elif messagestr.startswith(prefix+"members"):
-            await client.send_message(message.channel, "<@" + message.author.id + "> **Current members:**")
+            await client.send_typing(message.channel)
+            await client.send_message(message.channel, "<@" + message.author.id + "> **Members:**")
             count = 0
             members = ''
             for mem in message.channel.server.members:
@@ -311,9 +330,9 @@ class AyyBot:
         # Uptime
         elif messagestr.startswith(prefix+"uptime"):
             client.delete_message(message)
-            time_elapsed = time.time() - Timeutil.getstartup()
-            converted = Timeutil.gettime(time_elapsed)
-            await client.send_message(message.channel, "Uptime: {} ".format(converted))
+            timeelapsed = time.time() - Timeutil.getstartup()
+            converted = Timeutil.gettime(timeelapsed).split(":")
+            await client.send_message(message.channel, "Uptime: {} days, {} hours, {} minutes and {} seconds ".format(converted[0],converted[1],converted[2],converted[3]))
             print(str("{} by {}".format(message.content,message.author)))
             logdis(message,type="message")
         # Returns mentioned user's avatar, or if no mention present, yours.
@@ -333,7 +352,7 @@ class AyyBot:
             logdis(message,type="message")
         # Decides between two or more words
         elif messagestr.startswith(prefix+"decide"):
-            msg3 = str(message.content.lower()[7:]).split()
+            msg3 = str(message.content.lower()[len(prefix)+len("decide")+1:]).split()
             if randint(1,2) == 1:
                 await client.send_message(message.channel, "<@" + message.author.id + "> " + "\nI have decided: " + msg3[0])
             else:
@@ -342,21 +361,23 @@ class AyyBot:
             print(str("{} by {}".format(message.content,message.author)))
         # Answers your question - 8ball style
         elif messagestr.startswith(prefix+"8ball"):
+            await client.send_typing(message.channel)
             client.delete_message(message)
-            msg6 = str(message.content[6:])
+            msg6 = str(message.content[len(prefix)+len("8ball")+1:])
             answer = eightball[randint(1,len(eightball))]
             await client.send_message(message.channel,"<@" + message.author.id + "> asked : " + msg6 + "\n**" + answer + "**")
             logdis(message,type="message")
             print(str("{} by {}".format(message.content,message.author)))
         # Returns a gif matching the name from Giphy (!gif <name>)
         elif messagestr.startswith(prefix+"gif"):
-            msg2 = str(message.content.lower()[4:])
+            msg2 = str(message.content.lower()[len(prefix)+len("gif")+1:])
             img = str(translate(msg2))
             await client.send_message(message.channel, "<@" + message.author.id + "> " + img)
             logdis(message,type="message")
             print(str("{} by {}".format(message.content,message.author)))
         # Returns user info (name,id,discriminator and avatar url)
         elif messagestr.startswith(prefix+"user"):
+            await client.send_typing(message.channel)
             client.delete_message(message)
             if len(message.mentions) > 0:
                 for user in message.mentions:
@@ -372,42 +393,44 @@ class AyyBot:
             print(str("{} by {}".format(message.content,message.author)))
         # Returns a random quote
         elif messagestr.startswith(prefix+"quote"):
-            client.delete_message(message)
+            await client.delete_message(message)
             answer = quotes[randint(1,len(quotes))]
             await client.send_message(message.channel,answer)
             logdis(message,type="message")
             print(str("{} by {}".format(message.content,message.author)))
         # For managing roles
         elif messagestr.startswith(prefix+"role"):
-            if (message.author.id == ownerid) or checkwhitelist(name=message.author.name):
+            if (message.author.id == ownerid) or (message.author.name in self.whitelist):
                 if len(message.mentions) == 0:
                     await client.send_message(message.channel,"Please mention someone to add permissions")
                 elif len(message.mentions) >= 2:
                     await client.send_message(message.channel, "Please mention only one person at a time")
-                for dis in message.mentions:
-                    user = discord.utils.find(lambda member: member.name == dis.name, message.channel.server.members)
-                roles = []
-                for role in message.server.roles:
-                    roles.append(role.name)
-                for this1 in roles:
-                    if messagestr.startswith(prefix+"role " +  "add " + this1):
-                        role = discord.utils.find(lambda role: role.name == this1, message.channel.server.roles)
-                        await client.add_roles(user,role)
-                        await client.send_message(message.channel,'Successfully added ' + user.name + " to " + this1)
-                    elif messagestr.startswith(prefix+"role " +  "remove " + this1):
-                        role = discord.utils.find(lambda role: role.name == this1, message.channel.server.roles)
-                        await client.remove_roles(user,role)
-                        await client.send_message(message.channel,'Successfully removed ' + user.name + " from " + this1)
-                    elif messagestr.startswith(prefix+"role " +  "replacewith " + this1):
-                        role = discord.utils.find(lambda role: role.name == this1, message.channel.server.roles)
-                        await client.replace_roles(user,role)
-                        await client.send_message(message.channel,'Successfully replaced all ' + user.name + "'s roles : " + this1)
+                user = discord.utils.find(lambda member: member.name == dis.name, message.mentions)
+                if messagestr.startswith(prefix+"role " +  "add "):
+                    gotrole = str(message.content[len(prefix + "role " + "add "):]).split("<")[0].strip()
+                    role = discord.utils.find(lambda role: role.name == gotrole, message.channel.server.roles)
+                    await client.add_roles(user,role)
+                    await client.send_message(message.channel,'Successfully added *' + user.name + "* to " + gotrole)
+                elif messagestr.startswith(prefix+"role " +  "remove "):
+                    gotrole = str(message.content[len(prefix + "role " + "remove "):]).split("<")[0].strip()
+                    role = discord.utils.find(lambda role: role.name == gotrole, message.channel.server.roles)
+                    await client.remove_roles(user,role)
+                    await client.send_message(message.channel,'Successfully removed *' + user.name + "* from " + gotrole)
+                elif messagestr.startswith(prefix+"role " +  "replacewith "):
+                    gotrole = str(message.content[len(prefix + "role " + "replaceall "):]).split("<")[0].strip()
+                    role = discord.utils.find(lambda role: role.name == gotrole, message.channel.server.roles)
+                    await client.replace_roles(user,role)
+                    await client.send_message(message.channel,'Successfully replaced all ' + user.name + "'s roles : " + gotrole)
+                logdis(message,type="message")
             else:
                 logdis(message,type="message")
                 print(str("{msg} by {usr}, but incorrect permissions".format(msg=message.content,usr=message.author)))
         # Gets something from Wikipedia
         elif messagestr.startswith(prefix+"wiki") or messagestr.startswith(prefix+"define"):
-            cut = str(messagestr[6:])
+            if messagestr.startswith(prefix+"wiki"):
+                cut = str(messagestr[len(prefix)+len("wiki")])
+            elif messagestr.startswith(prefix+"define"):
+                cut = str(messagestr[len(prefix)+len("define")])
             try:
                 wikipage = wikipedia.summary(cut,sentences=parser.get("Settings","wikisentences"))
                 await client.send_message(message.channel,"*Wikipedia definition for* **" + cut + "** *:*\n" + wikipage)
@@ -419,7 +442,8 @@ class AyyBot:
             print(str("{} by {}".format(message.content,message.author)))
         # Gets urban dictionary term
         elif messagestr.startswith(prefix+"urban"):
-            query = str(messagestr[7:])
+            await client.send_typing(message.channel)
+            query = str(messagestr[len(prefix)+len("urban")+1:])
             define = requests.get("http://www.urbandictionary.com/define.php?term={}".format(query))
             purehtml = BeautifulSoup(define.content, "html.parser")
             convertedhtml = purehtml.find("div",attrs={"class":"meaning"}).text
@@ -428,10 +452,31 @@ class AyyBot:
             await client.send_message(message.channel,"*Urban definition for* **" + messagestr[7:] + "** *:*" + convertedhtml)
             logdis(message,type="message")
             print(str("{} by {}".format(message.content,message.author)))
-        # Adds custom commands on the fly
+        # User kick
+        elif messagestr.startswith(prefix+"kick"):
+            if ((message.author.id == ownerid) or (message.author.name in self.whitelist)) and len(message.mentions) != 0:
+                for mention in message.mentions:
+                    user = discord.utils.find(lambda  usr: usr.name == mention.name, message.channel.server.members)
+                    await client.kick(user)
+                    await client.send_message(message.channel,"User " + user.name + " has been kicked.")
+        # User ban
+        elif messagestr.startswith(prefix+"ban"):
+            if ((message.author.id == ownerid) or (message.author.name in self.whitelist)) and len(message.mentions) != 0:
+                for mention in message.mentions:
+                    user = discord.utils.find(lambda  usr: usr.name == mention.name, message.channel.server.members)
+                    await client.ban(user)
+                    await client.send_message(message.channel,"User " + user.name + " has been banned from this server.")
+        # User unban
+        elif messagestr.startswith(prefix+"unban"):
+            if ((message.author.id == ownerid) or (message.author.name in self.whitelist)) and len(message.mentions) != 0:
+                for mention in message.mentions:
+                    user = discord.utils.find(lambda  usr: usr.name == mention.name, message.channel.server.members)
+                    await client.unban(user)
+                    await client.send_message(message.channel,"User " + user.name + " has been unbanned.")
+        # Adds custom commands
         elif messagestr.startswith(prefix+"cmd"):
-            if (message.author.id == ownerid) or checkwhitelist(name=message.author.name):
-                if messagestr.startswith("cmd add"):
+            if (message.author.id == ownerid) or (message.author.name in self.whitelist):
+                if messagestr.startswith(prefix+"cmd add"):
                     cutstr = (messagestr.replace("\n"," ")).split(maxsplit=3)
                     print(cutstr)
                     try:
@@ -451,7 +496,7 @@ class AyyBot:
                     with open("data/customcmds.txt","a") as file:
                         file.write("\n" + processed)
                     await client.send_message(message.channel,"<@" + message.author.id + "> Command {} has been added.".format("!" + cutstr[2]))
-                elif messagestr.startswith(prefix+"!cmd list"):
+                elif messagestr.startswith(prefix+"cmd list"):
                     thatlist = []
                     for line in open('data/customcmds.txt', 'r'):
                         if line in ['\n', '\r\n']:
@@ -460,8 +505,9 @@ class AyyBot:
                     completelist = ""
                     for this in thatlist:
                         completelist += this[0] + ", "
+                    completelist = completelist[:-2]
                     if thatlist is not False:
-                        await client.send_message(message.channel,"<@" + message.author.id + "> *Current custom commands:*\n{}".format(completelist))
+                        await client.send_message(message.channel,"<@" + message.author.id + "> *Custom commands:*\n{}".format(completelist))
                     else:
                         await client.send_message(message.channel,"<@" + message.author.id + "> There are currently no custom commands")
                 elif messagestr.startswith(prefix+"cmd remove"):
@@ -479,9 +525,10 @@ class AyyBot:
                             await client.send_message(message.channel,"<@" + message.author.id + "> Failed to delete command, it does not exist")
             logdis(message,type="message")
             print(str("{} by {}".format(message.content,message.author)))
+        # Changes "playing 'something'" status
         elif messagestr.startswith(prefix+"playing"):
-            if (message.author.id == ownerid) or checkwhitelist(name=message.author.name):
-                cutstr = message.content[9:]
+            if (message.author.id == ownerid) or (message.author.name in self.whitelist):
+                cutstr = message.content[len(prefix)+len("playing")+1:]
                 try:
                     status = SetStatus()
                     await status.set(cutstr)
@@ -490,11 +537,13 @@ class AyyBot:
                     pass
                 logdis(message,type="message")
                 print(str("{} by {}".format(message.content,message.author)))
+        # Starts a vote
         elif messagestr.startswith(prefix+"vote start"):
-            if (message.author.id == ownerid) or checkwhitelist(name=message.author.name):
-                cutstr = message.content[12:]
-                if votebot.getcontent() == None:
-                    await client.send_message(message.channel,"There is an ongoing vote right now, cannot start another one.")
+            if (message.author.id == ownerid) or (message.author.name in self.whitelist):
+                cutstr = message.content[len(prefix)+len("vote start")+1:]
+                if votebot.getcontent() is not None:
+                    await client.send_message(message.channel,"A vote is already in progress, can't start another one")
+                    return
                 votebot.create(str(message.author.name),cutstr.strip("(").strip(")").split('+')[1])
                 one = 0
                 list1 = ""
@@ -505,8 +554,9 @@ class AyyBot:
                 await client.send_message(message.channel,"Vote started: \n{}\n{}".format(name[0],list1))
                 logdis(message,type="message")
                 print(str("{} by {}".format(message.content,message.author)))
+        # Ends the voting
         elif messagestr.startswith(prefix+"vote end"):
-            if (message.author.id == ownerid) or checkwhitelist(name=message.author.name):
+            if (message.author.id == ownerid) or (message.author.name in self.whitelist):
                 if votebot.getcontent() is not None:
                     one = 0
                     endstr = "Voting has ended. Results: \n"
@@ -517,6 +567,7 @@ class AyyBot:
                     votebot.reset()
                 logdis(message,type="message")
                 print(str("{} by {}".format(message.content,message.author)))
+        # For everybody to vote
         elif messagestr.startswith(prefix+"vote"):
             for this in votebot.voters:
                 if message.author.id == this:
@@ -524,63 +575,67 @@ class AyyBot:
                     return
             votebot.countone(messagestr[6:],voter=message.author.id)
 
+# Events
 @client.event
 async def on_message(message):
     try:
         await AyyBot().on_message(message)
     except discord.InvalidArgument:
         print("Error -3 : InvalidArgument")
-        await client.send_message(message.channel, "Error: InvalidArgument")
+        #await client.send_message(message.channel, "Error: InvalidArgument")
     except discord.ClientException:
         print("Error -1 : ClientException")
-        await client.send_message(message.channel, "Error: ClientException")
+        #await client.send_message(message.channel, "Error: ClientException")
     except discord.HTTPException:
         print("Error -2 : HTTPException")
-        await client.send_message(message.channel, "Error: HTTPException")
+        #await client.send_message(message.channel, "Error: HTTPException")
 
 @client.async_event
 async def on_member_join(member):
-    server = member.server
-    await client.send_message(server, 'Welcome to the server, {0}'.format(member.mention()))
-    print("{} joined the server".format(member.name))
-    logdis(message="{} joined the server".format(member.name),type="write")
+    if bool(parser.get("Settings","welcomemsg")) is True:
+        await client.send_message(member.server, 'Welcome to the server, {0}'.format(member.name))
+        print("{} joined the server".format(member.name))
+        logdis(message="{} joined the server".format(member.name),type="write")
 
 @client.async_event
 async def on_message_delete(message):
-    messagestr = str(message.content)
-    channel = discord.utils.find(lambda channel: channel.name == "logs", message.channel.server.channels)
-    if message.channel == channel or messagestr.startswith("!"):
-        return
-    await client.send_message(channel,"```User {} deleted his/her message:\n{}\nin channel: #{}```".format(message.author,messagestr,message.channel.name))
+    if bool(parser.get("Settings","logchannel")) is False:
+        messagestr = str(message.content)
+        channel = discord.utils.find(lambda channel: channel.name == "logs", message.channel.server.channels)
+        if message.channel == channel or messagestr.startswith("!") or message.author.name == client.user.name:
+            return
+        await client.send_message(channel,"```User {} deleted his/her message:\n{}\nin channel: #{}```".format(message.author,messagestr,message.channel.name))
 
 @client.async_event
 async def on_message_edit(before,after):
-    msgbefore = str(before.content)
-    msgafter = str(after.content)
-    if msgbefore == msgafter:
-        return
-    logchannel = discord.utils.find(lambda channel: channel.name == parser.get("Settings","logchannel"), before.channel.server.channels)
-    if before.channel == logchannel:
-        return
-    if msgbefore.startswith("!") or msgafter.startswith("!"):
-        return
-    try:
-        await client.send_message(logchannel,"```User {} edited his message:\nBefore: {}\nAfter: {}\nin channel: #{}```".format(before.author,msgbefore,msgafter,before.channel.name))
-    except discord.errors.InvalidArgument:
-        print("No 'logs' channel")
+    if bool(parser.get("Settings","logchannel")) is False:
+        msgbefore = str(before.content)
+        msgafter = str(after.content)
+        if msgbefore == msgafter:
+            return
+        logchannel = discord.utils.find(lambda channel: channel.name == parser.get("Settings","logchannel"), before.channel.server.channels)
+        if before.channel == logchannel:
+            return
+        if msgbefore.startswith("!") or msgafter.startswith("!"):
+            return
+        try:
+            await client.send_message(logchannel,"```User {} edited his message:\nBefore: {}\nAfter: {}\nin channel: #{}```".format(before.author,msgbefore,msgafter,before.channel.name))
+        except discord.errors.InvalidArgument:
+            print("No 'logs' channel")
 
 @client.async_event
 async def on_ready():
-    print("connected and running")
+    print("connected and running as")
     print("Username:", client.user.name)
     print("ID:", client.user.id)
     print('------------------')
     # sets status
-    try:
-        status = SetStatus()
-        await status.startup()
-    except AssertionError:
-        pass
+    if parser.get("Settings","status") == "False" or "false":
+        try:
+            status = SetStatus()
+            await status.startup()
+        except AssertionError:
+            pass
 
 # Starts the bot
 @asyncio.coroutine

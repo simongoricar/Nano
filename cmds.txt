@@ -17,6 +17,8 @@
 !cmd remove !<name>
 !credits - author, etc.
 ayybot.sleep/wake - pauses/resumes the bot
+ayybot.config.reload - reloads the config
+ayybot.whitelist.reload - reloads the whitelist
 ayybot.kill - stops the bot
 
 !gif <name> - returns a gif from Giphy

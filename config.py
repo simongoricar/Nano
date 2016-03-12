@@ -52,29 +52,34 @@ helpmsg1 = ("""\
 !uptime - displays bot uptime
 !avatar ""@<usr>"" returns a link to mentioned person's avatar or yours if there is no mention
 !user @mention - returns info about the user
-!wiki or !define <word> - defines a word
+!wiki <word> - defines a word
 !urban <term> - like !wiki, but from urbandictionary.com
+!credits - author, etc.
 *Owner/whitelisted users only:*
 !role add/remove/replacewith <role name> @mentions - modifies roles
+!kick @mention - kicks users
+!ban @mention - bans users
+!unban @mention - unbans users
 !playing <name> - changes status
 !cmd add <trigger> <response>
 !cmd list
 !cmd remove !<name>
-!credits - author, etc.
 ayybot.sleep/wake - pauses/resumes the bot
+ayybot.config.reload - reloads the config
+ayybot.whitelist.reload - reloads the whitelist
 ayybot.kill - stops the bot
 """)
 
 creditsmsg = ("""\
 **AyyBot {bot}**
-Made by *DefaltSimon* with discord.py API
+Made by *DefaltSimon* with discord.py api
 """)
 
 jokemsg = ("""\
-!gif <name> - returns a gif from Giphy
+!gif <name> - returns a gif from Giphy (can be glitchy, because it looks at links)
 !roll <number> - random number from 0 to <number>
 !dice - just like !roll but 0 - 6
-!decide word word - decides between two or more words
+!decide <word> <word> - decides between two or more words
 !quote - returns a random quote
 """)
 
