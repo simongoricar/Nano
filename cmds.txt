@@ -1,24 +1,28 @@
 ﻿!help useful - displays available commands
 !help fun - funny commands
 !help meme - memes
+!help all - send all the commands to you via private message
 !hello - says hi
 !ping - Pong!
 !members - displays all members on the server
 !uptime - displays bot uptime
 !avatar @mention returns a link to mentioned person's avatar or yours if there is no mention
 !user @mention - returns info about the user
+!games - tells you what games you played and how much
 !wiki or !define <word> - defines a word
 !urban <term> - like !wiki, but from urbandictionary.com
+!credits - author, etc.
 *Owner/whitelisted users only:*
 !role add/remove/replacewith <role name> @mentions - modifies roles
+!kick @mention - kicks users
+!ban @mention - bans users
+!unban @mention - unbans users
 !playing <name> - changes status
-!cmd add <trigger> <response>
+!cmd add !<trigger> <response>
 !cmd list
 !cmd remove !<name>
-!credits - author, etc.
 ayybot.sleep/wake - pauses/resumes the bot
-ayybot.config.reload - reloads the config
-ayybot.whitelist.reload - reloads the whitelist
+ayybot.config.reload
 ayybot.kill - stops the bot
 
 !gif <name> - returns a gif from Giphy
@@ -27,11 +31,11 @@ ayybot.kill - stops the bot
 !decide word word - decides between two words
 !quote - random quote
 
+!kappa - kappa
+!cats - catscatscats
 !ayy - ayy lmao
 !ayylmao - even more ayy lmao with lenny face
 !wot - u wot m8
 !allstar just try it ( ͡° ͜ʖ ͡°)
 !johncena dis too ( ͡° ͜ʖ ͡°)
 !thecakeisalie - want it?
-!cats - cuz they are cute
-!kappa - kappa

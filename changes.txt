@@ -1,3 +1,15 @@
+1.6
+- Improved spam detection, removed "Spam is not allowed" message.
+- Fixed some variables in settings.ini not working
+- Changed code layout (kind of)
+- Removed !game, was useless
+- Added game time monitoring. :
+    !games - tells you amount of every game you played
+- Added bot startup time to log.txt
+- @AyyBot say <something> now responds with tts
+- "!help all" has changed, now sends to private message, "!help all public" works as before
+- Added customizable !help delay in settings.ini
+
 1.5
 - Fixed no join message, can now also be disabled in settings.ini
 - Fixed !cmd list not working

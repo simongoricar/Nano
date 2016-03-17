@@ -1,3 +1,7 @@
+__author__ = "DefaltSimon"
+
+# Variable file for AyyBot
+
 customcmd = {
     "!johncena": "O_O https://www.youtube.com/watch?v=58mah_0Y8TU",
     "!allstar": "https://www.youtube.com/watch?v=L_jWHffIx5E",
@@ -46,13 +50,15 @@ helpmsg1 = ("""\
 !help useful - displays available commands
 !help fun - funny commands
 !help meme - memes
+!help all - send all the commands to you via private message
 !hello - says hi
 !ping - Pong!
 !members - displays all members on the server
 !uptime - displays bot uptime
-!avatar ""@<usr>"" returns a link to mentioned person's avatar or yours if there is no mention
+!avatar @mention returns a link to mentioned person's avatar or yours if there is no mention
 !user @mention - returns info about the user
-!wiki <word> - defines a word
+!games - tells you what games you played and how much
+!wiki or !define <word> - defines a word
 !urban <term> - like !wiki, but from urbandictionary.com
 !credits - author, etc.
 *Owner/whitelisted users only:*
@@ -61,12 +67,11 @@ helpmsg1 = ("""\
 !ban @mention - bans users
 !unban @mention - unbans users
 !playing <name> - changes status
-!cmd add <trigger> <response>
+!cmd add !<trigger> <response>
 !cmd list
 !cmd remove !<name>
 ayybot.sleep/wake - pauses/resumes the bot
-ayybot.config.reload - reloads the config
-ayybot.whitelist.reload - reloads the whitelist
+ayybot.config.reload
 ayybot.kill - stops the bot
 """)
 
@@ -76,7 +81,7 @@ Made by *DefaltSimon* with discord.py api
 """)
 
 jokemsg = ("""\
-!gif <name> - returns a gif from Giphy (can be glitchy, because it looks at links)
+!gif <name> - returns a gif from Giphy
 !roll <number> - random number from 0 to <number>
 !dice - just like !roll but 0 - 6
 !decide <word> <word> - decides between two or more words
@@ -84,13 +89,14 @@ jokemsg = ("""\
 """)
 
 memelist = ("""\
+!kappa - kappa
+!cats - catscatscats
 !ayy - ayy lmao
 !ayylmao - even more ayy lmao with lenny face
 !wot - u wot m8
 !allstar just try it ( ͡° ͜ʖ ͡°)
 !johncena dis too ( ͡° ͜ʖ ͡°)
 !thecakeisalie - want it?
-!kappa - kappa
 """)
 
 quotes = [
