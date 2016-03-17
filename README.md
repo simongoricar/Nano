@@ -50,14 +50,13 @@ ayybot.kill - stops the bot
 ```
 **1.3** - Fun Commands:  
 ```
-
 !gif <name> - returns a gif from Giphy
 !roll <number> - random number
 !dice - like !roll but 0 - 6
 !decide word word - decides between two words
-!quote - random quote 
+!quote - random quote
 ```
-**1.4** - Meme Commands:
+**1.4** - "Meme" Commands:
 ```
 !kappa - kappa
 !cats - catscatscats
@@ -68,4 +67,5 @@ ayybot.kill - stops the bot
 !johncena dis too ( ͡° ͜ʖ ͡°)
 !thecakeisalie - want it?
 ```
+
 Enjoy!
