@@ -1,2 +1,2 @@
-lol:Lol
-ayy lmao:ayy
+lol()Lol
+ayy lmao():alien:

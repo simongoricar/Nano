@@ -16,21 +16,21 @@ class SpamDetection:
         self.whitelist.append(user.name)
         return
     def check(self,message):
-        if message.author.name in self.whitelist or len(message.mentions) > 0:
-            return
-        words = message.content.lower().split()
-        #words = list(message)
-        print(words)
-        # Checks start here
-        count = 0
-        spamcount = 0
-        for w in words:
-            if w == words[count - 1] or words[count - 2]:
-                spamcount += 1
-            count += 1
-
-        if spamcount > 7:
-            return True
+        pass
+        # Is disabled until further... update
+        #if message.author.name in self.whitelist or len(message.mentions) > 0:
+        #    return
+        #words = message.content.lower().split()
+        #wordminus = round(len(words)/2,0)
+        ## Checks start here
+        #count = 0
+        #spamcount = 0
+        #for w in words:
+        #    if w == words[count - 1] or words[count - 2]:
+        #        spamcount += 1
+        #    count += 1
+        #if (spamcount - wordminus) > 7:
+        #    return True
 
 # Swearing detection for AyyBot
 

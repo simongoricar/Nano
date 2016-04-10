@@ -3,15 +3,15 @@ __author__ = "DefaltSimon"
 # Variable file for AyyBot
 
 customcmd = {
-    "!johncena": "O_O https://www.youtube.com/watch?v=58mah_0Y8TU",
-    "!allstar": "https://www.youtube.com/watch?v=L_jWHffIx5E",
-    "!ayylmao" : "Ayy lmao! ( ͡° ͜ʖ ͡°) 👾 ",
-    "!ayy": "Ayyyyy lmao!",
-    "!wot": "<@{usr}> U wot m8?",
-    "!synagoge": "DIE ALTEE-SYNAGOGE",
-    "!thecakeisalie": "<@{usr}> : Rick roll'd https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    "!butwait" : "*But wait, there's more!*",
-    "!ping": "Pong!"
+    "+johncena": "O_O https://www.youtube.com/watch?v=58mah_0Y8TU",
+    "+allstar": "https://www.youtube.com/watch?v=L_jWHffIx5E",
+    "+ayylmao" : "Ayy lmao! ( ͡° ͜ʖ ͡°) 👾 ",
+    "+ayy": "Ayyyyy lmao!",
+    "+wot": "<@{usr}> U wot m8?",
+    "+synagoge": "DIE ALTEE-SYNAGOGE",
+    "+thecakeisalie": "<@{usr}> : Rick roll'd https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+    "+butwait" : "*But wait, there's more!*",
+    "+ping": "Pong!"
 }
 
 # Adding commands:
@@ -35,6 +35,7 @@ conversation = {
     "hello":":wave:",
     "stop":"Nein, nein, nein."}
 
+# Words that should / will be filtered
 filterwords = [
     "beeyotch","biatch","bitch","chink","crip","cunt","dago","daygo","dego","dick","dyke","fag","fatass","fatso","gash",
     "gimp","golliwog","gook","homo","hooker","kike","kraut","lame","lesbo","negro","nigga","nigger","pussy","retard",
@@ -47,56 +48,59 @@ eightball = [
     "My reply is no","My sources say no","Signs point to yes"]
 
 helpmsg1 = ("""\
-!help useful - displays available commands
-!help fun - funny commands
-!help meme - memes
-!help all - send all the commands to you via private message
-!hello - says hi
-!ping - Pong!
-!members - displays all members on the server
-!uptime - displays bot uptime
-!avatar @mention returns a link to mentioned person's avatar or yours if there is no mention
-!user @mention - returns info about the user
-!games - tells you what games you played and how much
-!wiki or !define <word> - defines a word
-!urban <term> - like !wiki, but from urbandictionary.com
-!credits - author, etc.
-*Owner/whitelisted users only:*
-!role add/remove/replacewith <role name> @mentions - modifies roles
-!kick @mention - kicks users
-!ban @mention - bans users
-!unban @mention - unbans users
-!playing <name> - changes status
-!cmd add !<trigger> <response>
-!cmd list
-!cmd remove !<name>
-ayybot.sleep/wake - pauses/resumes the bot
-ayybot.config.reload
-ayybot.kill - stops the bot
++help useful - displays available commands
++help fun - funny commands
++help admin - admin commands
++help meme - meme commands
++help all - send all the commands to you via private message
++hello <mention>(optional) - greets you or whoever was mentioned
++wiki/+define <term> - returns a summary of a term from Wikipedia
++urban <term> - returns a summary of a term from Urban dictionary
++avatar <mention>(optional) - posts a link of your of mentioned person's avatar
++games - Makes use of the new game time module and tells you what game you have played and how much
++uptime - time since start
++credits - because the bot didn't make himself :)
 """)
 
+adminmsg = ("""\
++ping - checks if the bot is working +kick <mention> - kicks the person
++ban <mention> - bans the person
++unban <mention> - unbans the person
++vote start <name>+<option1>""<option2>""... (up to 5 choices, will be updated) - starts a public vote
++vote end - ends an ongoing vote and displays the results
++playing <status> - changes the status message
++members - lists all members on the server (WARNING: do not use on big servers, the list will be too long!)
++role add/remove/replacewith <rolename> <mention> - does things with roles
++cmd add !<trigger> <response> - adds custom commands
++cmd remove !<trigger> - removes the command
++cmd list - returns a list of all custom commands
+
+ayybot.sleep/wake - hibernates/wakes the bot
+ayybot.whitelist/config.reload - reloads whitelist or config
+""")
 creditsmsg = ("""\
 **AyyBot {bot}**
 Made by *DefaltSimon* with discord.py api
+Can be found at https://github.com/DefaltSimon/AyyBot/wiki
 """)
 
 jokemsg = ("""\
-!gif <name> - returns a gif from Giphy
-!roll <number> - random number from 0 to <number>
-!dice - just like !roll but 0 - 6
-!decide <word> <word> - decides between two or more words
-!quote - returns a random quote
++roll <number> - rolls a number from 0 to
++dice - just like roll, but 1 to 6
++decide <word1> <word2> - decides between multiple words
++8ball <question> - "answers" your question in an 8ball-way.
++gif <tag> - sends a random gif with a matching from Giphy +quote - returns a random quote to help you lighten up your day :P
 """)
 
 memelist = ("""\
-!kappa - kappa
-!cats - catscatscats
-!ayy - ayy lmao
-!ayylmao - even more ayy lmao with lenny face
-!wot - u wot m8
-!allstar just try it ( ͡° ͜ʖ ͡°)
-!johncena dis too ( ͡° ͜ʖ ͡°)
-!thecakeisalie - want it?
++cats - cuz cats are cute
++ayy - ayy lmao
++ayy lmao - even more ayy lmao
++wot - you what?
++thecakeisalie - is it really?
++allstar - just something
++johncena - da original John Cena meme
++butwait - But wait!. There's more.
 """)
 
 quotes = [

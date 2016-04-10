@@ -1,3 +1,16 @@
+1.6.1
+- Fix : The bot would keep filtering messages even if in sleep mode
+- Fix : The bot would keep filtering spam even if disabled in settings.ini
+- Fixed some commands not working with any other prefix than !
+- Fixed !cmd add always adding ! as prefix, as of now you must specify your own prefix in <trigger>
+- Fixed status in settings.ini not working as expected
+- Fixed !help all public not working
+- Added the ability to disable game time monitoring in settings.ini
+- Game time now uses id's instead of usernames!
+- Custom commands are now divided by (), allowing you to respond with emojis
+- Optimized stuff and organised help commands
+By the way, wiki has been added :)
+
 1.6
 - Improved spam detection, removed "Spam is not allowed" message.
 - Fixed some variables in settings.ini not working

@@ -1,14 +1,14 @@
 import discord,asyncio
 import time,configparser,wikipedia,requests
 from random import randint
-from config import customcmd,eightball,helpmsg1,creditsmsg,jokemsg,memelist,quotes,conversation
+from config import customcmd,eightball,helpmsg1,adminmsg,creditsmsg,jokemsg,memelist,quotes,conversation
 from datetime import timedelta, datetime
 from giphypop import translate
 from bs4 import BeautifulSoup
 from plugins import moderator,votebot,gametime
 
 __author__ = 'DefaltSimon'
-__version__ = '1.6'
+__version__ = '1.6.1'
 
 class SetStatus:
     def __init__(self):
@@ -105,6 +105,7 @@ class AyyBot:
         # Reloads settings.ini
         elif messagestr.startswith("ayybot.config.reload"):
             if (message.author.id == ownerid) or (message.author.name in self.whitelist):
+                parser.clear()
                 parser.read("settings.ini")
                 logdis("Successfully reloaded configuration.",type="write")
                 await client.send_message(message.channel, "Successfully reloaded config.")
@@ -140,7 +141,7 @@ class AyyBot:
                     logchannel = discord.utils.find(lambda channel: channel.name == parser.get("Settings","logchannel"), message.channel.server.channels)
                     await client.send_message(logchannel, "```{}'s message was (not) filtered : swearing \n{}```".format(message.author.name,message.content))
                 print("{}'s message was (not) filtered : swearing".format(message.author.name))
-        if bool(("Settings", "filterspam")) is True:
+        if bool(parser.get("Settings", "filterspam")) is True:
             if (spam.check(message) is True) and message.channel.name != str(parser.get("Settings","logchannel")):
                 await client.delete_message(message)
                 if bool(parser.get("Settings","logchannel")) is not False:
@@ -149,20 +150,20 @@ class AyyBot:
                 print("{}'s message was filtered : spam".format(message.author.name))
         # Commands from config.py
         for onething in customcmd.keys():
-            if message.content.lower().startswith(onething):
+            if message.content.lower().startswith(onething.replace("+",prefix)):
                 client.delete_message(message)
                 second = customcmd.get(str(message.content.lower()))
                 print(str("{} by {}".format(message.content,message.author)))
                 logdis(message,type="message")
-                await client.send_message(message.channel, second.format(usr=message.author.id))
+                await client.send_message(message.channel, str(second).format(usr=message.author.id))
                 return
         # Commands in customcmds.txt
         with open("data/customcmds.txt","r") as disone:
             for disonea in disone.readlines():
                 if disonea.strip() == "":
                     continue
-                if messagestr.startswith((disonea.strip().split(':',maxsplit=2))[0]):
-                    await client.send_message(message.channel,disonea.strip().split(':')[1])
+                if messagestr.startswith((disonea.strip().split('()',maxsplit=2))[0]):
+                    await client.send_message(message.channel,disonea.strip().split('()')[1])
                     logdis(message,type="message")
                     return
         # Just a conversation thingie
@@ -187,24 +188,31 @@ class AyyBot:
                         await client.send_message(message.channel,"<@" + message.author.id + "> eh")
                 elif cutmsg.lower().startswith("say"):
                     await client.send_message(message.channel,cutmsg[4:],tts=True)
+                elif "prefix" in cutmsg.lower():
+                    await client.send_message(message.channel,"My prefix is {}".format(str(prefix)))
         # Help commands
         if messagestr.startswith(prefix+"help"):
             if (int(time.time()) - int(Timeutil.getlast()) < parser.getint("Settings","helpdelay")) and ((message.author.id != ownerid) or (message.author.name in self.whitelist)):
                 return
+            if "here" in messagestr:
+                receiver = message.channel
+            else:
+                receiver = message.author
+
             if messagestr.startswith(prefix+"help useful") or messagestr == prefix+"help":
-                await client.send_message(message.channel, "**Help, useful commands:**\n" + helpmsg1.replace("!",prefix))
+                await client.send_message(receiver, "**Help, useful commands:**\n" + helpmsg1.replace("+",prefix))
+                Timeutil.setlast()
+            elif messagestr.startswith(prefix+"help admin"):
+                await client.send_message(receiver, "**Help, admin commands:**\n" + adminmsg.replace("+",prefix))
                 Timeutil.setlast()
             elif messagestr.startswith(prefix+"help fun"):
-                await client.send_message(message.channel, "**Help, fun commands:**\n" + jokemsg.replace("!",prefix))
+                await client.send_message(receiver, "**Help, fun commands:**\n" + jokemsg.replace("+",prefix))
                 Timeutil.setlast()
             elif messagestr.startswith(prefix+"help meme") or messagestr.startswith(prefix+"help memes"):
-                await client.send_message(message.channel, "**Help, meme list:**\n" + memelist.replace("!",prefix))
+                await client.send_message(receiver, "**Help, meme list:**\n" + memelist.replace("+",prefix))
                 Timeutil.setlast()
             elif messagestr.startswith(prefix+"help all"):
-                await client.send_message(message.author, "**Help:**\n*1. Useful commands*\n" + helpmsg1.replace("!",prefix) + "*2. Fun commands*\n" + jokemsg.replace("!",prefix) + "*3. Meme commands*\n" + memelist.replace("!",prefix))
-                Timeutil.setlast()
-            elif messagestr.startswith(prefix+"help all public"):
-                await client.send_message(message.channel, "**Help:**\n*1. Useful commands*\n" + helpmsg1.replace("!",prefix) + "*2. Fun commands*\n" + jokemsg.replace("!",prefix) + "*3. Meme commands*\n" + memelist.replace("!",prefix))
+                await client.send_message(receiver, "**Help:**\n*1. Useful commands*\n" + helpmsg1.replace("+",prefix) + "*2. Fun commands*\n" + jokemsg.replace("+",prefix) + "*3. Meme commands*\n" + memelist.replace("+",prefix))
                 Timeutil.setlast()
             print(str("{} by {}".format(message.content,message.author)))
             logdis(message,type="message")
@@ -318,16 +326,30 @@ class AyyBot:
             logdis(message,type="message")
             print(str("{} by {}".format(message.content,message.author)))
         elif messagestr.startswith(prefix+"games"):
-            await client.send_typing(message.channel)
-            games = game.getplayer(user=message.author.name)
-            full = ""
-            if games is None:
-                await client.send_message(message.channel, "<@" + message.author.id + "> ```You haven't played any games```")
+            if parser.getboolean("Settings","monitorgames") is False:
+                await client.send_message(message.channel,"This feature was disabled by the owner.")
+                return
+            games = game.getplayer(user=message.author.id)
+            if message.channel.is_private:
+                if games is None:
+                    await client.send_message(message.author, "```You haven't played any games```")
+                else:
+                    full = ""
+                    for that in games.keys():
+                        if that == "username":
+                            continue
+                        a, b = divmod(int(round(games[that]/60,0)),60)
+                        full += "{} : {} hours, {} minutes\n".format(that,a,b)
+                    await client.send_message(message.author,"<@" + message.author.id + "> You played:\n```" + full + "```")
             else:
-                for that in games.keys():
-                    a, b = divmod(int(round(games[that]/60,0)),60)
-                    full += "{} : {} hours, {} minutes\n".format(that,a,b)
-                await client.send_message(message.channel,"<@" + message.author.id + "> You played:\n```" + full + "```")
+                if games is None:
+                    await client.send_message(message.channel, "<@" + message.author.id + "> ```You haven't played any games```")
+                else:
+                    full = ""
+                    for that in games.keys():
+                        a, b = divmod(int(round(games[that]/60,0)),60)
+                        full += "{} : {} hours, {} minutes\n".format(that,a,b)
+                    await client.send_message(message.channel,"<@" + message.author.id + "> You played:\n```" + full + "```")
             logdis(message,type="message")
             print(str("{} by {}".format(message.content,message.author)))
         # Returns a random quote
@@ -426,7 +448,7 @@ class AyyBot:
                     cutstr = (message.content.replace("\n"," ")).split(maxsplit=3)
                     print(cutstr)
                     try:
-                        processed = str("!{}:{}".format(cutstr[2],cutstr[3]))
+                        processed = str("{}(){}".format(cutstr[2],cutstr[3]))
                     except IndexError:
                         await client.send_message(message.channel,"<@" + message.author.id + "> Please specify response.")
                         return
@@ -535,14 +557,14 @@ async def on_message(message):
 
 @client.async_event
 async def on_member_join(member):
-    if bool(parser.get("Settings","welcomemsg")) is True:
+    if bool(parser.get("Settings","welcomemsg")) is True and BotSleep.getstate() is False:
         await client.send_message(member.server, 'Welcome to the server, {0}'.format(member.name))
         print("{} joined the server".format(member.name))
         logdis(message="{} joined the server".format(member.name),type="write")
 
 @client.async_event
 async def on_message_delete(message):
-    if bool(parser.get("Settings","logchannel")) is not False:
+    if bool(parser.get("Settings","logchannel")) is not False and swearing.check(message) is False and BotSleep.getstate() is False:
         messagestr = str(message.content)
         channel = discord.utils.find(lambda channel: channel.name == parser.get("Settings","logchannel"), message.channel.server.channels)
         if message.channel == channel or messagestr.startswith("!") or message.author.name == client.user.name:
@@ -551,7 +573,7 @@ async def on_message_delete(message):
 
 @client.async_event
 async def on_message_edit(before,after):
-    if bool(parser.get("Settings","logchannel")) is not False:
+    if bool(parser.get("Settings","logchannel")) is not False and BotSleep.getstate() is False:
         msgbefore = str(before.content)
         msgafter = str(after.content)
         if msgbefore == msgafter:
@@ -568,27 +590,31 @@ async def on_message_edit(before,after):
 
 @client.async_event
 async def on_member_update(before,after):
+    # ayybot.sleep does not impact this feature!
+    # However, it can be disabled in settings.ini
+    if bool(parser.get("Settings","monitorgames")) is False:
+        return
     if before.name in game.cooldown:
             if time.time() - game.cooldown[before.name] < 0.20:
                 return
     if ((game.hasplayed(before.name)) or before.game is None) and after.game is not None:
         game.lasttime[before.name] = time.time()
     elif (after.game is None and before.game is not None) and game.hasplayed(before.name) is True:
-        game.add(user=before.name,game=before.game.name,time1=time.time())
+        game.add(user=before.name,server=before.server,game=before.game.name,time1=time.time())
         game.lasttime[before.name] = None
     elif before.game != after.game:
-        game.add(user=before.name,game=before.game.name,time1=time.time())
+        game.add(user=before.name,server=before.server,game=before.game.name,time1=time.time())
         game.lasttime[before.name] = time.time()
 
 
 @client.async_event
 async def on_ready():
-    print("connected and running as")
+    print("connected as")
     print("Username:", client.user.name)
     print("ID:", client.user.id)
-    print('------------------')
+    print('\nNow running...\n')
     # sets status
-    if bool(parser.get("Settings","status")) is False:
+    if bool(parser.get("Settings","status")) is not False:
         try:
             status = SetStatus()
             await status.startup()
