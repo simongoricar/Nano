@@ -12,7 +12,7 @@
 Try 'em:
 @AyyBot are you real
 @AyyBot die
-@AyyBot do you want to build a snowman?
+@AyyBot do you want to build a snowman
 @AyyBot hi
 @AyyBot hello
 @AyyBot stop
@@ -43,6 +43,14 @@ Try 'em:
 
 ayybot.sleep/wake - hibernates/wakes the bot
 ayybot.whitelist/config.reload - reloads whitelist or config
+ayybot.server.setup - generates a server file
+ayybot.settings <keyword> <var> - manages server settings
+ayybot.blacklistchannel <channel> - blacklists a channel
+ayybot.displaysettings - displays current server settings
+ayybot.admins add/remove <mention> - adds/removes a person from server admins (meaning that they can use admin commands)
+ayybot.admins list - lists current admins
+ayybot.invitelink - sends you an OAuth2 link to invite the bot to your server (must be the owner)
+ayybot.leaveserver - leaves the current server
 
 5. Fun commands
 

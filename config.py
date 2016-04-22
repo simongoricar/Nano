@@ -66,22 +66,31 @@ adminmsg = ("""\
 +ping - checks if the bot is working +kick <mention> - kicks the person
 +ban <mention> - bans the person
 +unban <mention> - unbans the person
-+vote start <name>+<option1>""<option2>""... (up to 5 choices, will be updated) - starts a public vote
++vote start <name>++<option1>""<option2>""... (up to 5 choices, will be updated) - starts a public vote
 +vote end - ends an ongoing vote and displays the results
 +playing <status> - changes the status message
 +members - lists all members on the server (WARNING: do not use on big servers, the list will be too long!)
 +role add/remove/replacewith <rolename> <mention> - does things with roles
-+cmd add !<trigger> <response> - adds custom commands
-+cmd remove !<trigger> - removes the command
++cmd add <trigger> <response> - adds custom commands
++cmd remove <trigger> - removes the command
 +cmd list - returns a list of all custom commands
 
 ayybot.sleep/wake - hibernates/wakes the bot
 ayybot.whitelist/config.reload - reloads whitelist or config
+ayybot.server.setup - generates a server file
+ayybot.settings <keyword> <var> - manages server settings
+ayybot.blacklistchannel <channel> - blacklists a channel
+ayybot.displaysettings - displays current server settings
+ayybot.admins add/remove <mention> - adds/removes a person from server admins (meaning that they can use admin commands)
+ayybot.admins list - lists current admins
+ayybot.invitelink - sends you an OAuth2 link to invite the bot to your server (must be the owner)
+ayybot.leaveserver - leaves the current server
 """)
-creditsmsg = ("""\
-**AyyBot {bot}**
-Made by *DefaltSimon* with discord.py api
-Can be found at https://github.com/DefaltSimon/AyyBot/wiki
+infomsg = ("""\
+**AyyBot {}**
+By: DefaltSimon
+api: discord.py
+Full commands list can be found at https://github.com/DefaltSimon/AyyBot/wiki/Commands-list
 """)
 
 jokemsg = ("""\

@@ -1,8 +1,9 @@
-import yaml,time,discord
+from yaml import load,dump
+import time,discord
+
 __author__ = "DefaltSimon"
 
 # Game time counting plugin for AyyBot
-
 class GameCount:
     def __init__(self):
         self.lasttime = {}
@@ -18,13 +19,13 @@ class GameCount:
             return True
     def getplayer(self,user):
         with open("plugins/data.yml","r") as file:
-            file = yaml.load(file)
+            file = load(file)
             for this in file.keys():
                 if this == user:
                     return file[user]
     def getgame(self,user,game):
         with open("plugins/data.yml","r") as file:
-            file = yaml.load(file)
+            file = load(file)
             mins = file.get(user).get(game)
             return mins
     def add(self,user,server,game,time1):
@@ -35,13 +36,14 @@ class GameCount:
         else:
             self.cooldown[user] = time.time()
         with open("plugins/data.yml","r+") as file:
-            file = yaml.load(file)
+            file = load(file)
             final = file
+            if user2.name not in self.lasttime:
+                return
             if user2.id not in file:
-                final[user2.id] = {game : 1}
                 final[user2.id] = {"username" : user2.name}
             if game not in file[user2.id]:
                 final[user2.id][game] = 0
-            final[user2.id].update({game : int(final[user2.id][game] + round(time1 - self.lasttime[user],0))})
+            final[user2.id].update( { game :  int(final[user2.id][game] + round(time1 - self.lasttime[user.name],0)) })
         with open("plugins/data.yml","w") as outfile:
-            outfile.write(yaml.dump(final,default_flow_style=False))
+            outfile.write(dump(final,default_flow_style=False))

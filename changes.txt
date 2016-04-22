@@ -1,3 +1,12 @@
+1.6.2
+- Per-server settings (a bunch of commands were added):
+  Almost every aspect of the bot can now be customized on server basis:
+  -> Sleeping, commands, channel blacklists, admins, filtering spam and swearing, logchannel and join message.
+- Fixed some bugs
+- +cmd add now uses ++ and "" as split points
+- Optimizations
+- Now the user must supply a token (requires a bot account)
+
 1.6.1
 - Fix : The bot would keep filtering messages even if in sleep mode
 - Fix : The bot would keep filtering spam even if disabled in settings.ini
