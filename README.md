@@ -11,15 +11,9 @@ made by DefaltSimon, with [discord.py api](https://github.com/Rapptz/discord.py)
 - game time monitoring
 
 **1.1** Requirements and installing:
-- Python 3.5+ (required for async def)
+- Python 3.5+ (required for asyncio)
 - [discord.py api](https://github.com/Rapptz/discord.py) (install with ```pip install git+https://github.com/Rapptz/discord.py@async```)
-- giphypop - ```pip install giphypop```  
-- wordfilter - ```pip install wordfilter```  
+- *giphypop* 
+- *wordfilter*
 
-  *Starting the bot:*  
-   1. first set up `settings.ini`  
-   2. then execute ```python ayybot.py```
-
-Check all available commands [here](https://github.com/DefaltSimon/AyyBot/wiki/Commands-list)  
-  
-Enjoy!
+######Check all available commands [here](https://github.com/DefaltSimon/AyyBot/wiki/Commands-list)  
