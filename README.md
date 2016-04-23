@@ -10,10 +10,10 @@ made by DefaltSimon, with [discord.py api](https://github.com/Rapptz/discord.py)
 - status display (settings.ini and !playing command)
 - game time monitoring
 
-**1.1** Requirements and installing:
+**1.1** Requirements:
 - Python 3.5+ (required for asyncio)
 - [discord.py api](https://github.com/Rapptz/discord.py) (install with ```pip install git+https://github.com/Rapptz/discord.py@async```)
 - *giphypop* 
 - *wordfilter*
 
-######Check all available commands [here](https://github.com/DefaltSimon/AyyBot/wiki/Commands-list)  
+######A list of all available commands: [Wiki](https://github.com/DefaltSimon/AyyBot/wiki/Commands-list)  
