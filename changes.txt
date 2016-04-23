@@ -1,3 +1,6 @@
+1.6.3dev
+- Fixed some bugs
+
 1.6.2
 - Per-server settings (a bunch of commands were added):
   Almost every aspect of the bot can now be customized on server basis:

@@ -59,17 +59,20 @@ if parser.getboolean("Settings","WriteLogs") is True:
         file.write("\n----- " + str(time.strftime("%Y-%m-%d %H:%M:%S", )) + " : startup -----\n")
 
 def logdis(message,type):
-    if parser.getboolean("Settings","WriteLogs") is True:
-        if type == "message":
-            with open('data/log.txt',"a") as file2:
-                one = str(time.strftime("%Y-%m-%d %H:%M:%S", ))
-                str2 = one + str(" : {msg} by {usr}\n".format(msg=message.content,usr=message.author))
-                file2.write(str2)
-        elif type == "write":
-            with open('data/log.txt',"a") as file2:
-                one = str(time.strftime("%Y-%m-%d %H:%M:%S", ))
-                str2 = one + str(" : {}\n".format(message))
-                file2.write(str2)
+    try:
+        if parser.getboolean("Settings","WriteLogs") is True:
+            if type == "message":
+                with open('data/log.txt',"a") as file2:
+                    one = str(time.strftime("%Y-%m-%d %H:%M:%S", ))
+                    str2 = one + str(" : {msg} by {usr}\n".format(msg=message.content,usr=message.author))
+                    file2.write(str2)
+            elif type == "write":
+                with open('data/log.txt',"a") as file2:
+                    one = str(time.strftime("%Y-%m-%d %H:%M:%S", ))
+                    str2 = one + str(" : {}\n".format(str(message)))
+                    file2.write(str2)
+    except UnicodeEncodeError:
+        pass
 
 # Commands
 class AyyBot:
@@ -227,7 +230,6 @@ Number of admins: {}```""".format(settings["blacklisted"],settings["customcmds"]
             # Spam and swearing check
             if handler.needwordfilter(message.server):
                 if (swearing.check(message) is True) and message.channel.name != str(parser.get("Settings","logchannel")):
-                    print("ok")
                     await client.delete_message(message)
                     if bool(parser.get("Settings","logchannel")) is not False:
                         logchannel = discord.utils.find(lambda channel: channel.name == parser.get("Settings","logchannel"), message.channel.server.channels)
@@ -248,12 +250,11 @@ Number of admins: {}```""".format(settings["blacklisted"],settings["customcmds"]
                 logdis(message,type="message")
                 await client.send_message(message.channel, str(second).format(usr=message.author.id))
                 return
-        with open("data/servers.yml","r") as file:
-            data = load(file)
-            commands = data[message.server.id]["customcmds"]
-            for this in commands:
-                if message.content == this:
-                    await client.send_message(message.channel,commands[this])
+        # Server custom commands
+        cmdlist = handler.returncommands(message.server)
+        for one in cmdlist:
+            if str(message.content).startswith(str(one)):
+                await client.send_message(message.channel, str(cmdlist.get(one)))
         # Help commands
         if messagestr.startswith(prefix+"help"):
             if (int(time.time()) - int(Timeutil.getlast()) < parser.getint("Settings","helpdelay")) and ((message.author.id != ownerid) or (message.author.name not in self.admins[message.server.id])):
@@ -650,8 +651,6 @@ Number of admins: {}```""".format(settings["blacklisted"],settings["customcmds"]
                 timerem = int(round(cut[1],0))*60
             elif cut[1].endswith("h"):
                 timerem = int(round(cut[1],0))*360
-
-
 
 
 # Events

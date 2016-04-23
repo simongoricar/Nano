@@ -120,6 +120,8 @@ class ServerHandler:
         with open("data/servers.yml","w") as outfile:
             outfile.write(dump(data,default_flow_style=False))
     def disabledlogging(self,server):
+        if server is None:
+            return True
         with open("data/servers.yml","r") as file:
             data = load(file)
             return bool(data[server.id]["logchannel"])

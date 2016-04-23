@@ -44,6 +44,6 @@ class GameCount:
                 final[user2.id] = {"username" : user2.name}
             if game not in file[user2.id]:
                 final[user2.id][game] = 0
-            final[user2.id].update( { game :  int(final[user2.id][game] + round(time1 - self.lasttime[user.name],0)) })
+            final[user2.id].update( { game :  int(final[user2.id][game] + round(time1 - self.lasttime[user2.name],0)) })
         with open("plugins/data.yml","w") as outfile:
             outfile.write(dump(final,default_flow_style=False))
