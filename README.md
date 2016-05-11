@@ -1,19 +1,24 @@
 # AyyBot (python)
-made by DefaltSimon, with [discord.py api](https://github.com/Rapptz/discord.py) .
+by DefaltSimon, made with [discord.py api](https://github.com/Rapptz/discord.py) .
 
-**1** Features:
+######**1.** Features:
 - Spam and swearing filter
-- "many" commands ("easy to add your own" - config.py, also !cmd add <> <> to add commands on the fly)
-- per server and global settings (see settings.ini)  
-- logging with timestamp (data/logs.txt)  
-- whitelist (data/whitelist.txt)
-- status display (settings.ini and !playing command)
+- many commands and custom ones (!cmd add to add commands on the fly)
+- per-server and global settings
+- logging
+- whitelist
+- custom status display (!playing command)
 - game time monitoring
+- voting
+- code execution
+- and more...
 
-**1.1** Requirements:
-- Python 3.5+ (required for asyncio)
-- [discord.py api](https://github.com/Rapptz/discord.py) (install with ```pip install git+https://github.com/Rapptz/discord.py@async```)
+######**1.1.** Requirements:
+- Python 3.5+
+- [discord.py api](https://github.com/Rapptz/discord.py) (need async branch, install with ```pip install git+https://github.com/Rapptz/discord.py@async```)
 - *giphypop* 
 - *wordfilter*
+- *wikipedia*
+- *PyYaml*
 
-######A list of all available commands: [Wiki](https://github.com/DefaltSimon/AyyBot/wiki/Commands-list)  
+######A list of all available commands is available on the [Wiki](https://github.com/DefaltSimon/AyyBot/wiki/Commands-list)  
