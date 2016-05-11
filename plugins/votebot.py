@@ -1,3 +1,5 @@
+"""Part of AyyBot"""
+
 __author__ = "DefaltSimon"
 
 # Voting plugin for AyyBot
@@ -33,7 +35,10 @@ class Vote:
         else:
             return self.votecontent
     def countone(self,option,voter):
-        option = int(option)
+        try:
+            option = int(option)
+        except ValueError:
+            return
         self.voters.append(voter)
         if option == 1:
             self.votesgot1 += 1

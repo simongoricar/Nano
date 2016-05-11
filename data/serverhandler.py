@@ -1,22 +1,32 @@
+"""Part of AyyBot"""
+
 from yaml import load,dump
+import configparser
+
+
 
 class ServerHandler:
     def __init__(self):
-        pass
+        self.parser = configparser.ConfigParser()
+        self.parser.read("settings.ini")
     def serversetup(self,server):
         with open("data/servers.yml","r+") as file:
             data = load(file)
             # Setup
-            data[server.id] = {"name" : server.name, "owner" : server.owner.name, "filterwords" : 0, "filterspam" : 0, "blacklisted" : [], "customcmds" : {}, "admins" : [], "logchannel" : "logs", "sleeping" : 0, "sayhi" : 0}
+            defaultprf = self.parser.get("Settings","defaultprefix")
+            data[server.id] = {"name" : server.name, "owner" : server.owner.name, "filterwords" : 0, "filterspam" : 0, "blacklisted" : [], "customcmds" : {}, "admins" : [], "logchannel" : "logs", "sleeping" : 0, "sayhi" : 0, "prefix" : str(defaultprf)}
         with open("data/servers.yml","w") as outfile:
             outfile.write(dump(data,default_flow_style=False))
     def serverexists(self,server):
         with open("data/servers.yml","r") as file:
             data = load(file)
-            if server.id in data:
+            try:
+                if server.id in data:
+                    return True
+                else:
+                    return False
+            except AttributeError:
                 return True
-            else:
-                return False
 
     def updatesettings(self,server,key,value):
         with open("data/servers.yml","r+") as file:
@@ -64,6 +74,14 @@ class ServerHandler:
                 return
             data[server.id]["admins"].append(str(user.id))
             with open("data/servers.yml","w") as outfile:
+                outfile.write(dump(data,default_flow_style=False))
+    def changeprefix(self,server,prefix):
+        with open("data/servers.yml","r") as file:
+            data = load(file)
+            if server.id not in data:
+                self.serversetup(server)
+            data[server.id]["prefix"] = prefix
+        with open("data/servers.yml","w") as outfile:
                 outfile.write(dump(data,default_flow_style=False))
     def removeadmin(self,server,user):
         with open("data/servers.yml","r+") as file:
@@ -126,6 +144,6 @@ class ServerHandler:
             data = load(file)
             return bool(data[server.id]["logchannel"])
     def shouldsayhi(self,server):
-        with open("data/server.yml","r") as file:
+        with open("data/servers.yml","r") as file:
             data = load(file)
             return bool(data[server.id]["sayhi"])

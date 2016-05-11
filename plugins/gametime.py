@@ -1,3 +1,5 @@
+"""Part of AyyBot"""
+
 from yaml import load,dump
 import time,discord
 
@@ -35,7 +37,7 @@ class GameCount:
                 return
         else:
             self.cooldown[user] = time.time()
-        with open("plugins/data.yml","r+") as file:
+        with open("plugins/data.yml","r") as file:
             file = load(file)
             final = file
             if user2.name not in self.lasttime:

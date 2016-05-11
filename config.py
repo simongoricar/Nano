@@ -4,14 +4,24 @@ __author__ = "DefaltSimon"
 
 customcmd = {
     "+johncena": "O_O https://www.youtube.com/watch?v=58mah_0Y8TU",
-    "+allstar": "https://www.youtube.com/watch?v=L_jWHffIx5E",
     "+ayylmao" : "Ayy lmao! ( ͡° ͜ʖ ͡°) 👾 ",
-    "+ayy": "Ayyyyy lmao!",
     "+wot": "<@{usr}> U wot m8?",
-    "+synagoge": "DIE ALTEE-SYNAGOGE",
     "+thecakeisalie": "<@{usr}> : Rick roll'd https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    "+butwait" : "*But wait, there's more!*",
-    "+ping": "Pong!"
+#    "+ping": "Pong!",
+    "+rip" : """```Rip indeed
+                 __)(
+           _____/  // \ ____
+          /         \\  /  \\__
+          |  _     //  \     ||
+          | | \    \\  / _   ||
+          | |  |    \\/ | \  ||
+          | |_/     |/  |  | ||
+          | | \     /|  |_/  ||
+          | |  \    \|  |     >_ )
+          | |   \. _|\  |    < _|=
+          |          /_.| .  \/
+  *       | *   **  / * **  |\)/)    **
+   \)).-(/.,(//,,..,,\||(,:.,\ ).((//```"""
 }
 
 # Adding commands:
@@ -60,6 +70,9 @@ helpmsg1 = ("""\
 +games - Makes use of the new game time module and tells you what game you have played and how much
 +uptime - time since start
 +credits - because the bot didn't make himself :)
+
+ayybot.stats / +stats - stats about sent messages, ...
+ayybot.status / +status - how many servers, people, ...
 """)
 
 adminmsg = ("""\
@@ -75,6 +88,11 @@ adminmsg = ("""\
 +cmd remove <trigger> - removes the command
 +cmd list - returns a list of all custom commands
 
++eval <statement> - math
++exec <code> - execute code on the fly
++download <link> - downloads a picture (.jpg/.jpeg/.png)
++dlmanage - to manage your download dir
+
 ayybot.sleep/wake - hibernates/wakes the bot
 ayybot.whitelist/config.reload - reloads whitelist or config
 ayybot.server.setup - generates a server file
@@ -84,12 +102,16 @@ ayybot.displaysettings - displays current server settings
 ayybot.admins add/remove <mention> - adds/removes a person from server admins (meaning that they can use admin commands)
 ayybot.admins list - lists current admins
 ayybot.invitelink - sends you an OAuth2 link to invite the bot to your server (must be the owner)
+ayybot.changeprefix <new> - changes server-specific prefix
+ayybot.changeavatar <type>|<file/link>:
+        examples: file|avatar.jpg, web|http://www.avatarsdb.com/avatars/wolf_art.jpg
+        - changes the avatar
 ayybot.leaveserver - leaves the current server
 """)
 infomsg = ("""\
 **AyyBot {}**
 By: DefaltSimon
-api: discord.py
+api: discord.py {}
 Full commands list can be found at https://github.com/DefaltSimon/AyyBot/wiki/Commands-list
 """)
 
@@ -103,13 +125,9 @@ jokemsg = ("""\
 
 memelist = ("""\
 +cats - cuz cats are cute
-+ayy - ayy lmao
-+ayy lmao - even more ayy lmao
++ayylmao - ayyy
 +wot - you what?
-+thecakeisalie - is it really?
-+allstar - just something
 +johncena - da original John Cena meme
-+butwait - But wait!. There's more.
 """)
 
 quotes = [

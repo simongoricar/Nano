@@ -25,6 +25,8 @@ Try 'em:
 +avatar <mention>(optional) - posts a link of your of mentioned person's avatar
 +games - Makes use of the new game time module and tells you what game you have played and how much
 +uptime - time since start
++stats - stats
++status - even more stats
 +credits - because the bot didn't make himself :)
 
 4. Admin commands
@@ -41,6 +43,9 @@ Try 'em:
 +cmd remove !<trigger> - removes the command
 +cmd list - returns a list of all custom commands
 
++eval/+calc <statement> - math
++exec ```<code>``` - execute code on the fly
+
 ayybot.sleep/wake - hibernates/wakes the bot
 ayybot.whitelist/config.reload - reloads whitelist or config
 ayybot.server.setup - generates a server file
@@ -50,6 +55,8 @@ ayybot.displaysettings - displays current server settings
 ayybot.admins add/remove <mention> - adds/removes a person from server admins (meaning that they can use admin commands)
 ayybot.admins list - lists current admins
 ayybot.invitelink - sends you an OAuth2 link to invite the bot to your server (must be the owner)
+ayybot.changeprefix <new> - changes server-specific prefix
+ayybot.changeavatar - changes the avatar
 ayybot.leaveserver - leaves the current server
 
 5. Fun commands

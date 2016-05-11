@@ -1,9 +1,11 @@
+"""Part of AyyBot"""
+
 from config import filterwords
 __author__ = "DefaltSimon"
 
 # Spam detection plugin for AyyBot
 
-# Add users you want to be ignored
+# Users you want to be ignored
 ignored = ["AyyBot"]
 
 
