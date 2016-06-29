@@ -1,4 +1,6 @@
-﻿1. Help commands (sent to pm)
+﻿Command list v2 coming soon...
+
+1. Help commands (sent to pm)
 
 +help useful/admin/fun/meme - commands divided into groups
 +help all - all commands above made into a single one

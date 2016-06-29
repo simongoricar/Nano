@@ -1,3 +1,8 @@
+v2.0!
+- Code rewritten from ground up!
+- Some useless features have been removed, many new added
+- Cleaner, faster code
+
 1.6.4
 - Added +eval/+calc and +exec (only for admins, has detection for potentially dangerous code, which only the owner can run)
 - Updated +user with account creation date

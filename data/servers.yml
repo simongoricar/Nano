@@ -1,3 +1,13 @@
-Template:
-  always: leave at least one thing here
-  dont: delete plz
+'132905482271719424':
+  admins: []
+  blacklisted: []
+  customcmds: {}
+  filterspam: 1
+  filterwords: 1
+  logchannel: logs
+  name: DS's dev server
+  onban: 1
+  owner: DefaltSimon
+  prefix: '!'
+  sayhi: 0
+  sleeping: 0

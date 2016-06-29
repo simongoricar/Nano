@@ -1,25 +1,36 @@
-"""Part of AyyBot"""
+"""Server data handler for AyyBot"""
+
+
+# This module is pretty much the same compared to v1, with some optimizations
 
 from yaml import load,dump
 import configparser
-
 
 
 class ServerHandler:
     def __init__(self):
         self.parser = configparser.ConfigParser()
         self.parser.read("settings.ini")
+
     def serversetup(self,server):
         with open("data/servers.yml","r+") as file:
             data = load(file)
-            # Setup
-            defaultprf = self.parser.get("Settings","defaultprefix")
-            data[server.id] = {"name" : server.name, "owner" : server.owner.name, "filterwords" : 0, "filterspam" : 0, "blacklisted" : [], "customcmds" : {}, "admins" : [], "logchannel" : "logs", "sleeping" : 0, "sayhi" : 0, "prefix" : str(defaultprf)}
-        with open("data/servers.yml","w") as outfile:
-            outfile.write(dump(data,default_flow_style=False))
-    def serverexists(self,server):
+
+            defaultpref = self.parser.get("Settings","defaultprefix")
+            data[server.id] = {"name" : server.name, "owner" : server.owner.name, "filterwords" : 0, "filterspam" : 0, "blacklisted" : [], "customcmds" : {}, "admins" : [], "logchannel" : "logs", "sleeping" : 0, "onban": 0, "sayhi" : 0, "prefix" : str(defaultpref)}
+
+        self.write(data)
+
+    @staticmethod
+    def write(data):
+        with open("data/servers.yml","w") as file:
+            file.write(dump(data,default_flow_style=False))
+
+    @staticmethod
+    def serverexists(server):
         with open("data/servers.yml","r") as file:
             data = load(file)
+
             try:
                 if server.id in data:
                     return True
@@ -30,21 +41,43 @@ class ServerHandler:
 
     def updatesettings(self,server,key,value):
         with open("data/servers.yml","r+") as file:
+
             data = load(file)
-            if value != 0 or 1:
-                value == 1
+
+            if str(value) == "True":
+                value = 1
+                print("here1")
+            elif str(value) == "False":
+                value = 0
+
+            elif int(value) >= 1:
+                value = 1
+                print("here2")
+            elif int(value) <= 0:
+                value = 0
+
             if server.id not in data:
                 self.serversetup(server)
 
-            if str(key) == "filterwords":
+            if str(key) == "filterwords" or str(key) == "wordfilter" or str(key).lower() == "word filter":
                 data[server.id].update({"filterwords" : int(value)})
-                with open("data/servers.yml","w") as outfile:
-                    outfile.write(dump(data,default_flow_style=False))
-            elif str(key) == "filterspam":
+                self.write(data)
+
+            elif str(key) == "filterspam" or str(key) == "spamfilter" or str(key).lower() == "spam filter":
                 data[server.id].update({"filterspam" : int(value)})
-                with open("data/servers.yml","w") as outfile:
-                    outfile.write(dump(data,default_flow_style=False))
-    def updatecommand(self,server,trigger,response):
+                self.write(data)
+
+            elif str(key) == "welcome" or str(key) == "sayhi" or str(key).lower() == "welcome message":
+                data[server.id].update({"sayhi" : int(value)})
+                self.write(data)
+
+            elif str(key) == "announceban" or str(key) == "onban" or str(key).lower() == "announce ban":
+                data[server.id].update({"onban" : int(value)})
+                self.write(data)
+
+            return bool(value)
+    @staticmethod
+    def updatecommand(server,trigger,response):
         try:
             with open("data/servers.yml","r+") as file:
                 data = load(file)
@@ -55,45 +88,59 @@ class ServerHandler:
                     outfile.write(dump(data,default_flow_style=False))
         except UnicodeEncodeError:
             pass
+
     def removecommand(self,server,trigger):
         with open("data/servers.yml","r+") as file:
             data = load(file)
             data[server.id]["customcmds"].pop(trigger,0)
-            with open("data/servers.yml","w") as outfile:
-                outfile.write(dump(data,default_flow_style=False))
+
+        self.write(data)
+
     def updatechannels(self,server,channel):
         with open("data/servers.yml","r+") as file:
             data = load(file)
             data[server.id]["blacklisted"].append(str(channel))
-            with open("data/servers.yml","w") as outfile:
-                outfile.write(dump(data,default_flow_style=False))
-    def updateadmins(self,server,user):
+
+        self.write(data)
+
+    def removechannels(self,server,channel):
+        with open("data/servers.yml","r+") as file:
+            data = load(file)
+            data[server.id]["blacklisted"].pop(str(channel))
+
+        self.write(data)
+
+    def addadmin(self,server,user):
         with open("data/servers.yml","r+") as file:
             data = load(file)
             if user.id in data[server.id]["admins"]:
                 return
             data[server.id]["admins"].append(str(user.id))
-            with open("data/servers.yml","w") as outfile:
-                outfile.write(dump(data,default_flow_style=False))
+
+        self.write(data)
+
     def changeprefix(self,server,prefix):
         with open("data/servers.yml","r") as file:
             data = load(file)
             if server.id not in data:
                 self.serversetup(server)
             data[server.id]["prefix"] = prefix
-        with open("data/servers.yml","w") as outfile:
-                outfile.write(dump(data,default_flow_style=False))
+
+        self.write(data)
+
     def removeadmin(self,server,user):
         with open("data/servers.yml","r+") as file:
             data = load(file)
             data[server.id]["admins"].remove(user.id)
-            with open("data/servers.yml","w") as outfile:
-                outfile.write(dump(data,default_flow_style=False))
-    def isblacklisted(self,server,channel):
+
+        self.write(data)
+
+    @staticmethod
+    def isblacklisted(server,channel):
         if channel.is_private:
             return
         try:
-            with open("data/servers.yml","r+") as file:
+            with open("data/servers.yml","r") as file:
                data = load(file)
                if channel.name in data[server.id]["blacklisted"]:
                    return True
@@ -101,49 +148,72 @@ class ServerHandler:
                    return False
         except KeyError:
             return False
-    def needspamfilter(self,server):
+
+    @staticmethod
+    def needspamfilter(server):
         with open("data/servers.yml","r") as file:
             data = load(file)
             return bool(data[server.id]["filterspam"])
-    def needwordfilter(self,server):
+
+    @staticmethod
+    def needwordfilter(server):
         with open("data/servers.yml","r") as file:
             data = load(file)
             return bool(data[server.id]["filterwords"])
 
-    def returnsettings(self,server):
+    @staticmethod
+    def returnsettings(server):
         with open("data/servers.yml","r") as file:
             data = load(file)
             return data[server.id]
-    def returncommands(self,server):
+
+    @staticmethod
+    def returncommands(server):
         with open("data/servers.yml","r") as file:
             data = load(file)
             return data[server.id]["customcmds"]
-    def returnwhitelisted(self,server):
+
+    @staticmethod
+    def returnadmins(server):
         with open("data/servers.yml","r") as file:
             data = load(file)
             return data[server.id]["admins"]
-    def returnlogch(self,server):
+
+    @staticmethod
+    def returnlogch(server):
         with open("data/servers.yml","r") as file:
             data = load(file)
             return data[server.id]["logchannel"]
 
-    def issleeping(self,server):
+    @staticmethod
+    def issleeping(server):
         with open("data/servers.yml","r") as file:
             data = load(file)
             return bool(data[server.id]["sleeping"])
+
     def setsleeping(self,server,wat):
         with open("data/servers.yml","r+") as file:
             data = load(file)
             data[server.id]["sleeping"] = wat
-        with open("data/servers.yml","w") as outfile:
-            outfile.write(dump(data,default_flow_style=False))
-    def disabledlogging(self,server):
+
+        self.write(data)
+
+    @staticmethod
+    def haslogging(server):
         if server is None:
             return True
         with open("data/servers.yml","r") as file:
             data = load(file)
             return bool(data[server.id]["logchannel"])
-    def shouldsayhi(self,server):
+
+    @staticmethod
+    def sayhi(server):
         with open("data/servers.yml","r") as file:
             data = load(file)
             return bool(data[server.id]["sayhi"])
+
+    @staticmethod
+    def onban(server):
+        with open("data/servers.yml","r") as file:
+            data = load(file)
+            return bool(data[server.id]["onban"])
