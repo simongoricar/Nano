@@ -18,5 +18,5 @@ by DefaltSimon, made with [discord.py api](https://github.com/Rapptz/discord.py)
 - *PyYaml*
 - *Youtube_dl*
 
-####A list of all available commands is available on the [Wiki](https://github.com/DefaltSimon/AyyBot/wiki/Commands-list) (not yet updated for v2)
+####A list of all available commands is available on the [Wiki](https://github.com/DefaltSimon/AyyBot/wiki/Commands-list) (not yet updated for v2.1)
 
