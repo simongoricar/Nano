@@ -1,5 +1,27 @@
+# coding=utf-8
+
 __author__ = "DefaltSimon"
-# Moderator plugin for AyyBot
+
+# Moderation plugin for AyyBot
+
+from pickle import load
+
+accepted_chars = "abcdefghijklmnopqrstuvwxyz "
+
+def normalize(line):
+    # Ignores punctuation, new lines, etc...
+    accepted = ""
+    for char in line:
+        if char in accepted_chars:
+            accepted += char
+
+    return accepted
+
+
+def twochars(line):  # Normalizes
+    norm = normalize(line)
+    for rn in range(0, len(norm) - 1):
+        yield norm[rn:rn + 1], norm[rn + 1:rn + 2]
 
 class BotModerator:
     def __init__(self):
@@ -10,6 +32,19 @@ class BotModerator:
             for line in file:
                 self.wordlist.append(line.strip("\n"))
 
+        # Gibberish detector
+        self.model = load(open("plugins/spam_model.pki", "rb"))
+
+        self.data = self.model["data"]
+        self.threshold = self.model["threshold"]
+        self.charpos = self.model["positions"]
+
+        # Mute system
+        self.mutedusers = {}
+
+        # Entropy calculator
+        self.chars2 = "abcdefghijklmnopqrstuvwxyz,.-!?_;:|1234567890*=)(/&%$#\"~<> "
+        self.pos2 = dict([(c, index) for index, c in enumerate(self.chars2)])
 
     def checkfilter(self,message):
         """Returns True if there is a banned word
@@ -30,85 +65,61 @@ class BotModerator:
         # If no banned words are found, return False
         return False
 
-    @staticmethod
-    def checkspam(message):
-        """Returns True if spam is found
-        :param message: Discord Message content
+    def checkspam(self, message):
+        """
+        Does a set of checks.
+        :param message: string to check
+        :return: bool
         """
 
-        mostallowedlong = 0.8
-        mostalloedshort = 1.34
+        #if len(message) > 10:  # This detector is 'effective' only when the string is
+        #    result = bool(self.detectgibberish(message))
+        #else:
+        #    result = bool(self.detectcharspam(message))
 
-        current = 0
+        result = bool(self.detectgibberish(message))  # Currently uses only the gibberish detector since the other one does not have much (or enough) better detection of repeated chars
 
-        wwhitelist = ["ha", ":"]
-        cwhitelist = ["h", "a"]
+        return result
 
-        # Checks if it's a sticker
-        def issticker(*args):
-            for arg in args:
-                msg = str(arg).strip(" ")
+    def detectgibberish(self, message):
+        """Returns True if spam is found
+        :param message: string
+        """
+        if not message:
+            return
 
-                if msg.startswith(":") and msg.endswith(":") or msg == "?":
+        th = len(message) / 2.4
+        c = float(0)
+        for ca, cb in twochars(message):
+
+            if self.data[self.charpos[ca]][self.charpos[cb]] < self.threshold[self.charpos[ca]]:
+                c += 1
+
+        return bool(c >= th)
+
+    def detectcharspam(self, message):
+        """
+        String entropy calculator.
+        :param message: string
+        :return: bool
+        """
+
+        counts = [[0 for c in range(len(self.chars2))] for ac in range(len(self.chars2))]
+
+        for o, t in twochars(message):
+            counts[self.pos2[o]][self.pos2[t]] += 1
+
+        thr = 0
+        for this in counts:
+            for another in this:
+                thr += another
+
+        thr /= 3.5
+
+        for this in counts:
+            for another in this:
+                if another > thr:
+                    print("Threshold {}, got {}".format(thr, another))
                     return True
-                else:
-                    return False
 
-        # First a word repetition check
-
-        wordss = str(message).lower().split(" ")
-        for n, word in enumerate(wordss):
-            try:
-                twoback = wordss[n-2]
-            except IndexError:
-                twoback = None
-
-            try:
-                oneback = wordss[n-1]
-            except IndexError:
-                oneback = None
-
-            if word == oneback or word == twoback:
-                if (word not in wwhitelist) and not issticker(word):
-                    current += 2
-
-            # Check for caps
-            if word.isupper() and oneback.isupper() and twoback.isupper():
-                current += 1
-
-
-            # Character repetition check
-            for char in word:
-                try:
-                    twocback = word[word.index(char)-2]
-                except IndexError:
-                    continue
-
-                try:
-                    onecback = word[word.index(char)-1]
-                except IndexError:
-                    continue
-
-                if char == twocback or char == onecback:
-                    if (char in cwhitelist) or char == "*" or issticker(char, twocback, onecback):
-                        pass
-                    else:
-                        current += 2
-
-        # If repetition count it above the threshold, return True
-
-        # Adjusted to the length of the text
-        # Not the best system right now, but I plan on calculating string entropy
-
-        calc = len(message)/2
-
-        if len(message) > 14:
-            if current/calc > mostallowedlong:
-                return True
-            else:
-                return False
-        else:
-            if current/calc > mostalloedshort:
-                return True
-            else:
-                return False
+        return False

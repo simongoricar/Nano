@@ -1,3 +1,5 @@
+# coding=utf-8
+
 __author__ = "DefaltSimon"
 # Messages file for AyyBot
 
@@ -22,7 +24,16 @@ Alternatively, you can check my wiki page: https://github.com/DefaltSimon/AyyBot
 If you are an admin and want to set up your server for AyyBot, type `>getstarted`.
 """
 
-# | char specifies that no args are needed for that command
+simples = """`_hello` - Welcomes you or the mentioned person.
+_randomgif - Posts a random gif from Giphy
+_roll number - rolls a random number
+_wiki term - gives you a description of a term from Wikipedia
+_urban term - gives you a description of a term from Urban Dictionary
+_decide option|option... - decides between your options so you don't have to
+
+For more info about each command, use `_help command`.
+"""
+
 # Template: {"desc": "", "use": None, "alias": None},
 commandhelpsnormal = {
     "_help": {"desc": "This is here.", "use": None, "alias": None},
@@ -101,6 +112,9 @@ commandhelpsadmin = {
     "ayybot.changeprefix": {"desc": "Changes the prefix on the server.", "use": "Use: <command> prefix", "alias": None},
     "ayybot.kill": {"desc": "Restricted to owner, shuts down the bot.", "use": "Use: <command> speshal codee", "alias": None},
     "ayybot.reload": {"desc": "Restricted to owner, reloads all settings from config file.", "use": None, "alias": "Alias: `_reload`"},
+    "_mute": {"desc": "Mutes the user - deletes all future messages from the user until he/she is un-muted.", "use": "Use: <command> <mention or name>", "alias": None},
+    "_unmute": {"desc": "Un-mutes the user (see mute help for more info).", "use": "Use: <command> <mention or name>", "alias": None},
+    "_muted": {"desc": "Displays a list of all members currently muted.", "use": None, "alias": None},
 }
 
 
@@ -128,7 +142,7 @@ _music skip/stop - skips the current song
 _music playing - info
 _music leave - leaves the voice channel if in one```"""""
 
-bugreport = "Found a bug? Please report it to **DefaltSimon** on Discord."
+bugreport = "Found a bug? Please report it to **DefaltSimon** on Discord or Reddit."
 
 
 quotes = [
@@ -159,6 +173,6 @@ quotes = [
 ]
 
 eightball = [
-    "It is certain","It is surely so","Without a doubt","You may rely on it","Most likely","Yes",
-    "Ask again later","Cannot predict now","Concentrate and ask again","I would say yes","JUST DO IT",
-    "My reply is no","My sources say no","Signs point to yes"]
+    "It is certain", "It is surely so", "Without a doubt", "You may rely on it", "Most likely", "Yes",
+    "Ask again later", "Cannot predict now", "Concentrate and ask again", "I would say yes", "JUST DO IT",
+    "My reply is no", "My sources say no", "Signs point to yes"]

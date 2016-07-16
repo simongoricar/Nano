@@ -1,3 +1,5 @@
+# coding=utf-8
+
 """Server data handler for AyyBot"""
 
 
@@ -17,7 +19,7 @@ class ServerHandler:
             data = load(file)
 
             defaultpref = self.parser.get("Settings","defaultprefix")
-            data[server.id] = {"name" : server.name, "owner" : server.owner.name, "filterwords" : 0, "filterspam" : 0, "blacklisted" : [], "customcmds" : {}, "admins" : [], "logchannel" : "logs", "sleeping" : 0, "onban": 0, "sayhi" : 0, "prefix" : str(defaultpref)}
+            data[server.id] = {"name" : server.name, "owner" : server.owner.name, "filterwords" : 0, "filterspam" : 0, "blacklisted" : [], "muted" : [], "customcmds" : {}, "admins" : [], "logchannel" : "logs", "sleeping" : 0, "onban": 0, "sayhi" : 0, "prefix" : str(defaultpref)}
 
         self.write(data)
 
@@ -217,3 +219,37 @@ class ServerHandler:
         with open("data/servers.yml","r") as file:
             data = load(file)
             return bool(data[server.id]["onban"])
+
+    def mute(self, user):
+        with open("data/servers.yml","r") as file:
+            data = load(file)
+
+            if not user.id in data[user.server.id]["muted"]:
+                data[user.server.id]["muted"].append(user.id)
+                self.write(data)
+
+            else:
+                pass
+
+    def ismuted(self, user):  # Actually supposed to be a Member class (not User, because it doesn't have server property)
+        with open("data/servers.yml","r") as file:
+            data = load(file)
+
+            return bool(user.id in data[user.server.id]["muted"])
+
+    def unmute(self, user):
+        with open("data/servers.yml","r") as file:
+            data = load(file)
+
+            if user.id in data[user.server.id]["muted"]:
+                data[user.server.id]["muted"].pop(user.id)
+                self.write(data)
+
+            else:
+                pass
+
+    def mutelist(self, server):
+        with open("data/servers.yml","r") as file:
+            data = load(file)
+
+            return data[server.id]["muted"]

@@ -1,3 +1,5 @@
+# coding=utf-8
+
 """Part of AyyBot"""
 
 from yaml import load,dump
@@ -72,4 +74,10 @@ class BotStats:
         with open("plugins/stats.yml","r+") as file:
             file = load(file)
             file["timespinged"] += 1
+        self.write(file)
+
+    def plusonesupress(self):
+        with open("plugins/stats.yml","r+") as file:
+            file = load(file)
+            file["messagessuppressed"] += 1
         self.write(file)

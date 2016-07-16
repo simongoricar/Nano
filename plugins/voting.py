@@ -1,10 +1,8 @@
+# coding=utf-8
+
 __author__ = "DefaltSimon"
 
 # Voting plugin for AyyBot v2
-
-class AlreadVoted(Exception):
-    def __init__(self):
-        pass
 
 class Vote:
     def __init__(self):
@@ -25,6 +23,7 @@ class Vote:
         voteob = votenames.split("|")
 
         self.votes[server.id] = {}
+        self.voters[server.id] = []
         count = 0
         for this in voteob:
             voteob[count] = this.strip(" ")
@@ -62,14 +61,10 @@ class Vote:
         except ValueError:
             return False
 
-        if voter in self.votes[server.id]:
-            raise AlreadVoted
+        if voter in self.voters[server.id]:
+            return -1
 
-        try:
-            self.voters[server.id].append(voter)
-        except KeyError:
-            self.voters[server.id] = []
-            self.voters[server.id].append(voter)
+        self.voters[server.id].append(voter)
 
         if option > len(self.votes):
             return False
