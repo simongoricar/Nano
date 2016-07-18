@@ -1,4 +1,11 @@
-v2.1
+2.1.1
+- Replaces time.sleep calls with asyncio.sleep
+- Fixed bugs
+- Shortened code for 'playing' status change
+- Added logging to log.txt
+- Added a special debugging mode
+
+2.1
 - More @ayybot mention responses
 - Completely new spam detection (2 character markov chain based detection)
 - Muting feature

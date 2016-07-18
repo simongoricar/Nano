@@ -7,6 +7,7 @@ import time
 import wikipedia
 import requests
 import giphypop
+import sys
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 from random import randint
@@ -20,14 +21,14 @@ from plugins import voting, stats, mentions, moderator
 from data import serverhandler
 
 __author__ = 'DefaltSimon'
-__version__ = '2.1'
+__version__ = '2.1.1'
 
 
 # Instances
 
 client = discord.Client()
 parser = configparser.ConfigParser()
-giphy = giphypop.Giphy(api_key="dc6zaTOxFJmzC")  # Public beta key, available on their GitHub page
+giphy = giphypop.Giphy()  # Public beta key, available on their GitHub page
 handler = serverhandler.ServerHandler()
 vote = voting.Vote()
 stat = stats.BotStats()
@@ -57,31 +58,29 @@ class PrefixNotSet(Exception):
     def __init__(self, *args, **kwargs):
         pass
 
-
-# Changes 'playing' status
-class StatusHandler:
-    def __init__(self):
-        pass
-
-    @staticmethod
-    async def set(content):
-        game = discord.Game(name=str(content))
-        loop.create_task(client.change_status(game=game))
+def log(content):
+    with open("log.txt", "a") as file:
+        date = datetime.now()
+        cn = date.strftime("%d-%m-%Y %H:%M:%S") + " - " + str(content) + "\n"
+        file.write(cn)
 
 # Main class
 
 
 class AyyBot:
-    def __init__(self, owner=False):
+    def __init__(self, owner, debug=False):
         self.admins = {}
         self.prefixes = {}
         self.mutes = {}
+
+        # Debug run
+        self.debug = bool(debug)
 
         self.updateprefixes()
         self.updateadmins()
 
         self.boottime = time.time()
-        self.ownerid = owner
+        self.ownerid = int(owner)
 
         # TODO multi-server implementation
         self.vc = None
@@ -137,6 +136,9 @@ class AyyBot:
             return False
 
     async def on_message(self, message):
+        if self.debug:
+            if str(message.channel.server.id) != str(parser.get("Settings", "debugserver")):
+                return
 
         if message.author.id == client.user.id:
             return
@@ -147,7 +149,15 @@ class AyyBot:
         except TypeError:
             isadmin = False
 
+        if not isadmin:
+            for role in message.author.roles:
+                if role.name == "Admin":
+                    isadmin = True
+                    continue
+
         isowner = bool(str(message.author.id) == str(self.ownerid))
+
+        isserverowner = bool(str(message.author.id) == str(message.channel.server.owner.id))
 
         # Delete message if the member is muted.
         if self.ismuted(message) and (message.author.id != self.ownerid):
@@ -161,11 +171,12 @@ class AyyBot:
 
         # Import code here
 
-        normalcmds = ["_help", "_hello", "_uptime", "_randomgif", "_8ball", "_wiki", "_define", "_urban", "_avatar",
+        normalcmds = ["_help", "_hello", "_uptime", "_randomgif", "_8ball", "_wiki", "_define", "_urban",
                       "_ping", "_cmd list", "_roll", "_ayybot", "ayybot.info", "_github", "_decide", "_cat", "_kappa",
                       "_prefix", "ayy lmao", "_vote", "_status", "ayybot.status", "_stats", "ayybot.stats", "_music join",
                       "_music leave", "_music volume", "_music pause", "_music resume", "_music playing", "_music help",
-                      "_music play", "_music skip", "_music stop", "ayybot.bug", "_bug", "_vote", "ayybot.prefix"]
+                      "_music play", "_music skip", "_music stop", "ayybot.bug", "_bug", "_vote", "ayybot.prefix", "_changes",
+                      "_changelog"]
 
         admincmds = ["ayybot.ban", "ayybot.unban", "ayybot.kick", "_ban", "_unban", "_kick", "_avatar", "_role add",
                      "_role replacewith", "_role remove", "_cmd add", "_cmd remove",
@@ -173,7 +184,7 @@ class AyyBot:
                      "ayybot.admins list", "ayybot.sleep", "ayybot.wake", "_invite", "ayybot.invite", "ayybot.displaysettings",
                      "ayybot.settings", "_vote start", "_vote end", "ayybot.blacklist add", "ayybot.blacklist remove", "_getstarted",
                      "ayybot.getstarted", "ayybot.changeprefix", "_playing", "ayybot.kill", "_user", "_reload", "ayybot.reload", "_muted",
-                     "_mute", "_unmute"]
+                     "_mute", "_unmute", "_purge"]
 
         privates = ["_help", "_uptime", "_randomgif", "_8ball", "_wiki", "_define", "_urban", "_github", "_bug", "_uptime", "_ayybot"]
 
@@ -196,6 +207,7 @@ class AyyBot:
 
         except KeyError:
             handler.serversetup(message.channel.server)
+            log("Server settings set up: {}".format(message.channel.server))
             prefix = DEFAULT_PREFIX
             print("Server '{}' has been given the default prefix".format(message.channel.server.name))
             handler.changeprefix(message.channel.server, DEFAULT_PREFIX)
@@ -280,7 +292,6 @@ class AyyBot:
                     if sf or wf:
                         # Apply
                         if issf:
-                            print("issf")
 
                             # Attempt to catch errors (messages not being there)
                             try:
@@ -289,7 +300,6 @@ class AyyBot:
                                 pass
 
                         if iswf:
-                            print("iswf")
 
                             try:
                                 await client.delete_message(message)
@@ -297,20 +307,20 @@ class AyyBot:
                                 pass
 
                     return
-        # Just a quick shortcut
 
+        # Just a quick shortcut
         def startswith(string):
             if not message:
                 raise MessageNotFoundError
 
-            if str(message.content).lower().startswith(str(string).lower()):
+            if str(message.content).lower().startswith(str(string)):
                 return True
             else:
                 return False
 
         # ayybot.wake command check
         if startswith("ayybot.wake"):
-            if not isadmin or isowner:
+            if not isadmin or not isowner or not isserverowner:
                 await client.send_message(message.channel, "You are not allowed to use this command.")
                 return
 
@@ -318,10 +328,9 @@ class AyyBot:
             if not handler.issleeping(message.channel.server):
                 return
 
-            if isadmin or isowner:
-                handler.setsleeping(message.channel.server, 0)
-                await client.send_message(message.channel, "I am back.")
-                stat.plusslept()
+            handler.setsleeping(message.channel.server, 0)
+            await client.send_message(message.channel, "I am back.")
+            stat.plusslept()
 
 
         # Before checking for commands checks for sleep state and server file existence
@@ -331,6 +340,7 @@ class AyyBot:
 
         if not handler.serverexists(message.channel.server):
             handler.serversetup(message.channel.server)
+            log("Server settings set up: {}".format(message.channel.server))
             print("Automatically set up server data ({})".format(message.channel.server.name))
 
         # The command declarations begin here
@@ -365,8 +375,13 @@ class AyyBot:
 
             else:
                 search = str(message.content)[len(prefix + "help "):]
+                k = False
+
                 for key in commandhelpsnormal.keys():
+
                     if search.startswith(str(key).replace("_", prefix)):
+
+                        k = True
                         cmd = str(key).replace("_", prefix)
                         desc = commandhelpsnormal[str(key)]["desc"]
                         use = commandhelpsnormal[str(key)]["use"]
@@ -375,6 +390,7 @@ class AyyBot:
                         # Compiles proper message
                         if use and alias:
                             preset = """Command: **{}**
+
 ```css
 Description: {}
 
@@ -384,6 +400,7 @@ Description: {}
 
                         elif alias and not use:
                             preset = """Command: **{}**
+
 ```css
 Description: {}
 
@@ -392,6 +409,7 @@ Description: {}
 
                         elif use and not alias:
                             preset = """Command: **{}**
+
 ```css
 Description: {}
 
@@ -400,6 +418,7 @@ Description: {}
 
                         elif not use and not alias:
                             preset = """Command: **{}**
+
 ```css
 Description: {}```
 """.format(cmd, desc)
@@ -416,6 +435,7 @@ Description: {}```
 
                 for key in commandhelpsadmin.keys():
                     if search.startswith(str(key).replace("_", prefix)):
+                        k = True
                         cmd = str(key).replace("_", prefix)
                         desc = commandhelpsadmin[str(key)]["desc"]
                         use = commandhelpsadmin[str(key)]["use"]
@@ -424,6 +444,7 @@ Description: {}```
                         # Compiles proper message
                         if use and alias:
                             preset = """Command: **{}** (admins only)
+
 ```css
 Description: {}
 
@@ -433,6 +454,7 @@ Description: {}
 
                         elif alias and not use:
                             preset = """Command: **{}** (admins only)
+
 ```css
 Description: {}
 
@@ -441,6 +463,7 @@ Description: {}
 
                         elif use and not alias:
                             preset = """Command: **{}** (admins only)
+
 ```css
 Description: {}
 
@@ -449,6 +472,7 @@ Description: {}
 
                         elif not use and not alias:
                             preset = """Command: **{}** (admins only)
+
 ```css
 Description: {}```
 """.format(cmd, desc)
@@ -462,6 +486,9 @@ Description: {}```
 
                         stat.plushelpcommand()
                         return
+
+                if not k:
+                    await client.send_message(message.channel, "Such a command could not be found.\n(Use: _help **'command with prefix'**)".replace("_", prefix))
 
         # Ping
         elif startswith(prefix + "ping"):
@@ -516,7 +543,7 @@ Description: {}```
         elif startswith(prefix + "uptime"):
             sec = timedelta(seconds=time.time()-self.boottime)
             d = datetime(1, 1, 1) + sec
-            uptime = "I have been tirelessly answering people without sleep for **{} days, {} hours, {} minutes and {} seconds!**".format(d.day - 1, d.hour, d.minute, d.second)
+            uptime = "I have been tirelessly answering people without sleep for\n**{} days, {} hours, {} minutes and {} seconds!**".format(d.day - 1, d.hour, d.minute, d.second)
 
             await client.send_message(message.channel, uptime)
 
@@ -591,7 +618,7 @@ Description: {}```
 
         # Vote creation
         elif startswith(prefix + "vote start"):
-            if not isowner or isadmin:
+            if not (isowner or isadmin or isserverowner):
                 await client.send_message(message.channel, "You are not permitted to use this command. :x:")
                 stat.pluswrongperms()
                 return
@@ -615,7 +642,7 @@ Description: {}```
 
         # Vote end
         elif startswith(prefix + "vote end"):
-            if not isowner or isadmin:
+            if not (isowner or isadmin or isserverowner):
                 await client.send_message(message.channel, "You are not permitted to use this command. :x:")
                 stat.pluswrongperms()
                 return
@@ -659,18 +686,17 @@ Description: {}```
         # Simple status (server, user count)
         elif startswith(prefix + "status") or startswith("ayybot.status"):
             servercount = 0
+            members = 0
+            channels = 0
+
             for server in client.servers:
                 servercount += 1
+                members += int(server.member_count)
 
-            members = 0
-            for member in client.get_all_members():
-                members += 1
+                for channel in server.channels:
+                    channels += 1
 
-            channels = 0
-            for channel in client.get_all_channels():
-                channels += 1
-
-            dstats = "**Quick Stats**```Servers: {}\nUsers: {}\nChannels: {}```".format(servercount, members, channels)
+            dstats = "**Stats**```Servers: {}\nUsers: {}\nChannels: {}```".format(servercount, members, channels)
 
             await client.send_message(message.channel, dstats)
 
@@ -786,7 +812,7 @@ Description: {}```
                     await client.send_message(message.channel, "Not a valid URL or incompatible video :x:")
 
                 while self.ytplayer is None:
-                    time.sleep(0.1)
+                    await asyncio.sleep(0.1)
 
                 try:
                     await self.ytplayer.start()
@@ -902,6 +928,9 @@ Description: {}```
         elif startswith(prefix + "bug") or startswith("ayybot.bug"):
             await client.send_message(message.channel, bugreport)
 
+        elif startswith(prefix + "changes") or startswith(prefix + "changelog"):
+            await client.send_message(message.channel, "Changes in the recent versions can be found here: https://github.com/DefaltSimon/AyyBot/blob/master/changes.txt")
+
         #
         # Here start ADMIN ONLY commands
         #
@@ -910,17 +939,14 @@ Description: {}```
 
         # If a command was already executed, return
         # If it is not an admin command, return before sending 'no permission' message
-        if isacommand or not isadmincommand:
+        if isacommand and not isadmincommand:
             return
 
-        isk = False
-
-        if not isowner:
+        if not (isowner or isserverowner):
             if not isadmin:
                 await client.send_message(message.channel, "You are not permitted to use this command. :x:")
                 stat.pluswrongperms()
                 return
-
 
         # Simple ban with CONFIRM check
         if startswith(prefix + "ban") or startswith("ayybot.ban"):
@@ -982,15 +1008,18 @@ Description: {}```
         elif startswith(prefix + "avatar"):
             # Selects the proper user
             if len(message.mentions) == 0:
-                name = str(str(message.content)[len(prefix + "user "):])
+                name = str(str(message.content)[len(prefix + "avatar "):])
                 member = discord.utils.find(lambda m: m.name == str(name), message.channel.server.members)
             else:
                 member = message.mentions[0]
 
+            if not member:
+                member = message.author
+
             url = member.avatar_url
 
             if not url:
-                await client.send_message(message.channel, "**{}** does not have an avatar. shame :P".format())
+                await client.send_message(message.channel, "**{}** does not have an avatar. :expressionless:".format())
             else:
                 await client.send_message(message.channel, "**{}**'s avatar: {}".format(member.name, url))
 
@@ -1028,6 +1057,7 @@ Description: {}```
         # Server setup should be automatic, but if you want to reset settings, here ya go
         elif startswith("ayybot.serversetup") or startswith("ayybot.server.setup"):
             handler.serversetup(message.channel.server)
+            log("Server settings set up: {}".format(message.channel.server))
             await client.send_message(message.channel, "Server settings reset :upside_down:")
 
             self.updateadmins()
@@ -1176,7 +1206,10 @@ Prefix: {}```""".format(bchan, cmds, spam, wfilter, settings["logchannel"], len(
             except IndexError:
                 return
 
-            value = handler.updatesettings(message.channel.server, cut[0], cut[1])
+            try:
+                value = handler.updatesettings(message.channel.server, cut[0], cut[1])
+            except IndexError:
+                return
 
             if str(cut[0]) == "filterwords" or str(cut[0]) == "wordfilter" or str(cut[0]).lower() == "word filter":
                 if value:
@@ -1226,7 +1259,7 @@ The setup consists of a few steps, where you will be prompted to answer.
 Since you started, I will only listen to your replies.
 **Let's get started, shall we?**"""""
             await client.send_message(message.channel, stmsg)
-            time.sleep(2)
+            await asyncio.sleep(2)
 
             # FIRST MESSAGE
             frmsg = """*1/4* It is recommended that you reset all **bot-related** server settings before continuing.
@@ -1359,30 +1392,30 @@ Don't forget, you can also add/remove/list custom commands with `_cmd add/remove
         # Shuts the bot down
         elif startswith("ayybot.kill"):
             # Restricted to owner
-            if not message.author.id == self.ownerid:
+            if not isowner:
                 await client.send_message(message.channel, "You are not permitted to use this command. :x:")
                 return
 
-            if message.author.id == self.ownerid:
-                await client.send_message(message.channel, "**DED**")
-                exit(0)
+            await client.send_message(message.channel, "**DED**")
+            await client.logout()
+            exit(0)
 
         # Changes 'playing' status
         elif startswith(prefix + "playing"):
             # Restricted to owner
-            if not message.author.id == self.ownerid:
+            if not isowner:
                 await client.send_message(message.channel, "You are not permitted to use this command. :x:")
                 return
 
             cut = str(message.content)[len(prefix + "playing "):]
-            await status.set(cut)
+            await client.change_status(game=discord.Game(name=cut))
 
             await client.send_message(message.channel, "Status set :white_check_mark:")
 
         # Reloads settings.ini, prefixes and admins
         elif startswith(prefix + "reload") + startswith("ayybot.reload"):
             # Restricted to owner
-            if not message.author.id == self.ownerid:
+            if not isowner:
                 await client.send_message(message.channel, "You are not permitted to use this command. :x:")
                 return
 
@@ -1492,15 +1525,43 @@ Created at: {}```""".format(name,bott,mid,avatar,role,joindate,createdate)
             await client.send_message(message.channel, "{} has been unmuted :heavy_check_mark:".format(user.name))
             self.updatemutes()
 
+        elif startswith(prefix + "purge"):
+            cut = str(message.content)[len(prefix + "purge "):]
 
+            try:
+                amount = int(cut.split(" ")[0])
+            except ValueError:
+                return
+
+            if len(message.mentions) >= 1:
+                user = message.mentions[0]
+
+            elif len(message.mentions) == 0:
+                name = str(str(message.content)[len(prefix + "purge  " + str(amount)):])
+                user = discord.utils.find(lambda m: m.name == str(name), message.channel.server.members)
+
+            else:
+                await client.send_message(message.channel, "Please mention somebody to purge his/her messages.")
+                return
+
+            if not user:
+                return
+
+            def isauthor(m):
+                return bool(m.author.id == user.id)
+
+            dl = await client.purge_from(channel=message.channel, limit=amount, check=isauthor)
+
+            msg = await client.send_message(message.channel, "Purged **{}** messages from **{}** in the last {} messages :)".format(len(dl), user.name, amount))
+            await asyncio.sleep(5)
+            await client.delete_message(msg)
 
 # When a member joins the server
 @client.event
 async def on_member_join(member):
-    server = member.server
 
-    if handler.sayhi(server):
-        await client.send_message(member.server.default_channel, "<@" + member.id + ">, welcome to **{}!**")
+    if handler.sayhi(member.server):
+        await client.send_message(member.server.default_channel, "<@" + member.id + ">, welcome to **{}!**".format(member.server.name))
 
 
 # When somebody gets banned
@@ -1510,15 +1571,25 @@ async def on_member_ban(member):
         await client.send_message(member.server.default_channel, "**{}** has been banned")
 
     if handler.haslogging(member.server):
-
         logchannel = discord.utils.find(lambda channel: channel.name == handler.returnlogch(member.server),member.server.channels)
         if logchannel:
             await client.send_message(logchannel, "**{}** has been banned.".format(member.name))
 
+@client.event
+async def on_server_join(server):
+    await client.send_message(server.default_channel, "**Hi!** My name is AyyBot!\nNow that you have invited me to your server, you might want to set up some things."
+                                                      "Right now only the server owner can use my restricted commands. But no worries, you can add admin permissions to others using `ayybot.admins add @mention`!"
+                                                      "\nTo get started, type `!getstarted` as the server owner. It will help you set up most of the things. After that, try `!help`.")
+
+    log("Joined server with {} members : {}".format(server.member_count, server.name))
+
+@client.event
+async def on_server_remove(server):
+    log("Removed from server: {}".format(server.name))
+
 # Events and stuff
 
-ayybot = AyyBot(owner=parser.getint("Settings","ownerid"))
-status = StatusHandler()
+ayybot = AyyBot(owner=parser.getint("Settings","ownerid"), debug=parser.getboolean("Settings", "debug"))
 
 @client.event
 async def on_ready():
@@ -1526,10 +1597,15 @@ async def on_ready():
     print("Username: " + str(client.user.name))
     print("ID: " + str(client.user.id))
 
+    if ayybot.debug:
+        print("Mode: DEBUG")
+
     # Sets the status on startup
     name = parser.get("Settings", "initialstatus")
-    if bool(name):
-        await status.set(name)
+    if name:
+        await client.change_status(game=discord.Game(name=name))
+
+    log("Started as {} with id {}".format(client.user.name, client.user.id))
 
 
 @client.event
