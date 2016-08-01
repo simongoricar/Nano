@@ -48,13 +48,11 @@ class ServerHandler:
 
             if str(value) == "True":
                 value = 1
-                print("here1")
             elif str(value) == "False":
                 value = 0
 
             elif int(value) >= 1:
                 value = 1
-                print("here2")
             elif int(value) <= 0:
                 value = 0
 
@@ -133,7 +131,11 @@ class ServerHandler:
     def removeadmin(self,server,user):
         with open("data/servers.yml","r+") as file:
             data = load(file)
-            data[server.id]["admins"].remove(user.id)
+
+            try:
+                data[server.id]["admins"].remove(user.id)
+            except ValueError:
+                return  # If user is not admin
 
         self.write(data)
 

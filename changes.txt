@@ -1,3 +1,10 @@
+2.1.2
+- !johncena command removed
+- Redundant console prints removed
+- !help command: fixed too many newlines
+- Added commands: _mc/_minecraft and _steam/_steam friends/_steam games
+- Set up logging module for easy debugging
+
 2.1.1
 - Replaces time.sleep calls with asyncio.sleep
 - Fixed bugs

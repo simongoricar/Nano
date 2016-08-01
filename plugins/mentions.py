@@ -30,7 +30,7 @@ class MentionHandler:
 
             return str(lst[rn])
 
-        elif has("do you wanna build a snowman","do you want to build a snowman"):
+        elif has("do you wanna build a snowman", "do you want to build a snowman"):
             return "C'mon lets go out and play!"
 
         elif has("die"):
@@ -50,3 +50,6 @@ class MentionHandler:
 
         elif has("what is this"):
             return "SPARTA!"
+
+        elif has("help"):
+            return "Use !help to get help, (! is the default prefix)"

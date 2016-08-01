@@ -5,13 +5,11 @@ __author__ = "DefaltSimon"
 
 
 messagelist = {
-    "_rip": "Rest in peperoni <mentioned>",
-    "_johncena": "Yeah, his name is JOHN CENA!",
+    "_rip": "Rest in *peperoni* indeed.",
     "ayybot.prefix": "The prefix to use is **_**",
     "_prefix": "You guessed it!",
     "ayy lmao": "Ayy lmao, my great inspiration in the world of memes.",
     "_cat": "meow! https://gif-avatars.com/img/90x90/cattypo.gif"
-
 }
 
 
@@ -20,7 +18,7 @@ helpmsg = """**Hi!** I see you're a bit lost! No worries, I'm here to help.
 To get familiar with simple commands, type `>help simple`.
 If you want specific info about a command, do `>help command`.
 
-Alternatively, you can check my wiki page: https://github.com/DefaltSimon/AyyBot/wiki/Commands-list
+Or you could just simply take a look at my wiki page: https://github.com/DefaltSimon/AyyBot/wiki/Commands-list
 If you are an admin and want to set up your server for AyyBot, type `>getstarted`.
 If you need additional help, you can visit "my official server" : https://discord.gg/FZJB6UJ
 """
@@ -32,8 +30,7 @@ _wiki term - gives you a description of a term from Wikipedia
 _urban term - gives you a description of a term from Urban Dictionary
 _decide option|option... - decides between your options so you don't have to
 
-These are only some of the simpler commands. For more info about each command, use `_help command`.
-"""
+These are just a few of some of the simpler commands. For more info about each command, use `_help command` Or try `_help` to look at the wiki page with all the commands."""
 
 # Template: {"desc": "", "use": None, "alias": None},
 commandhelpsnormal = {
@@ -78,6 +75,11 @@ commandhelpsnormal = {
     "ayybot.prefix": {"desc": "Helps you figure out the prefix.", "use": None, "alias": None},
     "_changes": {"desc": "A list of changes in the recent versions.", "use": None, "alias": "Alias: _changelog"},
     "_changelog": {"desc": "A list of changes in the recent versions.", "use": None, "alias": "Alias: _changes"},
+    "_steam": {"desc": "Searches for the specified steam id.\nSubcommands: `steam games`, `steam friends`", "use": "Use: <command> <end of user url/id>", "alias": None},
+    "_steam games": {"desc": "Searches for all owned games in user's account.", "use": "Use: <command> <end of user url/id>", "alias": None},
+    "_steam friends": {"desc": "Seaches for all friends that user has.", "use": "Use: <command> <end of user url/id>", "alias": None},
+    "_mc": {"desc": "Searches for items and displays their details", "use": "Use: <command> <item name or id:meta>", "alias": "Alias: _minecraft"},
+    "_minecraft": {"desc": "Searches for items and displays their details", "use": "Use: <command> <item name or id:meta>", "alias": "Alias: _mc"},
 }
 
 commandhelpsadmin = {
@@ -99,8 +101,8 @@ commandhelpsadmin = {
     "_playing": {"desc": "Restricted to owner, changes 'playing' status.", "use": "Use: <command> <status>", "alias": None},
     "_user": {"desc": "Gives info about the user", "use": "Use: <command> <mention or name>", "alias": None},
     "_reload": {"desc": "Restricted to owner, reloads all settings from config file.", "use": None, "alias": "Alias: ayybot.reload"},
-    "ayybot.serversetup": {"desc": "(Re)Sets all server related bot settings to default.", "use": None, "alias": "Alias: ayybot.server.setup"},
-    "ayybot.server.setup": {"desc": "(Re)Sets all server related bot settings to default.", "use": None, "alias": "Alias: ayybot.serversetup"},
+    "ayybot.serversetup": {"desc": "(Re)sets all server related bot settings to default.", "use": None, "alias": "Alias: ayybot.server.setup"},
+    "ayybot.server.setup": {"desc": "(Re)sets all server related bot settings to default.", "use": None, "alias": "Alias: ayybot.serversetup"},
     "ayybot.admins add": {"desc": "Adds a user to admins on the server.", "use": "Use: <command> <mention>", "alias": None},
     "ayybot.admins remove": {"desc": "Removes a user from admins on the server.", "use": "Use: <command> <mention>", "alias": None},
     "ayybot.admins list": {"desc": "Lists all admins on the server.", "use": None, "alias": None},

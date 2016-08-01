@@ -7,7 +7,7 @@ import time
 import wikipedia
 import requests
 import giphypop
-import sys
+import logging
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 from random import randint
@@ -17,25 +17,31 @@ from discord.voice_client import StreamPlayer
 
 # AyyBot modules
 from utils import *
-from plugins import voting, stats, mentions, moderator
+from plugins import voting, stats, mentions, moderator, minecraft, steam
 from data import serverhandler
 
 __author__ = 'DefaltSimon'
-__version__ = '2.1.1'
+__version__ = '2.1.2'
 
 
 # Instances
 
 client = discord.Client()
+
 parser = configparser.ConfigParser()
+parser.read("settings.ini")
+
 giphy = giphypop.Giphy()  # Public beta key, available on their GitHub page
 handler = serverhandler.ServerHandler()
 vote = voting.Vote()
 stat = stats.BotStats()
 mention = mentions.MentionHandler()
 mod = moderator.BotModerator()
+mc = minecraft.Minecraft()
+s = steam.Steam(parser.get("Settings", "steamapikey"))
 
-parser.read("settings.ini")
+# Logging setup
+logging.basicConfig(level=logging.INFO)
 
 # Constants
 
@@ -176,7 +182,7 @@ class AyyBot:
                       "_prefix", "ayy lmao", "_vote", "_status", "ayybot.status", "_stats", "ayybot.stats", "_music join",
                       "_music leave", "_music volume", "_music pause", "_music resume", "_music playing", "_music help",
                       "_music play", "_music skip", "_music stop", "ayybot.bug", "_bug", "_vote", "ayybot.prefix", "_changes",
-                      "_changelog"]
+                      "_changelog", "_johncena", "_rip", "_steam ", "_mc ", "_minecraft"]
 
         admincmds = ["ayybot.ban", "ayybot.unban", "ayybot.kick", "_ban", "_unban", "_kick", "_avatar", "_role add",
                      "_role replacewith", "_role remove", "_cmd add", "_cmd remove",
@@ -395,8 +401,7 @@ class AyyBot:
 Description: {}
 
 {}
-{}```
-""".format(cmd, desc, use, alias)
+{}```""".format(cmd, desc, use, alias)
 
                         elif alias and not use:
                             preset = """Command: **{}**
@@ -404,8 +409,7 @@ Description: {}
 ```css
 Description: {}
 
-{}```
-""".format(cmd, desc, alias)
+{}```""".format(cmd, desc, alias)
 
                         elif use and not alias:
                             preset = """Command: **{}**
@@ -413,15 +417,13 @@ Description: {}
 ```css
 Description: {}
 
-{}```
-""".format(cmd, desc, use)
+{}```""".format(cmd, desc, use)
 
                         elif not use and not alias:
                             preset = """Command: **{}**
 
 ```css
-Description: {}```
-""".format(cmd, desc)
+Description: {}```""".format(cmd, desc)
                         else:
                             print("How is this even possible?!")
                             return
@@ -449,8 +451,7 @@ Description: {}```
 Description: {}
 
 {}
-{}```
-""".format(cmd, desc, use, alias)
+{}```""".format(cmd, desc, use, alias)
 
                         elif alias and not use:
                             preset = """Command: **{}** (admins only)
@@ -458,8 +459,7 @@ Description: {}
 ```css
 Description: {}
 
-{}```
-""".format(cmd, desc, alias)
+{}```""".format(cmd, desc, alias)
 
                         elif use and not alias:
                             preset = """Command: **{}** (admins only)
@@ -467,15 +467,13 @@ Description: {}
 ```css
 Description: {}
 
-{}```
-""".format(cmd, desc, use)
+{}```""".format(cmd, desc, use)
 
                         elif not use and not alias:
                             preset = """Command: **{}** (admins only)
 
 ```css
-Description: {}```
-""".format(cmd, desc)
+Description: {}```""".format(cmd, desc)
                         else:
                             print("How is this even possible?!")
                             return
@@ -667,14 +665,15 @@ Description: {}```
 
         # People can vote with vote <number>
         elif startswith(prefix + "vote"):
+            # Ignore if no votes are going on
+            if not vote.inprogress(message.channel.server):
+                    return
+
             if not startswith(prefix + "vote start") and not startswith(prefix + "vote end"):
                 try:
                     num = int(str(message.content)[len(prefix + "vote "):])
                 except ValueError:
                     await client.send_message(message.channel, "Please select your choice and reply with it's number :upside_down:")
-                    return
-
-                if not vote.inprogress(message.channel.server):
                     return
 
                 gotit = vote.countone(num, message.author.id, message.channel.server)
@@ -930,6 +929,148 @@ Description: {}```
 
         elif startswith(prefix + "changes") or startswith(prefix + "changelog"):
             await client.send_message(message.channel, "Changes in the recent versions can be found here: https://github.com/DefaltSimon/AyyBot/blob/master/changes.txt")
+
+        elif startswith(prefix + "steam"):  # TODO early stages
+            if startswith(prefix + "steam friends "):
+                uid = str(message.content)[len(prefix + "steam friends "):]
+
+                # Friend search
+                await client.send_typing(message.channel)
+                username, friends = s.get_friends(uid)
+
+                friends = ["`" + friend + "`" for friend in friends]
+
+                if not username:
+                    await client.send_message(message.channel, "User **does not exist**.")
+                    return
+
+                await client.send_message(message.channel, "*User:* **{}**\n\n*Friends:* {}".format(username, ", ".join(friends)))
+
+            elif startswith(prefix + "steam games"):
+                uid = str(message.content)[len(prefix + "steam games "):]
+
+                # Game search
+                await client.send_typing(message.channel)
+                username, games = s.get_games(uid)
+
+                if not username:
+                    await client.send_message(message.channel, "User **does not exist**.")
+                    return
+
+                games = ["`" + game + "`" for game in games]
+
+                try:
+                    await client.send_message(message.channel, "*User:* **{}**:\n\n*Games:* {}".format(username, ", ".join(games)))
+                except discord.HTTPException:
+                    await client.send_message(message.channel, "This message can not fit onto Discord: **user has too many games to display (lol)**")
+
+            elif startswith(prefix + "steam"):
+                uid = str(message.content)[len(prefix + "steam "):]
+
+                # Basic search
+                await client.send_typing(message.channel)
+                steamuser = s.get_user(uid)
+
+                if not steamuser:
+                    await client.send_message(message.channel, "User **does not exist**.")
+                    return
+
+                ms = """User: **{}**
+```css
+Status: {}
+Level: {}
+Games: {} (including free games)
+Friends: {}```\nDirect link: http://steamcommunity.com/id/{}/""".format(steamuser.name, "Online" if steamuser.state else "Offline", steamuser.level, len(steamuser.games), len(steamuser.friends), uid)
+
+                try:
+                    await client.send_message(message.channel, ms)
+                except discord.HTTPException:
+                    await client.send_message(message.channel, "This message can not fit onto Discord: **user has too many friends to display (lol)**")
+
+        elif startswith(prefix + "mc") or startswith(prefix + "minecraft"):
+            if startswith(prefix + "mc "):
+                da = message.content[len(prefix + "mc "):]
+            elif startswith(prefix + "minecraft "):
+                da = message.content[len(prefix + "minecraft "):]
+
+            else:
+                # Help message
+                await client.send_message(message.channel, "**Minecraft**\n```css\n_mc name/id:meta - search for items and display their details```".replace("_", prefix))
+                return
+
+            # Determines if arg is id or name
+            if len(str(da).split(":")) > 1:
+                typ = 1
+
+            else:
+                try:
+                    int(da)
+                    typ = 1
+                except ValueError:
+                    typ = 2
+
+            # Requests item data from minecraft plugin
+            if typ == 1:
+                data = mc.id_to_data(da)
+            else:
+                # Group(ify)
+                if str(da).lower() == "wool":
+                    data = mc.group_to_list(35)
+                elif str(da).lower() == "stone":
+                    data = mc.group_to_list(1)
+                elif str(da).lower() == "wood plank":
+                    data = mc.group_to_list(5)
+                elif str(da).lower() == "sapling":
+                    data = mc.group_to_list(6)
+                elif str(da).lower() == "wood":
+                    data = mc.group_to_list(17)
+                elif str(da).lower() == "leaves":
+                    data = mc.group_to_list(18)
+                elif str(da).lower() == "sandstone":
+                    data = mc.group_to_list(24)
+                elif str(da).lower() == "tulip":
+                    data = mc.group_to_list(38)
+                elif str(da).lower() == "double slab":
+                    data = mc.group_to_list(43)
+                elif str(da).lower() == "slab":
+                    data = mc.group_to_list(44)
+                elif str(da).lower() == "stained glass":
+                    data = mc.group_to_list(95)
+                elif str(da).lower() == "stained clay":
+                    data = mc.group_to_list(159)
+                elif str(da).lower() == "stained glass pane":
+                    data = mc.group_to_list(160)
+                elif str(da).lower() == "carpet":
+                    data = mc.group_to_list(171)
+                elif str(da).lower() == "dye":
+                    data = mc.group_to_list(351)
+
+                else:
+                    data = mc.name_to_data(str(da))
+
+            if not data:
+                await client.send_message(message.channel, "**No item with that name/id**")
+                return
+
+            if not isinstance(data, list):
+                details = """**{}**
+```css
+Id: {}:{}```""".format(data.get("name"), data.get("type"), data.get("meta"))
+
+                # Details are uploaded simultaneously with the picture
+                with open("plugins/mc_item_png/{}-{}.png".format(data.get("type"), data.get("meta") or 0), "rb") as pic:
+                    await client.send_file(message.channel, pic, content=details)
+            else:
+                combined = []
+                for item in data:
+                    details = """**{}**
+```css
+Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
+                    combined.append(details)
+
+                await client.send_message(message.channel, "".join(combined))
+
+
 
         #
         # Here start ADMIN ONLY commands
@@ -1190,15 +1331,21 @@ Description: {}```
                     else:
                         wfilter = "Off"
 
+                    if bool(settings["sayhi"]):
+                        sayhi = "On"
+                    else:
+                        sayhi = "Off"
+
                     await client.send_message(message.channel, """**Settings for current server:**
 ```css
 Blacklisted channels: {}
 Commands: {}
 Spam filter: {}
 Word filter: {}
-Log channel: {}
+Log channel: {} (coming soon)
+Welcome message: {}
 Number of admins: {}
-Prefix: {}```""".format(bchan, cmds, spam, wfilter, settings["logchannel"], len(settings["admins"]), settings["prefix"]))
+Prefix: {}```""".format(bchan, cmds, spam, wfilter, settings["logchannel"], sayhi, len(settings["admins"]), settings["prefix"]))
 
         elif startswith("ayybot.settings"):
             try:
@@ -1366,7 +1513,7 @@ Reply with `YES` or `NO` after you decide.
 
             finalmsg = """**This concludes the basic server setup.**
 
-There are more settings, filtering swearing for example (use `ayybot.config filterwords True`).
+There are more settings, filtering swearing for example (use `ayybot.settings filterwords True`).
 
 You can also manage admins with `ayybot.admins add/remove/list @mention`.
 
@@ -1444,7 +1591,7 @@ Don't forget, you can also add/remove/list custom commands with `_cmd add/remove
             # Gets info
             name = member.name
             mid = member.id
-            avatar = member.avatar_url
+            avatar = str(member.avatar_url).strip("https://")
 
             isbot = member.bot
             if isbot:
@@ -1579,7 +1726,7 @@ async def on_member_ban(member):
 async def on_server_join(server):
     await client.send_message(server.default_channel, "**Hi!** My name is AyyBot!\nNow that you have invited me to your server, you might want to set up some things."
                                                       "Right now only the server owner can use my restricted commands. But no worries, you can add admin permissions to others using `ayybot.admins add @mention`!"
-                                                      "\nTo get started, type `!getstarted` as the server owner. It will help you set up most of the things. After that, try `!help`.")
+                                                      "\nTo get started, type `!getstarted` as the server owner. It will help you set up most of the things. After that, try `!help` to get familiar with the bot.")
 
     log("Joined server with {} members : {}".format(server.member_count, server.name))
 
