@@ -9,7 +9,8 @@ messagelist = {
     "ayybot.prefix": "The prefix to use is **_**",
     "_prefix": "You guessed it!",
     "ayy lmao": "Ayy lmao, my great inspiration in the world of memes.",
-    "_cat": "meow! https://gif-avatars.com/img/90x90/cattypo.gif"
+    "_cat": "meow! https://gif-avatars.com/img/90x90/cattypo.gif",
+    "_cmds": "https://github.com/DefaltSimon/AyyBot/wiki/Commands-list"
 }
 
 
@@ -24,13 +25,14 @@ If you need additional help, you can visit "my official server" : https://discor
 """
 
 simples = """`_hello` - Welcomes you or the mentioned person.
-_randomgif - Posts a random gif from Giphy
-_roll number - rolls a random number
-_wiki term - gives you a description of a term from Wikipedia
-_urban term - gives you a description of a term from Urban Dictionary
-_decide option|option... - decides between your options so you don't have to
+`_randomgif` - Posts a random gif from Giphy
+`_roll number` - rolls a random number
+`_wiki term` - gives you a description of a term from Wikipedia
+`_urban term` - gives you a description of a term from Urban Dictionary
+`_decide option|option...` - decides between your options so you don't have to
+`_tf item_name` - item prices from backpack.tf
 
-These are just a few of some of the simpler commands. For more info about each command, use `_help command` Or try `_help` to look at the wiki page with all the commands."""
+These are just a few of some of the simpler commands. For more info about each command, use `_help command` or type `_cmds` to look at the wiki page with all the commands."""
 
 # Template: {"desc": "", "use": None, "alias": None},
 commandhelpsnormal = {
@@ -71,15 +73,18 @@ commandhelpsnormal = {
     "ayybot.stats": {"desc": "Some stats like message count and stuff like that.", "use": None, "alias": "Alias: _stats"},
     "_bug": {"desc": "Place where you can report bugs.", "use": None, "alias": "Alias: ayybot.bug"},
     "ayybot.bug": {"desc": "Place where you can report bugs.", "use": None, "alias": "Alias: _bug"},
+    "_feature": {"desc": "Place where you can submit your ideas for this bot", "use": None, "alias": None},
     "ayybot.info": {"desc": "A little info about me.", "use": None, "alias": "Alias: _ayybot"},
     "ayybot.prefix": {"desc": "Helps you figure out the prefix.", "use": None, "alias": None},
     "_changes": {"desc": "A list of changes in the recent versions.", "use": None, "alias": "Alias: _changelog"},
     "_changelog": {"desc": "A list of changes in the recent versions.", "use": None, "alias": "Alias: _changes"},
-    "_steam": {"desc": "Searches for the specified steam id.\nSubcommands: `steam games`, `steam friends`", "use": "Use: <command> <end of user url/id>", "alias": None},
+    "_steam": {"desc": "Searches for the specified steam id.\nSubcommands: 'steam games', 'steam friends'", "use": "Use: <command> <end of user url/id>", "alias": None},
     "_steam games": {"desc": "Searches for all owned games in user's account.", "use": "Use: <command> <end of user url/id>", "alias": None},
-    "_steam friends": {"desc": "Seaches for all friends that user has.", "use": "Use: <command> <end of user url/id>", "alias": None},
+    "_steam friends": {"desc": "Searches for all friends that the user has.", "use": "Use: <command> <end of user url/id>", "alias": None},
     "_mc": {"desc": "Searches for items and displays their details", "use": "Use: <command> <item name or id:meta>", "alias": "Alias: _minecraft"},
     "_minecraft": {"desc": "Searches for items and displays their details", "use": "Use: <command> <item name or id:meta>", "alias": "Alias: _mc"},
+    "_tf": {"desc": "Gets item prices from backpack.tf (not perfect for items with unusual effects/shines)", "use": "Use: <command> <item name>", "alias": None},
+    "_quote": {"desc": "Brightens your day with a random quote.", "use": None, "alias": None},
 }
 
 commandhelpsadmin = {
@@ -149,6 +154,8 @@ _music playing - info
 _music leave - leaves the voice channel if in one```"""""
 
 bugreport = "Found a bug? Please report it to **DefaltSimon** on Discord.\nYou may find him here: https://discord.gg/FZJB6UJ"
+
+featurereq = "Got an idea for a feature? Submit it here: https://discord.gg/FZJB6UJ"
 
 
 quotes = [

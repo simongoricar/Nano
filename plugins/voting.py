@@ -11,6 +11,7 @@ class Vote:
 
         self.voters = {}
         self.votes = {}
+        self.progress = {}
 
         self.author = {}
 
@@ -39,6 +40,8 @@ class Vote:
 
         self.author[server.id] = str(author)
 
+        self.progress[server.id] = True
+
     def getcontent(self,server):
 
         if not self.votecontent[server.id]:
@@ -48,7 +51,7 @@ class Vote:
 
     def inprogress(self,server):
         try:
-            if self.votes[server.id]:
+            if self.progress[server.id] is True:
                 return True
             else:
                 return False
@@ -84,3 +87,14 @@ class Vote:
 
     def returncontent(self,server):
         return self.votecontent[server.id]
+
+    def end_voting(self, server):
+        self.progress[server.id] = False
+
+        self.votes.pop(server.id)
+        self.voters.pop(server.id)
+
+        self.voteheader.pop(server.id)
+        self.votecontent.pop(server.id)
+
+        self.author.pop(server.id)

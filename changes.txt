@@ -1,3 +1,10 @@
+2.1.3
+- Optmizations
+- !tf added
+- !notifydev and !cmds added
+- Fixed ayybot.wake bug
+- Reworked help system
+
 2.1.2
 - !johncena command removed
 - Redundant console prints removed

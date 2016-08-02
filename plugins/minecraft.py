@@ -47,6 +47,13 @@ class Minecraft:
 
         return items
 
+    def _items_to_list(self, **kwargs):
+        # Private for now, todo
+        items = []
+        for item in self.data:
+            if kwargs.get(str(item.get("type"))) is not None:
+                pass
+
     def id_to_pic(self, num):
         if num > len(self.data):
             raise MinecraftException

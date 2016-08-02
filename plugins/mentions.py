@@ -11,7 +11,7 @@ class MentionHandler:
         pass
 
     @staticmethod
-    def respond(message):
+    def on_message(message):
         """Return type: answer"""
 
         def has(*args):

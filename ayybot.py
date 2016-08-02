@@ -8,6 +8,7 @@ import wikipedia
 import requests
 import giphypop
 import logging
+
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 from random import randint
@@ -17,11 +18,12 @@ from discord.voice_client import StreamPlayer
 
 # AyyBot modules
 from utils import *
-from plugins import voting, stats, mentions, moderator, minecraft, steam
+from plugins import voting, stats, mentions, moderator, minecraft, steam, bptf
 from data import serverhandler
 
+__title__ = "AyyBot"
 __author__ = 'DefaltSimon'
-__version__ = '2.1.2'
+__version__ = '2.1.3'
 
 
 # Instances
@@ -32,13 +34,16 @@ parser = configparser.ConfigParser()
 parser.read("settings.ini")
 
 giphy = giphypop.Giphy()  # Public beta key, available on their GitHub page
+
+# Plugin instances
 handler = serverhandler.ServerHandler()
 vote = voting.Vote()
 stat = stats.BotStats()
 mention = mentions.MentionHandler()
 mod = moderator.BotModerator()
 mc = minecraft.Minecraft()
-s = steam.Steam(parser.get("Settings", "steamapikey"))
+s = steam.Steam(parser.get("ApiKeys", "steam"))
+tf = bptf.CommunityPrices(parser.get("ApiKeys", "bptf"), max_age=7200, allow_cache=True)
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
@@ -46,6 +51,7 @@ logging.basicConfig(level=logging.INFO)
 # Constants
 
 DEFAULT_PREFIX = parser.get("Settings","defaultprefix")
+first = True
 
 # Exception classes
 
@@ -67,8 +73,9 @@ class PrefixNotSet(Exception):
 def log(content):
     with open("log.txt", "a") as file:
         date = datetime.now()
-        cn = date.strftime("%d-%m-%Y %H:%M:%S") + " - " + str(content) + "\n"
-        file.write(cn)
+        cn = date.strftime("%d-%m-%Y %H:%M:%S") + " - " + str(content)
+        print(cn)
+        file.write(cn + "\n")
 
 # Main class
 
@@ -82,13 +89,16 @@ class AyyBot:
         # Debug run
         self.debug = bool(debug)
 
+        if self.debug:
+            self.debug_server = str(parser.get("Debug", "debugserver"))
+
         self.updateprefixes()
         self.updateadmins()
 
         self.boottime = time.time()
         self.ownerid = int(owner)
 
-        # TODO multi-server implementation
+        # TODO multi-server implementation and support for redhat linux
         self.vc = None
         self.ytplayer = None
         self.ytstatus = ""
@@ -106,10 +116,7 @@ class AyyBot:
                 if not data[this]["admins"]:
                     continue
 
-                self.admins[this] = []
-
-                for admin in data[this]["admins"]:
-                    self.admins[this].append(admin)
+                self.admins[this] = [admin for admin in data[this]["admins"]]
 
     def updateprefixes(self):
         with open("data/servers.yml", "r") as file:
@@ -118,6 +125,7 @@ class AyyBot:
 
             data = load(file)
             for this in data:
+
                 try:
                     self.prefixes[str(this)] = data[this]["prefix"]
                 except KeyError:
@@ -131,25 +139,37 @@ class AyyBot:
             data = load(file)
             for this in data:
                 try:
-                    self.mutes[this] = data[this]["muted"]
+                    self.mutes[this] = data[this]["muted"]  # list
                 except KeyError:
                     pass
 
-    def ismuted(self, message):
+    def is_muted(self, message):
         try:
             return bool(message.author.id in self.mutes[message.channel.server.id])
         except KeyError:
             return False
 
+    def is_bot_owner(self, uid):
+        return str(uid) == str(self.ownerid)
+
+    @staticmethod
+    def is_server_owner(uid, server):
+        return str(uid) == str(server.owner.id)
+
     async def on_message(self, message):
         if self.debug:
-            if str(message.channel.server.id) != str(parser.get("Settings", "debugserver")):
-                return
+            try:
+                if str(message.channel.server.id) != str(self.debug_server):
+                    return
+            except AttributeError:
+                pass
 
-        if message.author.id == client.user.id:
+        if message.channel.is_private:  # Ignore DMs
             return
 
-        isadmin = False
+        if message.author.id == client.user.id:  # Ignore messages from yourself
+            return
+
         try:
             isadmin = bool(message.author.id in self.admins.get(message.channel.server.id))
         except TypeError:
@@ -161,12 +181,12 @@ class AyyBot:
                     isadmin = True
                     continue
 
-        isowner = bool(str(message.author.id) == str(self.ownerid))
+        isowner = self.is_bot_owner(message.author.id)
 
-        isserverowner = bool(str(message.author.id) == str(message.channel.server.owner.id))
+        isserverowner = self.is_server_owner(message.author.id, message.channel.server)
 
         # Delete message if the member is muted.
-        if self.ismuted(message) and (message.author.id != self.ownerid):
+        if self.is_muted(message) and (message.author.id != self.ownerid):
             try:
                 await client.delete_message(message)
             except discord.NotFound:
@@ -182,7 +202,8 @@ class AyyBot:
                       "_prefix", "ayy lmao", "_vote", "_status", "ayybot.status", "_stats", "ayybot.stats", "_music join",
                       "_music leave", "_music volume", "_music pause", "_music resume", "_music playing", "_music help",
                       "_music play", "_music skip", "_music stop", "ayybot.bug", "_bug", "_vote", "ayybot.prefix", "_changes",
-                      "_changelog", "_johncena", "_rip", "_steam ", "_mc ", "_minecraft"]
+                      "_changelog", "_johncena", "_rip", "_steam ", "_mc ", "_minecraft", "_tf", "_feature", "_quote", "_say",
+                      "_members", "_notifydev", "_cmds"]
 
         admincmds = ["ayybot.ban", "ayybot.unban", "ayybot.kick", "_ban", "_unban", "_kick", "_avatar", "_role add",
                      "_role replacewith", "_role remove", "_cmd add", "_cmd remove",
@@ -192,11 +213,11 @@ class AyyBot:
                      "ayybot.getstarted", "ayybot.changeprefix", "_playing", "ayybot.kill", "_user", "_reload", "ayybot.reload", "_muted",
                      "_mute", "_unmute", "_purge"]
 
-        privates = ["_help", "_uptime", "_randomgif", "_8ball", "_wiki", "_define", "_urban", "_github", "_bug", "_uptime", "_ayybot"]
+        # To be implemented
+        # privates = ["_help", "_uptime", "_randomgif", "_8ball", "_wiki", "_define", "_urban", "_github", "_bug", "_uptime", "_ayybot"]
 
 
         # Just so it cant be undefined
-        prefix = None
         isacommand = False
         isadmincommand = False
 
@@ -224,21 +245,21 @@ class AyyBot:
         if not prefix:
             raise PrefixNotSet("prefix for {} could not be found.".format(message.channel.server))
 
-        # Checks for private channel
-        if isinstance(message.channel, discord.PrivateChannel):
-            for this in privates:
-                this = this.replace("_", DEFAULT_PREFIX)
-                if str(message.content).startswith(this):
-                    break
-            else:
-                return
+        # Checks for private channel (to be implemented)
+        # if isinstance(message.channel, discord.PrivateChannel):
+        #     for this in privates:
+        #         this = this.replace("_", DEFAULT_PREFIX)
+        #         if str(message.content).startswith(this):
+        #             break
+        #     else:
+        #         return
 
         # When it is not a private channel, check if a command even exists
         else:
             if client.user in message.mentions:
 
                 # MentionHandler processes the message and returns the answer
-                response = mention.respond(message)
+                response = mention.on_message(message)
 
                 if not response:
                     pass
@@ -259,6 +280,7 @@ class AyyBot:
                     if str(message.content).startswith(command):
                         # Maybe same replacement logic in the future update?
                         await client.send_message(message.channel, servercmd[command])
+                        stat.plusmsg()
 
                         return
 
@@ -295,22 +317,21 @@ class AyyBot:
                     if wf:
                         iswf = mod.checkfilter(message.content)
 
-                    if sf or wf:
-                        # Apply
-                        if issf:
+                    # If need filtering, apply
+                    if issf:
 
-                            # Attempt to catch errors (messages not being there)
-                            try:
-                                await client.delete_message(message)
-                            except discord.errors.NotFound:
-                                pass
+                        # Attempt to catch errors (messages not being there)
+                        try:
+                            await client.delete_message(message)
+                        except discord.errors.NotFound:
+                            pass
 
-                        if iswf:
+                    if iswf:
 
-                            try:
-                                await client.delete_message(message)
-                            except discord.errors.NotFound:
-                                pass
+                        try:
+                            await client.delete_message(message)
+                        except discord.errors.NotFound:
+                            pass
 
                     return
 
@@ -326,7 +347,7 @@ class AyyBot:
 
         # ayybot.wake command check
         if startswith("ayybot.wake"):
-            if not isadmin or not isowner or not isserverowner:
+            if not (isadmin or isowner or isserverowner):
                 await client.send_message(message.channel, "You are not allowed to use this command.")
                 return
 
@@ -346,8 +367,8 @@ class AyyBot:
 
         if not handler.serverexists(message.channel.server):
             handler.serversetup(message.channel.server)
+
             log("Server settings set up: {}".format(message.channel.server))
-            print("Automatically set up server data ({})".format(message.channel.server.name))
 
         # The command declarations begin here
 
@@ -371,122 +392,122 @@ class AyyBot:
 
             if str(message.content) == "_help".replace("_", prefix):
                 await client.send_message(message.channel, str(helpmsg).replace(">", prefix))
-
                 stat.plushelpcommand()
                 return
 
             elif startswith(prefix + "help simple"):
                 # All simple(r) commands
                 await client.send_message(message.channel, simples.replace("_", prefix))
+                stat.plushelpcommand()
 
             else:
                 search = str(message.content)[len(prefix + "help "):]
-                k = False
 
-                for key in commandhelpsnormal.keys():
+                # Allows for !help ping AND !help !ping
+                if not search.startswith(prefix):
+                    search = prefix + search
 
-                    if search.startswith(str(key).replace("_", prefix)):
+                cmd = commandhelpsnormal.get(str(search.replace(prefix, "_").strip(" ")))
+                if cmd is not None:
+                    cmdn = search.replace(prefix, "")  # Changeable
+                    desc = cmd["desc"]
+                    use = cmd["use"]
+                    alias = cmd["alias"]
 
-                        k = True
-                        cmd = str(key).replace("_", prefix)
-                        desc = commandhelpsnormal[str(key)]["desc"]
-                        use = commandhelpsnormal[str(key)]["use"]
-                        alias = commandhelpsnormal[str(key)]["alias"]
-
-                        # Compiles proper message
-                        if use and alias:
-                            preset = """Command: **{}**
-
-```css
-Description: {}
-
-{}
-{}```""".format(cmd, desc, use, alias)
-
-                        elif alias and not use:
-                            preset = """Command: **{}**
-
-```css
-Description: {}
-
-{}```""".format(cmd, desc, alias)
-
-                        elif use and not alias:
-                            preset = """Command: **{}**
-
-```css
-Description: {}
-
-{}```""".format(cmd, desc, use)
-
-                        elif not use and not alias:
-                            preset = """Command: **{}**
-
-```css
-Description: {}```""".format(cmd, desc)
-                        else:
-                            print("How is this even possible?!")
-                            return
-
-
-                        await client.send_message(message.channel, preset)
-
-
-                        stat.plushelpcommand()
-                        return
-
-                for key in commandhelpsadmin.keys():
-                    if search.startswith(str(key).replace("_", prefix)):
-                        k = True
-                        cmd = str(key).replace("_", prefix)
-                        desc = commandhelpsadmin[str(key)]["desc"]
-                        use = commandhelpsadmin[str(key)]["use"]
-                        alias = commandhelpsadmin[str(key)]["alias"]
-
-                        # Compiles proper message
-                        if use and alias:
-                            preset = """Command: **{}** (admins only)
+                    # Compiles proper message
+                    if use and alias:
+                        preset = """Command: **{}**
 
 ```css
 Description: {}
 
 {}
-{}```""".format(cmd, desc, use, alias)
+{}```""".format(cmdn, desc, use, alias)
 
-                        elif alias and not use:
-                            preset = """Command: **{}** (admins only)
-
-```css
-Description: {}
-
-{}```""".format(cmd, desc, alias)
-
-                        elif use and not alias:
-                            preset = """Command: **{}** (admins only)
+                    elif alias and not use:
+                        preset = """Command: **{}**
 
 ```css
 Description: {}
 
-{}```""".format(cmd, desc, use)
+{}```""".format(cmdn, desc, alias)
 
-                        elif not use and not alias:
-                            preset = """Command: **{}** (admins only)
+                    elif use and not alias:
+                        preset = """Command: **{}**
 
 ```css
-Description: {}```""".format(cmd, desc)
-                        else:
-                            print("How is this even possible?!")
-                            return
+Description: {}
 
+{}```""".format(cmdn, desc, use)
 
-                        await client.send_message(message.channel, preset)
+                    elif not use and not alias:
+                        preset = """Command: **{}**
 
-
-                        stat.plushelpcommand()
+```css
+Description: {}```""".format(cmdn, desc)
+                    else:
+                        print("How is this even possible?!")
                         return
 
-                if not k:
-                    await client.send_message(message.channel, "Such a command could not be found.\n(Use: _help **'command with prefix'**)".replace("_", prefix))
+
+                    await client.send_message(message.channel, preset)
+
+
+                    stat.plushelpcommand()
+                    return
+
+                cmd = commandhelpsadmin.get(str(search.replace(prefix, "_").strip(" ")))
+                if cmd is not None:
+                    cmdn = search.replace(prefix, "")  # Changeable
+                    desc = cmd["desc"]
+                    use = cmd["use"]
+                    alias = cmd["alias"]
+
+                    # Compiles proper message
+                    if use and alias:
+                        preset = """Command: **{}** (admins only)
+
+```css
+Description: {}
+
+{}
+{}```""".format(cmdn, desc, use, alias)
+
+                    elif alias and not use:
+                        preset = """Command: **{}** (admins only)
+
+```css
+Description: {}
+
+{}```""".format(cmdn, desc, alias)
+
+                    elif use and not alias:
+                        preset = """Command: **{}** (admins only)
+
+```css
+Description: {}
+
+{}```""".format(cmdn, desc, use)
+
+                    elif not use and not alias:
+                        preset = """Command: **{}** (admins only)
+
+```css
+Description: {}```""".format(cmdn, desc)
+                    else:
+                        print("How is this even possible?!")
+                        return
+
+
+                    await client.send_message(message.channel, preset)
+
+
+                    stat.plushelpcommand()
+                    return
+
+                if cmd is None:
+                    await client.send_message(message.channel, "Command could not be found.\n**(Use: `>help command`)**".replace(">", prefix))
+                    return
 
         # Ping
         elif startswith(prefix + "ping"):
@@ -496,14 +517,17 @@ Description: {}```""".format(cmd, desc)
         # Throw a dice
         elif startswith(prefix + "dice"):
             rnum = randint(1, 6)
+
             if rnum == 6:
                 rnum = str(rnum) + ". Woot!"
             else:
                 rnum = str(rnum) + "."
+
             await client.send_message(message.channel, "**{}** rolled {}".format(message.author.name, rnum))
 
         # Simple roll da number
         elif startswith(prefix + "roll"):
+
             try:
                 num = int(str(message.content)[len(prefix + "roll "):])
             except ValueError:
@@ -533,15 +557,15 @@ Description: {}```""".format(cmd, desc)
         # Says hello to you or the mentioned person
         elif startswith(prefix + "hello"):
             if len(message.mentions) >= 1:
-                await client.send_message(message.channel, "Hi <@" + message.mentions[0].id + ">")
+                await client.send_message(message.channel, "Hi " + message.mentions[0].mention)
             elif len(message.mentions) == 0:
-                await client.send_message(message.channel, "Hi <@" + message.author.id + ">")
+                await client.send_message(message.channel, "Hi " + message.author.mention)
 
         # Calculates uptime
         elif startswith(prefix + "uptime"):
             sec = timedelta(seconds=time.time()-self.boottime)
             d = datetime(1, 1, 1) + sec
-            uptime = "I have been tirelessly answering people without sleep for\n**{} days, {} hours, {} minutes and {} seconds!**".format(d.day - 1, d.hour, d.minute, d.second)
+            uptime = "I have been tirelessly answering people for\n**{} days, {} hours, {} minutes and {} seconds!**".format(d.day - 1, d.hour, d.minute, d.second)
 
             await client.send_message(message.channel, uptime)
 
@@ -549,12 +573,12 @@ Description: {}```""".format(cmd, desc)
         elif startswith(prefix + "quote"):
             chosen = str(quotes[randint(0,len(quotes)-1)])
             place = chosen.rfind("–")
-            await client.send_message(message.channel, chosen[:place] + "\n**" + chosen[place:] + "**")
+            await client.send_message(message.channel, chosen[:place] + "\n__*" + chosen[place:] + "*__")
 
         # Answers your question - 8ball style
         elif startswith(prefix + "8ball"):
             answer = eightball[randint(0, len(eightball)-1)]
-            await client.send_message(message.channel, "The 8ball tells me: " + str(answer) + ".")
+            await client.send_message(message.channel, "The magic 8ball says: *" + str(answer) + "*.")
 
         # Finds a totally random gif
         elif startswith(prefix + "randomgif"):
@@ -576,13 +600,14 @@ Description: {}```""".format(cmd, desc)
             try:
                 answer = wikipedia.summary(search, sentences=parser.get("Settings", "wikisentences"), auto_suggest=True)
                 await client.send_message(message.channel, "**{} :** \n".format(search) + answer)
+
             except wikipedia.exceptions.PageError:
                 await client.send_message(message.channel, "No definitions found.")
-            except wikipedia.exceptions.DisambiguationError:
-                await client.send_message(message.channel,
-                                          "I found multiple definitions of {}, please be more specific (somehow).".format(search))
 
-        # Fetches a definition from Urban Dictionary
+            except wikipedia.exceptions.DisambiguationError:
+                await client.send_message(message.channel, "Got multiple definitions of {}, please be more specific (somehow).".format(search))
+
+        # Gets a definition from Urban Dictionary
         elif startswith(prefix + "urban"):
             search = str(message.content)[len(prefix + "urban "):]
             define = requests.get("http://www.urbandictionary.com/define.php?term={}".format(search))
@@ -610,9 +635,9 @@ Description: {}```""".format(cmd, desc)
                     final += "\n{} : {}".format(this, cmds[this])
 
                 if not final:
-                    await client.send_message(message.channel, "No commands registered for this server ")
+                    await client.send_message(message.channel, "No custom commands on this server. Add one with `_cmd add trigger|response`!".replace("_", prefix))
                     return
-                await client.send_message(message.channel, "*Command list:*" + final)
+                await client.send_message(message.channel, "*Custom commands:*" + final)
 
         # Vote creation
         elif startswith(prefix + "vote start"):
@@ -625,16 +650,17 @@ Description: {}```""".format(cmd, desc)
                 await client.send_message(message.channel, "A vote is already in progress.")
                 return
 
-            content = str(str(message.content)[len(prefix + "vote start "):])
+            content = message.content[len(prefix + "vote start "):]
 
             vote.create(message.author.name,message.channel.server,content)
-            ch = ""
+            ch = []
 
             n = 1
             for this in vote.getcontent(message.channel.server):
-                ch += "{}. {}\n".format(n,this)
+                ch.append("{}. {}".format(n,this))
                 n += 1
-            ch.strip("\n")
+
+            ch = "\n".join(ch).strip("\n")
 
             await client.send_message(message.channel, "**{}**\n```{}```".format(vote.returnvoteheader(message.channel.server),ch))
 
@@ -653,13 +679,13 @@ Description: {}```""".format(cmd, desc)
             content = vote.returncontent(message.channel.server)
 
             # Reset!
-            vote.__init__()
+            vote.end_voting(message.channel.server)
 
-            cn = ""
+            cn = []
             for this in content:
-                cn += "{} - `{} vote(s)`\n".format(this,votes[this])
+                cn.append("{} - `{} vote(s)`".format(this,votes[this]))
 
-            combined = "Vote ended:\n**{}**\n\n{}".format(header,cn)
+            combined = "Vote ended:\n**{}**\n\n{}".format(header,"\n".join(cn))
 
             await client.send_message(message.channel, combined)
 
@@ -673,14 +699,15 @@ Description: {}```""".format(cmd, desc)
                 try:
                     num = int(str(message.content)[len(prefix + "vote "):])
                 except ValueError:
-                    await client.send_message(message.channel, "Please select your choice and reply with it's number :upside_down:")
+                    # Update: now ignoring no-choices, making chat more clean
+                    # await client.send_message(message.channel, "Please select your choice and reply with it's number :upside_down:")
                     return
 
                 gotit = vote.countone(num, message.author.id, message.channel.server)
                 stat.plusonevote()
 
                 if gotit == -1:
-                    await client.send_message(message.channel, "Cheater :smile:")
+                    await client.send_message(message.channel, "No, you can't change your mind :smile:")
 
         # Simple status (server, user count)
         elif startswith(prefix + "status") or startswith("ayybot.status"):
@@ -713,10 +740,11 @@ Description: {}```""".format(cmd, desc)
                 wrongpermc = file["wrongpermscount"]
                 pplhelp = file["peoplehelped"]
                 imgc = file["imagessent"]
+                # imgd = file["imagesize"]
                 votesc = file["votesgot"]
                 pings = file["timespinged"]
 
-            onetosend = "**Stats**\n```python\n{} messages sent\n{} people yelled at because of wrong args\n{} people denied because of wrong permissions\n{} people helped\n{} votes got\n{} times slept\n{} servers left\n{} images sent\n{} times Pong!-ed```"\
+            onetosend = "**Stats**\n```python\n{} messages sent\n{} people yelled at because of wrong args\n{} people denied because of wrong permissions\n{} people helped\n{} votes got\n{} times slept\n{} servers left\n{} images uploaded\n{} times Pong!-ed```"\
                 .format(mcount, wrongargc, wrongpermc, pplhelp, votesc, timesslept, timesleft, imgc, pings)
             await client.send_message(message.channel, onetosend)
 
@@ -735,7 +763,7 @@ Description: {}```""".format(cmd, desc)
             discord.opus.load_opus("libopus-0.x64.dll")
 
             if not discord.opus.is_loaded():
-                await client.send_message(message.channel, "Opus lib could not be loaded, please contact owner.")
+                await client.send_message(message.channel, "Opus lib could not be loaded (this feature is still in beta)")
 
             try:
                 self.vc = await client.join_voice_channel(ch)
@@ -922,15 +950,17 @@ Description: {}```""".format(cmd, desc)
         elif startswith(prefix + "kappa"):
             await client.send_file(message.channel, "data/images/kappasmall.png")
 
-
         # BUG REPORT
         elif startswith(prefix + "bug") or startswith("ayybot.bug"):
             await client.send_message(message.channel, bugreport)
 
+        elif startswith(prefix + "feature"):
+            await client.send_message(message.channel, featurereq)
+
         elif startswith(prefix + "changes") or startswith(prefix + "changelog"):
             await client.send_message(message.channel, "Changes in the recent versions can be found here: https://github.com/DefaltSimon/AyyBot/blob/master/changes.txt")
 
-        elif startswith(prefix + "steam"):  # TODO early stages
+        elif startswith(prefix + "steam"):
             if startswith(prefix + "steam friends "):
                 uid = str(message.content)[len(prefix + "steam friends "):]
 
@@ -1022,13 +1052,17 @@ Friends: {}```\nDirect link: http://steamcommunity.com/id/{}/""".format(steamuse
                     data = mc.group_to_list(5)
                 elif str(da).lower() == "sapling":
                     data = mc.group_to_list(6)
+                elif str(da).lower() == "sand":
+                    data = mc.group_to_list(12)
                 elif str(da).lower() == "wood":
                     data = mc.group_to_list(17)
                 elif str(da).lower() == "leaves":
                     data = mc.group_to_list(18)
+                elif str(da).lower() == "sponge":
+                    data = mc.group_to_list(19)
                 elif str(da).lower() == "sandstone":
                     data = mc.group_to_list(24)
-                elif str(da).lower() == "tulip":
+                elif str(da).lower() == "flower":
                     data = mc.group_to_list(38)
                 elif str(da).lower() == "double slab":
                     data = mc.group_to_list(43)
@@ -1036,14 +1070,36 @@ Friends: {}```\nDirect link: http://steamcommunity.com/id/{}/""".format(steamuse
                     data = mc.group_to_list(44)
                 elif str(da).lower() == "stained glass":
                     data = mc.group_to_list(95)
+                elif str(da).lower() == "monster egg":
+                    data = mc.group_to_list(97)
+                elif str(da).lower() == "stone brick":
+                    data = mc.group_to_list(98)
+                elif str(da).lower() == "double wood slab":
+                    data = mc.group_to_list(125)
+                elif str(da).lower() == "wood slab":
+                    data = mc.group_to_list(126)
+                elif str(da).lower() == "quartz block":
+                    data = mc.group_to_list(155)
                 elif str(da).lower() == "stained clay":
                     data = mc.group_to_list(159)
                 elif str(da).lower() == "stained glass pane":
                     data = mc.group_to_list(160)
+                elif str(da).lower() == "prismarine":
+                    data = mc.group_to_list(168)
                 elif str(da).lower() == "carpet":
                     data = mc.group_to_list(171)
+                elif str(da).lower() == "plant":
+                    data = mc.group_to_list(175)
+                elif str(da).lower() == "sandstone":
+                    data = mc.group_to_list(179)
+                elif str(da).lower() == "fish":
+                    data = mc.group_to_list(349)
                 elif str(da).lower() == "dye":
                     data = mc.group_to_list(351)
+                elif str(da).lower() == "egg":
+                    data = mc.group_to_list(383)
+                elif str(da).lower() == "head":
+                    data = mc.group_to_list(397)
 
                 else:
                     data = mc.name_to_data(str(da))
@@ -1060,6 +1116,7 @@ Id: {}:{}```""".format(data.get("name"), data.get("type"), data.get("meta"))
                 # Details are uploaded simultaneously with the picture
                 with open("plugins/mc_item_png/{}-{}.png".format(data.get("type"), data.get("meta") or 0), "rb") as pic:
                     await client.send_file(message.channel, pic, content=details)
+                    stat.plusimagesent()
             else:
                 combined = []
                 for item in data:
@@ -1070,7 +1127,75 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
 
                 await client.send_message(message.channel, "".join(combined))
 
+        elif startswith(prefix + "tf"):
+            da = message.content[len(prefix + "tf "):]
 
+            item = tf.get_item_by_name(str(da))
+
+            if not item:
+                await client.send_message(message.channel, "'{}' *does not exist.*".format(da))
+                return
+
+            ls = []
+            for qu in item.get_all_qualities():
+                down = qu.get(list(qu.keys())[0])
+                dt = "__**{}**__: `{} {}`".format(bptf.get_quality_name(list(qu.keys())[0]), down.get("price").get("value"), "ref" if down.get("price").get("currency") == "metal" else down.get("price").get("currency"))
+                ls.append(dt)
+
+            det = """**{}** *(on bp.tf)*\n\n{}""".format(item.name, "\n".join(ls))
+            await client.send_message(message.channel, det)
+
+        elif startswith(prefix + "say"):
+            da = message.content[len(prefix + "say "):]
+
+            ok = False
+            for roles in message.author.roles:
+                if roles.permissions.mention_everyone:
+                    ok = True
+
+            if message.channel.server.owner == message.author:
+                ok = True
+
+            # Apply @ filters
+            if not ok:
+                da = da.replace("@", "")
+
+            await client.send_message(message.channel, da)
+
+        elif startswith(prefix + "members"):
+            ls = []
+            for member in message.channel.server.members:
+                ls.append(member.name)
+
+            if len(ls) > 150:
+                await client.send_message(message.channel, ":warning: Too many members on this server! Don't wanna freeze!")
+                return
+
+            ls = ["`{}`".format(mem) for mem in ls]
+
+            await client.send_message(message.channel, "*__Members__*:\n\n{}".format(", ".join(ls)))
+
+        elif startswith(prefix + "notifydev"):
+            report = message.content[len(prefix + "notifydev "):]
+
+            ownerserver = discord.utils.get(client.servers, id=parser.get("Dev", "serverid"))
+
+            if int(ownerserver.owner.id) != int(self.ownerid):
+                log("Should send bug report, but {} would receive it: {}".format(ownerserver.owner.name, report))
+                return
+
+            # Timestamp
+            ts = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+
+            # 'Compiled' report
+            comp = """Report from *{}*:
+```{}```
+**__Timestamp__**: `{}`
+**__Server__**: `{}` ({} members)
+**__Server Owner__**: {}
+""".format(message.author.mention, report, ts, message.channel.server.name, message.channel.server.member_count, "Yes" if message.author.id == message.channel.server.owner.id else message.channel.server.owner.id)
+
+            await client.send_message(ownerserver.owner, comp)
 
         #
         # Here start ADMIN ONLY commands
@@ -1111,7 +1236,7 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
 
             followup = await client.wait_for_message(author=message.author, channel=message.channel, timeout=15, content="CONFIRM")
             if followup is None:
-                await client.send_message(message.channel, "You ran out of time :upside_down:")
+                await client.send_message(message.channel, "Confirmation not received, NOT banning :upside_down:")
 
             else:
                 await client.ban(user)
@@ -1125,7 +1250,7 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
 
             followup = await client.wait_for_message(author=message.author, channel=message.channel, timeout=15, content="CONFIRM")
             if followup is None:
-                await client.send_message(message.channel, "You ran out of time :upside_down:")
+                await client.send_message(message.channel, "Confirmation not received, NOT banning :upside_down:")
 
             else:
                 await client.unban(user)
@@ -1203,6 +1328,7 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
 
             self.updateadmins()
             self.updateprefixes()
+            self.updatemutes()
 
         # Command management
         elif startswith(prefix + "cmd"):
@@ -1211,7 +1337,7 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
                 try:
                     cut = str(message.content)[len(prefix + "cmd add "):].split("|")
                     handler.updatecommand(message.server, cut[0], cut[1])
-                    await client.send_message(message.channel, "Command has been added.")
+                    await client.send_message(message.channel, "Command '{}' added.".format(cut))
 
                 except KeyError:
                     await client.send_message(message.channel,
@@ -1228,7 +1354,7 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
                 handler.removecommand(message.server, cut)
                 await client.send_message(message.channel, "Ok :white_check_mark: ")
 
-            # Cmd list does not require admin permission so it was moved up
+            # Cmd list does not require admin permission so it was moved under normal commands
 
         elif startswith("ayybot.admins"):
 
@@ -1243,7 +1369,6 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
                     return
 
                 count = 0
-                usern = None
                 for ment in message.mentions:
                     handler.addadmin(message.server, ment)
                     count += 1
@@ -1266,7 +1391,6 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
                     return
 
                 count = 0
-                usern = None
                 for ment in message.mentions:
                     handler.removeadmin(message.server, ment)
                     count += 1
@@ -1321,20 +1445,11 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
                     if not bchan:
                         bchan = "None"
 
-                    if bool(settings["filterspam"]):
-                        spam = "On"
-                    else:
-                        spam = "Off"
+                    spam = "On" if settings["filterspam"] else "Off"
 
-                    if bool(settings["filterwords"]):
-                        wfilter = "On"
-                    else:
-                        wfilter = "Off"
+                    wfilter = "On" if settings["filterwords"] else "Off"
 
-                    if bool(settings["sayhi"]):
-                        sayhi = "On"
-                    else:
-                        sayhi = "Off"
+                    sayhi = "On" if settings["sayhi"] else "Off"
 
                     await client.send_message(message.channel, """**Settings for current server:**
 ```css
@@ -1591,28 +1706,27 @@ Don't forget, you can also add/remove/list custom commands with `_cmd add/remove
             # Gets info
             name = member.name
             mid = member.id
-            avatar = str(member.avatar_url).strip("https://")
+            avatar = str(member.avatar_url)
 
             isbot = member.bot
             if isbot:
-                bott = "`(BOT)`"
+                bott = ":robot:"
             else:
                 bott = ""
 
             role = member.top_role
             createdate = member.created_at
-            joindate = member.joined_at
+            #joindate = member.joined_at
+            st = "ONLINE" if member.status.online or member.status.idle else "OFFLINE"
 
             # 'Compiles' info
-            mixed = """User: **{}** {}
-```python
-ID: {}
-Avatar url: {}
+            mixed = """User: **{}** {} {}
+➤ Status: {}
+➤ Id: {}
+➤ Avatar: {}
 
-Top role: {}
-
-Joined at: {}
-Created at: {}```""".format(name,bott,mid,avatar,role,joindate,createdate)
+➤ Top role_: {}
+➤ Created at: {}""".format(name, member.discriminator, bott, st, mid, avatar, role, createdate)
 
             await client.send_message(message.channel, mixed)
 
@@ -1733,19 +1847,26 @@ async def on_server_join(server):
 @client.event
 async def on_server_remove(server):
     log("Removed from server: {}".format(server.name))
+    stat.plusleftserver()
 
 # Events and stuff
 
-ayybot = AyyBot(owner=parser.getint("Settings","ownerid"), debug=parser.getboolean("Settings", "debug"))
+ayybot = AyyBot(owner=parser.getint("Settings","ownerid"), debug=parser.getboolean("Debug", "debug"))
 
 @client.event
 async def on_ready():
+    global first
+    if not first:
+        log("Resumed connection (on_ready event)")
+        return
+    first = False
+
     print("done")
     print("Username: " + str(client.user.name))
     print("ID: " + str(client.user.id))
 
     if ayybot.debug:
-        print("Mode: DEBUG")
+        print("Mode: DEBUG (server: {})".format(discord.utils.get(client.servers, id=parser.get("Dev", "serverid")).name))
 
     # Sets the status on startup
     name = parser.get("Settings", "initialstatus")

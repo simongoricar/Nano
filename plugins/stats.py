@@ -81,3 +81,9 @@ class BotStats:
             file = load(file)
             file["messagessuppressed"] += 1
         self.write(file)
+
+    def plus_download(self, size):
+        with open("plugins/stats.yml","r+") as file:
+            file = load(file)
+            file["imagesize"] += size
+        self.write(file)
