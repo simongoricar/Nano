@@ -1,9 +1,11 @@
-2.1.3
-- Optmizations
+2.1.3a/b
+- Optmizations and bugfixes
 - !tf added
-- !notifydev and !cmds added
 - Fixed ayybot.wake bug
 - Reworked help system
+- Added vote saving between restarts
+- KeyboardInterrupt handler
+- More server settings added (custom welcome, ban and kick message)
 
 2.1.2
 - !johncena command removed

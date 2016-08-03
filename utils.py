@@ -10,7 +10,7 @@ messagelist = {
     "_prefix": "You guessed it!",
     "ayy lmao": "Ayy lmao, my great inspiration in the world of memes.",
     "_cat": "meow! https://gif-avatars.com/img/90x90/cattypo.gif",
-    "_cmds": "https://github.com/DefaltSimon/AyyBot/wiki/Commands-list"
+    "_cmds": "A 'complete' list of commands is available here: https://github.com/DefaltSimon/AyyBot/wiki/Commands-list"
 }
 
 
@@ -85,6 +85,7 @@ commandhelpsnormal = {
     "_minecraft": {"desc": "Searches for items and displays their details", "use": "Use: <command> <item name or id:meta>", "alias": "Alias: _mc"},
     "_tf": {"desc": "Gets item prices from backpack.tf (not perfect for items with unusual effects/shines)", "use": "Use: <command> <item name>", "alias": None},
     "_quote": {"desc": "Brightens your day with a random quote.", "use": None, "alias": None},
+    "_notifydev": {"desc": "Sends a message to the developer (me). Please use only when you encounter a bug or an exploit.", "use": "Use: <command> <message>", "alias": None},
 }
 
 commandhelpsadmin = {
@@ -126,6 +127,9 @@ commandhelpsadmin = {
     "_unmute": {"desc": "Un-mutes the user (see mute help for more info).", "use": "Use: <command> <mention or name>", "alias": None},
     "_muted": {"desc": "Displays a list of all members currently muted.", "use": None, "alias": None},
     "_purge": {"desc": "Deletes the messages from the specified user in the last x messages", "use": "Use: <command> <amount> <user name>", "alias": None},
+    "_welcomemsg": {"desc": "Sets the message sent when a member joins the server.\nFormatting: ':user' = @userthatjoined, ':server' = server name", "use": "Use: <command> <content>", "alias": None},
+    "_banmsg": {"desc": "Sets the message sent when a member is banned.\nFormatting: ':user' = user name", "use": "Use: <command> <content>", "alias": None},
+    "_kickmsg": {"desc": "Sets the message sent when a member is kicked.\nFormatting: ':user' = user name", "use": "Use: <command> <content>", "alias": None},
 }
 
 
@@ -153,7 +157,7 @@ _music skip/stop - skips the current song
 _music playing - info
 _music leave - leaves the voice channel if in one```"""""
 
-bugreport = "Found a bug? Please report it to **DefaltSimon** on Discord.\nYou may find him here: https://discord.gg/FZJB6UJ"
+bugreport = "Found a bug? Please report it to **DefaltSimon** on Discord.\n1. You may find him here: https://discord.gg/FZJB6UJ\n2. For small things you can simply use _notifydev [message]"
 
 featurereq = "Got an idea for a feature? Submit it here: https://discord.gg/FZJB6UJ"
 

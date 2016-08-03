@@ -111,8 +111,9 @@ class Item(object):
 
             d = self._prices.get(str(quality))
 
+            pr = d.get(list(d.keys())[0]).get(list(d.get(list(d.keys())[0]).keys())[0]) # Took me long enough :P
+
             try:
-                pr = d.get(list(d.keys())[0]).get(list(d.get(list(d.keys())[0]).keys())[0]) # Took me long enough :P
                 pr = pr[0]
             except KeyError:
                 pass

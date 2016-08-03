@@ -8,12 +8,18 @@ import wikipedia
 import requests
 import giphypop
 import logging
+import threading
+import os
+import sys
+import signal
 
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 from random import randint
 from yaml import load
 from youtube_dl import utils as ut
+from pickle import dump
+from pickle import load as pickle_load
 from discord.voice_client import StreamPlayer
 
 # AyyBot modules
@@ -23,7 +29,7 @@ from data import serverhandler
 
 __title__ = "AyyBot"
 __author__ = 'DefaltSimon'
-__version__ = '2.1.3'
+__version__ = '2.1.3b'
 
 
 # Instances
@@ -36,8 +42,15 @@ parser.read("settings.ini")
 giphy = giphypop.Giphy()  # Public beta key, available on their GitHub page
 
 # Plugin instances
+
+if os.path.isfile("cache/voting_state.cache"):
+    with open("cache/voting_state.cache", "rb+") as vt:
+        vote = pickle_load(vt)
+    os.remove("cache/voting_state.cache")
+else:
+    vote = voting.Vote()
+
 handler = serverhandler.ServerHandler()
-vote = voting.Vote()
 stat = stats.BotStats()
 mention = mentions.MentionHandler()
 mod = moderator.BotModerator()
@@ -52,6 +65,39 @@ logging.basicConfig(level=logging.INFO)
 
 DEFAULT_PREFIX = parser.get("Settings","defaultprefix")
 first = True
+
+# KeyboardInterrupt things
+def KeyboardItr(signal, frame):
+    print("[EXCEPTION] KeyboardInterrupt: Saving voting state to cache/voting_state.cache")
+    # Quick state save
+    if not os.path.isdir("cache"): os.mkdir("cache")
+
+    with open("cache/voting_state.cache", "wb") as cache:
+        dump(vote, cache)  # Save instance of Vote
+
+    sys.exit()
+
+signal.signal(signal.SIGINT, KeyboardItr)
+
+# Decorator
+
+def threaded(fn):
+    def wrapper(*args, **kwargs):
+        threading.Thread(target=fn, args=args, kwargs=kwargs).start()
+    return wrapper
+
+@threaded
+def save_submission(content):
+    with open("data/submissions.txt", "a") as sf:
+        sf.write(str(content))
+
+@threaded
+def log(content):
+    with open("log.txt", "a") as file:
+        date = datetime.now()
+        cn = date.strftime("%d-%m-%Y %H:%M:%S") + " - " + str(content)
+        print(cn)
+        file.write(cn + "\n")
 
 # Exception classes
 
@@ -69,13 +115,6 @@ class PrefixNotSet(Exception):
     """
     def __init__(self, *args, **kwargs):
         pass
-
-def log(content):
-    with open("log.txt", "a") as file:
-        date = datetime.now()
-        cn = date.strftime("%d-%m-%Y %H:%M:%S") + " - " + str(content)
-        print(cn)
-        file.write(cn + "\n")
 
 # Main class
 
@@ -130,6 +169,8 @@ class AyyBot:
                     self.prefixes[str(this)] = data[this]["prefix"]
                 except KeyError:
                     pass
+                except TypeError:
+                    pass
 
     def updatemutes(self):
         with open("data/servers.yml", "r") as file:
@@ -155,6 +196,19 @@ class AyyBot:
     @staticmethod
     def is_server_owner(uid, server):
         return str(uid) == str(server.owner.id)
+
+    @threaded
+    def _server_check(self, server):
+        cname = handler.get_name(server.id)
+        cown = handler.get_owner(server.id)
+
+        if server.name != cname:
+            handler.update_name(server.id, server.name)
+
+        if server.owner.id != cown:
+            handler.update_owner(server.id, server.owner.name)
+
+        handler._check_server_vars(server.id)
 
     async def on_message(self, message):
         if self.debug:
@@ -185,6 +239,7 @@ class AyyBot:
 
         isserverowner = self.is_server_owner(message.author.id, message.channel.server)
 
+
         # Delete message if the member is muted.
         if self.is_muted(message) and (message.author.id != self.ownerid):
             try:
@@ -211,7 +266,7 @@ class AyyBot:
                      "ayybot.admins list", "ayybot.sleep", "ayybot.wake", "_invite", "ayybot.invite", "ayybot.displaysettings",
                      "ayybot.settings", "_vote start", "_vote end", "ayybot.blacklist add", "ayybot.blacklist remove", "_getstarted",
                      "ayybot.getstarted", "ayybot.changeprefix", "_playing", "ayybot.kill", "_user", "_reload", "ayybot.reload", "_muted",
-                     "_mute", "_unmute", "_purge"]
+                     "_mute", "_unmute", "_purge", "_dev", "_welcomemsg", "_banmsg", "_kickmsg"]
 
         # To be implemented
         # privates = ["_help", "_uptime", "_randomgif", "_8ball", "_wiki", "_define", "_urban", "_github", "_bug", "_uptime", "_ayybot"]
@@ -334,6 +389,9 @@ class AyyBot:
                             pass
 
                     return
+
+                else:
+                    self._server_check(message.channel.server)
 
         # Just a quick shortcut
         def startswith(string):
@@ -733,16 +791,16 @@ Description: {}```""".format(cmdn, desc)
 
                 # downsize = str(round(int(stat.sizeofdown()) / 1024 / 1024 / 1024, 3))
 
-                mcount = file["msgcount"]
-                wrongargc = file["wrongargcount"]
-                timesleft = file["serversleft"]
-                timesslept = file["timesslept"]
-                wrongpermc = file["wrongpermscount"]
-                pplhelp = file["peoplehelped"]
-                imgc = file["imagessent"]
-                # imgd = file["imagesize"]
-                votesc = file["votesgot"]
-                pings = file["timespinged"]
+                mcount = file.get("msgcount")
+                wrongargc = file.get("wrongargcount")
+                timesleft = file.get("serversleft")
+                timesslept = file.get("timesslept")
+                wrongpermc = file.get("wrongpermscount")
+                pplhelp = file.get("peoplehelped")
+                imgc = file.get("imagessent")
+                # imgd = file.get("imagesize")
+                votesc = file.get("votesgot")
+                pings = file.get("timespinged")
 
             onetosend = "**Stats**\n```python\n{} messages sent\n{} people yelled at because of wrong args\n{} people denied because of wrong permissions\n{} people helped\n{} votes got\n{} times slept\n{} servers left\n{} images uploaded\n{} times Pong!-ed```"\
                 .format(mcount, wrongargc, wrongpermc, pplhelp, votesc, timesslept, timesleft, imgc, pings)
@@ -952,7 +1010,7 @@ Description: {}```""".format(cmdn, desc)
 
         # BUG REPORT
         elif startswith(prefix + "bug") or startswith("ayybot.bug"):
-            await client.send_message(message.channel, bugreport)
+            await client.send_message(message.channel, bugreport.replace("_", prefix))
 
         elif startswith(prefix + "feature"):
             await client.send_message(message.channel, featurereq)
@@ -1180,22 +1238,29 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
 
             ownerserver = discord.utils.get(client.servers, id=parser.get("Dev", "serverid"))
 
-            if int(ownerserver.owner.id) != int(self.ownerid):
-                log("Should send bug report, but {} would receive it: {}".format(ownerserver.owner.name, report))
-                return
-
             # Timestamp
             ts = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
 
             # 'Compiled' report
-            comp = """Report from *{}*:
+            comp = """Report from {}:
 ```{}```
 **__Timestamp__**: `{}`
 **__Server__**: `{}` ({} members)
 **__Server Owner__**: {}
 """.format(message.author.mention, report, ts, message.channel.server.name, message.channel.server.member_count, "Yes" if message.author.id == message.channel.server.owner.id else message.channel.server.owner.id)
 
+            # Saves the submission to disk
+            if int(ownerserver.owner.id) != int(self.ownerid):
+                save_submission("Should have sent report, but {} would receive it: {}".format(ownerserver.owner.name, comp.replace(message.author.mention, str(message.author.name + "(" + message.author.id + ")")) + "\n"))
+            else:
+                save_submission(comp.replace(message.author.mention, str(message.author.name + "(" + message.author.id + ")")) + "\n")
+
             await client.send_message(ownerserver.owner, comp)
+
+            m = await client.send_message(message.channel, "Thank you for your submission.")
+
+            await asyncio.sleep(4)
+            client.delete_message(m)
 
         #
         # Here start ADMIN ONLY commands
@@ -1214,22 +1279,44 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
                 stat.pluswrongperms()
                 return
 
+        if startswith(prefix + "welcomemsg"):
+            msg = message.content[len(prefix + "welcomemsg "):]
+            handler._force_update_var(message.channel.server.id, "welcomemsg", msg)
+            await client.send_message(message.channel, "Welcome message has been updated :smile:")
+
+        elif startswith(prefix + "banmsg"):
+            msg = message.content[len(prefix + "banmsg "):]
+            handler._force_update_var(message.channel.server.id, "banmsg", msg)
+            await client.send_message(message.channel, "Ban message has been updated :smile:")
+
+        elif startswith(prefix + "kickmsg"):
+            msg = message.content[len(prefix + "kickmsg "):]
+            handler._force_update_var(message.channel.server.id, "kickmsg", msg)
+            await client.send_message(message.channel, "Kick message has been updated :smile:")
+
         # Simple ban with CONFIRM check
-        if startswith(prefix + "ban") or startswith("ayybot.ban"):
+        elif startswith(prefix + "ban") or startswith("ayybot.ban"):
             name = None
 
             if len(message.mentions) >= 1:
                 user = message.mentions[0]
 
             else:
+
                 try:
-                    name = str(str(message.content)[len(prefix + "ban "):])
+
+                    if startswith(prefix + "ban"):
+                        name = str(str(message.content)[len(prefix + "ban "):])
+                    elif startswith("ayybot.ban"):
+                        name = str(str(message.content)[len("ayybot.ban "):])
+                    else:
+                        return
                 except IndexError:
                     return
 
                 user = discord.utils.find(lambda m: m.name == str(name), message.channel.server.members)
 
-            if not name:
+            if not user:
                 return
 
             await client.send_message(message.channel, "Are you sure you want to ban " + user.name + "? Confirm by replying with 'CONFIRM'.")
@@ -1240,11 +1327,30 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
 
             else:
                 await client.ban(user)
-                await client.send_message(message.channel, "**{}** has been banned. rip".format(user.name))
+                await client.send_message(message.channel, handler.get_var(message.channel.server.id, "banmsg").replace(":user", user.name))
 
         # Simple unban with CONFIRM check
         elif startswith(prefix + "unban") or startswith("ayybot.unban"):
-            user = message.mentions[0]
+            if len(message.mentions) >= 1:
+                user = message.mentions[0]
+
+            else:
+
+                try:
+
+                    if startswith(prefix + "unban"):
+                        name = str(str(message.content)[len(prefix + "unban "):])
+                    elif startswith("ayybot.unban"):
+                        name = str(str(message.content)[len("ayybot.unban "):])
+                    else:
+                        return
+                except IndexError:
+                    return
+
+                user = discord.utils.find(lambda m: m.name == str(name), message.channel.server.members)
+
+            if not user:
+                return
 
             await client.send_message(message.channel,"Are you sure you want to unban " + user.name + "? Confirm by replying 'CONFIRM'.")
 
@@ -1258,10 +1364,29 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
 
         # Simple kick WITHOUT double check
         elif startswith(prefix + "kick") or startswith("ayybot.kick"):
-            user = message.mentions[0]
+            if len(message.mentions) >= 1:
+                user = message.mentions[0]
+
+            else:
+
+                try:
+                    if startswith(prefix + "kick"):
+                        name = str(str(message.content)[len(prefix + "kick "):])
+                    elif startswith("ayybot.kick"):
+                        name = str(str(message.content)[len("ayybot.kick "):])
+                    else:
+                        return
+
+                except IndexError:
+                    return
+
+                user = discord.utils.find(lambda m: m.name == str(name), message.channel.server.members)
+
+            if not user:
+                return
 
             await client.kick(user)
-            await client.send_message(message.channel, "**{}** has been kicked. rest in peperoni".format(user.name))
+            await client.send_message(message.channel, handler.get_var(message.channel.server.id, "kickmsg").replace(":user", user.name))
 
         # Sleep command
         elif startswith("ayybot.sleep"):
@@ -1435,7 +1560,7 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
 
         # Displays current settings, including the prefix
         elif startswith("ayybot.displaysettings"):
-                    settings = handler.returnsettings(message.server)
+                    settings = handler.get_all_data(message.server.id)
                     bchan = ",".join(settings["blacklisted"])
                     cmds = ",".join(settings["customcmds"])
 
@@ -1449,18 +1574,18 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
 
                     wfilter = "On" if settings["filterwords"] else "Off"
 
-                    sayhi = "On" if settings["sayhi"] else "Off"
-
                     await client.send_message(message.channel, """**Settings for current server:**
 ```css
 Blacklisted channels: {}
 Commands: {}
 Spam filter: {}
 Word filter: {}
-Log channel: {} (coming soon)
-Welcome message: {}
-Number of admins: {}
-Prefix: {}```""".format(bchan, cmds, spam, wfilter, settings["logchannel"], sayhi, len(settings["admins"]), settings["prefix"]))
+Log channel: {}
+Prefix: {}```
+Messages:
+➤ Join: `{}`
+➤ Ban: `{}`
+➤ Kick: `{}`""".format(bchan, cmds, spam, wfilter, settings.get("logchannel"), settings.get("prefix"), settings.get("welcomemsg"), settings.get("banmsg"), settings.get("kickmsg")))
 
         elif startswith("ayybot.settings"):
             try:
@@ -1484,18 +1609,6 @@ Prefix: {}```""".format(bchan, cmds, spam, wfilter, settings["logchannel"], sayh
                     await client.send_message(message.channel, "Spam filter :white_check_mark:")
                 else:
                     await client.send_message(message.channel, "Spam filter :negative_squared_cross_mark:")
-
-            elif str(cut[0]) == "welcome" or str(cut[0]) == "sayhi" or str(cut[0]).lower() == "welcome message":
-                if value:
-                    await client.send_message(message.channel, "Welcome message :white_check_mark:")
-                else:
-                    await client.send_message(message.channel, "Welcome message :negative_squared_cross_mark:")
-
-            elif str(cut[0]) == "announceban" or str(cut[0]) == "onban" or str(cut[0]).lower() == "announce ban":
-                if value:
-                    await client.send_message(message.channel, "Ban announcement :white_check_mark:")
-                else:
-                    await client.send_message(message.channel, "Ban announcement :negative_squared_cross_mark:")
 
         # Blacklists individual channels
         elif startswith("ayybot.blacklist"):
@@ -1658,7 +1771,16 @@ Don't forget, you can also add/remove/list custom commands with `_cmd add/remove
                 await client.send_message(message.channel, "You are not permitted to use this command. :x:")
                 return
 
+            m = await client.send_message(message.channel, "Staving state...")
+
+            if not os.path.isdir("cache"): os.mkdir("cache")
+
+            with open("cache/voting_state.cache", "wb") as cache:
+                dump(vote, cache)  # Save instance of Vote
+
             await client.send_message(message.channel, "**DED**")
+            await client.delete_message(m)
+
             await client.logout()
             exit(0)
 
@@ -1809,7 +1931,7 @@ Don't forget, you can also add/remove/list custom commands with `_cmd add/remove
                 return
 
             def isauthor(m):
-                return bool(m.author.id == user.id)
+                return m.author.id == user.id
 
             dl = await client.purge_from(channel=message.channel, limit=amount, check=isauthor)
 
@@ -1817,32 +1939,71 @@ Don't forget, you can also add/remove/list custom commands with `_cmd add/remove
             await asyncio.sleep(5)
             await client.delete_message(msg)
 
+        elif startswith(prefix + "dev"):
+            if not isowner:
+                return
+
+            if startswith(prefix + "dev get_all_servers"):
+                ls = ["{} ({} u) - {}".format(srv.name, srv.member_count, srv.id) for srv in client.servers]
+                await client.send_message(message.channel, "Servers:\n```\n{}```".format("\n".join(ls)))
+
+            elif startswith(prefix + "dev server_info"):
+                sid = str(message.content)[len(prefix + "dev server_info "):]
+                srv = discord.utils.find(lambda s: s.id == sid, client.servers)
+
+                if not srv:
+                    await client.send_message(message.channel, "Error. :x:")
+                    return
+
+                ayybotdata = handler.get_all_data(srv.id)
+                sdata = "{}\n```css\nMember count: {}\nChannels: {}\nOwner: {}```\nAyyBot settings: ```{}```".format(srv.name, srv.member_count, ",".join([ch.name for ch in srv.channels]), srv.owner.name, ayybotdata)
+
+                await client.send_message(message.channel, sdata)
+
 # When a member joins the server
 @client.event
 async def on_member_join(member):
+    if handler.issleeping(member.server):
+        return
 
     if handler.sayhi(member.server):
-        await client.send_message(member.server.default_channel, "<@" + member.id + ">, welcome to **{}!**".format(member.server.name))
-
+        await client.send_message(member.server.default_channel, handler.get_var(member.server.id, "welcomemsg").replace(":user", member.mention).replace(":server", member.server.name))
 
 # When somebody gets banned
 @client.event
 async def on_member_ban(member):
-    if handler.onban(member.server):
-        await client.send_message(member.server.default_channel, "**{}** has been banned")
+    if handler.issleeping(member.server):
+        return
+
+    #if handler.onban(member.server):
+    #    await client.send_message(member.server.default_channel, handler.get_var(member.server.id, "banmsg").replace(":user", member.name))
 
     if handler.haslogging(member.server):
-        logchannel = discord.utils.find(lambda channel: channel.name == handler.returnlogch(member.server),member.server.channels)
+        logchannel = discord.utils.find(lambda channel: channel.name == handler.returnlogch(member.server), member.server.channels)
         if logchannel:
-            await client.send_message(logchannel, "**{}** has been banned.".format(member.name))
+            await client.send_message(logchannel, handler.get_var(member.server.id, "banmsg").replace(":user", member.name))
+
+@client.event
+async def on_member_remove(member):
+    if handler.issleeping(member.server):
+        return
+
+    await client.send_message(member.server.default_channel, handler.get_var(member.server.id, "leavemsg").replace(":user", member.name))
+
+    if handler.haslogging(member.server):
+        logchannel = discord.utils.find(lambda channel: channel.name == handler.returnlogch(member.server), member.server.channels)
+        if logchannel:
+            await client.send_message(logchannel, "{} left".format(member.name))
 
 @client.event
 async def on_server_join(server):
     await client.send_message(server.default_channel, "**Hi!** My name is AyyBot!\nNow that you have invited me to your server, you might want to set up some things."
-                                                      "Right now only the server owner can use my restricted commands. But no worries, you can add admin permissions to others using `ayybot.admins add @mention`!"
-                                                      "\nTo get started, type `!getstarted` as the server owner. It will help you set up most of the things. After that, try `!help` to get familiar with the bot.")
+                                                      "Right now only the server owner can use my restricted commands. But no worries, you can add admin permissions to others using `ayybot.admins add @mention` or by assigning them a role named `Admin`!"
+                                                      "\nTo get started, type `!getstarted` as the server owner. It will help you set up most of the things. After that, you might want to see `!cmds` to get familiar with the bot.")
 
     log("Joined server with {} members : {}".format(server.member_count, server.name))
+    handler.serversetup(server)
+
 
 @client.event
 async def on_server_remove(server):
@@ -1898,7 +2059,7 @@ def start():
 
     else:
         print("[ERROR] Some credentials are missing.")
-        exit(-1)
+        sys.exit()
 
 # Loop initialization
 

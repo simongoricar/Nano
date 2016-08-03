@@ -1,6 +1,7 @@
 # coding=utf-8
 
 from random import randint
+from utils import helpmsg
 
 __author__ = "DefaltSimon"
 
@@ -13,6 +14,8 @@ class MentionHandler:
     @staticmethod
     def on_message(message):
         """Return type: answer"""
+        if message.content[21:] == "":
+            return helpmsg
 
         def has(*args):
             for arg in args:
