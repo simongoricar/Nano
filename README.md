@@ -1,4 +1,4 @@
-# Nano v2 (formely AyyBot)
+# Nano (formely AyyBot v2)
 by DefaltSimon, made in python with [discord.py api](https://github.com/Rapptz/discord.py) .
 
 ###**1.** Features:
