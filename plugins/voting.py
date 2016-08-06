@@ -2,7 +2,7 @@
 
 __author__ = "DefaltSimon"
 
-# Voting plugin for AyyBot v2
+# Voting plugin for Nano v2
 
 class Vote:
     def __init__(self):
@@ -14,6 +14,9 @@ class Vote:
         self.progress = {}
 
         self.author = {}
+
+    def need_save(self):
+        return bool(self.voteheader != {} or self.votecontent != {} or self.progress != {})
 
     def create(self,author,server,vote):
 

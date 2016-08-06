@@ -1,6 +1,6 @@
 # coding=utf-8
 
-"""Server data handler for AyyBot"""
+"""Server data handler for Nano"""
 
 
 # Optimized in v2.1.3
@@ -8,6 +8,7 @@
 from yaml import load,dump
 import configparser
 import threading
+import time
 
 
 # Decorator
@@ -34,13 +35,30 @@ server_nondepend_defaults = {
     "logchannel": "logs",
     "sleeping": 0,
     # "onban": 0, //removed
-    # "sayhi": 0, //moved
+    # "sayhi": 0, //changed
     "prefix": parser.get("Settings","defaultprefix")
 }
 
+server_deprecated_settings = [
+    "onban",
+    "sayhi"
+]
+
 class ServerHandler:
     def __init__(self):
-        pass
+        self.data_lock = False
+
+    def lock(self):
+        self.data_lock = True
+
+    def wait_until_release(self):
+        while self.data_lock is True:
+            time.sleep(0.05)
+
+        return
+
+    def release_lock(self):
+        self.data_lock = False
 
     def serversetup(self,server):
         data = self._get_data()
@@ -62,15 +80,24 @@ class ServerHandler:
 
         self.write(data)
 
-    @staticmethod
-    def write(data):
+    def write(self, data):
+        # Locking prevents file corruption
+        self.wait_until_release()
+
+        self.lock()
         with open("data/servers.yml", "w") as file:
             file.write(dump(data, default_flow_style=False))
+        self.release_lock()
 
     @staticmethod
     def _get_data():
-        with open("data/servers.yml","r") as file:
-            return load(file)
+        with open("data/servers.yml", "r") as file:
+            s = load(file)
+
+            if s:
+                return s
+            else:
+                assert False
 
     def get_all_data(self, server_id):
         data = self._get_data()
@@ -111,14 +138,6 @@ class ServerHandler:
             data[server.id].update({"filterspam" : int(value)})
             self.write(data)
 
-        elif str(key) == "welcome" or str(key) == "sayhi" or str(key).lower() == "welcome message":
-            data[server.id].update({"sayhi" : int(value)})
-            self.write(data)
-
-        elif str(key) == "announceban" or str(key) == "onban" or str(key).lower() == "announce ban":
-            data[server.id].update({"onban" : int(value)})
-            self.write(data)
-
         return bool(value)
 
     def _force_update_var(self, server, key, value):
@@ -127,13 +146,32 @@ class ServerHandler:
         data[server][key] = value
         self.write(data)
 
-    @threaded
-    def _check_server_vars(self, server):
+    def _check_server_vars(self, sid, delete_old=True):
         data = self._get_data()
 
         for var in server_nondepend_defaults.keys():
-            if data.get(server).get(var) is None:
-                data.get(server)[var] = server_nondepend_defaults.get(var)
+            sd = data.get(sid)
+            if sd:
+                if sd.get(var) is None:
+                    data[sid][var] = server_nondepend_defaults.get(var)
+
+        if delete_old:
+            self._check_deprecated_vars(sid, data)
+        else:
+            self.write(data)
+
+    def _check_deprecated_vars(self, server, data=None):
+        if not data:
+            data = self._get_data()
+
+        #for dep in server_deprecated_settings:
+        #    sd = data.get(server)
+        #
+        #    if sd:
+        #        if sd.get(dep) is not None:
+        #            print("found old, removing " + dep)
+        #            data[server].pop(dep)
+        data[server] = {key: value for key, value in data[server].items() if key not in server_deprecated_settings}
         self.write(data)
 
     def updatecommand(self, server, trigger, response):
@@ -141,8 +179,8 @@ class ServerHandler:
             data = self._get_data()
                 
             data[server.id]["customcmds"][trigger] = response
-            if "ayybot.checkcmd" in data[server.id]["customcmds"]:
-                data[server.id]["customcmds"].pop("ayybot.checkcmds",0)
+            if "nano.checkcmd" in data[server.id]["customcmds"]:
+                data[server.id]["customcmds"].pop("nano.checkcmds",0)
             with open("data/servers.yml","w") as outfile:
                 outfile.write(dump(data,default_flow_style=False))
         except UnicodeEncodeError:
@@ -255,7 +293,7 @@ class ServerHandler:
             
         return bool(data[server.id]["logchannel"])
 
-    def sayhi(self, server):
+    def _sayhi(self, server):  # Deprecated
         data = self._get_data()
             
         return bool(data[server.id]["welcomemsg"])

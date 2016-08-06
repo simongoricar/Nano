@@ -22,14 +22,14 @@ from pickle import dump
 from pickle import load as pickle_load
 from discord.voice_client import StreamPlayer
 
-# AyyBot modules
+# Nano modules
 from utils import *
 from plugins import voting, stats, mentions, moderator, minecraft, steam, bptf
 from data import serverhandler
 
-__title__ = "AyyBot"
+__title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '2.1.3b'
+__version__ = '2.1.4dev'
 
 
 # Instances
@@ -119,7 +119,7 @@ class PrefixNotSet(Exception):
 # Main class
 
 
-class AyyBot:
+class Nano:
     def __init__(self, owner, debug=False):
         self.admins = {}
         self.prefixes = {}
@@ -137,10 +137,13 @@ class AyyBot:
         self.boottime = time.time()
         self.ownerid = int(owner)
 
-        # TODO multi-server implementation and support for redhat linux
+        # TODO multi-server implementation and support for (redhat) linux
         self.vc = None
         self.ytplayer = None
         self.ytstatus = ""
+
+        # Locks
+        self.checking = False
 
     def updateadmins(self):
         with open("data/servers.yml", "r") as file:
@@ -197,8 +200,16 @@ class AyyBot:
     def is_server_owner(uid, server):
         return str(uid) == str(server.owner.id)
 
-    @threaded
-    def _server_check(self, server):
+    def server_check(self, server, threaded=True):
+        if threaded:
+            threading.Thread(target=self.server_check, args=[server, False]).start()
+            return
+
+        self.checking = True
+
+        if not handler.serverexists(server):
+            return
+
         cname = handler.get_name(server.id)
         cown = handler.get_owner(server.id)
 
@@ -209,6 +220,8 @@ class AyyBot:
             handler.update_owner(server.id, server.owner.name)
 
         handler._check_server_vars(server.id)
+
+        self.checking = False
 
     async def on_message(self, message):
         if self.debug:
@@ -253,23 +266,23 @@ class AyyBot:
         # Import code here
 
         normalcmds = ["_help", "_hello", "_uptime", "_randomgif", "_8ball", "_wiki", "_define", "_urban",
-                      "_ping", "_cmd list", "_roll", "_ayybot", "ayybot.info", "_github", "_decide", "_cat", "_kappa",
-                      "_prefix", "ayy lmao", "_vote", "_status", "ayybot.status", "_stats", "ayybot.stats", "_music join",
+                      "_ping", "_cmd list", "_roll", "_nano", "nano.info", "_github", "_decide", "_cat", "_kappa",
+                      "_prefix", "ayy lmao", "_vote", "_status", "nano.status", "_stats", "nano.stats", "_music join",
                       "_music leave", "_music volume", "_music pause", "_music resume", "_music playing", "_music help",
-                      "_music play", "_music skip", "_music stop", "ayybot.bug", "_bug", "_vote", "ayybot.prefix", "_changes",
+                      "_music play", "_music skip", "_music stop", "nano.bug", "_bug", "_vote", "nano.prefix", "_changes",
                       "_changelog", "_johncena", "_rip", "_steam ", "_mc ", "_minecraft", "_tf", "_feature", "_quote", "_say",
                       "_members", "_notifydev", "_cmds"]
 
-        admincmds = ["ayybot.ban", "ayybot.unban", "ayybot.kick", "_ban", "_unban", "_kick", "_avatar", "_role add",
+        admincmds = ["nano.ban", "nano.unban", "nano.kick", "_ban", "_unban", "_kick", "_avatar", "_role add",
                      "_role replacewith", "_role remove", "_cmd add", "_cmd remove",
-                     "ayybot.serversetup", "ayybot.server.setup", "ayybot.admins add", "ayybot.admins remove",
-                     "ayybot.admins list", "ayybot.sleep", "ayybot.wake", "_invite", "ayybot.invite", "ayybot.displaysettings",
-                     "ayybot.settings", "_vote start", "_vote end", "ayybot.blacklist add", "ayybot.blacklist remove", "_getstarted",
-                     "ayybot.getstarted", "ayybot.changeprefix", "_playing", "ayybot.kill", "_user", "_reload", "ayybot.reload", "_muted",
+                     "nano.serversetup", "nano.server.setup", "nano.admins add", "nano.admins remove",
+                     "nano.admins list", "nano.sleep", "nano.wake", "_invite", "nano.invite", "nano.displaysettings",
+                     "nano.settings", "_vote start", "_vote end", "nano.blacklist add", "nano.blacklist remove", "_getstarted",
+                     "nano.getstarted", "nano.changeprefix", "_playing", "nano.kill", "_user", "_reload", "nano.reload", "_muted",
                      "_mute", "_unmute", "_purge", "_dev", "_welcomemsg", "_banmsg", "_kickmsg"]
 
         # To be implemented
-        # privates = ["_help", "_uptime", "_randomgif", "_8ball", "_wiki", "_define", "_urban", "_github", "_bug", "_uptime", "_ayybot"]
+        # privates = ["_help", "_uptime", "_randomgif", "_8ball", "_wiki", "_define", "_urban", "_github", "_bug", "_uptime", "_nano"]
 
 
         # Just so it cant be undefined
@@ -390,9 +403,6 @@ class AyyBot:
 
                     return
 
-                else:
-                    self._server_check(message.channel.server)
-
         # Just a quick shortcut
         def startswith(string):
             if not message:
@@ -403,8 +413,8 @@ class AyyBot:
             else:
                 return False
 
-        # ayybot.wake command check
-        if startswith("ayybot.wake"):
+        # nano.wake command check
+        if startswith("nano.wake"):
             if not (isadmin or isowner or isserverowner):
                 await client.send_message(message.channel, "You are not allowed to use this command.")
                 return
@@ -677,8 +687,8 @@ Description: {}```""".format(cmdn, desc)
                 await client.send_message(message.channel, "**" + message.content[7:] + "** *:*" + answer)
 
         # Simple info
-        elif startswith(prefix + "ayybot") or startswith("ayybot.info"):
-            await client.send_message(message.channel, ayybotinfo.replace("<version>", __version__))
+        elif startswith(prefix + "nano") or startswith("nano.info"):
+            await client.send_message(message.channel, nanoinfo.replace("<version>", __version__))
 
         # Github repo link
         elif startswith(prefix + "github"):
@@ -768,7 +778,7 @@ Description: {}```""".format(cmdn, desc)
                     await client.send_message(message.channel, "No, you can't change your mind :smile:")
 
         # Simple status (server, user count)
-        elif startswith(prefix + "status") or startswith("ayybot.status"):
+        elif startswith(prefix + "status") or startswith("nano.status"):
             servercount = 0
             members = 0
             channels = 0
@@ -785,7 +795,7 @@ Description: {}```""".format(cmdn, desc)
             await client.send_message(message.channel, dstats)
 
         # Some interesting stats
-        elif startswith(prefix + "stats") or startswith("ayybot.stats"):
+        elif startswith(prefix + "stats") or startswith("nano.stats"):
             with open("plugins/stats.yml", "r+") as file:
                 file = load(file)
 
@@ -1009,14 +1019,14 @@ Description: {}```""".format(cmdn, desc)
             await client.send_file(message.channel, "data/images/kappasmall.png")
 
         # BUG REPORT
-        elif startswith(prefix + "bug") or startswith("ayybot.bug"):
+        elif startswith(prefix + "bug") or startswith("nano.bug"):
             await client.send_message(message.channel, bugreport.replace("_", prefix))
 
         elif startswith(prefix + "feature"):
             await client.send_message(message.channel, featurereq)
 
         elif startswith(prefix + "changes") or startswith(prefix + "changelog"):
-            await client.send_message(message.channel, "Changes in the recent versions can be found here: https://github.com/DefaltSimon/AyyBot/blob/master/changes.txt")
+            await client.send_message(message.channel, "Changes in the recent versions can be found here: https://github.com/DefaltSimon/Nano/blob/master/changes.txt")
 
         elif startswith(prefix + "steam"):
             if startswith(prefix + "steam friends "):
@@ -1295,7 +1305,7 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
             await client.send_message(message.channel, "Kick message has been updated :smile:")
 
         # Simple ban with CONFIRM check
-        elif startswith(prefix + "ban") or startswith("ayybot.ban"):
+        elif startswith(prefix + "ban") or startswith("nano.ban"):
             name = None
 
             if len(message.mentions) >= 1:
@@ -1307,8 +1317,8 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
 
                     if startswith(prefix + "ban"):
                         name = str(str(message.content)[len(prefix + "ban "):])
-                    elif startswith("ayybot.ban"):
-                        name = str(str(message.content)[len("ayybot.ban "):])
+                    elif startswith("nano.ban"):
+                        name = str(str(message.content)[len("nano.ban "):])
                     else:
                         return
                 except IndexError:
@@ -1330,7 +1340,7 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
                 await client.send_message(message.channel, handler.get_var(message.channel.server.id, "banmsg").replace(":user", user.name))
 
         # Simple unban with CONFIRM check
-        elif startswith(prefix + "unban") or startswith("ayybot.unban"):
+        elif startswith(prefix + "unban") or startswith("nano.unban"):
             if len(message.mentions) >= 1:
                 user = message.mentions[0]
 
@@ -1340,8 +1350,8 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
 
                     if startswith(prefix + "unban"):
                         name = str(str(message.content)[len(prefix + "unban "):])
-                    elif startswith("ayybot.unban"):
-                        name = str(str(message.content)[len("ayybot.unban "):])
+                    elif startswith("nano.unban"):
+                        name = str(str(message.content)[len("nano.unban "):])
                     else:
                         return
                 except IndexError:
@@ -1363,7 +1373,7 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
                 await client.send_message(message.channel, "**{}** has been unbanned. woot!".format(user.name))
 
         # Simple kick WITHOUT double check
-        elif startswith(prefix + "kick") or startswith("ayybot.kick"):
+        elif startswith(prefix + "kick") or startswith("nano.kick"):
             if len(message.mentions) >= 1:
                 user = message.mentions[0]
 
@@ -1372,8 +1382,8 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
                 try:
                     if startswith(prefix + "kick"):
                         name = str(str(message.content)[len(prefix + "kick "):])
-                    elif startswith("ayybot.kick"):
-                        name = str(str(message.content)[len("ayybot.kick "):])
+                    elif startswith("nano.kick"):
+                        name = str(str(message.content)[len("nano.kick "):])
                     else:
                         return
 
@@ -1389,7 +1399,7 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
             await client.send_message(message.channel, handler.get_var(message.channel.server.id, "kickmsg").replace(":user", user.name))
 
         # Sleep command
-        elif startswith("ayybot.sleep"):
+        elif startswith("nano.sleep"):
             handler.setsleeping(message.channel.server, 1)
             await client.send_message(message.channel, "Going to sleep... :zipper_mouth:")
 
@@ -1446,7 +1456,7 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
                 await client.send_message(message.channel, "Done :white_check_mark: ")
 
         # Server setup should be automatic, but if you want to reset settings, here ya go
-        elif startswith("ayybot.serversetup") or startswith("ayybot.server.setup"):
+        elif startswith("nano.serversetup") or startswith("nano.server.setup"):
             handler.serversetup(message.channel.server)
             log("Server settings set up: {}".format(message.channel.server))
             await client.send_message(message.channel, "Server settings reset :upside_down:")
@@ -1481,9 +1491,9 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
 
             # Cmd list does not require admin permission so it was moved under normal commands
 
-        elif startswith("ayybot.admins"):
+        elif startswith("nano.admins"):
 
-            if startswith("ayybot.admins add"):
+            if startswith("nano.admins add"):
                 if len(message.mentions) > 20:
                     await client.send_message(message.channel, "Too muchhh!\nSeriously, up to 20 at a time")
                     stat.pluswrongarg()
@@ -1505,7 +1515,7 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
 
                 self.updateadmins()
 
-            elif startswith("ayybot.admins remove"):
+            elif startswith("nano.admins remove"):
                 if len(message.mentions) > 20:
                     await client.send_message(message.channel, "Too muchhh!\nSeriously, up to 20 at a time")
                     stat.pluswrongarg()
@@ -1527,7 +1537,7 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
 
                 self.updateadmins()
 
-            elif startswith("ayybot.admins list"):
+            elif startswith("nano.admins list"):
                 self.updateadmins()
                 admins = handler.returnadmins(message.server)
 
@@ -1548,18 +1558,18 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
                     else:
                         await client.send_message(message.channel, "**Admins:** " + final)
 
-        # A link to invite AyyBot to your server
-        elif startswith(prefix + "invite") or startswith("ayybot.invite"):
+        # A link to invite nano to your server
+        elif startswith(prefix + "invite") or startswith("nano.invite"):
             clientappid = await client.application_info()
 
-            # Most of the permissions that AyyBot uses
+            # Most of the permissions that nano uses
             perms = str("0x510917638")
             url = 'https://discordapp.com/oauth2/authorize?client_id={}&scope=bot&permissions={}'.format(clientappid.id, perms)
 
             await client.send_message(message.channel, appinfo.replace("<link>", url))
 
         # Displays current settings, including the prefix
-        elif startswith("ayybot.displaysettings"):
+        elif startswith("nano.displaysettings"):
                     settings = handler.get_all_data(message.server.id)
                     bchan = ",".join(settings["blacklisted"])
                     cmds = ",".join(settings["customcmds"])
@@ -1587,9 +1597,9 @@ Messages:
 ➤ Ban: `{}`
 ➤ Kick: `{}`""".format(bchan, cmds, spam, wfilter, settings.get("logchannel"), settings.get("prefix"), settings.get("welcomemsg"), settings.get("banmsg"), settings.get("kickmsg")))
 
-        elif startswith("ayybot.settings"):
+        elif startswith("nano.settings"):
             try:
-                cut = str(message.content)[len("ayybot.settings "):].split(" ")
+                cut = str(message.content)[len("nano.settings "):].split(" ")
             except IndexError:
                 return
 
@@ -1611,21 +1621,21 @@ Messages:
                     await client.send_message(message.channel, "Spam filter :negative_squared_cross_mark:")
 
         # Blacklists individual channels
-        elif startswith("ayybot.blacklist"):
-            if startswith("ayybot.blacklist add"):
-                cut = str(str(message.content)[len("ayybot.blacklist add "):])
+        elif startswith("nano.blacklist"):
+            if startswith("nano.blacklist add"):
+                cut = str(str(message.content)[len("nano.blacklist add "):])
                 handler.updatechannels(message.channel.server, cut)
 
                 await client.send_message(message.channel, "**{}** has been blacklisted!".format(cut))
 
-            elif startswith("ayybot.blacklist remove "):
-                cut = str(str(message.content)[len("ayybot.blacklist remove "):])
+            elif startswith("nano.blacklist remove "):
+                cut = str(str(message.content)[len("nano.blacklist remove "):])
                 handler.removechannels(message.channel.server, cut)
 
                 await client.send_message(message.channel, "No worries, **{}** has been removed from the blacklist!".format(cut))
 
         # GET STARTED
-        elif startswith(prefix + "getstarted") or startswith("ayybot.getstarted"):
+        elif startswith(prefix + "getstarted") or startswith("nano.getstarted"):
 
             auth = message.author
 
@@ -1741,11 +1751,11 @@ Reply with `YES` or `NO` after you decide.
 
             finalmsg = """**This concludes the basic server setup.**
 
-There are more settings, filtering swearing for example (use `ayybot.settings filterwords True`).
+There are more settings, filtering swearing for example (use `nano.settings filterwords True`).
 
-You can also manage admins with `ayybot.admins add/remove/list @mention`.
+You can also manage admins with `nano.admins add/remove/list @mention`.
 
-The prefix can be changed again with `ayybot.changeprefix prefix` and channels can be blacklisted with `ayybot.blacklist add/remove channel`.
+The prefix can be changed again with `nano.changeprefix prefix` and channels can be blacklisted with `nano.blacklist add/remove channel`.
 
 Don't forget, you can also add/remove/list custom commands with `_cmd add/remove/list command|response`.
 """.replace("_", str(ch2.content))
@@ -1756,8 +1766,8 @@ Don't forget, you can also add/remove/list custom commands with `_cmd add/remove
             self.updateprefixes()
 
 
-        elif startswith("ayybot.changeprefix"):
-            cut = str(message.content)[len("ayybot.changeprefix "):]
+        elif startswith("nano.changeprefix"):
+            cut = str(message.content)[len("nano.changeprefix "):]
             handler.changeprefix(message.channel.server, str(cut))
 
             await client.send_message(message.channel, "Prefix has been changed :heavy_check_mark:")
@@ -1765,7 +1775,7 @@ Don't forget, you can also add/remove/list custom commands with `_cmd add/remove
             self.updateprefixes()
 
         # Shuts the bot down
-        elif startswith("ayybot.kill"):
+        elif startswith("nano.kill"):
             # Restricted to owner
             if not isowner:
                 await client.send_message(message.channel, "You are not permitted to use this command. :x:")
@@ -1797,7 +1807,7 @@ Don't forget, you can also add/remove/list custom commands with `_cmd add/remove
             await client.send_message(message.channel, "Status set :white_check_mark:")
 
         # Reloads settings.ini, prefixes and admins
-        elif startswith(prefix + "reload") + startswith("ayybot.reload"):
+        elif startswith(prefix + "reload") + startswith("nano.reload"):
             # Restricted to owner
             if not isowner:
                 await client.send_message(message.channel, "You are not permitted to use this command. :x:")
@@ -1955,8 +1965,8 @@ Don't forget, you can also add/remove/list custom commands with `_cmd add/remove
                     await client.send_message(message.channel, "Error. :x:")
                     return
 
-                ayybotdata = handler.get_all_data(srv.id)
-                sdata = "{}\n```css\nMember count: {}\nChannels: {}\nOwner: {}```\nAyyBot settings: ```{}```".format(srv.name, srv.member_count, ",".join([ch.name for ch in srv.channels]), srv.owner.name, ayybotdata)
+                nanodata = handler.get_all_data(srv.id)
+                sdata = "{}\n```css\nMember count: {}\nChannels: {}\nOwner: {}```\nNano settings: ```{}```".format(srv.name, srv.member_count, ",".join([ch.name for ch in srv.channels]), srv.owner.name, nanodata)
 
                 await client.send_message(message.channel, sdata)
 
@@ -1966,8 +1976,11 @@ async def on_member_join(member):
     if handler.issleeping(member.server):
         return
 
-    if handler.sayhi(member.server):
-        await client.send_message(member.server.default_channel, handler.get_var(member.server.id, "welcomemsg").replace(":user", member.mention).replace(":server", member.server.name))
+    msg = handler.get_var(member.server.id, "welcomemsg").replace(":user", member.mention).replace(":server", member.server.name)
+    if msg is None or msg is False:
+        return
+
+    await client.send_message(member.server.default_channel, msg)
 
 # When somebody gets banned
 @client.event
@@ -1977,18 +1990,25 @@ async def on_member_ban(member):
 
     #if handler.onban(member.server):
     #    await client.send_message(member.server.default_channel, handler.get_var(member.server.id, "banmsg").replace(":user", member.name))
+    msg = handler.get_var(member.server.id, "banmsg").replace(":user", member.name)
+    if msg is None or msg is False:
+        return
 
     if handler.haslogging(member.server):
         logchannel = discord.utils.find(lambda channel: channel.name == handler.returnlogch(member.server), member.server.channels)
         if logchannel:
-            await client.send_message(logchannel, handler.get_var(member.server.id, "banmsg").replace(":user", member.name))
+            await client.send_message(logchannel, msg)
 
 @client.event
 async def on_member_remove(member):
     if handler.issleeping(member.server):
         return
 
-    await client.send_message(member.server.default_channel, handler.get_var(member.server.id, "leavemsg").replace(":user", member.name))
+    msg = handler.get_var(member.server.id, "leavemsg").replace(":user", member.name)
+    if msg is None or msg is False:
+        return
+
+    await client.send_message(member.server.default_channel, msg)
 
     if handler.haslogging(member.server):
         logchannel = discord.utils.find(lambda channel: channel.name == handler.returnlogch(member.server), member.server.channels)
@@ -1997,9 +2017,9 @@ async def on_member_remove(member):
 
 @client.event
 async def on_server_join(server):
-    await client.send_message(server.default_channel, "**Hi!** My name is AyyBot!\nNow that you have invited me to your server, you might want to set up some things."
-                                                      "Right now only the server owner can use my restricted commands. But no worries, you can add admin permissions to others using `ayybot.admins add @mention` or by assigning them a role named `Admin`!"
-                                                      "\nTo get started, type `!getstarted` as the server owner. It will help you set up most of the things. After that, you might want to see `!cmds` to get familiar with the bot.")
+    await client.send_message(server.default_channel, "**Hi!** My name is Nano!\nNow that you have invited me to your server, you might want to set up some things."
+                                                      "Right now only the server owner can use my restricted commands. But no worries, you can add admin permissions to others using `nano.admins add @mention` or by assigning them a role named `Admin`!"
+                                                      "\nTo get started, type `!getstarted` as the server owner. It will help you set up most of the things. After that, you might want to see `!cmds` to get familiar with my commands.")
 
     log("Joined server with {} members : {}".format(server.member_count, server.name))
     handler.serversetup(server)
@@ -2012,13 +2032,19 @@ async def on_server_remove(server):
 
 # Events and stuff
 
-ayybot = AyyBot(owner=parser.getint("Settings","ownerid"), debug=parser.getboolean("Debug", "debug"))
+nano = Nano(owner=parser.getint("Settings", "ownerid"), debug=parser.getboolean("Debug", "debug"))
 
 @client.event
 async def on_ready():
+    def check_all_servers():
+        for server in client.servers:
+            print("checking " + server.name)
+            nano.server_check(server, threaded=False)
+
     global first
     if not first:
         log("Resumed connection (on_ready event)")
+        check_all_servers()
         return
     first = False
 
@@ -2026,7 +2052,7 @@ async def on_ready():
     print("Username: " + str(client.user.name))
     print("ID: " + str(client.user.id))
 
-    if ayybot.debug:
+    if nano.debug:
         print("Mode: DEBUG (server: {})".format(discord.utils.get(client.servers, id=parser.get("Dev", "serverid")).name))
 
     # Sets the status on startup
@@ -2034,12 +2060,15 @@ async def on_ready():
     if name:
         await client.change_status(game=discord.Game(name=name))
 
+    await asyncio.sleep(3)
+    check_all_servers()
+
     log("Started as {} with id {}".format(client.user.name, client.user.id))
 
 
 @client.event
 async def on_message(message):
-    await ayybot.on_message(message)
+    await nano.on_message(message)
 
 @asyncio.coroutine
 def start():

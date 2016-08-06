@@ -1,16 +1,16 @@
 # coding=utf-8
 
 __author__ = "DefaltSimon"
-# Messages file for AyyBot
+# Messages file for Nano
 
 
 messagelist = {
     "_rip": "Rest in *peperoni* indeed.",
-    "ayybot.prefix": "The prefix to use is **_**",
+    "nano.prefix": "The prefix to use is **_**",
     "_prefix": "You guessed it!",
     "ayy lmao": "Ayy lmao, my great inspiration in the world of memes.",
     "_cat": "meow! https://gif-avatars.com/img/90x90/cattypo.gif",
-    "_cmds": "A 'complete' list of commands is available here: https://github.com/DefaltSimon/AyyBot/wiki/Commands-list"
+    "_cmds": "A 'complete' list of commands is available here: https://github.com/DefaltSimon/Nano/wiki/Commands-list"
 }
 
 
@@ -19,8 +19,8 @@ helpmsg = """**Hi!** I see you're a bit lost! No worries, I'm here to help.
 To get familiar with simple commands, type `>help simple`.
 If you want specific info about a command, do `>help command`.
 
-Or you could just simply take a look at my wiki page: https://github.com/DefaltSimon/AyyBot/wiki/Commands-list
-If you are an admin and want to set up your server for AyyBot, type `>getstarted`.
+Or you could just simply take a look at my wiki page: https://github.com/DefaltSimon/Nano/wiki/Commands-list
+If you are an admin and want to set up your server for Nano, type `>getstarted`.
 If you need additional help, you can visit "my official server" : https://discord.gg/FZJB6UJ
 """
 
@@ -47,7 +47,7 @@ commandhelpsnormal = {
     "_avatar": {"desc": "Gives you the avatar url of a mentioned person", "use": "Use: <command> <mention or name>", "alias": None},
     "_ping": {"desc": "Just to check if I'm alive. fyi: I love ping-pong.", "use": None, "alias": None},
     "_roll": {"desc": "Replies with a random number in range from 0 to your number.", "use": "Use: <command> <number>", "alias": None},
-    "_ayybot": {"desc": "A little info about me.", "use": None, "alias": "Alias: `ayybot.info`"},
+    "_ayybot": {"desc": "A little info about me.", "use": None, "alias": "Alias: `nano.info`"},
     "_github": {"desc": "Link to my project on GitHub.", "use": None, "alias": None},
     "_decide": {"desc": "Decides between different choices so you don't have to.", "use": "Use: <command> word1|word2|word3|...", "alias": None},
     "_cmd list": {"desc": "Returns a server-specific command list.", "use": None, "alias": None},
@@ -67,15 +67,15 @@ commandhelpsnormal = {
     "_music help": {"desc": "Some help with all the music commands.", "use": None, "alias": None},
     "_prefix": {"desc": "No use whatsoever, but jk here you have it.", "use": None, "alias": None},
     "_vote": {"desc": "One up for your choice, if there's a vote running.", "use": "Use: <command> <choice>", "alias": None},
-    "_status": {"desc": "Displays current status: server, user and channel count.", "use": None, "alias": "Alias: ayybot.status"},
-    "ayybot.status": {"desc": "Displays current status: server, user and channel count.", "use": None, "alias": "Alias: _status"},
-    "_stats": {"desc": "Some stats like message count and stuff like that.", "use": None, "alias": "Alias: ayybot.stats"},
-    "ayybot.stats": {"desc": "Some stats like message count and stuff like that.", "use": None, "alias": "Alias: _stats"},
-    "_bug": {"desc": "Place where you can report bugs.", "use": None, "alias": "Alias: ayybot.bug"},
-    "ayybot.bug": {"desc": "Place where you can report bugs.", "use": None, "alias": "Alias: _bug"},
+    "_status": {"desc": "Displays current status: server, user and channel count.", "use": None, "alias": "Alias: nano.status"},
+    "nano.status": {"desc": "Displays current status: server, user and channel count.", "use": None, "alias": "Alias: _status"},
+    "_stats": {"desc": "Some stats like message count and stuff like that.", "use": None, "alias": "Alias: nano.stats"},
+    "nano.stats": {"desc": "Some stats like message count and stuff like that.", "use": None, "alias": "Alias: _stats"},
+    "_bug": {"desc": "Place where you can report bugs.", "use": None, "alias": "Alias: nano.bug"},
+    "nano.bug": {"desc": "Place where you can report bugs.", "use": None, "alias": "Alias: _bug"},
     "_feature": {"desc": "Place where you can submit your ideas for this bot", "use": None, "alias": None},
-    "ayybot.info": {"desc": "A little info about me.", "use": None, "alias": "Alias: _ayybot"},
-    "ayybot.prefix": {"desc": "Helps you figure out the prefix.", "use": None, "alias": None},
+    "nano.info": {"desc": "A little info about me.", "use": None, "alias": "Alias: _ayybot"},
+    "nano.prefix": {"desc": "Helps you figure out the prefix.", "use": None, "alias": None},
     "_changes": {"desc": "A list of changes in the recent versions.", "use": None, "alias": "Alias: _changelog"},
     "_changelog": {"desc": "A list of changes in the recent versions.", "use": None, "alias": "Alias: _changes"},
     "_steam": {"desc": "Searches for the specified steam id.\nSubcommands: 'steam games', 'steam friends'", "use": "Use: <command> <end of user url/id>", "alias": None},
@@ -89,40 +89,40 @@ commandhelpsnormal = {
 }
 
 commandhelpsadmin = {
-    "_ban": {"desc": "Bans a member.", "use": "Use: <command> <mention>", "alias": "Alias: ayybot.ban"},
-    "ayybot.ban": {"desc": "Bans a member.", "use": "User: <command> <mention>", "alias": "Alias: _ban"},
-    "_kick": {"desc": "Kicks a member.", "use": "Use: <command> <mention>", "alias": "Alias: ayybot.kick"},
-    "ayybot.kick": {"desc": "Kicks a member", "use": "Use: <command> <mention>", "alias": "Alias: _kick"},
-    "_unban": {"desc": "Unbans a member.", "use": "Use: <command> <mention>", "alias": "Alias: ayybot.unban"},
-    "ayybot.unban": {"desc": "Unbans a member.", "use": "Use: <command> <mention>", "alias": "Alias: _unban"},
+    "_ban": {"desc": "Bans a member.", "use": "Use: <command> <mention>", "alias": "Alias: nano.ban"},
+    "nano.ban": {"desc": "Bans a member.", "use": "User: <command> <mention>", "alias": "Alias: _ban"},
+    "_kick": {"desc": "Kicks a member.", "use": "Use: <command> <mention>", "alias": "Alias: nano.kick"},
+    "nano.kick": {"desc": "Kicks a member", "use": "Use: <command> <mention>", "alias": "Alias: _kick"},
+    "_unban": {"desc": "Unbans a member.", "use": "Use: <command> <mention>", "alias": "Alias: nano.unban"},
+    "nano.unban": {"desc": "Unbans a member.", "use": "Use: <command> <mention>", "alias": "Alias: _unban"},
     "_role add": {"desc": "Adds a role to the user.", "use": "Use: <command> <role name> <mention>", "alias": None},
     "_role remove": {"desc": "Removes a role from the user.", "use": "Use: <command> <role name> <mention>", "alias": None},
     "_role replacewith": {"desc": "Replace all roles with the specified one for a user.", "use": "Use: <command> <role name> <mention>", "alias": None},
     "_cmd add": {"desc": "Adds a command to the server.", "use": "Use: <command> command|response", "alias": None},
     "_cmd remove": {"desc": "Removes a command from the server.", "use": "Use: <command> command", "alias": None},
-    "_invite": {"desc": "Gives you a link to invite AyyBot to another (your) server.", "use": None, "alias": "Alias: ayybot.invite"},
+    "_invite": {"desc": "Gives you a link to invite Nano to another (your) server.", "use": None, "alias": "Alias: nano.invite"},
     "_vote start": {"desc": "Starts a vote on the server.", "use": "Use: <command> \"question\" choice1|choice2|...", "alias": None},
     "_vote end": {"desc": "Simply ends the current vote on the server.", "use": None, "alias": None},
-    "_getstarted": {"desc": "Helps admins set up basic settings for the bot (guided setup).", "use": None, "alias": "Alias: ayybot.getstarted"},
+    "_getstarted": {"desc": "Helps admins set up basic settings for the bot (guided setup).", "use": None, "alias": "Alias: nano.getstarted"},
     "_playing": {"desc": "Restricted to owner, changes 'playing' status.", "use": "Use: <command> <status>", "alias": None},
     "_user": {"desc": "Gives info about the user", "use": "Use: <command> <mention or name>", "alias": None},
-    "_reload": {"desc": "Restricted to owner, reloads all settings from config file.", "use": None, "alias": "Alias: ayybot.reload"},
-    "ayybot.serversetup": {"desc": "(Re)sets all server related bot settings to default.", "use": None, "alias": "Alias: ayybot.server.setup"},
-    "ayybot.server.setup": {"desc": "(Re)sets all server related bot settings to default.", "use": None, "alias": "Alias: ayybot.serversetup"},
-    "ayybot.admins add": {"desc": "Adds a user to admins on the server.", "use": "Use: <command> <mention>", "alias": None},
-    "ayybot.admins remove": {"desc": "Removes a user from admins on the server.", "use": "Use: <command> <mention>", "alias": None},
-    "ayybot.admins list": {"desc": "Lists all admins on the server.", "use": None, "alias": None},
-    "ayybot.sleep": {"desc": "Puts AyyBot to sleep.", "use": None, "alias": None},
-    "ayybot.wake": {"desc": "Wakes AyyBot up.", "use": None, "alias": None},
-    "ayybot.invite": {"desc": "Gives you a link to invite AyyBot to another (your) server.", "use": None, "alias": "Alias: _invite"},
-    "ayybot.settings": {"desc": "Sets server settings like word and spam filtering, enables or disables welcome message and ban announcement", "use": "Use: <command> <setting> True/False", "alias": None},
-    "ayybot.displaysettings": {"desc": "Displays all server settings.", "use": None, "alias": None},
-    "ayybot.blacklist add": {"desc": "Adds a channel to command blacklist.", "use": "Use: <command> <channel name>", "alias": None},
-    "ayybot.blacklist remove": {"desc": "Removes a channel from command blacklist", "use": "Use: <command> <channel name>", "alias": None},
-    "ayybot.getstarted": {"desc": "Helps admins set up basic settings for the bot (guided setup).", "use": None, "alias": "Alias: _getstarted"},
-    "ayybot.changeprefix": {"desc": "Changes the prefix on the server.", "use": "Use: <command> prefix", "alias": None},
-    "ayybot.kill": {"desc": "Restricted to owner, shuts down the bot.", "use": "Use: <command> speshal codee", "alias": None},
-    "ayybot.reload": {"desc": "Restricted to owner, reloads all settings from config file.", "use": None, "alias": "Alias: _reload"},
+    "_reload": {"desc": "Restricted to owner, reloads all settings from config file.", "use": None, "alias": "Alias: nano.reload"},
+    "nano.serversetup": {"desc": "(Re)sets all server related bot settings to default.", "use": None, "alias": "Alias: nano.server.setup"},
+    "nano.server.setup": {"desc": "(Re)sets all server related bot settings to default.", "use": None, "alias": "Alias: nano.serversetup"},
+    "nano.admins add": {"desc": "Adds a user to admins on the server.", "use": "Use: <command> <mention>", "alias": None},
+    "nano.admins remove": {"desc": "Removes a user from admins on the server.", "use": "Use: <command> <mention>", "alias": None},
+    "nano.admins list": {"desc": "Lists all admins on the server.", "use": None, "alias": None},
+    "nano.sleep": {"desc": "Puts Nano to sleep.", "use": None, "alias": None},
+    "nano.wake": {"desc": "Wakes Nano up.", "use": None, "alias": None},
+    "nano.invite": {"desc": "Gives you a link to invite Nano to another (your) server.", "use": None, "alias": "Alias: _invite"},
+    "nano.settings": {"desc": "Sets server settings like word and spam filtering, enables or disables welcome message and ban announcement", "use": "Use: <command> <setting> True/False", "alias": None},
+    "nano.displaysettings": {"desc": "Displays all server settings.", "use": None, "alias": None},
+    "nano.blacklist add": {"desc": "Adds a channel to command blacklist.", "use": "Use: <command> <channel name>", "alias": None},
+    "nano.blacklist remove": {"desc": "Removes a channel from command blacklist", "use": "Use: <command> <channel name>", "alias": None},
+    "nano.getstarted": {"desc": "Helps admins set up basic settings for the bot (guided setup).", "use": None, "alias": "Alias: _getstarted"},
+    "nano.changeprefix": {"desc": "Changes the prefix on the server.", "use": "Use: <command> prefix", "alias": None},
+    "nano.kill": {"desc": "Restricted to owner, shuts down the bot.", "use": "Use: <command> speshal codee", "alias": None},
+    "nano.reload": {"desc": "Restricted to owner, reloads all settings from config file.", "use": None, "alias": "Alias: _reload"},
     "_mute": {"desc": "Mutes the user - deletes all future messages from the user until he/she is un-muted.", "use": "Use: <command> <mention or name>", "alias": None},
     "_unmute": {"desc": "Un-mutes the user (see mute help for more info).", "use": "Use: <command> <mention or name>", "alias": None},
     "_muted": {"desc": "Displays a list of all members currently muted.", "use": None, "alias": None},
@@ -134,17 +134,17 @@ commandhelpsadmin = {
 
 
 
-ayybotinfo = """**Hey! My name is AyyBot!**
+nanoinfo = """**Hey! My name is Nano!**
 I have a GitHub repo! `!github`
 My version is **<version>**.
 I have been coded by *DefaltSimon*.
 """
 
-githubinfo = """AyyBot is being maintained and updated on **GitHub**
-Repo link: https://github.com/DefaltSimon/AyyBot
+githubinfo = """Nano is being maintained and updated on **GitHub**
+Repo link: https://github.com/DefaltSimon/Nano
 """
 
-appinfo = """You wanna invite AyyBot to your server, eh? Sure man.
+appinfo = """You wanna invite Nano to your server, eh? Sure man.
 **Here's the link:** <link>
 """
 

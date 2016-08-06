@@ -2,7 +2,7 @@
 
 __author__ = "DefaltSimon"
 
-# Moderation plugin for AyyBot
+# Moderation plugin for Nano
 
 from pickle import load
 

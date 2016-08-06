@@ -1,6 +1,6 @@
 # coding=utf-8
 
-"""Part of AyyBot"""
+"""Part of Nano"""
 
 from yaml import load,dump
 import os

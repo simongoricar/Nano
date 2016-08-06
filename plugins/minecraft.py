@@ -2,7 +2,7 @@
 
 __author__ = "DefaltSimon"
 
-# Minecraft plugin for AyyBot
+# Minecraft plugin for Nano
 
 import requests
 

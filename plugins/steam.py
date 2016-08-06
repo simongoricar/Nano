@@ -3,7 +3,7 @@ import steamapi
 
 __author__ = "DefaltSimon"
 
-# Steam plugin for AyyBot
+# Steam plugin for Nano
 
 class Steam:
     def __init__(self, apikey):

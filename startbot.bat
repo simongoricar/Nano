@@ -1,3 +1,3 @@
 @echo off
-@title AyyBot
-python ayybot.py
+@title Nano
+python nano.py

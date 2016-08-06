@@ -1,3 +1,7 @@
+2.1.4
+- Bugfixes
+- AyyBot has been renamed to Nano! (ayybot.* is now nano.* and !ayybot is !nano)
+
 2.1.3a/b
 - Optmizations and bugfixes
 - !tf added
@@ -73,7 +77,7 @@ By the way, wiki has been added :)
 - Added game time monitoring. :
     !games - tells you amount of every game you played
 - Added bot startup time to log.txt
-- @AyyBot say <something> now responds with tts
+- @Nano say <something> now responds with tts
 - "!help all" has changed, now sends to private message, "!help all public" works as before
 - Added customizable !help delay in settings.ini
 

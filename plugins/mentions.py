@@ -5,7 +5,7 @@ from utils import helpmsg
 
 __author__ = "DefaltSimon"
 
-# Mention module for AyyBot (handles @AyyBot mentions)
+# Mention module for Nano (handles @Nano mentions)
 
 class MentionHandler:
     def __init__(self):
