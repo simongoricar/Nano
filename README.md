@@ -1,4 +1,4 @@
-# AyyBot (python) 0.9 api
+# AyyBot (python) 0.9 api (now known as Nano)
 made by DefaltSimon, with [discord.py api](https://github.com/Rapptz/discord.py)
 
 **1** Features:
