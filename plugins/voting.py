@@ -83,13 +83,13 @@ class Vote:
                 return
 
     def returnvotes(self,server):
-        return self.votes[server.id]
+        return self.votes.get(server.id)
 
     def returnvoteheader(self,server):
-        return str(self.voteheader[server.id])
+        return self.voteheader.get(server.id)
 
     def returncontent(self,server):
-        return self.votecontent[server.id]
+        return self.votecontent.get(server.id)
 
     def end_voting(self, server):
         self.progress[server.id] = False

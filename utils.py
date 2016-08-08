@@ -14,7 +14,7 @@ messagelist = {
 }
 
 
-helpmsg = """**Hi!** I see you're a bit lost! No worries, I'm here to help.
+helpmsg = """**Hey, I'm Nano!**
 
 To get familiar with simple commands, type `>help simple`.
 If you want specific info about a command, do `>help command`.
@@ -31,6 +31,7 @@ simples = """`_hello` - Welcomes you or the mentioned person.
 `_urban term` - gives you a description of a term from Urban Dictionary
 `_decide option|option...` - decides between your options so you don't have to
 `_tf item_name` - item prices from backpack.tf
+`_steam user_id` - search users on Steam
 
 These are just a few of some of the simpler commands. For more info about each command, use `_help command` or type `_cmds` to look at the wiki page with all the commands."""
 
@@ -112,8 +113,8 @@ commandhelpsadmin = {
     "nano.admins add": {"desc": "Adds a user to admins on the server.", "use": "Use: <command> <mention>", "alias": None},
     "nano.admins remove": {"desc": "Removes a user from admins on the server.", "use": "Use: <command> <mention>", "alias": None},
     "nano.admins list": {"desc": "Lists all admins on the server.", "use": None, "alias": None},
-    "nano.sleep": {"desc": "Puts Nano to sleep.", "use": None, "alias": None},
-    "nano.wake": {"desc": "Wakes Nano up.", "use": None, "alias": None},
+    "nano.sleep": {"desc": "Puts Nano to sleep. (per-server basis)", "use": None, "alias": None},
+    "nano.wake": {"desc": "Wakes Nano up. (per-server basis)", "use": None, "alias": None},
     "nano.invite": {"desc": "Gives you a link to invite Nano to another (your) server.", "use": None, "alias": "Alias: _invite"},
     "nano.settings": {"desc": "Sets server settings like word and spam filtering, enables or disables welcome message and ban announcement", "use": "Use: <command> <setting> True/False", "alias": None},
     "nano.displaysettings": {"desc": "Displays all server settings.", "use": None, "alias": None},

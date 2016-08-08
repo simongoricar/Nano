@@ -24,22 +24,24 @@ from discord.voice_client import StreamPlayer
 
 # Nano modules
 from utils import *
-from plugins import voting, stats, mentions, moderator, minecraft, steam, bptf
+from plugins import voting, stats, mentions, moderator, minecraft, steam, bptf, playing, backup
 from data import serverhandler
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '2.1.4dev'
+__version__ = '2.1.5'
 
 
-# Instances
+# Instances and loop initialization
 
-client = discord.Client()
+loop = asyncio.get_event_loop()
+
+client = discord.Client(loop=loop)
 
 parser = configparser.ConfigParser()
 parser.read("settings.ini")
 
-giphy = giphypop.Giphy()  # Public beta key, available on their GitHub page
+giphy = giphypop.Giphy()  # Public beta key (default), available on their GitHub page
 
 # Plugin instances
 
@@ -55,11 +57,18 @@ stat = stats.BotStats()
 mention = mentions.MentionHandler()
 mod = moderator.BotModerator()
 mc = minecraft.Minecraft()
+b = backup.BackupManager()
 s = steam.Steam(parser.get("ApiKeys", "steam"))
 tf = bptf.CommunityPrices(parser.get("ApiKeys", "bptf"), max_age=7200, allow_cache=True)
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
+
+logger = logging.getLogger("discord")
+logger.setLevel(logging.INFO)
+h = logging.FileHandler(filename="data/debug.log", encoding="utf-8", mode="w")
+h.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+logger.addHandler(h)
 
 # Constants
 
@@ -79,6 +88,18 @@ def KeyboardItr(signal, frame):
 
 signal.signal(signal.SIGINT, KeyboardItr)
 
+# 'Special' uncaught exception logger (for easy debugging)
+
+def exc_logger(exctype, value, tb):
+    with open("data/errors.log", "a") as log:
+        data = """Exception: {}
+Value: {}
+Traceback: {}
+""".format(exctype, value, tb)
+        log.write(data)
+
+sys.excepthook = exc_logger
+
 # Decorator
 
 def threaded(fn):
@@ -93,7 +114,7 @@ def save_submission(content):
 
 @threaded
 def log(content):
-    with open("log.txt", "a") as file:
+    with open("data/log.txt", "a") as file:
         date = datetime.now()
         cn = date.strftime("%d-%m-%Y %H:%M:%S") + " - " + str(content)
         print(cn)
@@ -575,6 +596,7 @@ Description: {}```""".format(cmdn, desc)
 
                 if cmd is None:
                     await client.send_message(message.channel, "Command could not be found.\n**(Use: `>help command`)**".replace(">", prefix))
+                    stat.pluswrongarg()
                     return
 
         # Ping
@@ -758,7 +780,7 @@ Description: {}```""".format(cmdn, desc)
             await client.send_message(message.channel, combined)
 
         # People can vote with vote <number>
-        elif startswith(prefix + "vote"):
+        elif startswith(prefix + "vote "):
             # Ignore if no votes are going on
             if not vote.inprogress(message.channel.server):
                     return
@@ -767,15 +789,22 @@ Description: {}```""".format(cmdn, desc)
                 try:
                     num = int(str(message.content)[len(prefix + "vote "):])
                 except ValueError:
+                    stat.pluswrongarg()
                     # Update: now ignoring no-choices, making chat more clean
                     # await client.send_message(message.channel, "Please select your choice and reply with it's number :upside_down:")
                     return
+
 
                 gotit = vote.countone(num, message.author.id, message.channel.server)
                 stat.plusonevote()
 
                 if gotit == -1:
-                    await client.send_message(message.channel, "No, you can't change your mind :smile:")
+                    sm = await client.send_message(message.channel, "No, you can't change your mind :smile:")
+                else:
+                    sm = await client.send_message(message.channel, "All right :ballot_box_with_check:")
+
+                await asyncio.sleep(2)
+                await client.delete_message(sm)
 
         # Simple status (server, user count)
         elif startswith(prefix + "status") or startswith("nano.status"):
@@ -787,8 +816,7 @@ Description: {}```""".format(cmdn, desc)
                 servercount += 1
                 members += int(server.member_count)
 
-                for channel in server.channels:
-                    channels += 1
+                channels += len(server.channels)
 
             dstats = "**Stats**```Servers: {}\nUsers: {}\nChannels: {}```".format(servercount, members, channels)
 
@@ -839,6 +867,7 @@ Description: {}```""".format(cmdn, desc)
             except discord.errors.InvalidArgument:
                 self.vc = None
                 await client.send_message(message.channel, "Could not join, **{}** is not a voice channel.".format(cut))
+                stat.pluswrongarg()
                 return
 
         elif startswith(prefix + "music leave"):
@@ -1040,6 +1069,7 @@ Description: {}```""".format(cmdn, desc)
 
                 if not username:
                     await client.send_message(message.channel, "User **does not exist**.")
+                    stat.pluswrongarg()
                     return
 
                 await client.send_message(message.channel, "*User:* **{}**\n\n*Friends:* {}".format(username, ", ".join(friends)))
@@ -1053,6 +1083,7 @@ Description: {}```""".format(cmdn, desc)
 
                 if not username:
                     await client.send_message(message.channel, "User **does not exist**.")
+                    stat.pluswrongarg()
                     return
 
                 games = ["`" + game + "`" for game in games]
@@ -1071,6 +1102,7 @@ Description: {}```""".format(cmdn, desc)
 
                 if not steamuser:
                     await client.send_message(message.channel, "User **does not exist**.")
+                    stat.pluswrongarg()
                     return
 
                 ms = """User: **{}**
@@ -1174,6 +1206,7 @@ Friends: {}```\nDirect link: http://steamcommunity.com/id/{}/""".format(steamuse
 
             if not data:
                 await client.send_message(message.channel, "**No item with that name/id**")
+                stat.pluswrongarg()
                 return
 
             if not isinstance(data, list):
@@ -1202,6 +1235,7 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
 
             if not item:
                 await client.send_message(message.channel, "'{}' *does not exist.*".format(da))
+                stat.pluswrongarg()
                 return
 
             ls = []
@@ -1988,8 +2022,7 @@ async def on_member_ban(member):
     if handler.issleeping(member.server):
         return
 
-    #if handler.onban(member.server):
-    #    await client.send_message(member.server.default_channel, handler.get_var(member.server.id, "banmsg").replace(":user", member.name))
+
     msg = handler.get_var(member.server.id, "banmsg").replace(":user", member.name)
     if msg is None or msg is False:
         return
@@ -2017,7 +2050,7 @@ async def on_member_remove(member):
 
 @client.event
 async def on_server_join(server):
-    await client.send_message(server.default_channel, "**Hi!** My name is Nano!\nNow that you have invited me to your server, you might want to set up some things."
+    await client.send_message(server.default_channel, "**Hi!** I'm Nano!\nNow that you have invited me to your server, you might want to set up some things."
                                                       "Right now only the server owner can use my restricted commands. But no worries, you can add admin permissions to others using `nano.admins add @mention` or by assigning them a role named `Admin`!"
                                                       "\nTo get started, type `!getstarted` as the server owner. It will help you set up most of the things. After that, you might want to see `!cmds` to get familiar with my commands.")
 
@@ -2037,9 +2070,10 @@ nano = Nano(owner=parser.getint("Settings", "ownerid"), debug=parser.getboolean(
 @client.event
 async def on_ready():
     def check_all_servers():
+        print("Checking server data...", end="")
         for server in client.servers:
-            print("checking " + server.name)
             nano.server_check(server, threaded=False)
+        print("done")
 
     global first
     if not first:
@@ -2057,7 +2091,8 @@ async def on_ready():
 
     # Sets the status on startup
     name = parser.get("Settings", "initialstatus")
-    if name:
+    roll = parser.get("Settings", "rollstatus")
+    if name and roll:
         await client.change_status(game=discord.Game(name=name))
 
     await asyncio.sleep(3)
@@ -2087,18 +2122,26 @@ def start():
         yield from client.connect()
 
     else:
-        print("[ERROR] Some credentials are missing.")
+        print("[ERROR] Credentials are missing.")
         sys.exit()
-
-# Loop initialization
-
-loop = asyncio.get_event_loop()
 
 try:
     print("Connecting...", end="")
 
+    # Playing status changer (1800 - twice an hour)
+    roll = parser.get("Settings", "rollstatus")
+    if roll:
+        loop.create_task(playing.roll_statuses(client, time=1800))
+
+    # Runs scheduled backups (once a day)
+    backup = parser.get("Backup", "enable")
+    if backup:
+        loop.create_task(b.run_forever())
+
     loop.run_until_complete(start())
 except:
+    #b.backup()
+    b.stop()  # Stops backups if active
     loop.run_until_complete(client.logout())
 finally:
     loop.close()

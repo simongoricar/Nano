@@ -1,3 +1,8 @@
+2.1.5
+- Small changes
+- Backup module added
+- Now runs on one loop instead of two
+
 2.1.4
 - Bugfixes
 - AyyBot has been renamed to Nano! (ayybot.* is now nano.* and !ayybot is !nano)

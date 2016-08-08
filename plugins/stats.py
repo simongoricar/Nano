@@ -4,6 +4,7 @@
 
 from yaml import load,dump
 import os
+import time
 
 # Pretty much like v1, but with small changes
 
@@ -11,11 +12,28 @@ __author__ = "DefaltSimon"
 
 class BotStats:
     def __init__(self):
-        pass
+        self.data_lock = False
+
+    def lock(self):
+        self.data_lock = True
+
+    def wait_until_release(self):
+        while self.data_lock is True:
+            time.sleep(0.05)
+
+        return
+
+    def release_lock(self):
+        self.data_lock = False
 
     def write(self,data):
+        # Prevents data corruption
+        self.wait_until_release()
+
+        self.lock()
         with open("plugins/stats.yml","w") as outfile:
             outfile.write(dump(data,default_flow_style=False))
+        self.release_lock()
 
     def plusmsg(self):
         with open("plugins/stats.yml","r+") as file:
