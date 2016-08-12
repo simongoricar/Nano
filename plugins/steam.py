@@ -32,3 +32,11 @@ class Steam:
             return user.name, [game.name for game in user.games]
         except steamapi.errors.UserNotFoundError:
             return None, None
+
+    @staticmethod
+    def get_owned_games(uid):
+        try:
+            user = steamapi.user.SteamUser(userurl=str(uid))
+            return user.name, [game.name for game in user.owned_games]
+        except steamapi.errors.UserNotFoundError:
+            return None, None

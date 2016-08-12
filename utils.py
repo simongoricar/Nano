@@ -86,7 +86,8 @@ commandhelpsnormal = {
     "_minecraft": {"desc": "Searches for items and displays their details", "use": "Use: <command> <item name or id:meta>", "alias": "Alias: _mc"},
     "_tf": {"desc": "Gets item prices from backpack.tf (not perfect for items with unusual effects/shines)", "use": "Use: <command> <item name>", "alias": None},
     "_quote": {"desc": "Brightens your day with a random quote.", "use": None, "alias": None},
-    "_notifydev": {"desc": "Sends a message to the developer (me). Please use only when you encounter a bug or an exploit.", "use": "Use: <command> <message>", "alias": None},
+    "_notifydev": {"desc": "Sends a message to the developer", "use": "Use: <command> <message>", "alias": "Alias: _suggest"},
+    "_suggest": {"desc": "Sends a message to the developer", "use": "Use: <command> <message>", "alias": "Alias: _notifydev"},
 }
 
 commandhelpsadmin = {
@@ -105,7 +106,6 @@ commandhelpsadmin = {
     "_vote start": {"desc": "Starts a vote on the server.", "use": "Use: <command> \"question\" choice1|choice2|...", "alias": None},
     "_vote end": {"desc": "Simply ends the current vote on the server.", "use": None, "alias": None},
     "_getstarted": {"desc": "Helps admins set up basic settings for the bot (guided setup).", "use": None, "alias": "Alias: nano.getstarted"},
-    "_playing": {"desc": "Restricted to owner, changes 'playing' status.", "use": "Use: <command> <status>", "alias": None},
     "_user": {"desc": "Gives info about the user", "use": "Use: <command> <mention or name>", "alias": None},
     "_reload": {"desc": "Restricted to owner, reloads all settings from config file.", "use": None, "alias": "Alias: nano.reload"},
     "nano.serversetup": {"desc": "(Re)sets all server related bot settings to default.", "use": None, "alias": "Alias: nano.server.setup"},
@@ -122,8 +122,6 @@ commandhelpsadmin = {
     "nano.blacklist remove": {"desc": "Removes a channel from command blacklist", "use": "Use: <command> <channel name>", "alias": None},
     "nano.getstarted": {"desc": "Helps admins set up basic settings for the bot (guided setup).", "use": None, "alias": "Alias: _getstarted"},
     "nano.changeprefix": {"desc": "Changes the prefix on the server.", "use": "Use: <command> prefix", "alias": None},
-    "nano.kill": {"desc": "Restricted to owner, shuts down the bot.", "use": "Use: <command> speshal codee", "alias": None},
-    "nano.reload": {"desc": "Restricted to owner, reloads all settings from config file.", "use": None, "alias": "Alias: _reload"},
     "_mute": {"desc": "Mutes the user - deletes all future messages from the user until he/she is un-muted.", "use": "Use: <command> <mention or name>", "alias": None},
     "_unmute": {"desc": "Un-mutes the user (see mute help for more info).", "use": "Use: <command> <mention or name>", "alias": None},
     "_muted": {"desc": "Displays a list of all members currently muted.", "use": None, "alias": None},
@@ -131,6 +129,13 @@ commandhelpsadmin = {
     "_welcomemsg": {"desc": "Sets the message sent when a member joins the server.\nFormatting: ':user' = @userthatjoined, ':server' = server name", "use": "Use: <command> <content>", "alias": None},
     "_banmsg": {"desc": "Sets the message sent when a member is banned.\nFormatting: ':user' = user name", "use": "Use: <command> <content>", "alias": None},
     "_kickmsg": {"desc": "Sets the message sent when a member is kicked.\nFormatting: ':user' = user name", "use": "Use: <command> <content>", "alias": None},
+}
+
+commandhelpsowner = {
+    "_playing": {"desc": "Restricted to owner(!), changes 'playing' status.", "use": "Use: <command> <status>", "alias": None},
+    "nano.kill": {"desc": "Restricted to owner, shuts down the bot.", "use": "Use: <command>", "alias": None},
+    "nano.restart": {"desc": "Restricted to owner, restarts down the bot.", "use": "Use: <command>", "alias": None},
+    "nano.reload": {"desc": "Restricted to owner, reloads all settings from config file.", "use": None, "alias": "Alias: _reload"},
 }
 
 

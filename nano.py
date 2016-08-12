@@ -12,6 +12,7 @@ import threading
 import os
 import sys
 import signal
+import subprocess
 
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
@@ -25,11 +26,12 @@ from discord.voice_client import StreamPlayer
 # Nano modules
 from utils import *
 from plugins import voting, stats, mentions, moderator, minecraft, steam, bptf, playing, backup
+from bots_discord_pw import POSTServerCount
 from data import serverhandler
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '2.1.5'
+__version__ = '2.1.6'
 
 
 # Instances and loop initialization
@@ -244,6 +246,25 @@ class Nano:
 
         self.checking = False
 
+    @staticmethod
+    async def create_log_channel(server, name):
+        them = discord.PermissionOverwrite(read_messages=False, send_messages=False, read_message_history=False)
+        us = discord.PermissionOverwrite(read_messages=True, send_messages=True, read_message_history=True, attach_files=True, embed_links=True, manage_messages=True)
+
+        admins = discord.utils.find(lambda m: m.name == "Nano Admin", server.roles)
+
+        th = discord.ChannelPermissions(target=server.default_role, overwrite=them)
+        m = discord.ChannelPermissions(target=server.me, overwrite=us)
+        ad = discord.ChannelPermissions(target=admins, overwrite=us)
+
+        ln = handler.get_var(server.id, "logchannel")
+
+        if ln:
+            if not admins:
+                return await client.create_channel(server, ln, th, m)
+            else:
+                return await client.create_channel(server, ln, th, m, ad)
+
     async def on_message(self, message):
         if self.debug:
             try:
@@ -265,7 +286,7 @@ class Nano:
 
         if not isadmin:
             for role in message.author.roles:
-                if role.name == "Admin":
+                if role.name == "Nano Admin":
                     isadmin = True
                     continue
 
@@ -291,11 +312,11 @@ class Nano:
                       "_prefix", "ayy lmao", "_vote", "_status", "nano.status", "_stats", "nano.stats", "_music join",
                       "_music leave", "_music volume", "_music pause", "_music resume", "_music playing", "_music help",
                       "_music play", "_music skip", "_music stop", "nano.bug", "_bug", "_vote", "nano.prefix", "_changes",
-                      "_changelog", "_johncena", "_rip", "_steam ", "_mc ", "_minecraft", "_tf", "_feature", "_quote", "_say",
-                      "_members", "_notifydev", "_cmds"]
+                      "_changelog", "_johncena", "_rip", "_steam", "_mc ", "_minecraft", "_tf", "_feature", "_quote", "_say",
+                      "_members", "_notifydev", "_suggest", "_cmds"]
 
         admincmds = ["nano.ban", "nano.unban", "nano.kick", "_ban", "_unban", "_kick", "_avatar", "_role add",
-                     "_role replacewith", "_role remove", "_cmd add", "_cmd remove",
+                     "_role replacewith", "_role remove", "_cmd add", "_cmd remove", "nano.restart",
                      "nano.serversetup", "nano.server.setup", "nano.admins add", "nano.admins remove",
                      "nano.admins list", "nano.sleep", "nano.wake", "_invite", "nano.invite", "nano.displaysettings",
                      "nano.settings", "_vote start", "_vote end", "nano.blacklist add", "nano.blacklist remove", "_getstarted",
@@ -580,6 +601,55 @@ Description: {}
 
                     elif not use and not alias:
                         preset = """Command: **{}** (admins only)
+
+```css
+Description: {}```""".format(cmdn, desc)
+                    else:
+                        print("How is this even possible?!")
+                        return
+
+
+                    await client.send_message(message.channel, preset)
+
+
+                    stat.plushelpcommand()
+                    return
+
+                cmd = commandhelpsowner.get(str(search.replace(prefix, "_").strip(" ")))
+                if cmd is not None:
+                    cmdn = search.replace(prefix, "")  # Changeable
+                    desc = cmd["desc"]
+                    use = cmd["use"]
+                    alias = cmd["alias"]
+
+                    # Compiles proper message
+                    if use and alias:
+                        preset = """Command: **{}** (owner only)
+
+```css
+Description: {}
+
+{}
+{}```""".format(cmdn, desc, use, alias)
+
+                    elif alias and not use:
+                        preset = """Command: **{}** (owner only)
+
+```css
+Description: {}
+
+{}```""".format(cmdn, desc, alias)
+
+                    elif use and not alias:
+                        preset = """Command: **{}** (owner only)
+
+```css
+Description: {}
+
+{}```""".format(cmdn, desc, use)
+
+                    elif not use and not alias:
+                        preset = """Command: **{}** (owner only)
 
 ```css
 Description: {}```""".format(cmdn, desc)
@@ -1079,7 +1149,7 @@ Description: {}```""".format(cmdn, desc)
 
                 # Game search
                 await client.send_typing(message.channel)
-                username, games = s.get_games(uid)
+                username, games = s.get_owned_games(uid)
 
                 if not username:
                     await client.send_message(message.channel, "User **does not exist**.")
@@ -1089,12 +1159,15 @@ Description: {}```""".format(cmdn, desc)
                 games = ["`" + game + "`" for game in games]
 
                 try:
-                    await client.send_message(message.channel, "*User:* **{}**:\n\n*Games:* {}".format(username, ", ".join(games)))
+                    await client.send_message(message.channel, "*User:* **{}**:\n\n*Owned games:* {}".format(username, ", ".join(games)))
                 except discord.HTTPException:
                     await client.send_message(message.channel, "This message can not fit onto Discord: **user has too many games to display (lol)**")
 
-            elif startswith(prefix + "steam"):
-                uid = str(message.content)[len(prefix + "steam "):]
+            elif startswith(prefix + "steam") or startswith(prefix + "steam help"):
+                await client.send_message(message.channel, "**Steam commands:**\n`_steam user community_url`, `_steam friends community_url`, `_steam games community_url`")
+
+            elif startswith(prefix + "steam user "):
+                uid = str(message.content)[len(prefix + "steam user "):]
 
                 # Basic search
                 await client.send_typing(message.channel)
@@ -1109,7 +1182,7 @@ Description: {}```""".format(cmdn, desc)
 ```css
 Status: {}
 Level: {}
-Games: {} (including free games)
+Games: {} owned (including free games)
 Friends: {}```\nDirect link: http://steamcommunity.com/id/{}/""".format(steamuser.name, "Online" if steamuser.state else "Offline", steamuser.level, len(steamuser.games), len(steamuser.friends), uid)
 
                 try:
@@ -1277,8 +1350,13 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
 
             await client.send_message(message.channel, "*__Members__*:\n\n{}".format(", ".join(ls)))
 
-        elif startswith(prefix + "notifydev"):
-            report = message.content[len(prefix + "notifydev "):]
+        elif startswith(prefix + "notifydev") or startswith(prefix + "suggest"):
+            if startswith(prefix + "notifydev"):
+                report = message.content[len(prefix + "notifydev "):]
+                typ = "Report"
+            elif startswith(prefix + "suggest"):
+                report = message.content[len(prefix + "suggest "):]
+                typ = "Suggestion"
 
             ownerserver = discord.utils.get(client.servers, id=parser.get("Dev", "serverid"))
 
@@ -1286,12 +1364,12 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
             ts = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
 
             # 'Compiled' report
-            comp = """Report from {}:
+            comp = """{} from {}:
 ```{}```
 **__Timestamp__**: `{}`
 **__Server__**: `{}` ({} members)
 **__Server Owner__**: {}
-""".format(message.author.mention, report, ts, message.channel.server.name, message.channel.server.member_count, "Yes" if message.author.id == message.channel.server.owner.id else message.channel.server.owner.id)
+""".format(typ ,message.author.mention, report, ts, message.channel.server.name, message.channel.server.member_count, "Yes" if message.author.id == message.channel.server.owner.id else message.channel.server.owner.id)
 
             # Saves the submission to disk
             if int(ownerserver.owner.id) != int(self.ownerid):
@@ -1301,10 +1379,9 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
 
             await client.send_message(ownerserver.owner, comp)
 
-            m = await client.send_message(message.channel, "Thank you for your submission.")
+            await client.send_message(message.channel, "**Thank you** for your *{}*.".format("submission" if typ == "Report" else "suggestion"))
 
             await asyncio.sleep(4)
-            client.delete_message(m)
 
         #
         # Here start ADMIN ONLY commands
@@ -1596,7 +1673,7 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
         elif startswith(prefix + "invite") or startswith("nano.invite"):
             clientappid = await client.application_info()
 
-            # Most of the permissions that nano uses
+            # Most of the permissions that Nano uses
             perms = str("0x510917638")
             url = 'https://discordapp.com/oauth2/authorize?client_id={}&scope=bot&permissions={}'.format(clientappid.id, perms)
 
@@ -1629,7 +1706,7 @@ Prefix: {}```
 Messages:
 ➤ Join: `{}`
 ➤ Ban: `{}`
-➤ Kick: `{}`""".format(bchan, cmds, spam, wfilter, settings.get("logchannel"), settings.get("prefix"), settings.get("welcomemsg"), settings.get("banmsg"), settings.get("kickmsg")))
+➤ Kick: `{}`""".format(bchan, cmds, spam, wfilter, settings.get("logchannel") if settings.get("logchannel") else "None", settings.get("prefix"), settings.get("welcomemsg"), settings.get("banmsg"), settings.get("kickmsg")))
 
         elif startswith("nano.settings"):
             try:
@@ -1828,6 +1905,32 @@ Don't forget, you can also add/remove/list custom commands with `_cmd add/remove
             await client.logout()
             exit(0)
 
+        # Restarts the bot
+        elif startswith("nano.restart"):
+            # Restricted to owner
+            if not isowner:
+                await client.send_message(message.channel, "You are not permitted to use this command. :x:")
+                return
+
+            m = await client.send_message(message.channel, "Staving state and restarting...")
+
+            if not os.path.isdir("cache"): os.mkdir("cache")
+
+            with open("cache/voting_state.cache", "wb") as cache:
+                dump(vote, cache)  # Save instance of Vote
+
+            await client.send_message(message.channel, "**DED**")
+            await client.delete_message(m)
+
+            await client.logout()
+
+            if sys.platform == "win32":
+                p = subprocess.Popen("startbot.bat")
+            else:
+                p = subprocess.Popen(["./startbot"])
+
+            sys.exit(0)
+
         # Changes 'playing' status
         elif startswith(prefix + "playing"):
             # Restricted to owner
@@ -2004,6 +2107,18 @@ Don't forget, you can also add/remove/list custom commands with `_cmd add/remove
 
                 await client.send_message(message.channel, sdata)
 
+            elif startswith(prefix + "dev create_logchannel"):
+                await self.create_log_channel(message.channel.server, handler.get_var(message.channel.server.id, "logchannel"))
+
+            elif startswith(prefix + "dev sm"):
+                sid = str(message.content)[len(prefix + "dev sm "):]
+                uid = str(int(sid[:18]))  # Check for id
+                msg = sid[18 + 1:]
+
+                reporter = discord.utils.find(lambda u: u.id == uid, client.get_all_members())
+                await client.send_message(reporter, msg)
+
+
 # When a member joins the server
 @client.event
 async def on_member_join(member):
@@ -2028,10 +2143,13 @@ async def on_member_ban(member):
         return
 
     if handler.haslogging(member.server):
-        logchannel = discord.utils.find(lambda channel: channel.name == handler.returnlogch(member.server), member.server.channels)
+        logchannel = discord.utils.find(lambda channel: channel.name == handler.get_var(member.server.id, "logchannel"), member.server.channels)
+
         if logchannel:
             await client.send_message(logchannel, msg)
-
+        else:
+            logchannel = await nano.create_log_channel(member.server, handler.get_var(member.server.id, "logchannel"))
+            await client.send_message(logchannel, msg)
 @client.event
 async def on_member_remove(member):
     if handler.issleeping(member.server):
@@ -2044,19 +2162,26 @@ async def on_member_remove(member):
     await client.send_message(member.server.default_channel, msg)
 
     if handler.haslogging(member.server):
-        logchannel = discord.utils.find(lambda channel: channel.name == handler.returnlogch(member.server), member.server.channels)
+        logchannel = discord.utils.find(lambda channel: channel.name == handler.get_var(member.server.id, "logchannel"), member.server.channels)
+
         if logchannel:
-            await client.send_message(logchannel, "{} left".format(member.name))
+            await client.send_message(logchannel, "**{}** left".format(member.name))
+        else:
+            logchannel = await nano.create_log_channel(member.server, handler.get_var(member.server.id, "logchannel"))
+            await client.send_message(logchannel, "**{}** left".format(member.name))
 
 @client.event
 async def on_server_join(server):
     await client.send_message(server.default_channel, "**Hi!** I'm Nano!\nNow that you have invited me to your server, you might want to set up some things."
-                                                      "Right now only the server owner can use my restricted commands. But no worries, you can add admin permissions to others using `nano.admins add @mention` or by assigning them a role named `Admin`!"
+                                                      "Right now only the server owner can use my restricted commands. But no worries, you can add admin permissions to others using `nano.admins add @mention` or by assigning them a role named `Nano Admin`!"
                                                       "\nTo get started, type `!getstarted` as the server owner. It will help you set up most of the things. After that, you might want to see `!cmds` to get familiar with my commands.")
 
     log("Joined server with {} members : {}".format(server.member_count, server.name))
     handler.serversetup(server)
 
+    POSTServerCount.upload(len(client.servers))
+
+    log("POSTed server count to bots.discord.pw : {}".format(len(client.servers)))
 
 @client.event
 async def on_server_remove(server):
