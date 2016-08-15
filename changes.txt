@@ -1,3 +1,9 @@
+2.1.8
+- ServerHandler is now more efficient (less reads/writes) and a singleton
+- Fixed some messages
+- Fixed !getstarted settings wrong things and added another step
+- Fixed unnecessary servers.yml writes at bot startup
+
 2.1.7
 - Added POSTing server count to bots.discord.pw
 - Fixed !steam help message

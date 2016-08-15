@@ -56,3 +56,6 @@ class MentionHandler:
 
         elif has("help"):
             return "Use !help to get help, (! is the default prefix)"
+
+        elif has("i love you"):
+            return "I love you too, whoeveryouare"

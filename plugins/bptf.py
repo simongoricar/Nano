@@ -187,6 +187,7 @@ class CommunityPrices:
         if not self.cached_raw_items:
             raise ApiError("No items in response.")
 
+
     def _request(self, address=None, params=None):
         if not address:
             address = self.address
@@ -203,7 +204,8 @@ class CommunityPrices:
         if not max_age: max_age = self.max_age
         self.__init__(self.api_key, max_age)
 
-    def _write_temp(self, data):
+    @staticmethod
+    def _write_temp(data):
         from json import dump
         import os
 
@@ -235,7 +237,10 @@ class CommunityPrices:
 
         self._check_cache()
 
-        return Item(name, self.cached_raw_items.get(name).get("defindex"), self.cached_raw_items.get(name).get("prices"))
+        try:
+            return Item(name, self.cached_raw_items.get(name).get("defindex"), self.cached_raw_items.get(name).get("prices"))
+        except AttributeError:
+            return None
 
 
 #import configparser

@@ -8,6 +8,7 @@ import wikipedia
 import requests
 import giphypop
 import logging
+import logging.config as logconfig
 import threading
 import os
 import sys
@@ -31,7 +32,7 @@ from data import serverhandler
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '2.1.6'
+__version__ = '2.1.8'
 
 
 # Instances and loop initialization
@@ -48,7 +49,7 @@ giphy = giphypop.Giphy()  # Public beta key (default), available on their GitHub
 # Plugin instances
 
 if os.path.isfile("cache/voting_state.cache"):
-    with open("cache/voting_state.cache", "rb+") as vt:
+    with open("cache/voting_state.cache", "rb") as vt:
         vote = pickle_load(vt)
     os.remove("cache/voting_state.cache")
 else:
@@ -66,11 +67,13 @@ tf = bptf.CommunityPrices(parser.get("ApiKeys", "bptf"), max_age=7200, allow_cac
 # Logging setup
 logging.basicConfig(level=logging.INFO)
 
-logger = logging.getLogger("discord")
-logger.setLevel(logging.INFO)
+logger = logging.getLogger(__name__)
+
+lg = logging.getLogger("discord")
+lg.setLevel(logging.INFO)
 h = logging.FileHandler(filename="data/debug.log", encoding="utf-8", mode="w")
 h.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-logger.addHandler(h)
+lg.addHandler(h)
 
 # Constants
 
@@ -79,7 +82,7 @@ first = True
 
 # KeyboardInterrupt things
 def KeyboardItr(signal, frame):
-    print("[EXCEPTION] KeyboardInterrupt: Saving voting state to cache/voting_state.cache")
+    logger.critical("[EXCEPTION] KeyboardInterrupt: Saving voting state to cache/voting_state.cache")
     # Quick state save
     if not os.path.isdir("cache"): os.mkdir("cache")
 
@@ -119,7 +122,7 @@ def log(content):
     with open("data/log.txt", "a") as file:
         date = datetime.now()
         cn = date.strftime("%d-%m-%Y %H:%M:%S") + " - " + str(content)
-        print(cn)
+        logger.info(content)
         file.write(cn + "\n")
 
 # Exception classes
@@ -169,46 +172,34 @@ class Nano:
         self.checking = False
 
     def updateadmins(self):
-        with open("data/servers.yml", "r") as file:
-            if not file:
-                return
+        data = handler.get_all_data()
+        for this in data.keys():
+            # 'this' is id of the server
+            # 'admin' is the admin on the server
 
-            data = load(file)
-            for this in data.keys():
-                # 'this' is id of the server
-                # 'admin' is the admin on the server
+            if not data[this]["admins"]:
+                continue
 
-                if not data[this]["admins"]:
-                    continue
-
-                self.admins[this] = [admin for admin in data[this]["admins"]]
+            self.admins[this] = [admin for admin in data[this]["admins"]]
 
     def updateprefixes(self):
-        with open("data/servers.yml", "r") as file:
-            if not file:
-                return
+        data = handler.get_all_data()
+        for this in data:
 
-            data = load(file)
-            for this in data:
-
-                try:
-                    self.prefixes[str(this)] = data[this]["prefix"]
-                except KeyError:
-                    pass
-                except TypeError:
-                    pass
+            try:
+                self.prefixes[str(this)] = data[this]["prefix"]
+            except KeyError:
+                pass
+            except TypeError:
+                pass
 
     def updatemutes(self):
-        with open("data/servers.yml", "r") as file:
-            if not file:
-                return
-
-            data = load(file)
-            for this in data:
-                try:
-                    self.mutes[this] = data[this]["muted"]  # list
-                except KeyError:
-                    pass
+        data = handler.get_all_data()
+        for this in data:
+            try:
+                self.mutes[this] = data[this]["muted"]  # list
+            except KeyError:
+                pass
 
     def is_muted(self, message):
         try:
@@ -239,7 +230,7 @@ class Nano:
         if server.name != cname:
             handler.update_name(server.id, server.name)
 
-        if server.owner.id != cown:
+        if server.owner.name != cown:
             handler.update_owner(server.id, server.owner.name)
 
         handler._check_server_vars(server.id)
@@ -265,13 +256,19 @@ class Nano:
             else:
                 return await client.create_channel(server, ln, th, m, ad)
 
-    async def on_message(self, message):
+    def debug_blocked(self, sid):
         if self.debug:
             try:
-                if str(message.channel.server.id) != str(self.debug_server):
-                    return
+                if str(sid) != str(self.debug_server):
+                    return True
             except AttributeError:
-                pass
+                return False
+
+            return False
+
+    async def on_message(self, message):
+        if self.debug_blocked(message.channel.server.id):
+            return
 
         if message.channel.is_private:  # Ignore DMs
             return
@@ -338,16 +335,16 @@ class Nano:
                 self.prefixes[message.channel.server.id] = DEFAULT_PREFIX
                 prefix = DEFAULT_PREFIX
                 print("Server '{}' has been given the default prefix".format(message.channel.server.name))
-                handler.changeprefix(message.channel.server, DEFAULT_PREFIX)
+                handler.change_prefix(message.channel.server, DEFAULT_PREFIX)
 
                 self.updateprefixes()
 
         except KeyError:
-            handler.serversetup(message.channel.server)
+            handler.server_setup(message.channel.server)
             log("Server settings set up: {}".format(message.channel.server))
             prefix = DEFAULT_PREFIX
             print("Server '{}' has been given the default prefix".format(message.channel.server.name))
-            handler.changeprefix(message.channel.server, DEFAULT_PREFIX)
+            handler.change_prefix(message.channel.server, DEFAULT_PREFIX)
 
             self.updateprefixes()
 
@@ -476,7 +473,7 @@ class Nano:
             return
 
         if not handler.serverexists(message.channel.server):
-            handler.serversetup(message.channel.server)
+            handler.server_setup(message.channel.server)
 
             log("Server settings set up: {}".format(message.channel.server))
 
@@ -926,7 +923,8 @@ Description: {}```""".format(cmdn, desc)
             ch = discord.utils.find(lambda m: m.name == str(cut), message.channel.server.channels)
 
             # Opus load
-            discord.opus.load_opus("libopus-0.x64.dll")
+            if not discord.opus.is_loaded():
+                discord.opus.load_opus("libopus-0.x64.dll")
 
             if not discord.opus.is_loaded():
                 await client.send_message(message.channel, "Opus lib could not be loaded (this feature is still in beta)")
@@ -1163,9 +1161,6 @@ Description: {}```""".format(cmdn, desc)
                 except discord.HTTPException:
                     await client.send_message(message.channel, "This message can not fit onto Discord: **user has too many games to display (lol)**")
 
-            elif startswith(prefix + "steam") or startswith(prefix + "steam help"):
-                await client.send_message(message.channel, "**Steam commands:**\n`_steam user community_url`, `_steam friends community_url`, `_steam games community_url`")
-
             elif startswith(prefix + "steam user "):
                 uid = str(message.content)[len(prefix + "steam user "):]
 
@@ -1189,6 +1184,9 @@ Friends: {}```\nDirect link: http://steamcommunity.com/id/{}/""".format(steamuse
                     await client.send_message(message.channel, ms)
                 except discord.HTTPException:
                     await client.send_message(message.channel, "This message can not fit onto Discord: **user has too many friends to display (lol)**")
+
+            elif startswith(prefix + "steam") or startswith(prefix + "steam help"):
+                await client.send_message(message.channel, "**Steam commands:**\n`_steam user community_url`, `_steam friends community_url`, `_steam games community_url`")
 
         elif startswith(prefix + "mc") or startswith(prefix + "minecraft"):
             if startswith(prefix + "mc "):
@@ -1307,7 +1305,7 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
             item = tf.get_item_by_name(str(da))
 
             if not item:
-                await client.send_message(message.channel, "'{}' *does not exist.*".format(da))
+                await client.send_message(message.channel, "An item with that name *does not exist*.".format(da))
                 stat.pluswrongarg()
                 return
 
@@ -1402,17 +1400,17 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
 
         if startswith(prefix + "welcomemsg"):
             msg = message.content[len(prefix + "welcomemsg "):]
-            handler._force_update_var(message.channel.server.id, "welcomemsg", msg)
+            handler.update_var(message.channel.server.id, "welcomemsg", msg)
             await client.send_message(message.channel, "Welcome message has been updated :smile:")
 
         elif startswith(prefix + "banmsg"):
             msg = message.content[len(prefix + "banmsg "):]
-            handler._force_update_var(message.channel.server.id, "banmsg", msg)
+            handler.update_var(message.channel.server.id, "banmsg", msg)
             await client.send_message(message.channel, "Ban message has been updated :smile:")
 
         elif startswith(prefix + "kickmsg"):
             msg = message.content[len(prefix + "kickmsg "):]
-            handler._force_update_var(message.channel.server.id, "kickmsg", msg)
+            handler.update_var(message.channel.server.id, "kickmsg", msg)
             await client.send_message(message.channel, "Kick message has been updated :smile:")
 
         # Simple ban with CONFIRM check
@@ -1568,7 +1566,7 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
 
         # Server setup should be automatic, but if you want to reset settings, here ya go
         elif startswith("nano.serversetup") or startswith("nano.server.setup"):
-            handler.serversetup(message.channel.server)
+            handler.server_setup(message.channel.server)
             log("Server settings set up: {}".format(message.channel.server))
             await client.send_message(message.channel, "Server settings reset :upside_down:")
 
@@ -1582,8 +1580,8 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
             if startswith(prefix + "cmd add"):
                 try:
                     cut = str(message.content)[len(prefix + "cmd add "):].split("|")
-                    handler.updatecommand(message.server, cut[0], cut[1])
-                    await client.send_message(message.channel, "Command '{}' added.".format(cut))
+                    handler.update_command(message.server, cut[0], cut[1])
+                    await client.send_message(message.channel, "Command '{}' added.".format(cut[0]))
 
                 except KeyError:
                     await client.send_message(message.channel,
@@ -1597,7 +1595,7 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
 
             elif startswith(prefix + "cmd remove"):
                 cut = str(message.content)[len(prefix + "cmd remove "):]
-                handler.removecommand(message.server, cut)
+                handler.remove_command(message.server, cut)
                 await client.send_message(message.channel, "Ok :white_check_mark: ")
 
             # Cmd list does not require admin permission so it was moved under normal commands
@@ -1616,7 +1614,7 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
 
                 count = 0
                 for ment in message.mentions:
-                    handler.addadmin(message.server, ment)
+                    handler.add_admin(message.server, ment)
                     count += 1
 
                 if count == 1:
@@ -1638,7 +1636,7 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
 
                 count = 0
                 for ment in message.mentions:
-                    handler.removeadmin(message.server, ment)
+                    handler.remove_admin(message.server, ment)
                     count += 1
 
                 if count == 1:
@@ -1681,7 +1679,7 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
 
         # Displays current settings, including the prefix
         elif startswith("nano.displaysettings"):
-                    settings = handler.get_all_data(message.server.id)
+                    settings = handler.get_server_data(message.server.id)
                     bchan = ",".join(settings["blacklisted"])
                     cmds = ",".join(settings["customcmds"])
 
@@ -1715,7 +1713,7 @@ Messages:
                 return
 
             try:
-                value = handler.updatesettings(message.channel.server, cut[0], cut[1])
+                value = handler.update_moderation_settings(message.channel.server, cut[0], cut[1])
             except IndexError:
                 return
 
@@ -1735,13 +1733,13 @@ Messages:
         elif startswith("nano.blacklist"):
             if startswith("nano.blacklist add"):
                 cut = str(str(message.content)[len("nano.blacklist add "):])
-                handler.updatechannels(message.channel.server, cut)
+                handler.add_channel_blacklist(message.channel.server, cut)
 
                 await client.send_message(message.channel, "**{}** has been blacklisted!".format(cut))
 
             elif startswith("nano.blacklist remove "):
                 cut = str(str(message.content)[len("nano.blacklist remove "):])
-                handler.removechannels(message.channel.server, cut)
+                handler.remove_channel_blacklist(message.channel.server, cut)
 
                 await client.send_message(message.channel, "No worries, **{}** has been removed from the blacklist!".format(cut))
 
@@ -1750,125 +1748,130 @@ Messages:
 
             auth = message.author
 
-            stmsg = """**Hey!** I see you want to set up your server? Sure man.
-The setup consists of a few steps, where you will be prompted to answer.
-Since you started, I will only listen to your replies.
+            async def timeout(message):
+                await client.send_message(message.channel, "You ran out of time :upside_down: (FYI: the timeout is 20 seconds)")
+                return
+
+            answers = {}
+
+            stmsg = """**SERVER SETUP**
+You have started the server setup. It consists of a few steps, where you will be prompted to answer.
 **Let's get started, shall we?**"""""
             await client.send_message(message.channel, stmsg)
             await asyncio.sleep(2)
 
             # FIRST MESSAGE
-            frmsg = """*1/4* It is recommended that you reset all **bot-related** server settings before continuing.
-Do you want to do that? (this includes spam and swearing protection, admin list, blacklisted channels, logchannel, prefix and welcome message)
-Reply with `YES` or `NO` after you decide."""
-            await client.send_message(message.channel,frmsg)
-
-            async def timeout(message):
-                await client.send_message(message.channel, "You ran out of time :upside_down: (FYI: the timeout is 20 seconds)")
-                return
+            frmsg = """Do you want to reset all bot-related settings for this server?
+(this includes spam and swearing protection, admin list, blacklisted channels, log channel, prefix, welcome, ban and kick message). yes/no"""
+            await client.send_message(message.channel, frmsg)
 
             # First check
-            choice1 = None
 
-            def whatisit(msg):
+            def check_yes1(msg):
                 global choice1
                 # yes or no
-                if str(msg).lower().strip(" ") == "yes":
-                    choice1 = True
+                if str(msg.content).lower().strip(" ") == "yes":
+                    answers["reset"] = True
                     return True
                 else:
-                    choice1 = False
+                    answers["reset"] = False
                     return True
 
-            ch1 = await client.wait_for_message(timeout=20, author=auth, check=whatisit)
+            ch1 = await client.wait_for_message(timeout=35, author=auth, check=check_yes1)
             if ch1 is None:
                 timeout(message)
+                return
 
-            if choice1:
-                handler.serversetup(message.channel.server)
-            else:
-                pass
+            if answers["reset"]:
+                handler.server_setup(message.channel.server)
 
             # SECOND MESSAGE
-            secmsg = """*2/4* What prefix would you like to use for all commands?
-**Reply** only with that prefix.
-"""
+            secmsg = """What prefix would you like to use for all commands?
+Type that prefix.\n(prefix example: **!** 'translates to' `!help`)"""
             await client.send_message(message.channel,secmsg)
 
-            # Second check
-            ch2 = await client.wait_for_message(timeout=20, author=auth)
+            # Second check, does not need yes/no filter
+            ch2 = await client.wait_for_message(timeout=35, author=auth)
             if ch2 is None:
                 timeout(message)
 
-            if str(ch2.content):
-                handler.changeprefix(message.channel.server,str(ch2.content))
+            if ch2.content:
+                handler.change_prefix(message.channel.server, ch2.content)
 
             # THIRD MESSAGE
-            thrmsg = """*3/4* Would you like me to say hello to every person that joins the server?
-Reply with `YES` or `NO` after you decide.
-"""
-            await client.send_message(message.channel,thrmsg)
+            thrmsg = """What would you like me to say when a person joins your server?
+Reply with that message or with None if you want to disable welcome messages."""
+            await client.send_message(message.channel, thrmsg)
 
-            # Third check
-            choice3 = None
-
-            def whatisit2(msg):
-                global choice3
-                # yes or no
-                if str(msg).lower().strip(" ") == "yes":
-                    choice3 = True
-                    return True
-                else:
-                    choice3 = False
-                    return True
-
-            ch3 = await client.wait_for_message(timeout=20,author=auth,check=whatisit2)
+            ch3 = await client.wait_for_message(timeout=35, author=auth)
             if ch3 is None:
                 timeout(message)
 
-            if choice3:
-                handler.updatesettings(message.channel.server, "sayhi", True)
+            if ch3.content.strip(" ") == "None":
+                handler.update_var(message.server.id, "welcomemsg", None)
             else:
-                handler.updatesettings(message.channel.server, "sayhi", False)
+                handler.update_var(message.server.id, "welcomemsg", str(ch3.content))
 
             # FOURTH MESSAGE
-            fourmsg = """*4/4* Would you like me to filter spam?
-Reply with `YES` or `NO` after you decide.
-"""
+            fourmsg = """Would you like me to filter spam? yes/no"""
             await client.send_message(message.channel, fourmsg)
 
-            # Foutrth check
-            choice4 = None
+            # Fourth check
 
-            def whatisit3(msg):
-                global choice4
+            def check_yes3(msg):
                 # yes or no
-                if str(msg).lower().strip(" ") == "yes":
-                    choice4 = True
+                if str(msg.content).lower().strip(" ") == "yes":
+                    answers["spam"] = True
                     return True
                 else:
-                    choice4 = False
+                    answers["spam"] = False
                     return True
 
-            ch3 = await client.wait_for_message(timeout=20,author=auth,check=whatisit3)
+            ch3 = await client.wait_for_message(timeout=35, author=auth, check=check_yes3)
             if ch3 is None:
                 timeout(message)
 
-            if choice3:
-                handler.updatesettings(message.channel.server, "filterspam", True)
+            if answers["spam"]:
+                handler.update_moderation_settings(message.channel.server, "filterspam", True)
             else:
-                handler.updatesettings(message.channel.server, "filterspam", False)
+                handler.update_moderation_settings(message.channel.server, "filterspam", False)
+
+            # FIFTH MESSAGE
+            fifthmsg = """Would you like me to filter swearing? yes/no"""
+            await client.send_message(message.channel, fifthmsg)
+
+            # Fifth check check
+
+            def check_yes4(msg):
+                # yes or no
+                if str(msg.content).lower().strip(" ") == "yes":
+                    answers["words"] = True
+                    return True
+                else:
+                    answers["words"] = False
+                    return True
+
+            ch4 = await client.wait_for_message(timeout=35, author=auth, check=check_yes4)
+            if ch4 is None:
+                timeout(message)
+
+            if answers["words"]:
+                handler.update_moderation_settings(message.channel.server, "filterwords", True)
+            else:
+                handler.update_moderation_settings(message.channel.server, "filterwords", False)
+
 
 
             finalmsg = """**This concludes the basic server setup.**
+But there are a few more settings to set up if you need'em:
+➤ channel blacklisting - `nano.blacklist add/remove channel_name`
+➤ kick message - `_kickmsg message`
+➤ ban message - `_banmsg message`
 
-There are more settings, filtering swearing for example (use `nano.settings filterwords True`).
+The prefix can simply be changed again with `nano.changeprefix prefix`.
 
-You can also manage admins with `nano.admins add/remove/list @mention`.
-
-The prefix can be changed again with `nano.changeprefix prefix` and channels can be blacklisted with `nano.blacklist add/remove channel`.
-
-Don't forget, you can also add/remove/list custom commands with `_cmd add/remove/list command|response`.
+You and all admins can also add/remove/list custom commands with `_cmd add/remove/list command|response`.
+For more detailed descriptions about all commands, type `_cmds`.
 """.replace("_", str(ch2.content))
 
             await client.send_message(message.channel, finalmsg)
@@ -1879,7 +1882,7 @@ Don't forget, you can also add/remove/list custom commands with `_cmd add/remove
 
         elif startswith("nano.changeprefix"):
             cut = str(message.content)[len("nano.changeprefix "):]
-            handler.changeprefix(message.channel.server, str(cut))
+            handler.change_prefix(message.channel.server, str(cut))
 
             await client.send_message(message.channel, "Prefix has been changed :heavy_check_mark:")
 
@@ -1927,7 +1930,7 @@ Don't forget, you can also add/remove/list custom commands with `_cmd add/remove
             if sys.platform == "win32":
                 p = subprocess.Popen("startbot.bat")
             else:
-                p = subprocess.Popen(["./startbot"])
+                p = subprocess.Popen(os.path.abspath("startbot.sh"), shell=True)
 
             sys.exit(0)
 
@@ -1950,9 +1953,13 @@ Don't forget, you can also add/remove/list custom commands with `_cmd add/remove
                 await client.send_message(message.channel, "You are not permitted to use this command. :x:")
                 return
 
+            handler.reload()
+
+            # Dependant on handler.reload()
             self.updateadmins()
             self.updateprefixes()
             self.updatemutes()
+
             parser.read("settings.ini")
 
             await client.send_message(message.channel, "**Settings refreshed!** :muscle:")
@@ -2102,7 +2109,7 @@ Don't forget, you can also add/remove/list custom commands with `_cmd add/remove
                     await client.send_message(message.channel, "Error. :x:")
                     return
 
-                nanodata = handler.get_all_data(srv.id)
+                nanodata = handler.get_server_data(srv.id)
                 sdata = "{}\n```css\nMember count: {}\nChannels: {}\nOwner: {}```\nNano settings: ```{}```".format(srv.name, srv.member_count, ",".join([ch.name for ch in srv.channels]), srv.owner.name, nanodata)
 
                 await client.send_message(message.channel, sdata)
@@ -2122,6 +2129,9 @@ Don't forget, you can also add/remove/list custom commands with `_cmd add/remove
 # When a member joins the server
 @client.event
 async def on_member_join(member):
+    if nano.debug_blocked(member.server.id):
+            return
+
     if handler.issleeping(member.server):
         return
 
@@ -2134,9 +2144,11 @@ async def on_member_join(member):
 # When somebody gets banned
 @client.event
 async def on_member_ban(member):
+    if nano.debug_blocked(member.server.id):
+            return
+
     if handler.issleeping(member.server):
         return
-
 
     msg = handler.get_var(member.server.id, "banmsg").replace(":user", member.name)
     if msg is None or msg is False:
@@ -2150,8 +2162,12 @@ async def on_member_ban(member):
         else:
             logchannel = await nano.create_log_channel(member.server, handler.get_var(member.server.id, "logchannel"))
             await client.send_message(logchannel, msg)
+
 @client.event
 async def on_member_remove(member):
+    if nano.debug_blocked(member.server.id):
+            return
+
     if handler.issleeping(member.server):
         return
 
@@ -2173,11 +2189,11 @@ async def on_member_remove(member):
 @client.event
 async def on_server_join(server):
     await client.send_message(server.default_channel, "**Hi!** I'm Nano!\nNow that you have invited me to your server, you might want to set up some things."
-                                                      "Right now only the server owner can use my restricted commands. But no worries, you can add admin permissions to others using `nano.admins add @mention` or by assigning them a role named `Nano Admin`!"
+                                                      "Right now only the server owner can use my restricted commands. But no worries, you can add admin permissions to others using `nano.admins add @mention` or by assigning them a role named **Nano Admin**!"
                                                       "\nTo get started, type `!getstarted` as the server owner. It will help you set up most of the things. After that, you might want to see `!cmds` to get familiar with my commands.")
 
     log("Joined server with {} members : {}".format(server.member_count, server.name))
-    handler.serversetup(server)
+    handler.server_setup(server)
 
     POSTServerCount.upload(len(client.servers))
 
@@ -2212,7 +2228,7 @@ async def on_ready():
     print("ID: " + str(client.user.id))
 
     if nano.debug:
-        print("Mode: DEBUG (server: {})".format(discord.utils.get(client.servers, id=parser.get("Dev", "serverid")).name))
+        print("Mode: DEBUG (server: {})".format(discord.utils.get(client.servers, id=parser.get("Debug", "debugserver")).name))
 
     # Sets the status on startup
     name = parser.get("Settings", "initialstatus")
@@ -2255,7 +2271,7 @@ try:
 
     # Playing status changer (1800 - twice an hour)
     roll = parser.get("Settings", "rollstatus")
-    if roll:
+    if roll and not nano.debug:
         loop.create_task(playing.roll_statuses(client, time=1800))
 
     # Runs scheduled backups (once a day)
