@@ -42,7 +42,7 @@ class BackupManager:
             b2.write(d)
 
         d = None
-        with open(self.servers, "r") as b:
+        with open(self.stats, "r") as b:
             d = b.read()
 
         with open(os.path.join("backup", "stats.yml.bak2"), "w") as b2:
