@@ -1,3 +1,11 @@
+2.1.9
+- Added !nuke for mass deleting messages
+- Fixed a bug where stats.yml.bak2 would be a server file
+- Fixed a bug where missing vars would not get added to servers.yml
+- Fixed a bug where some settings would not get changed because the use of two words instead of one
+- Performance optimizations
+- Added invite detection and removal
+
 2.1.8
 - ServerHandler is now more efficient (less reads/writes) and a singleton
 - Fixed some messages

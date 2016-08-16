@@ -8,7 +8,6 @@ import wikipedia
 import requests
 import giphypop
 import logging
-import logging.config as logconfig
 import threading
 import os
 import sys
@@ -32,7 +31,7 @@ from data import serverhandler
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '2.1.8'
+__version__ = '2.1.9'
 
 
 # Instances and loop initialization
@@ -63,6 +62,8 @@ mc = minecraft.Minecraft()
 b = backup.BackupManager()
 s = steam.Steam(parser.get("ApiKeys", "steam"))
 tf = bptf.CommunityPrices(parser.get("ApiKeys", "bptf"), max_age=7200, allow_cache=True)
+
+decide = serverhandler.get_decision
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
@@ -233,7 +234,7 @@ class Nano:
         if server.owner.name != cown:
             handler.update_owner(server.id, server.owner.name)
 
-        handler._check_server_vars(server.id)
+        handler.queue_modification(handler._check_server_vars, server.id)
 
         self.checking = False
 
@@ -268,6 +269,9 @@ class Nano:
 
     async def on_message(self, message):
         if self.debug_blocked(message.channel.server.id):
+            return
+
+        if handler.isblacklisted(message.channel.server.id, message.channel):
             return
 
         if message.channel.is_private:  # Ignore DMs
@@ -318,7 +322,7 @@ class Nano:
                      "nano.admins list", "nano.sleep", "nano.wake", "_invite", "nano.invite", "nano.displaysettings",
                      "nano.settings", "_vote start", "_vote end", "nano.blacklist add", "nano.blacklist remove", "_getstarted",
                      "nano.getstarted", "nano.changeprefix", "_playing", "nano.kill", "_user", "_reload", "nano.reload", "_muted",
-                     "_mute", "_unmute", "_purge", "_dev", "_welcomemsg", "_banmsg", "_kickmsg"]
+                     "_mute", "_unmute", "_purge", "_dev", "_welcomemsg", "_banmsg", "_kickmsg", "_nuke"]
 
         # To be implemented
         # privates = ["_help", "_uptime", "_randomgif", "_8ball", "_wiki", "_define", "_urban", "_github", "_bug", "_uptime", "_nano"]
@@ -413,16 +417,20 @@ class Nano:
                 # APPLIES FILTERS and returns
                 if not isacommand and not isadmincommand:
 
-                    issf = iswf = False
+                    issf = iswf = isinv = False
                     # If it is not a command, apply filters
                     sf = handler.needspamfilter(message.channel.server)
                     wf = handler.needwordfilter(message.channel.server)
+                    inf = handler.needinvitefiler(message.channel.server)
 
                     if sf:
                         issf = mod.checkspam(message.content)
 
                     if wf:
                         iswf = mod.checkfilter(message.content)
+
+                    if inf:
+                        isinv = mod.checkinvite(message.content)
 
                     # If need filtering, apply
                     if issf:
@@ -433,12 +441,22 @@ class Nano:
                         except discord.errors.NotFound:
                             pass
 
-                    if iswf:
+                    elif iswf:
 
                         try:
                             await client.delete_message(message)
                         except discord.errors.NotFound:
                             pass
+
+                    elif isinv[0]:
+                        logchannel = discord.utils.find(lambda channel: channel.name == handler.get_var(message.channel.server.id, "logchannel"), message.channel.server.channels)
+                        try:
+                            await client.delete_message(message)
+                        except discord.errors.NotFound:
+                            pass
+
+                        st = str(isinv[1].string[isinv[1].start():isinv[1].end()]).strip("https://discord.gg/").strip("http://discord.gg/")
+                        await client.send_message(logchannel, "**{}** posted an invite\nServer: `{}`".format(message.author.mention, st))
 
                     return
 
@@ -898,17 +916,15 @@ Description: {}```""".format(cmdn, desc)
 
                 mcount = file.get("msgcount")
                 wrongargc = file.get("wrongargcount")
-                timesleft = file.get("serversleft")
                 timesslept = file.get("timesslept")
                 wrongpermc = file.get("wrongpermscount")
                 pplhelp = file.get("peoplehelped")
                 imgc = file.get("imagessent")
-                # imgd = file.get("imagesize")
                 votesc = file.get("votesgot")
                 pings = file.get("timespinged")
 
-            onetosend = "**Stats**\n```python\n{} messages sent\n{} people yelled at because of wrong args\n{} people denied because of wrong permissions\n{} people helped\n{} votes got\n{} times slept\n{} servers left\n{} images uploaded\n{} times Pong!-ed```"\
-                .format(mcount, wrongargc, wrongpermc, pplhelp, votesc, timesslept, timesleft, imgc, pings)
+            onetosend = "**Stats**\n```python\n{} messages sent\n{} people yelled at because of wrong args\n{} people denied because of wrong permissions\n{} people helped\n{} votes got\n{} times slept\n{} images uploaded\n{} times Pong!-ed```"\
+                .format(mcount, wrongargc, wrongpermc, pplhelp, votesc, timesslept, imgc, pings)
             await client.send_message(message.channel, onetosend)
 
 
@@ -1413,6 +1429,11 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
             handler.update_var(message.channel.server.id, "kickmsg", msg)
             await client.send_message(message.channel, "Kick message has been updated :smile:")
 
+        elif startswith(prefix + "leavemsg"):
+            msg = message.content[len(prefix + "leavemsg "):]
+            handler.update_var(message.channel.server.id, "leavemsg", msg)
+            await client.send_message(message.channel, "Leave message has been updated :smile:")
+
         # Simple ban with CONFIRM check
         elif startswith(prefix + "ban") or startswith("nano.ban"):
             name = None
@@ -1681,10 +1702,6 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
         elif startswith("nano.displaysettings"):
                     settings = handler.get_server_data(message.server.id)
                     bchan = ",".join(settings["blacklisted"])
-                    cmds = ",".join(settings["customcmds"])
-
-                    if not cmds:
-                        cmds = "None"
 
                     if not bchan:
                         bchan = "None"
@@ -1693,41 +1710,50 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
 
                     wfilter = "On" if settings["filterwords"] else "Off"
 
+                    invrem = "On" if settings["filterinvite"] else "Off"
+
                     await client.send_message(message.channel, """**Settings for current server:**
 ```css
 Blacklisted channels: {}
-Commands: {}
 Spam filter: {}
 Word filter: {}
+Invite removal: {}
 Log channel: {}
 Prefix: {}```
 Messages:
 ➤ Join: `{}`
+➤ Leave: `{}`
 ➤ Ban: `{}`
-➤ Kick: `{}`""".format(bchan, cmds, spam, wfilter, settings.get("logchannel") if settings.get("logchannel") else "None", settings.get("prefix"), settings.get("welcomemsg"), settings.get("banmsg"), settings.get("kickmsg")))
+➤ Kick: `{}`""".format(bchan, spam, wfilter, invrem, settings.get("logchannel") if settings.get("logchannel") else "None", settings.get("prefix"), settings.get("welcomemsg"), settings.get("leavemsg"), settings.get("banmsg"), settings.get("kickmsg")))
 
         elif startswith("nano.settings"):
             try:
-                cut = str(message.content)[len("nano.settings "):].split(" ")
+                cut = str(message.content)[len("nano.settings "):].rsplit(" ", 1)
             except IndexError:
                 return
-
             try:
-                value = handler.update_moderation_settings(message.channel.server, cut[0], cut[1])
+                value = handler.update_moderation_settings(message.channel.server, cut[0], decide(cut[1]))
             except IndexError:
+                stat.pluswrongarg()
                 return
 
-            if str(cut[0]) == "filterwords" or str(cut[0]) == "wordfilter" or str(cut[0]).lower() == "word filter":
+            if decide(cut[0], ("word filter", "filter words", "wordfilter")):
                 if value:
                     await client.send_message(message.channel, "Word filter :white_check_mark:")
                 else:
                     await client.send_message(message.channel, "Word filter :negative_squared_cross_mark:")
 
-            elif str(cut[0]) == "filterspam" or str(cut[0]) == "spamfilter" or str(cut[0]).lower() == "spam filter":
+            elif decide(cut[0], ("spam filter", "spamfilter", "filter spam")):
                 if value:
                     await client.send_message(message.channel, "Spam filter :white_check_mark:")
                 else:
                     await client.send_message(message.channel, "Spam filter :negative_squared_cross_mark:")
+
+            elif decide(cut[0], ("filterinvite", "filterinvites", "invite removal", "invite filter")):
+                if value:
+                    await client.send_message(message.channel, "Invite filter :white_check_mark:")
+                else:
+                    await client.send_message(message.channel, "Invite filter :negative_squared_cross_mark:")
 
         # Blacklists individual channels
         elif startswith("nano.blacklist"):
@@ -2092,6 +2118,24 @@ For more detailed descriptions about all commands, type `_cmds`.
             msg = await client.send_message(message.channel, "Purged **{}** messages from **{}** in the last {} messages :)".format(len(dl), user.name, amount))
             await asyncio.sleep(5)
             await client.delete_message(msg)
+
+        elif startswith(prefix + "nuke"):
+            cut = str(message.content)[len(prefix + "nuke "):]
+
+            try:
+                cut = int(cut) + 1 # Includes the sender's message
+            except ValueError:
+                await client.send_message(message.channel, "Must be a number.")
+                return
+
+            await client.delete_message(message)
+
+            await client.send_message(message.channel, "Purgning last {} messages... :boom:".format(cut - 1))
+            await client.purge_from(message.channel, limit=cut)
+
+            m = await client.send_message(message.channel, "Purged {} messages :white_check_mark:".format(cut - 1))
+            await asyncio.sleep(1.5)
+            await client.delete_message(m)
 
         elif startswith(prefix + "dev"):
             if not isowner:

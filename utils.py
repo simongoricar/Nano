@@ -129,6 +129,7 @@ commandhelpsadmin = {
     "_welcomemsg": {"desc": "Sets the message sent when a member joins the server.\nFormatting: ':user' = @userthatjoined, ':server' = server name", "use": "Use: <command> <content>", "alias": None},
     "_banmsg": {"desc": "Sets the message sent when a member is banned.\nFormatting: ':user' = user name", "use": "Use: <command> <content>", "alias": None},
     "_kickmsg": {"desc": "Sets the message sent when a member is kicked.\nFormatting: ':user' = user name", "use": "Use: <command> <content>", "alias": None},
+    "_nuke": {"desc": "Nukes (deletes) last x messages.", "use": None, "alias": None},
 }
 
 commandhelpsowner = {

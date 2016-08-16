@@ -4,6 +4,7 @@ __author__ = "DefaltSimon"
 
 # Moderation plugin for Nano
 
+import re
 from pickle import load
 
 accepted_chars = "abcdefghijklmnopqrstuvwxyz "
@@ -123,3 +124,17 @@ class BotModerator:
                     return True
 
         return False
+
+    def checkinvite(self, message):
+        """
+        Checks for invites
+        :param message: string
+        :return: bool
+        """
+        rg = re.compile(r'(http(s)?://)?discord.gg/\w+')
+
+        res = rg.search(str(message))
+        if res is not None:
+            return True, res
+        else:
+            return False,

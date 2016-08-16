@@ -9,6 +9,7 @@ import configparser
 import threading
 import time
 import logging
+import copy
 
 from yaml import load,dump
 
@@ -20,14 +21,30 @@ def threaded(fn):
         threading.Thread(target=fn, args=args, kwargs=kwargs).start()
     return wrapper
 
+
+words = (
+    "on",
+    "enabled",
+    "enable",
+    "turn on",
+    "true",
+)
+
+def get_decision(content, wrd=words):
+    if str(content).lower().startswith(wrd):
+        return True
+    else:
+        return False
+
 parser = configparser.ConfigParser()
 parser.read("settings.ini")
 
 logger = logging.getLogger(__name__)
 
 server_nondepend_defaults = {
-    "filterwords": 0,
-    "filterspam": 0,
+    "filterwords": False,
+    "filterspam": False,
+    "filterinvite": False,
     "welcomemsg": "Welcome to :server, :user!",
     "kickmsg": ":user has been kicked.",
     "banmsg": ":user has been banned.",
@@ -45,7 +62,7 @@ server_nondepend_defaults = {
 
 server_deprecated_settings = [
     "onban",
-    "sayhi"
+    "sayhi",
 ]
 
 # Singleton class
@@ -66,6 +83,20 @@ class ServerHandler(metaclass=Singleton):
         self.is_old = False
         self.data_lock = False
 
+        self.process_lock = False
+
+    def p_lock(self):
+        self.process_lock = True
+
+    def wait_until_p_unlock(self):
+        while self.data_lock is True:
+            time.sleep(0.05)
+        return
+
+    def p_release(self):
+        self.process_lock = False
+
+
     def lock(self):
         self.data_lock = True
 
@@ -84,9 +115,11 @@ class ServerHandler(metaclass=Singleton):
                            "owner" : server.owner.name,
                            "filterwords" : False,
                            "filterspam" : False,
+                           "filterinvite": False,
                            "welcomemsg": ":user, Welcome to :server!",
                            "kickmsg": ":user has been kicked.",
                            "banmsg": ":user has been banned.",
+                           "leavemsg": "Bye, **:user**",
                            "blacklisted" : [],
                            "muted" : [],
                            "customcmds" : {},
@@ -95,13 +128,13 @@ class ServerHandler(metaclass=Singleton):
                            "sleeping" : False,
                            "prefix" : str(parser.get("Settings","defaultprefix"))}
 
-        logger.info("Queued new server for write: {}".format(server.name))
+        logger.info("Queued new server: {}".format(server.name))
 
         self.queue_write(data)
 
     @threaded
     def queue_write(self, data):
-        self.cached_file = data
+        self.cached_file = copy.deepcopy(data)
         self.wait_until_release()
 
         self.lock()
@@ -121,6 +154,12 @@ class ServerHandler(metaclass=Singleton):
 
         logger.info("Reloaded servers.yml")
 
+    def queue_modification(self, thing, *args):
+        self.wait_until_p_unlock()
+        self.p_lock()
+        thing(*args)
+        self.p_release()
+
     def get_all_data(self):
         return self.cached_file
 
@@ -139,26 +178,19 @@ class ServerHandler(metaclass=Singleton):
     def update_moderation_settings(self, server, key, value):
         data = self.cached_file
 
-        # XD
-        #if value is True:
-        #    value = True
-        #elif value is False:
-        #    value = False
-
-        if int(value) > 1:
-            value = True
-        elif int(value) < 0:
-            value = False
-
         if server.id not in data:
             self.server_setup(server)
 
-        if str(key) == "filterwords" or str(key) == "wordfilter" or str(key).lower() == "word filter":
-            data[server.id]["filterwods"] = value
+        if get_decision(key, ("word filter", "filter words", "wordfilter")):
+            data[server.id]["filterwords"] = value
             self.queue_write(data)
 
-        elif str(key) == "filterspam" or str(key) == "spamfilter" or str(key).lower() == "spam filter":
+        elif get_decision(key, ("spam filter", "spamfilter", "filter spam")):
             data[server.id]["filterspam"] = value
+            self.queue_write(data)
+
+        elif get_decision(key, ("filterinvite", "filterinvites", "invite removal", "invite filter")):
+            data[server.id]["filterinvite"] = value
             self.queue_write(data)
 
         return bool(value)
@@ -171,28 +203,30 @@ class ServerHandler(metaclass=Singleton):
 
     def _check_server_vars(self, sid, delete_old=True):
         data = self.cached_file
-        do = self.cached_file
+        mustwrite = False
 
-        for var in server_nondepend_defaults.keys():
-            sd = data.get(sid)
-            if sd:
+        sd = data.get(sid)
+        if data.get(sid):
+            for var in server_nondepend_defaults.keys():
                 if sd.get(var) is None:
-                    data[sid][var] = server_nondepend_defaults.get(var)
+                    data[sid][var] = server_nondepend_defaults[var]
+                    mustwrite = True
 
         if delete_old:
-            self._check_deprecated_vars(sid, data, old=do)
+            self._check_deprecated_vars(sid, data, changed=mustwrite)
         else:
-            if do != data:
+            if mustwrite:
                 self.queue_write(data)
 
-    def _check_deprecated_vars(self, server, data=None, old=None):
+    def _check_deprecated_vars(self, server, data=None, changed=False):
         if not data:
             data = self.cached_file
-        if not old:
-            old = self.cached_file
+        ld = copy.deepcopy(self.cached_file)
 
         data[server] = {key: value for key, value in data[server].items() if key not in server_deprecated_settings}
-        if old != data:
+
+        nw = bool(data != ld)
+        if changed or nw:
             self.queue_write(data)
 
     def update_command(self, server, trigger, response):
@@ -253,16 +287,18 @@ class ServerHandler(metaclass=Singleton):
 
         self.queue_write(data)
 
-    def isblacklisted(self, server, channel):
+    def isblacklisted(self, sid, channel):
         if channel.is_private:
             return
+
         try:
             data = self.cached_file
                
-            if channel.name in data[server.id]["blacklisted"]:
+            if channel.name in data[sid.id]["blacklisted"]:
                 return True
             else:
                 return False
+
         except KeyError:
             return False
 
@@ -275,6 +311,11 @@ class ServerHandler(metaclass=Singleton):
         data = self.cached_file
             
         return bool(data[server.id]["filterwords"])
+
+    def needinvitefiler(self, server):
+        data = self.cached_file
+
+        return bool(data[server.id]["filterinvite"])
 
     def returnsettings(self, sid):
         data = self.cached_file
@@ -376,3 +417,10 @@ class ServerHandler(metaclass=Singleton):
             
 
         return data.get(sid).get(var)
+
+    def remove_server(self, server):
+        data = self.cached_file
+
+        data.pop(server.id)
+
+        logger.info("Removed {} from servers.yml".format(server.name))
