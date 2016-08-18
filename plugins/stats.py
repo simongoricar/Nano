@@ -2,9 +2,13 @@
 
 """Part of Nano"""
 
-from yaml import load,dump
 import os
 import time
+import logging
+from yaml import load, dump
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
 
 # Pretty much like v1, but with small changes
 
@@ -12,6 +16,7 @@ __author__ = "DefaltSimon"
 
 class BotStats:
     def __init__(self):
+        log.info("Enabled")
         self.data_lock = False
 
     def lock(self):

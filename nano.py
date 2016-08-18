@@ -25,14 +25,26 @@ from discord.voice_client import StreamPlayer
 
 # Nano modules
 from utils import *
-from plugins import voting, stats, mentions, moderator, minecraft, steam, bptf, playing, backup
+from plugins import voting, stats, mentions, moderator, minecraft, steam, bptf, playing, backup, imdb
 from bots_discord_pw import POSTServerCount
 from data import serverhandler
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '2.1.9'
+__version__ = '2.2dev'
 
+# Logging setup
+logging.basicConfig(level=logging.INFO)
+
+logger = logging.getLogger(__name__)
+
+logging.getLogger("requests").setLevel(logging.WARNING)
+
+lg = logging.getLogger("discord")
+lg.setLevel(logging.INFO)
+h = logging.FileHandler(filename="data/debug.log", encoding="utf-8", mode="w")
+h.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+lg.addHandler(h)
 
 # Instances and loop initialization
 
@@ -62,19 +74,9 @@ mc = minecraft.Minecraft()
 b = backup.BackupManager()
 s = steam.Steam(parser.get("ApiKeys", "steam"))
 tf = bptf.CommunityPrices(parser.get("ApiKeys", "bptf"), max_age=7200, allow_cache=True)
+idb = imdb.Imdb()
 
 decide = serverhandler.get_decision
-
-# Logging setup
-logging.basicConfig(level=logging.INFO)
-
-logger = logging.getLogger(__name__)
-
-lg = logging.getLogger("discord")
-lg.setLevel(logging.INFO)
-h = logging.FileHandler(filename="data/debug.log", encoding="utf-8", mode="w")
-h.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
-lg.addHandler(h)
 
 # Constants
 
@@ -83,7 +85,7 @@ first = True
 
 # KeyboardInterrupt things
 def KeyboardItr(signal, frame):
-    logger.critical("[EXCEPTION] KeyboardInterrupt: Saving voting state to cache/voting_state.cache")
+    logger.critical("Exception: KeyboardInterrupt - Saving voting state to cache/voting_state.cache")
     # Quick state save
     if not os.path.isdir("cache"): os.mkdir("cache")
 
@@ -231,8 +233,11 @@ class Nano:
         if server.name != cname:
             handler.update_name(server.id, server.name)
 
-        if server.owner.name != cown:
-            handler.update_owner(server.id, server.owner.name)
+        try:
+            if server.owner.id != cown:
+                handler.update_owner(server.id, server.owner.id)
+        except AttributeError:
+            pass
 
         handler.queue_modification(handler._check_server_vars, server.id)
 
@@ -240,6 +245,7 @@ class Nano:
 
     @staticmethod
     async def create_log_channel(server, name):
+        logger.info("Creating a log channel for {} - {}".format(server.name, name))
         them = discord.PermissionOverwrite(read_messages=False, send_messages=False, read_message_history=False)
         us = discord.PermissionOverwrite(read_messages=True, send_messages=True, read_message_history=True, attach_files=True, embed_links=True, manage_messages=True)
 
@@ -295,6 +301,9 @@ class Nano:
 
         isserverowner = self.is_server_owner(message.author.id, message.channel.server)
 
+        # For debugging purposes
+        # print("Owner: " + str(isowner) + "\nServer owner: " + str(isserverowner) + "\nAdmin: " + str(isadmin))
+
 
         # Delete message if the member is muted.
         if self.is_muted(message) and (message.author.id != self.ownerid):
@@ -314,7 +323,7 @@ class Nano:
                       "_music leave", "_music volume", "_music pause", "_music resume", "_music playing", "_music help",
                       "_music play", "_music skip", "_music stop", "nano.bug", "_bug", "_vote", "nano.prefix", "_changes",
                       "_changelog", "_johncena", "_rip", "_steam", "_mc ", "_minecraft", "_tf", "_feature", "_quote", "_say",
-                      "_members", "_notifydev", "_suggest", "_cmds"]
+                      "_members", "_notifydev", "_suggest", "_cmds", "_csgo", "_imdb"]
 
         admincmds = ["nano.ban", "nano.unban", "nano.kick", "_ban", "_unban", "_kick", "_avatar", "_role add",
                      "_role replacewith", "_role remove", "_cmd add", "_cmd remove", "nano.restart",
@@ -417,7 +426,7 @@ class Nano:
                 # APPLIES FILTERS and returns
                 if not isacommand and not isadmincommand:
 
-                    issf = iswf = isinv = False
+                    issf = iswf = isinv = invt = False
                     # If it is not a command, apply filters
                     sf = handler.needspamfilter(message.channel.server)
                     wf = handler.needwordfilter(message.channel.server)
@@ -430,7 +439,7 @@ class Nano:
                         iswf = mod.checkfilter(message.content)
 
                     if inf:
-                        isinv = mod.checkinvite(message.content)
+                        isinv, invt = mod.checkinvite(message.content)
 
                     # If need filtering, apply
                     if issf:
@@ -448,14 +457,14 @@ class Nano:
                         except discord.errors.NotFound:
                             pass
 
-                    elif isinv[0]:
+                    elif isinv and not (isadmin or isowner or isserverowner):
                         logchannel = discord.utils.find(lambda channel: channel.name == handler.get_var(message.channel.server.id, "logchannel"), message.channel.server.channels)
                         try:
                             await client.delete_message(message)
                         except discord.errors.NotFound:
                             pass
 
-                        st = str(isinv[1].string[isinv[1].start():isinv[1].end()]).strip("https://discord.gg/").strip("http://discord.gg/")
+                        st = str(invt.string[invt.start():invt.end()]).strip("https://discord.gg/").strip("http://discord.gg/")
                         await client.send_message(logchannel, "**{}** posted an invite\nServer: `{}`".format(message.author.mention, st))
 
                     return
@@ -1334,6 +1343,99 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
             det = """**{}** *(on bp.tf)*\n\n{}""".format(item.name, "\n".join(ls))
             await client.send_message(message.channel, det)
 
+        elif startswith(prefix + "imdb"):
+            await client.send_typing(message.channel)
+
+            if startswith(prefix + "imdb plot") or startswith(prefix + "imdb story"):
+                if startswith(prefix + "imdb plot"):
+                    search = str(message.content[len(prefix + "imdb plot "):])
+                else:
+                    search = str(message.content[len(prefix + "imdb story "):])
+
+                data = idb.get_page_by_name(search)
+
+                if not data:
+                    await client.send_message(message.channel, "No results.")
+                    return
+
+                if data.type == imdb.PERSON:
+                    return
+                else:
+                    await client.send_message(message.channel, "**{}**'s story\n```{}```".format(data.name, data.storyline))
+
+            elif startswith(prefix + "imdb search"):
+                search = str(message.content[len(prefix + "imdb search "):])
+                data = idb.get_page_by_name(search)
+
+                if not data:
+                    await client.send_message(message.channel, "No results.")
+                    return
+
+                if data.type == imdb.MOVIE:
+                    st = """**{}** ({})
+
+Length: `{}`
+Genres: {}
+Rating: **{}/10**
+
+Director: *{}*
+Summary:
+```{}```""".format(data.name, data.year, data.length, str("`" + "`, `".join(data.genres) + "`"), data.rating, data.director, data.summary)
+                elif data.type == imdb.SERIES:
+                    st = """**{}** series
+
+Genres: {}
+Rating: **{}/10**
+
+Director: *{}*
+Summary:
+```{}```""".format(data.name, str("`" + "`, `".join(data.genres) + "`"), data.rating, data.director, data.summary)
+
+                elif data.type == imdb.PERSON:
+                    st = """**{}**
+
+Known for: {}
+IMDB Rank: **{}**
+
+Short bio:
+```{}```""".format(data.name, str("`" + "`, `".join(data.known_for) + "`"), data.rank, data.short_bio)
+
+                else:
+                    return
+
+                await client.send_message(message.channel, st)
+
+            elif startswith(prefix + "imdb trailer"):
+                search = str(message.content[len(prefix + "imdb trailer "):])
+                data = idb.get_page_by_name(search)
+
+                if not data:
+                    await client.send_message(message.channel, "No results.")
+                    return
+
+                if data.type == imdb.PERSON:
+                    return
+
+                await client.send_message(message.channel, "**{}**'s trailer on IMDB: {}".format(data.name, data.trailer))
+
+            elif startswith(prefix + "imdb rating"):
+                search = str(message.content[len(prefix + "imdb rating "):])
+                data = idb.get_page_by_name(search)
+
+                if not data:
+                    await client.send_message(message.channel, "No results.")
+                    return
+
+                if not data.type == imdb.MOVIE:
+                    await client.send_message(message.channel, "Only movies have Metascores.")
+                    return
+
+                await client.send_message(message.channel,
+                                          "**{}**'s ratings on IMDB\nUser ratings: __{} out of 10__\nMetascore: __{}__".format(data.name, data.rating, data.metascore))
+
+            else:
+                await client.send_message(message.channel, "**IMDB help**\n\n`_imdb search [name or title]`, `_imdb plot [title]`, `_imdb trailer [title]`, `_imdb rating [title]`".replace("_", prefix))
+
         elif startswith(prefix + "say"):
             da = message.content[len(prefix + "say "):]
 
@@ -1378,12 +1480,12 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
             ts = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
 
             # 'Compiled' report
-            comp = """{} from {}:
+            comp = """{} from {} ({}):
 ```{}```
 **__Timestamp__**: `{}`
 **__Server__**: `{}` ({} members)
 **__Server Owner__**: {}
-""".format(typ ,message.author.mention, report, ts, message.channel.server.name, message.channel.server.member_count, "Yes" if message.author.id == message.channel.server.owner.id else message.channel.server.owner.id)
+""".format(typ ,message.author.name, message.author.id, report, ts, message.channel.server.name, message.channel.server.member_count, "Yes" if message.author.id == message.channel.server.owner.id else message.channel.server.owner.id)
 
             # Saves the submission to disk
             if int(ownerserver.owner.id) != int(self.ownerid):
@@ -1550,7 +1652,7 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
             url = member.avatar_url
 
             if not url:
-                await client.send_message(message.channel, "**{}** does not have an avatar. :expressionless:".format())
+                await client.send_message(message.channel, "**{}** does not have an avatar. :expressionless:".format(member.name))
             else:
                 await client.send_message(message.channel, "**{}**'s avatar: {}".format(member.name, url))
 
@@ -2169,6 +2271,10 @@ For more detailed descriptions about all commands, type `_cmds`.
                 reporter = discord.utils.find(lambda u: u.id == uid, client.get_all_members())
                 await client.send_message(reporter, msg)
 
+            elif startswith(prefix + "dev imdb clean"):
+                idb._clean_cache()
+                await client.send_message(message.channel, "Imdb cache cleaned :clapper:")
+
 
 # When a member joins the server
 @client.event
@@ -2280,7 +2386,8 @@ async def on_ready():
     if name and roll:
         await client.change_status(game=discord.Game(name=name))
 
-    await asyncio.sleep(3)
+    #await asyncio.sleep(3)
+    await client.wait_until_ready()
     check_all_servers()
 
     log("Started as {} with id {}".format(client.user.name, client.user.id))
@@ -2327,6 +2434,8 @@ try:
 except:
     #b.backup()
     b.stop()  # Stops backups if active
+    logger.warn("Exception raised, logging out")
     loop.run_until_complete(client.logout())
 finally:
+    logger.warn("Closing the loop")
     loop.close()

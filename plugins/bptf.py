@@ -2,10 +2,14 @@
 import requests
 import time
 import threading
+import logging
 from json import load
 
 __author__ = "DefaltSimon"
 __version__ = "0.1"
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 # Constants
 
@@ -159,8 +163,11 @@ class CommunityPrices:
 
                     if (time.time() - int(data.get("current_time"))) > max_age:
                         # If cache is too old, request new cache
+                        logger.info("Downloading prices from backpack.tf/api")
                         data = self._request()
                         self._write_temp(data)
+                    else:
+                        logger.info("Using cache")
 
             except FileNotFoundError:
                 # If cached file does not exist, get new data and cache it.
@@ -170,6 +177,7 @@ class CommunityPrices:
                     self._write_temp(data)
 
         else:
+            logger.info("Downloading prices from backpack.tf/api")
             data = self._request()
 
         if data.get("success") == 0:

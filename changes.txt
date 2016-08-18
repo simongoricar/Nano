@@ -1,3 +1,8 @@
+2.2
+- Added logging to most of the modules
+- Added IMDB.com search
+- Fixed a bug where bot would not check some servers on startup
+
 2.1.9
 - Added !nuke for mass deleting messages
 - Fixed a bug where stats.yml.bak2 would be a server file

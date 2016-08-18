@@ -5,6 +5,10 @@ __author__ = "DefaltSimon"
 # Minecraft plugin for Nano
 
 import requests
+import logging
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
 
 # Exception class
 
@@ -12,12 +16,12 @@ class MinecraftException(Exception):
     def __init__(self, *args, **kwargs):
         pass
 
-
 # Main class
 
 class Minecraft:
     def __init__(self):
         # Gets a fresh copy of items at each startup.
+        log.info("Requesting JSON data from minecraft-ids")
         jsondata = requests.get("http://minecraft-ids.grahamedgecombe.com/items.json")
         self.data = jsondata.json()
 

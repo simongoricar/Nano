@@ -1,7 +1,11 @@
 # coding=utf-8
 import os
+import logging
 from asyncio import sleep
 from datetime import datetime
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
 
 def log_backup(content):
     with open("data/log.txt", "a") as file:
@@ -12,6 +16,7 @@ def log_backup(content):
 
 class BackupManager:
     def __init__(self, time=86400):  # 86400 seconds = one day (backup is executed once a day)
+        log.info("Enabled")
 
         if not os.path.isdir("backup"):
             os.mkdir("backup")

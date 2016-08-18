@@ -5,7 +5,11 @@ __author__ = "DefaltSimon"
 # Moderation plugin for Nano
 
 import re
+import logging
 from pickle import load
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
 
 accepted_chars = "abcdefghijklmnopqrstuvwxyz "
 
@@ -26,6 +30,7 @@ def twochars(line):  # Normalizes
 
 class BotModerator:
     def __init__(self):
+        log.info("Enabled")
         self.wordlist = []
 
         with open("plugins/wordlist.txt","r") as file:
@@ -137,4 +142,4 @@ class BotModerator:
         if res is not None:
             return True, res
         else:
-            return False,
+            return False, None

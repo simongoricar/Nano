@@ -1,8 +1,12 @@
 # coding=utf-8
 
+import logging
 from discord import Client, Game
 from asyncio import sleep
 from random import shuffle
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
 
 game_list = [
     "(formerly AyyBot)",
@@ -23,11 +27,13 @@ async def roll_statuses(client, time=3600):  # 3600 = 1 hour
     await client.wait_until_ready()
 
     # Shuffle list in place
+    log.debug("Shuffling list")
     shuffle(game_list)
 
     await sleep(time)
 
     async def next_game(gm):
+        log.info("Changing status to '{}'".format(str(gm)))
         await client.change_status(game=Game(name=str(gm)))
 
     while not client.is_closed:
@@ -40,4 +46,5 @@ async def roll_statuses(client, time=3600):  # 3600 = 1 hour
             await sleep(time)
 
         # Reshuffle when done
+        log.debug("Shuffling list")
         shuffle(game_list)

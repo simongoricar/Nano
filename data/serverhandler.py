@@ -39,7 +39,9 @@ def get_decision(content, wrd=words):
 parser = configparser.ConfigParser()
 parser.read("settings.ini")
 
-logger = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
+
 
 server_nondepend_defaults = {
     "filterwords": False,
@@ -75,6 +77,7 @@ class Singleton(type):
 
 class ServerHandler(metaclass=Singleton):
     def __init__(self):
+        log.info("Enabled")
         self.file = "data/servers.yml"
 
         with open(self.file, "r") as file:
@@ -128,7 +131,7 @@ class ServerHandler(metaclass=Singleton):
                            "sleeping" : False,
                            "prefix" : str(parser.get("Settings","defaultprefix"))}
 
-        logger.info("Queued new server: {}".format(server.name))
+        log.info("Queued new server: {}".format(server.name))
 
         self.queue_write(data)
 
@@ -138,7 +141,7 @@ class ServerHandler(metaclass=Singleton):
         self.wait_until_release()
 
         self.lock()
-        logger.info("Write queued")
+        log.info("Write queued")
 
         with open(self.file, "w") as file:
             file.write(dump(data, default_flow_style=False))  # Makes it readable
@@ -152,7 +155,7 @@ class ServerHandler(metaclass=Singleton):
             self.cached_file = load(file)
         self.release_lock()
 
-        logger.info("Reloaded servers.yml")
+        log.info("Reloaded servers.yml")
 
     def queue_modification(self, thing, *args):
         self.wait_until_p_unlock()
@@ -294,7 +297,7 @@ class ServerHandler(metaclass=Singleton):
         try:
             data = self.cached_file
                
-            if channel.name in data[sid.id]["blacklisted"]:
+            if channel.name in data[sid]["blacklisted"]:
                 return True
             else:
                 return False
@@ -423,4 +426,4 @@ class ServerHandler(metaclass=Singleton):
 
         data.pop(server.id)
 
-        logger.info("Removed {} from servers.yml".format(server.name))
+        log.info("Removed {} from servers.yml".format(server.name))
