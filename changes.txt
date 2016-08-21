@@ -1,3 +1,10 @@
+2.2.1
+- Now removing servers from servers.yml in on_server_remove
+- Fixed a bug involving Nano mentions
+- Fixed a bug with user muting
+- Stats module optimizations (amount of read operations decreased)
+- Added !remind
+
 2.2
 - Added logging to most of the modules
 - Added IMDB.com search

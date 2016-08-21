@@ -145,7 +145,7 @@ class CommunityPrices:
     def __init__(self, api_key, max_age=14400, allow_cache=True):
         """
         :param api_key: backpack.tf/developer key
-        :param max_age: max cache age in s, if allow_cache is True (default)
+        :param max_age: max cache age in s, if allow_local_cache is True (default)
         :param allow_cache: should CommunityPrices be allowed to use cache
         :return: None
         """

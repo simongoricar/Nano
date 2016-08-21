@@ -13,7 +13,6 @@ from pickle import load, dump
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
 
-logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
@@ -104,7 +103,7 @@ class Person:
 # Main class
 
 class Imdb:
-    def __init__(self, max_age=86400):
+    def __init__(self, max_age=86400, allow_local_cache=True):
         if os.path.isfile("cache/imdb.cache"):
             with open("cache/imdb.cache", "rb") as js:
                 if js.read():
@@ -121,6 +120,8 @@ class Imdb:
         self.max_age = max_age
         self.threadlock = False
 
+        self.allow_local_cache = allow_local_cache
+
     def lock(self):
         self.threadlock = True
 
@@ -134,6 +135,9 @@ class Imdb:
 
     @threaded
     def queue_write(self, data):
+        if not self.allow_local_cache:
+            return
+
         assert isinstance(data, dict)
 
         if self.cache != data:
@@ -220,7 +224,36 @@ class Imdb:
         video = baseurl + str(sp.find("a", {"itemprop": "trailer"}, href=True).get("href")).strip("?ref_=tt_ov_vi")
 
         director = sp.find("div", {"class": "credit_summary_item"}).find("span", {"itemprop": "name"}).text
-        cast = [a.text for a in sp.find("div", {"id": "titleCast"}).find_all("span", {"itemprop": "name"})]
+        cast = [a.text for a in sp.find("div", {"class": "cast_list"}).find_all("span", {"itemprop": "name"})]
+
+        #sh = sp.find("table", {"class": "cast_list"})
+        #odd = sh.find_all("tr", {"class": "odd"})
+        #even = sh.find_all("tr", {"class": "even"})
+
+        #cast = []
+        #for rn in range(len(odd + even)):
+        #    try:
+        #        onee = odd.pop(0)
+        #        twoo = even.pop(0)
+        #
+        #        if not onee and not twoo:
+        #            break
+        #
+        #        if onee:
+        #            one = dict(name=onee.find("span", {"itemprop": "name"}).text,
+        #                        character=onee.find("td", {"class": "character"})) # .find("a", href=True).text)
+        #
+        #            cast.append(one)
+        #
+        #        if twoo:
+        #            two = dict(name=onee.find("span", {"itemprop": "name"}).text,
+        #                        character=onee.find("td", {"class": "character"})) # .find("a", href=True).text)
+        #            cast.append(two)
+        #
+        #        del onee
+        #        del twoo
+        #    except IndexError:
+        #        break
 
         summary = clean(sp.find("div", {"class": "summary_text"}).text)
         storyline = clean(sp.find("div", {"class": "inline canwrap", "itemprop": "description"}).text)
@@ -255,6 +288,8 @@ class Imdb:
         return Person(name=name, short_bio=summary, rank=rank, known_for=knownfor, type=PERSON)
 
 # Tests
+#logging.basicConfig(level=logging.INFO)
+#
 #im = Imdb()
 #
 #while True:
@@ -262,7 +297,7 @@ class Imdb:
 #
 #    if isinstance(movie, Movie) or isinstance(movie, TVSeries):
 #        print(get_type(movie.type))
-#        print(movie.genres, sep="\n")
+#        print(movie.cast, sep="\n")
 #
 #    elif isinstance(movie, Person):
 #        print(movie.name, movie.rank, movie.short_bio, movie.known_for, sep="\n")

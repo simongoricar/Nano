@@ -25,13 +25,13 @@ from discord.voice_client import StreamPlayer
 
 # Nano modules
 from utils import *
-from plugins import voting, stats, mentions, moderator, minecraft, steam, bptf, playing, backup, imdb
+from plugins import voting, stats, mentions, moderator, minecraft, steam, bptf, playing, backup, imdb, reminder
 from bots_discord_pw import POSTServerCount
 from data import serverhandler
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '2.2dev'
+__version__ = '2.2.2dev'
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
@@ -43,7 +43,7 @@ logging.getLogger("requests").setLevel(logging.WARNING)
 lg = logging.getLogger("discord")
 lg.setLevel(logging.INFO)
 h = logging.FileHandler(filename="data/debug.log", encoding="utf-8", mode="w")
-h.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+h.setFormatter(logging.Formatter('%(asctime)stm:%(levelname)stm:%(name)stm: %(message)stm'))
 lg.addHandler(h)
 
 # Instances and loop initialization
@@ -66,13 +66,20 @@ if os.path.isfile("cache/voting_state.cache"):
 else:
     vote = voting.Vote()
 
+#if os.path.isfile("cache/voting_state.cache"):
+#    with open("cache/reminder_state.cache", "rb") as vt:
+#        rem = pickle_load(vt)
+#    os.remove("cache/reminder_state.cache")
+#else:
+rem = reminder.Reminder(None, loop)
+
 handler = serverhandler.ServerHandler()
 stat = stats.BotStats()
 mention = mentions.MentionHandler()
 mod = moderator.BotModerator()
 mc = minecraft.Minecraft()
 b = backup.BackupManager()
-s = steam.Steam(parser.get("ApiKeys", "steam"))
+stm = steam.Steam(parser.get("ApiKeys", "steam"))
 tf = bptf.CommunityPrices(parser.get("ApiKeys", "bptf"), max_age=7200, allow_cache=True)
 idb = imdb.Imdb()
 
@@ -91,6 +98,9 @@ def KeyboardItr(signal, frame):
 
     with open("cache/voting_state.cache", "wb") as cache:
         dump(vote, cache)  # Save instance of Vote
+
+    with open("cache/reminder_state.cache", "wb") as cache:
+        dump(rem, cache)  # Save instance of Reminder
 
     sys.exit()
 
@@ -162,6 +172,7 @@ class Nano:
 
         self.updateprefixes()
         self.updateadmins()
+        self.updatemutes()
 
         self.boottime = time.time()
         self.ownerid = int(owner)
@@ -204,6 +215,10 @@ class Nano:
             except KeyError:
                 pass
 
+    @staticmethod
+    async def send_message(channel, content):
+        await client.send_message(channel, content)
+
     def is_muted(self, message):
         try:
             return bool(message.author.id in self.mutes[message.channel.server.id])
@@ -243,6 +258,14 @@ class Nano:
 
         self.checking = False
 
+    def remove_old_servers(self, threaded=True):
+        if threaded:
+            threading.Thread(target=self.server_check, args=[False]).start()
+            return
+
+        serverslist = [srv.id for srv in client.servers]
+        handler._delete_old_servers(serverslist)
+
     @staticmethod
     async def create_log_channel(server, name):
         logger.info("Creating a log channel for {} - {}".format(server.name, name))
@@ -274,13 +297,13 @@ class Nano:
             return False
 
     async def on_message(self, message):
+        if message.channel.is_private:  # Ignore DMs
+            return
+
         if self.debug_blocked(message.channel.server.id):
             return
 
         if handler.isblacklisted(message.channel.server.id, message.channel):
-            return
-
-        if message.channel.is_private:  # Ignore DMs
             return
 
         if message.author.id == client.user.id:  # Ignore messages from yourself
@@ -306,7 +329,7 @@ class Nano:
 
 
         # Delete message if the member is muted.
-        if self.is_muted(message) and (message.author.id != self.ownerid):
+        if self.is_muted(message) and not self.is_bot_owner(message.author.id):
             try:
                 await client.delete_message(message)
             except discord.NotFound:
@@ -323,7 +346,7 @@ class Nano:
                       "_music leave", "_music volume", "_music pause", "_music resume", "_music playing", "_music help",
                       "_music play", "_music skip", "_music stop", "nano.bug", "_bug", "_vote", "nano.prefix", "_changes",
                       "_changelog", "_johncena", "_rip", "_steam", "_mc ", "_minecraft", "_tf", "_feature", "_quote", "_say",
-                      "_members", "_notifydev", "_suggest", "_cmds", "_csgo", "_imdb"]
+                      "_members", "_notifydev", "_suggest", "_cmds", "_csgo", "_imdb", "_remind"]
 
         admincmds = ["nano.ban", "nano.unban", "nano.kick", "_ban", "_unban", "_kick", "_avatar", "_role add",
                      "_role replacewith", "_role remove", "_cmd add", "_cmd remove", "nano.restart",
@@ -382,7 +405,7 @@ class Nano:
                 response = mention.on_message(message)
 
                 if not response:
-                    pass
+                    return
                 else:
                     await client.send_message(message.channel,response)
                     stat.plusmsg()
@@ -732,7 +755,7 @@ Description: {}```""".format(cmdn, desc)
             items = beforesplit.split("|")
 
             if beforesplit == items[0]:
-                await client.send_message(message.channel, "Guess what? It's " + str(items[0]) + ". **ba dum tss.**")
+                await client.send_message(message.channel, "Guess what? It'stm " + str(items[0]) + ". **ba dum tss.**")
                 return
 
             rn = randint(0, len(items)-1)
@@ -867,7 +890,7 @@ Description: {}```""".format(cmdn, desc)
 
             cn = []
             for this in content:
-                cn.append("{} - `{} vote(s)`".format(this,votes[this]))
+                cn.append("{} - `{} vote(stm)`".format(this,votes[this]))
 
             combined = "Vote ended:\n**{}**\n\n{}".format(header,"\n".join(cn))
 
@@ -1156,7 +1179,7 @@ Description: {}```""".format(cmdn, desc)
 
                 # Friend search
                 await client.send_typing(message.channel)
-                username, friends = s.get_friends(uid)
+                username, friends = stm.get_friends(uid)
 
                 friends = ["`" + friend + "`" for friend in friends]
 
@@ -1172,7 +1195,7 @@ Description: {}```""".format(cmdn, desc)
 
                 # Game search
                 await client.send_typing(message.channel)
-                username, games = s.get_owned_games(uid)
+                username, games = stm.get_owned_games(uid)
 
                 if not username:
                     await client.send_message(message.channel, "User **does not exist**.")
@@ -1191,7 +1214,7 @@ Description: {}```""".format(cmdn, desc)
 
                 # Basic search
                 await client.send_typing(message.channel)
-                steamuser = s.get_user(uid)
+                steamuser = stm.get_user(uid)
 
                 if not steamuser:
                     await client.send_message(message.channel, "User **does not exist**.")
@@ -1361,7 +1384,7 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
                 if data.type == imdb.PERSON:
                     return
                 else:
-                    await client.send_message(message.channel, "**{}**'s story\n```{}```".format(data.name, data.storyline))
+                    await client.send_message(message.channel, "**{}**'stm story\n```{}```".format(data.name, data.storyline))
 
             elif startswith(prefix + "imdb search"):
                 search = str(message.content[len(prefix + "imdb search "):])
@@ -1416,7 +1439,7 @@ Short bio:
                 if data.type == imdb.PERSON:
                     return
 
-                await client.send_message(message.channel, "**{}**'s trailer on IMDB: {}".format(data.name, data.trailer))
+                await client.send_message(message.channel, "**{}**'stm trailer on IMDB: {}".format(data.name, data.trailer))
 
             elif startswith(prefix + "imdb rating"):
                 search = str(message.content[len(prefix + "imdb rating "):])
@@ -1431,7 +1454,7 @@ Short bio:
                     return
 
                 await client.send_message(message.channel,
-                                          "**{}**'s ratings on IMDB\nUser ratings: __{} out of 10__\nMetascore: __{}__".format(data.name, data.rating, data.metascore))
+                                          "**{}**'stm ratings on IMDB\nUser ratings: __{} out of 10__\nMetascore: __{}__".format(data.name, data.rating, data.metascore))
 
             else:
                 await client.send_message(message.channel, "**IMDB help**\n\n`_imdb search [name or title]`, `_imdb plot [title]`, `_imdb trailer [title]`, `_imdb rating [title]`".replace("_", prefix))
@@ -1473,6 +1496,8 @@ Short bio:
             elif startswith(prefix + "suggest"):
                 report = message.content[len(prefix + "suggest "):]
                 typ = "Suggestion"
+            else:
+                return
 
             ownerserver = discord.utils.get(client.servers, id=parser.get("Dev", "serverid"))
 
@@ -1498,6 +1523,75 @@ Short bio:
             await client.send_message(message.channel, "**Thank you** for your *{}*.".format("submission" if typ == "Report" else "suggestion"))
 
             await asyncio.sleep(4)
+
+        elif startswith(prefix + "remind me in "):
+            st = [a.strip(" ") for a in str(message.content)[len(prefix + "remind me in "):].split(":")]
+
+            if len(st) == 1:
+                st = [a.strip(" ") for a in str(message.content)[len(prefix + "remind me in "):].split("about")]
+
+            if len(st) < 2:
+                await client.send_message("That is not the proper use of this command. Use `_remind` to get more info.".replace("_", prefix))
+                stat.pluswrongarg()
+                return
+
+            s = rem.remind_in_sec(message.author, message.author, st[1], rem.convert_to_seconds(st[0]))
+
+            if not s:
+                await client.send_message(message.channel, "Allowed range: from 5 seconds to 3 days :alarm_clock:")
+
+            await client.send_message(message.channel, "Reminder set.")
+
+        elif startswith(prefix + "remind here in "):
+            st = [a.strip(" ") for a in str(message.content)[len(prefix + "remind here in "):].split(":")]
+
+            if len(st) == 1:
+                st = [a.strip(" ") for a in str(message.content)[len(prefix + "remind here in "):].split("about")]
+
+            rem.remind_in_sec(message.channel, message.author, st[1], rem.convert_to_seconds(st[0]))
+
+            await client.send_message(message.channel, "Reminder set.")
+
+        elif startswith(prefix + "remind list") or startswith(prefix + "reminder list"):
+            ls = rem.get_reminders(message.author)
+
+            if ls:
+                st = """Your reminders:"""
+                for things in ls:
+                    tm = abs(time.time() - things[2] - things[0])
+                    st += "\n{} - up in `{}`".format(things[1], reminder.resolve_time(tm))
+
+                await client.send_message(message.channel, st)
+
+            else:
+                await client.send_message(message.channel, "You have not set any **reminders**.")
+
+        elif startswith(prefix + "remind remove") or startswith(prefix + "reminder remove"):
+
+            if startswith(prefix + "remind remove"):
+                st = str(message.content)[len(prefix + "remind remove "):]
+
+            elif startswith(prefix + "reminder remove"):
+                st = str(message.content)[len(prefix + "reminder remove "):]
+
+            else:
+                return
+
+            if st == "all":
+                rem.remove_all_reminders(message.author)
+
+                await client.send_message(message.channel, "Removed **all** active reminders!")
+
+            else:
+                su = rem.remove_reminder(message.author, st)
+
+                if su:
+                    await client.send_message(message.channel, "Successfully removed the reminder.")
+                else:
+                    await client.send_message(message.channel, "Could not remove the reminder. Command usage: `_remind remove [time or content]`")
+
+        elif startswith(prefix + "remind"):
+            await client.send_message(message.channel, "**Remind help**\n`_remind me in [sometime]: [message]` - reminds you in your DM\n`_remind here in [sometime]: [message]` - reminds everyone in current channel")
 
         #
         # Here start ADMIN ONLY commands
@@ -1654,7 +1748,7 @@ Short bio:
             if not url:
                 await client.send_message(message.channel, "**{}** does not have an avatar. :expressionless:".format(member.name))
             else:
-                await client.send_message(message.channel, "**{}**'s avatar: {}".format(member.name, url))
+                await client.send_message(message.channel, "**{}**'stm avatar: {}".format(member.name, url))
 
         # Role management
         elif startswith(prefix + "role"):
@@ -1884,7 +1978,7 @@ Messages:
 
             stmsg = """**SERVER SETUP**
 You have started the server setup. It consists of a few steps, where you will be prompted to answer.
-**Let's get started, shall we?**"""""
+**Let'stm get started, shall we?**"""""
             await client.send_message(message.channel, stmsg)
             await asyncio.sleep(2)
 
@@ -2030,6 +2124,9 @@ For more detailed descriptions about all commands, type `_cmds`.
             with open("cache/voting_state.cache", "wb") as cache:
                 dump(vote, cache)  # Save instance of Vote
 
+            # with open("cache/reminder_state.cache", "wb") as cache:
+            #    dump(rem, cache)  # Save instance of Reminder
+
             await client.send_message(message.channel, "**DED**")
             await client.delete_message(m)
 
@@ -2049,6 +2146,9 @@ For more detailed descriptions about all commands, type `_cmds`.
 
             with open("cache/voting_state.cache", "wb") as cache:
                 dump(vote, cache)  # Save instance of Vote
+
+            #with open("cache/reminder_state.cache", "wb") as cache:
+            #    dump(rem, cache)  # Save instance of Reminder
 
             await client.send_message(message.channel, "**DED**")
             await client.delete_message(m)
@@ -2168,7 +2268,7 @@ For more detailed descriptions about all commands, type `_cmds`.
                 return
 
             handler.mute(user)
-            await client.send_message(message.channel, "{} has been muted :heavy_check_mark:".format(user.name))
+            await client.send_message(message.channel, "{} has been muted :no_bell:".format(user.name))
             self.updatemutes()
 
         elif startswith(prefix + "unmute"):
@@ -2187,7 +2287,7 @@ For more detailed descriptions about all commands, type `_cmds`.
                 return
 
             handler.unmute(user)
-            await client.send_message(message.channel, "{} has been unmuted :heavy_check_mark:".format(user.name))
+            await client.send_message(message.channel, "{} has been unmuted :bell:".format(user.name))
             self.updatemutes()
 
         elif startswith(prefix + "purge"):
@@ -2275,6 +2375,25 @@ For more detailed descriptions about all commands, type `_cmds`.
                 idb._clean_cache()
                 await client.send_message(message.channel, "Imdb cache cleaned :clapper:")
 
+            elif startswith(prefix + "dev servers clean"):
+                logger.info("Checking server data integrity")
+                await client.send_message(message.channel, "Checking...")
+
+                for server in client.servers:
+                    self.server_check(server, threaded=False)
+
+                await client.send_message(message.channel, "Server integrity check :ok:")
+
+            # Work in progress
+            elif startswith(prefix + "dev user_info"):
+                sid = str(message.content)[len(prefix + "dev server_info "):].split("|")
+
+                srv = discord.utils.find(lambda a: a.id == sid[0], client.servers)
+                usr = discord.utils.find(lambda s: s.id == sid[1], srv.members)
+
+                await client.send_message(message.channel, "**{}**\nAvatar: {}\n".format(usr.name, usr.avatar_url))
+
+
 
 # When a member joins the server
 @client.event
@@ -2354,17 +2473,21 @@ async def on_server_remove(server):
     log("Removed from server: {}".format(server.name))
     stat.plusleftserver()
 
+    nano.remove_old_servers(threaded=True)
+
 # Events and stuff
 
 nano = Nano(owner=parser.getint("Settings", "ownerid"), debug=parser.getboolean("Debug", "debug"))
 
 @client.event
 async def on_ready():
+    rem._update_client(nano)
+    rem.wait()
+
     def check_all_servers():
-        print("Checking server data...", end="")
         for server in client.servers:
             nano.server_check(server, threaded=False)
-        print("done")
+        logger.info("Checked server data")
 
     global first
     if not first:
@@ -2390,28 +2513,32 @@ async def on_ready():
     await client.wait_until_ready()
     check_all_servers()
 
+    nano.remove_old_servers(threaded=False)
+    logger.info("Removed old servers")
+
     log("Started as {} with id {}".format(client.user.name, client.user.id))
+
+    rem.wait_release()
 
 
 @client.event
 async def on_message(message):
     await nano.on_message(message)
 
-@asyncio.coroutine
-def start():
+async def start():
     # Will accept both forms of auth (token vs mail/pass)
     if parser.has_option("Credentials", "token"):
         token = parser.get("Credentials", "token")
 
-        yield from client.login(token)
-        yield from client.connect()
+        await client.login(token)
+        await client.connect()
 
     elif parser.has_option("Credentials", "mail") and parser.has_option("Credentials", "password"):
         mail = parser.get("Credentials", "mail")
         password = parser.get("Credentials", "password")
 
-        yield from client.login(mail, password)
-        yield from client.connect()
+        await client.login(mail, password)
+        await client.connect()
 
     else:
         print("[ERROR] Credentials are missing.")

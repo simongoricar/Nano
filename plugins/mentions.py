@@ -13,7 +13,7 @@ class MentionHandler:
 
     @staticmethod
     def on_message(message):
-        """Return type: answer"""
+        """Return: answer"""
         if message.content[21:] == "":
             return helpmsg
 
@@ -29,7 +29,7 @@ class MentionHandler:
 
         elif has("how are you"):
             lst = ["I'm awesome!", "Doing great.", "Doing awesome. Pumpin' dem messages out like it's christmas babyyy!"]
-            rn = randint(0,len(lst))
+            rn = randint(0, len(lst))
 
             return str(lst[rn])
 
@@ -59,3 +59,9 @@ class MentionHandler:
 
         elif has("i love you"):
             return "I love you too, whoeveryouare"
+
+        elif has("fuck you"):
+            return "I cry everytiem."
+
+        else:
+            return None
