@@ -1591,7 +1591,7 @@ Short bio:
                     await client.send_message(message.channel, "Could not remove the reminder. Command usage: `_remind remove [time or content]`")
 
         elif startswith(prefix + "remind"):
-            await client.send_message(message.channel, "**Remind help**\n`_remind me in [sometime]: [message]` - reminds you in your DM\n`_remind here in [sometime]: [message]` - reminds everyone in current channel")
+            await client.send_message(message.channel, "**Remind help**\n`_remind me in [sometime]: [message]` - reminds you in your DM\n`_remind here in [sometime]: [message]` - reminds everyone in current channel".replace("_", prefix))
 
         #
         # Here start ADMIN ONLY commands
