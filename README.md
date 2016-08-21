@@ -8,6 +8,7 @@ by DefaltSimon, made in python with [discord.py api](https://github.com/Rapptz/d
 - logging
 - permissions
 - voting
+- reminders
 - Other fun stuff: TF2 item prices, Minecraft item ids, Steam user search  
 - and more...
 
