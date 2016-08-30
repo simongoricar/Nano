@@ -260,7 +260,12 @@ class Imdb:
 
         if typ is MOVIE:
 
-            metascore = clean(sp.find("div", {"class": "metacriticScore score_mixed titleReviewBarSubItem"}).text)
+            # Not fully flexible
+            # metascore = clean(sp.find("div", {"class": "metacriticScore titleReviewBarSubItem"}).text)
+            # Instead, this
+
+            metascore = clean(sp.find("div", {"class": "titleReviewBarItem"}).find("a", href=True).text)
+
             writers = [a.text for a in
                        sp.find_all("div", {"class": "credit_summary_item"})[1].find_all("span", {"itemprop": "name"})]
             yr = sp.find("span", {"id": "titleYear"}).find("a", href=True).text
