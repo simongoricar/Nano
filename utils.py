@@ -103,6 +103,8 @@ commandhelpsadmin = {
     "nano.kick": {"desc": "Kicks a member", "use": "Use: <command> <mention>", "alias": "Alias: _kick"},
     "_unban": {"desc": "Unbans a member.", "use": "Use: <command> <mention>", "alias": "Alias: nano.unban"},
     "nano.unban": {"desc": "Unbans a member.", "use": "Use: <command> <mention>", "alias": "Alias: _unban"},
+    "_softban": {"desc": "Temporarily bans a member (for time formatting see reminders)", "use": "Use: <command> <time> @mention", "alias": "Alias: nano.softban"},
+    "nano.softban": {"desc": "Temporarily bans a member (for time formatting see reminders)", "use": "Use: <command> <time> @mention", "alias": "Alias: _softban"},
     "_role add": {"desc": "Adds a role to the user.", "use": "Use: <command> <role name> <mention>", "alias": None},
     "_role remove": {"desc": "Removes a role from the user.", "use": "Use: <command> <role name> <mention>", "alias": None},
     "_role replacewith": {"desc": "Replace all roles with the specified one for a user.", "use": "Use: <command> <role name> <mention>", "alias": None},

@@ -1,3 +1,8 @@
+2.2.2
+- Small message changes
+- Added softbanning (!softban [time] @mention)
+- Fixed imdb search and grammar mistakes
+
 2.2.1
 - Now removing servers from servers.yml in on_server_remove
 - Fixed a bug involving Nano mentions

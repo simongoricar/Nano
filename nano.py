@@ -25,13 +25,13 @@ from discord.voice_client import StreamPlayer
 
 # Nano modules
 from utils import *
-from plugins import voting, stats, mentions, moderator, minecraft, steam, bptf, playing, backup, imdb, reminder
+from plugins import voting, stats, mentions, moderator, minecraft, steam, bptf, playing, backup, imdb, timing
 from bots_discord_pw import POSTServerCount
 from data import serverhandler
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '2.2.2dev'
+__version__ = '2.2.2'
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
@@ -55,7 +55,7 @@ client = discord.Client(loop=loop)
 parser = configparser.ConfigParser()
 parser.read("settings.ini")
 
-giphy = giphypop.Giphy()  # Public beta key (default), available on their GitHub page
+giphy = giphypop.Giphy()  # Public beta key (default), available on Giphy's GitHub page
 
 # Plugin instances
 
@@ -71,7 +71,8 @@ else:
 #        rem = pickle_load(vt)
 #    os.remove("cache/reminder_state.cache")
 #else:
-rem = reminder.Reminder(None, loop)
+rem = timing.Reminder(None, loop)
+timebans = timing.TimedBan(None, loop)
 
 handler = serverhandler.ServerHandler()
 stat = stats.BotStats()
@@ -185,6 +186,8 @@ class Nano:
         # Locks
         self.checking = False
 
+        self.softbans = {}
+
     def updateadmins(self):
         data = handler.get_all_data()
         for this in data.keys():
@@ -218,6 +221,14 @@ class Nano:
     @staticmethod
     async def send_message(channel, content):
         await client.send_message(channel, content)
+
+    @staticmethod
+    async def unban(server, user):
+        await client.unban(server, user)
+
+    @staticmethod
+    async def ban(server, member):
+        await client.ban(member)
 
     def is_muted(self, message):
         try:
@@ -354,7 +365,7 @@ class Nano:
                      "nano.admins list", "nano.sleep", "nano.wake", "_invite", "nano.invite", "nano.displaysettings",
                      "nano.settings", "_vote start", "_vote end", "nano.blacklist add", "nano.blacklist remove", "_getstarted",
                      "nano.getstarted", "nano.changeprefix", "_playing", "nano.kill", "_user", "_reload", "nano.reload", "_muted",
-                     "_mute", "_unmute", "_purge", "_dev", "_welcomemsg", "_banmsg", "_kickmsg", "_nuke"]
+                     "_mute", "_unmute", "_purge", "_dev", "_welcomemsg", "_banmsg", "_kickmsg", "_nuke", "_softban", "nano.softban"]
 
         # To be implemented
         # privates = ["_help", "_uptime", "_randomgif", "_8ball", "_wiki", "_define", "_urban", "_github", "_bug", "_uptime", "_nano"]
@@ -755,7 +766,7 @@ Description: {}```""".format(cmdn, desc)
             items = beforesplit.split("|")
 
             if beforesplit == items[0]:
-                await client.send_message(message.channel, "Guess what? It'stm " + str(items[0]) + ". **ba dum tss.**")
+                await client.send_message(message.channel, "Guess what? It's " + str(items[0]) + ". **ba dum tss.**")
                 return
 
             rn = randint(0, len(items)-1)
@@ -1384,7 +1395,7 @@ Id: {}:{}```""".format(item.get("name"), item.get("type"), item.get("meta"))
                 if data.type == imdb.PERSON:
                     return
                 else:
-                    await client.send_message(message.channel, "**{}**'stm story\n```{}```".format(data.name, data.storyline))
+                    await client.send_message(message.channel, "**{}**'s story\n```{}```".format(data.name, data.storyline))
 
             elif startswith(prefix + "imdb search"):
                 search = str(message.content[len(prefix + "imdb search "):])
@@ -1439,7 +1450,7 @@ Short bio:
                 if data.type == imdb.PERSON:
                     return
 
-                await client.send_message(message.channel, "**{}**'stm trailer on IMDB: {}".format(data.name, data.trailer))
+                await client.send_message(message.channel, "**{}**'s trailer on IMDB: {}".format(data.name, data.trailer))
 
             elif startswith(prefix + "imdb rating"):
                 search = str(message.content[len(prefix + "imdb rating "):])
@@ -1454,7 +1465,7 @@ Short bio:
                     return
 
                 await client.send_message(message.channel,
-                                          "**{}**'stm ratings on IMDB\nUser ratings: __{} out of 10__\nMetascore: __{}__".format(data.name, data.rating, data.metascore))
+                                          "**{}**'s ratings on IMDB\nUser ratings: __{} out of 10__\nMetascore: __{}__".format(data.name, data.rating, data.metascore))
 
             else:
                 await client.send_message(message.channel, "**IMDB help**\n\n`_imdb search [name or title]`, `_imdb plot [title]`, `_imdb trailer [title]`, `_imdb rating [title]`".replace("_", prefix))
@@ -1535,7 +1546,11 @@ Short bio:
                 stat.pluswrongarg()
                 return
 
-            s = rem.remind_in_sec(message.author, message.author, st[1], rem.convert_to_seconds(st[0]))
+            try:
+                s = rem.remind_in_sec(message.author, message.author, st[1], rem.convert_to_seconds(st[0]))
+            except timing.ReminderLimitExceeded:
+                await client.send_message(message.channel, "You have exceeded the max limit - **2 active reminders**")
+                return
 
             if not s:
                 await client.send_message(message.channel, "Allowed range: from 5 seconds to 3 days :alarm_clock:")
@@ -1548,7 +1563,11 @@ Short bio:
             if len(st) == 1:
                 st = [a.strip(" ") for a in str(message.content)[len(prefix + "remind here in "):].split("about")]
 
-            rem.remind_in_sec(message.channel, message.author, st[1], rem.convert_to_seconds(st[0]))
+            try:
+                s = rem.remind_in_sec(message.channel, message.author, st[1], rem.convert_to_seconds(st[0]))
+            except timing.ReminderLimitExceeded:
+                await client.send_message(message.channel, "You have exceeded the max limit - **2 active reminders**")
+                return
 
             await client.send_message(message.channel, "Reminder set.")
 
@@ -1559,7 +1578,7 @@ Short bio:
                 st = """Your reminders:"""
                 for things in ls:
                     tm = abs(time.time() - things[2] - things[0])
-                    st += "\n{} - up in `{}`".format(things[1], reminder.resolve_time(tm))
+                    st += "\n{} - up in `{}`".format(things[1], timing.resolve_time(tm))
 
                 await client.send_message(message.channel, st)
 
@@ -1665,6 +1684,45 @@ Short bio:
                 await client.ban(user)
                 await client.send_message(message.channel, handler.get_var(message.channel.server.id, "banmsg").replace(":user", user.name))
 
+        elif startswith(prefix + "softban") or startswith("nano.softban"):
+            if startswith(prefix + "softban "):
+                try:
+                    cut = str(message.content)[len(prefix + "softban "):].rsplit("<")
+                    name = cut[1]; cut = cut[0]
+                except IndexError:
+                    cut = str(message.content)[len(prefix + "softban "):].rsplit(" ")
+                    name = cut[1]; cut = cut[0]
+            else:
+                try:
+                    cut = str(message.content)[len("nano.softban "):].rsplit("<")
+                    name = cut[1]; cut = cut[0]
+                except IndexError:
+                    cut = str(message.content)[len("nano.softban "):].rsplit(" ")
+                    name = cut[1]; cut = cut[0]
+
+            if len(message.mentions) >= 1:
+                usr = message.mentions[0]
+            else:
+                await client.send_message(message.channel, "Please mention a person to softban.")
+                return
+                #usr = discord.utils.find(lambda m: m.name == str(name), message.channel.server.members)
+
+            if not usr:
+                await client.send_message(message.channel, "User not found.")
+                return
+
+            md = timing.Reminder.convert_to_seconds(cut)
+            a = timebans.time_ban(message.channel.server, usr, md)
+
+            if a:
+
+                if not self.softbans.get(message.server.id):
+                    self.softbans.update( { message.server.id : { usr.id : timing.resolve_time(md) }} )
+                else:
+                    self.softbans[message.server.id].update( {usr.id : timing.resolve_time(md)} )
+
+                await client.send_message(message.channel, "**{}** has been softbanned for `{}`".format(usr.name, timing.resolve_time(md)))
+
         # Simple unban with CONFIRM check
         elif startswith(prefix + "unban") or startswith("nano.unban"):
             if len(message.mentions) >= 1:
@@ -1673,7 +1731,6 @@ Short bio:
             else:
 
                 try:
-
                     if startswith(prefix + "unban"):
                         name = str(str(message.content)[len(prefix + "unban "):])
                     elif startswith("nano.unban"):
@@ -1748,7 +1805,7 @@ Short bio:
             if not url:
                 await client.send_message(message.channel, "**{}** does not have an avatar. :expressionless:".format(member.name))
             else:
-                await client.send_message(message.channel, "**{}**'stm avatar: {}".format(member.name, url))
+                await client.send_message(message.channel, "**{}**'s avatar: {}".format(member.name, url))
 
         # Role management
         elif startswith(prefix + "role"):
@@ -1978,7 +2035,7 @@ Messages:
 
             stmsg = """**SERVER SETUP**
 You have started the server setup. It consists of a few steps, where you will be prompted to answer.
-**Let'stm get started, shall we?**"""""
+**Let's get started, shall we?**"""""
             await client.send_message(message.channel, stmsg)
             await asyncio.sleep(2)
 
@@ -2419,18 +2476,32 @@ async def on_member_ban(member):
     if handler.issleeping(member.server):
         return
 
-    msg = handler.get_var(member.server.id, "banmsg").replace(":user", member.name)
-    if msg is None or msg is False:
-        return
+    if nano.softbans.get(member.server.id):
+        if (member.id in nano.softbans.get(member.server.id).keys()) and handler.haslogging(member.server):
+                logchannel = discord.utils.find(lambda channel: channel.name == handler.get_var(member.server.id, "logchannel"), member.server.channels)
 
-    if handler.haslogging(member.server):
-        logchannel = discord.utils.find(lambda channel: channel.name == handler.get_var(member.server.id, "logchannel"), member.server.channels)
+                msg = "**{}** has been softbanned for `{}`".format(member.name, nano.softbans[member.server.id].get(member.id))
 
-        if logchannel:
-            await client.send_message(logchannel, msg)
-        else:
-            logchannel = await nano.create_log_channel(member.server, handler.get_var(member.server.id, "logchannel"))
-            await client.send_message(logchannel, msg)
+                if logchannel:
+                    await client.send_message(logchannel, msg)
+                elif handler.get_var(member.server.id, "logchannel") is not None:
+                    logchannel = await nano.create_log_channel(member.server, handler.get_var(member.server.id, "logchannel"))
+                    await client.send_message(logchannel, msg)
+
+    else:
+
+        msg = handler.get_var(member.server.id, "banmsg").replace(":user", member.name)
+        if msg is None or msg is False:
+            return
+
+        if handler.haslogging(member.server):
+            logchannel = discord.utils.find(lambda channel: channel.name == handler.get_var(member.server.id, "logchannel"), member.server.channels)
+
+            if logchannel:
+                await client.send_message(logchannel, msg)
+            elif handler.get_var(member.server.id, "logchannel") is not None:
+                logchannel = await nano.create_log_channel(member.server, handler.get_var(member.server.id, "logchannel"))
+                await client.send_message(logchannel, msg)
 
 @client.event
 async def on_member_remove(member):
@@ -2444,16 +2515,19 @@ async def on_member_remove(member):
     if msg is None or msg is False:
         return
 
-    await client.send_message(member.server.default_channel, msg)
+    if nano.softbans.get(member.server.id):
+        if not member.id in nano.softbans[member.server.id].keys():
+            return
 
-    if handler.haslogging(member.server):
-        logchannel = discord.utils.find(lambda channel: channel.name == handler.get_var(member.server.id, "logchannel"), member.server.channels)
+    else:
+        if handler.haslogging(member.server):
+            logchannel = discord.utils.find(lambda channel: channel.name == handler.get_var(member.server.id, "logchannel"), member.server.channels)
 
-        if logchannel:
-            await client.send_message(logchannel, "**{}** left".format(member.name))
-        else:
-            logchannel = await nano.create_log_channel(member.server, handler.get_var(member.server.id, "logchannel"))
-            await client.send_message(logchannel, "**{}** left".format(member.name))
+            if logchannel:
+                await client.send_message(logchannel, "**{}** left".format(member.name))
+            elif handler.get_var(member.server.id, "logchannel") is not None:
+                logchannel = await nano.create_log_channel(member.server, handler.get_var(member.server.id, "logchannel"))
+                await client.send_message(logchannel, "**{}** left".format(member.name))
 
 @client.event
 async def on_server_join(server):
@@ -2479,9 +2553,20 @@ async def on_server_remove(server):
 
 nano = Nano(owner=parser.getint("Settings", "ownerid"), debug=parser.getboolean("Debug", "debug"))
 
+#@client.event
+#async def on_error(event, *args, **kwargs):
+#    typ, value, traceback = sys.exc_info()
+#
+#    if typ == discord.Forbidden:
+#        pass
+#
+#    else:
+#        exc_logger(typ, value, traceback)
+
 @client.event
 async def on_ready():
     rem._update_client(nano)
+    timebans._set_client(nano)
     rem.wait()
 
     def check_all_servers():

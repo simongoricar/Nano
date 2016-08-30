@@ -120,8 +120,8 @@ class ServerHandler(metaclass=Singleton):
                            "filterspam" : False,
                            "filterinvite": False,
                            "welcomemsg": ":user, Welcome to :server!",
-                           "kickmsg": ":user has been kicked.",
-                           "banmsg": ":user has been banned.",
+                           "kickmsg": "**:user** has been kicked.",
+                           "banmsg": "**:user** has been banned.",
                            "leavemsg": "Bye, **:user**",
                            "blacklisted" : [],
                            "muted" : [],
@@ -230,6 +230,17 @@ class ServerHandler(metaclass=Singleton):
 
         nw = bool(data != ld)
         if changed or nw:
+            self.queue_write(data)
+
+    def _delete_old_servers(self, current_servers):
+        data = self.cached_file
+        ld = copy.deepcopy(self.cached_file)
+
+        for server in data.keys():
+            if server not in current_servers:
+                data.pop(server)
+
+        if data != ld:
             self.queue_write(data)
 
     def update_command(self, server, trigger, response):

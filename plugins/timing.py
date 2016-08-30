@@ -28,15 +28,15 @@ def resolve_time(tm):
     minutes = 0
 
     while True:
-        if tm > 86400: # 1 Day
+        if tm >= 86400: # 1 Day
             days += 1
             tm -= 86400
 
-        elif tm > 3600: # 1 hour
+        elif tm >= 3600: # 1 hour
             hours += 1
             tm -= 3600
 
-        elif tm > 60: # 1 minute
+        elif tm >= 60: # 1 minute
             minutes += 1
             tm -= 60
 
@@ -172,11 +172,11 @@ class Reminder:
         :return: bool
         """
         if self.reminders.get(user.id):
-            if len(self.reminders[user.id]) > limit:
-                return False
+            if len(self.reminders[user.id]) > limit+1:
+                return True
 
             else:
-                return True
+                return False
         else:
             return True
 
@@ -206,7 +206,7 @@ class Reminder:
         except ValueError:
             tim = self.convert_to_seconds(tim)
 
-        if not (5 < tim < 259200): # 5 sec to 3 days
+        if not (5 < tim < 259200):  # 5 sec to 3 days
             return False
 
         # Threaded
@@ -228,3 +228,57 @@ class Reminder:
         self._dispatch(self.client.send_message, channel, content)
 
         self.reminders[uid] = [a for a in self.reminders[uid] if a[2] != tstamp]
+
+
+class TimedBan:
+    def __init__(self, client=None, loop=asyncio.get_event_loop()):
+        self.data = {}
+
+        self.loop = loop
+        self.client = client
+
+    def _set_loop(self, loop):
+        self.loop = loop
+
+    def _set_client(self, client):
+        self.client = client
+
+    def _dispatch(self, fn, *args, **kwargs):
+        log.info("Dispatching scheduled event")
+
+        self.loop.create_task(fn(*args, **kwargs))
+
+    def get_bans(self, sid):
+        return self.data.get(sid)
+
+    def remove_ban(self, sid, member):
+        if self.data.get(sid):
+            self.data[sid].pop(member.id)
+
+    @threaded
+    def schedule(self, server, member, tim):
+        time.sleep(tim)
+
+        self._dispatch(self.client.unban, server, member)
+        self.data[server.id].pop(member.id)
+
+
+    def time_ban(self, server, member, tim):
+
+        otim = int(tim)
+
+        try:
+            tim = int(tim)
+        except TypeError:
+            tim = Reminder.convert_to_seconds(tim)
+
+        if not self.data.get(server.id):
+            self.data[server.id] = {member.id : otim}
+        else:
+            self.data[server.id].update({member.id : otim})
+
+        self._dispatch(self.client.ban, server, member)
+
+        self.schedule(server, member, tim)
+
+        return True

@@ -224,7 +224,7 @@ class Imdb:
         video = baseurl + str(sp.find("a", {"itemprop": "trailer"}, href=True).get("href")).strip("?ref_=tt_ov_vi")
 
         director = sp.find("div", {"class": "credit_summary_item"}).find("span", {"itemprop": "name"}).text
-        cast = [a.text for a in sp.find("div", {"class": "cast_list"}).find_all("span", {"itemprop": "name"})]
+        cast = [a.text for a in sp.find("table", {"class": "cast_list"}).find_all("span", {"itemprop": "name"})]
 
         #sh = sp.find("table", {"class": "cast_list"})
         #odd = sh.find_all("tr", {"class": "odd"})
