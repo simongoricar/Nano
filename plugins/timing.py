@@ -6,6 +6,7 @@ import logging
 import asyncio
 
 __author__ = "DefaltSimon"
+# Timing plugin for Nano
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -16,6 +17,7 @@ possibilites = [
     "h", "hr", "hours",
     "d", "day", "days"
 ]
+
 
 def resolve_time(tm):
     try:
@@ -28,15 +30,15 @@ def resolve_time(tm):
     minutes = 0
 
     while True:
-        if tm >= 86400: # 1 Day
+        if tm >= 86400:  # 1 Day
             days += 1
             tm -= 86400
 
-        elif tm >= 3600: # 1 hour
+        elif tm >= 3600:  # 1 hour
             hours += 1
             tm -= 3600
 
-        elif tm >= 60: # 1 minute
+        elif tm >= 60:  # 1 minute
             minutes += 1
             tm -= 60
 
@@ -57,11 +59,10 @@ def resolve_time(tm):
 
     # Ayy lmao
     return "{}{}{}{}{}{}{}".format(get(days, "days"), comma(days and hours),
-                                     get(hours, "hours"), comma(hours and minutes),
-                                     get(minutes, "minutes"),
-                                     " and " if minutes and tm else "",
-                                     get(int(round(tm, 0)), "seconds")).strip(" ")
-
+                                   get(hours, "hours"), comma(hours and minutes),
+                                   get(minutes, "minutes"),
+                                   " and " if minutes and tm else "",
+                                   get(int(round(tm, 0)), "seconds")).strip(" ")
 
 
 def threaded(fn):
@@ -69,9 +70,11 @@ def threaded(fn):
         threading.Thread(target=fn, args=args, kwargs=kwargs).start()
     return wrapper
 
+
 class InvalidParameters(Exception):
     def __init__(self, *args, **kwargs):
         pass
+
 
 class ReminderLimitExceeded(Exception):
     def __init__(self, *args, **kwargs):
@@ -81,7 +84,6 @@ class ReminderLimitExceeded(Exception):
 class Reminder:
     def __init__(self, client, loop=asyncio.get_event_loop()):
         #assert isinstance(client, Client) or isinstance(client, Nano)
-
         self.client = client
         self.loop = loop
 
@@ -94,7 +96,6 @@ class Reminder:
 
     def wait_release(self):
         self.must_wait = False
-
 
     def _update_client(self, client):
         self.client = client
@@ -126,7 +127,6 @@ class Reminder:
                 s += int(el[:-1])
             elif el.endswith("sec"):
                 s += int(el[:-3])
-
 
             elif el.endswith("m"):
                 s += int(el[:-1]) * 60
@@ -210,15 +210,15 @@ class Reminder:
             return False
 
         # Threaded
-        self.schedule(channel, fulltext, round(float(tim - (time.time() - t)), 0), uid=author.id, tstamp=int(round(t, 0)))
+        self.schedule(channel, fulltext, round(float(tim - (time.time() - t)), 0), uid=author.id, time_stamp=int(round(t, 0)))
 
         return True
 
     @threaded
-    def schedule(self, channel, content, tim, uid, tstamp):
+    def schedule(self, channel, content, tim, uid, time_stamp):
         time.sleep(tim)
 
-        if not [a for a in self.reminders[uid] if a[2] == tstamp]:
+        if not [a for a in self.reminders[uid] if a[2] == time_stamp]:
             log.info("Reminder deleted before execution, quitting")
             return
 
@@ -227,7 +227,7 @@ class Reminder:
 
         self._dispatch(self.client.send_message, channel, content)
 
-        self.reminders[uid] = [a for a in self.reminders[uid] if a[2] != tstamp]
+        self.reminders[uid] = [a for a in self.reminders[uid] if a[2] != time_stamp]
 
 
 class TimedBan:
@@ -261,7 +261,6 @@ class TimedBan:
 
         self._dispatch(self.client.unban, server, member)
         self.data[server.id].pop(member.id)
-
 
     def time_ban(self, server, member, tim):
 

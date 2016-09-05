@@ -2,12 +2,12 @@
 import steamapi
 
 __author__ = "DefaltSimon"
-
 # Steam plugin for Nano
 
+
 class Steam:
-    def __init__(self, apikey):
-        steamapi.core.APIConnection(api_key=apikey)
+    def __init__(self, api_key):
+        steamapi.core.APIConnection(api_key=api_key)
 
     @staticmethod
     def get_user(uid):

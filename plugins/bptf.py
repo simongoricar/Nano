@@ -6,7 +6,7 @@ import logging
 from json import load
 
 __author__ = "DefaltSimon"
-__version__ = "0.1"
+# Backpack.tf price plugin for Nano
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)

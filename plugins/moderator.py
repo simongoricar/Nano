@@ -1,17 +1,17 @@
 # coding=utf-8
 
-__author__ = "DefaltSimon"
-
-# Moderation plugin for Nano
-
 import re
 import logging
 from pickle import load
+
+__author__ = "DefaltSimon"
+# Moderation plugin for Nano
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 accepted_chars = "abcdefghijklmnopqrstuvwxyz "
+
 
 def normalize(line):
     # Ignores punctuation, new lines, etc...
@@ -23,36 +23,37 @@ def normalize(line):
     return accepted
 
 
-def twochars(line):  # Normalizes
+def two_chars(line):  # Normalizes
     norm = normalize(line)
     for rn in range(0, len(norm) - 1):
         yield norm[rn:rn + 1], norm[rn + 1:rn + 2]
 
+
 class BotModerator:
     def __init__(self):
         log.info("Enabled")
-        self.wordlist = []
+        self.word_list = []
 
-        with open("plugins/wordlist.txt","r") as file:
+        with open("plugins/wordlist.txt", "r") as file:
             file = file.readlines()
             for line in file:
-                self.wordlist.append(line.strip("\n"))
+                self.word_list.append(line.strip("\n"))
 
         # Gibberish detector
         self.model = load(open("plugins/spam_model.pki", "rb"))
 
         self.data = self.model["data"]
         self.threshold = self.model["threshold"]
-        self.charpos = self.model["positions"]
+        self.char_p = self.model["positions"]
 
         # Mute system
-        self.mutedusers = {}
+        self.muted_users = {}
 
         # Entropy calculator
         self.chars2 = "abcdefghijklmnopqrstuvwxyz,.-!?_;:|1234567890*=)(/&%$#\"~<> "
         self.pos2 = dict([(c, index) for index, c in enumerate(self.chars2)])
 
-    def checkfilter(self,message):
+    def checkfilter(self, message):
         """Returns True if there is a banned word
         :param message: Discord Message content
         """
@@ -63,7 +64,7 @@ class BotModerator:
         # Checks for matches
         # Each word is compared to each banned word
         for mword in messagewords:
-            for bword in self.wordlist:
+            for bword in self.word_list:
 
                 if str(mword).find(str(bword)) != -1:
                     return True
@@ -96,9 +97,9 @@ class BotModerator:
 
         th = len(message) / 2.4
         c = float(0)
-        for ca, cb in twochars(message):
+        for ca, cb in two_chars(message):
 
-            if self.data[self.charpos[ca]][self.charpos[cb]] < self.threshold[self.charpos[ca]]:
+            if self.data[self.char_p[ca]][self.char_p[cb]] < self.threshold[self.char_p[ca]]:
                 c += 1
 
         return bool(c >= th)
@@ -112,7 +113,7 @@ class BotModerator:
 
         counts = [[0 for c in range(len(self.chars2))] for ac in range(len(self.chars2))]
 
-        for o, t in twochars(message):
+        for o, t in two_chars(message):
             counts[self.pos2[o]][self.pos2[t]] += 1
 
         thr = 0

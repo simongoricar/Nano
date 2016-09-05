@@ -1,13 +1,13 @@
 # coding=utf-8
 
 __author__ = "DefaltSimon"
-
 # Voting plugin for Nano v2
+
 
 class Vote:
     def __init__(self):
-        self.voteheader = {}
-        self.votecontent = {}
+        self.vote_header = {}
+        self.vote_content = {}
 
         self.voters = {}
         self.votes = {}
@@ -16,15 +16,15 @@ class Vote:
         self.author = {}
 
     def need_save(self):
-        return bool(self.voteheader != {} or self.votecontent != {} or self.progress != {})
+        return bool(self.vote_header != {} or self.vote_content != {} or self.progress != {})
 
     def create(self,author,server,vote):
 
         # Reference - !vote start "Vote for this mate" one|two|three
-        self.voteheader[server.id] = str(vote).split("\"")[1]
-        votenames = str(vote).split("\"")[2]
+        self.vote_header[server.id] = str(vote).split("\"")[1]
+        vote_names = str(vote).split("\"")[2]
 
-        voteob = votenames.split("|")
+        voteob = vote_names.split("|")
 
         self.votes[server.id] = {}
         self.voters[server.id] = []
@@ -39,20 +39,20 @@ class Vote:
 
             count += 1
 
-        self.votecontent[server.id] = voteob
+        self.vote_content[server.id] = voteob
 
         self.author[server.id] = str(author)
 
         self.progress[server.id] = True
 
-    def getcontent(self,server):
+    def getcontent(self, server):
 
-        if not self.votecontent[server.id]:
+        if not self.vote_content[server.id]:
             return None
         else:
-            return self.votecontent[server.id]
+            return self.vote_content[server.id]
 
-    def inprogress(self,server):
+    def inprogress(self, server):
         try:
             if self.progress[server.id] is True:
                 return True
@@ -61,7 +61,7 @@ class Vote:
         except KeyError:
             return False
 
-    def countone(self,option,voter,server):
+    def countone(self, option, voter, server):
         try:
             option = int(option)
         except ValueError:
@@ -75,21 +75,21 @@ class Vote:
         if option > len(self.votes):
             return False
         else:
-            item = self.votecontent[server.id][option-1]
+            item = self.vote_content[server.id][option - 1]
             try:
                 self.votes[server.id][item] += 1
             except KeyError:
                 self.votes[server.id][item] = 1
                 return
 
-    def returnvotes(self,server):
+    def returnvotes(self, server):
         return self.votes.get(server.id)
 
-    def returnvoteheader(self,server):
-        return self.voteheader.get(server.id)
+    def returnvoteheader(self, server):
+        return self.vote_header.get(server.id)
 
-    def returncontent(self,server):
-        return self.votecontent.get(server.id)
+    def returncontent(self, server):
+        return self.vote_content.get(server.id)
 
     def end_voting(self, server):
         self.progress[server.id] = False
@@ -97,7 +97,7 @@ class Vote:
         self.votes.pop(server.id)
         self.voters.pop(server.id)
 
-        self.voteheader.pop(server.id)
-        self.votecontent.pop(server.id)
+        self.vote_header.pop(server.id)
+        self.vote_content.pop(server.id)
 
         self.author.pop(server.id)

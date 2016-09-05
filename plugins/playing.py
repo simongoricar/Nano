@@ -5,6 +5,9 @@ from discord import Client, Game
 from asyncio import sleep
 from random import shuffle
 
+__author__ = "DefaltSimon"
+# Status roller plugin for Nano
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 

@@ -1,17 +1,19 @@
 # coding=utf-8
 
-"""Part of Nano"""
-
 import os
 import time
 import logging
 import threading
 from yaml import load, dump
 
+__author__ = "DefaltSimon"
+# Stats plugin for Nano
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 # Decorator
+
 
 def threaded(fn):
     def wrapper(*args, **kwargs):
@@ -20,7 +22,6 @@ def threaded(fn):
 
 # Pretty much like v1, but with small changes
 
-__author__ = "DefaltSimon"
 
 class BotStats:
     def __init__(self):
@@ -50,8 +51,8 @@ class BotStats:
         self.cached_data = data.copy()
 
         self.lock()
-        with open("plugins/stats.yml","w") as outfile:
-            outfile.write(dump(data,default_flow_style=False))
+        with open("plugins/stats.yml", "w") as outfile:
+            outfile.write(dump(data, default_flow_style=False))
         self.release_lock()
 
     def get_data(self):

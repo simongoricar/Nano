@@ -1,8 +1,4 @@
 # coding=utf-8
-
-
-__author__ = "DefaltSimon"
-
 import logging
 import copy
 import time
@@ -13,11 +9,14 @@ from pickle import load, dump
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
 
+__author__ = "DefaltSimon"
+# IMDb plugin for Nano
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
-baseurl = "http://www.imdb.com"
-findurl = "http://www.imdb.com/find?&q="
+base_url = "http://www.imdb.com"
+search_url = "http://www.imdb.com/find?&q="
 
 MOVIE = 1
 SERIES = 2
@@ -118,20 +117,20 @@ class Imdb:
             self.cache = {}
 
         self.max_age = max_age
-        self.threadlock = False
+        self.thread_lock = False
 
         self.allow_local_cache = allow_local_cache
 
     def lock(self):
-        self.threadlock = True
+        self.thread_lock = True
 
     def wait_until_release(self):
-        while self.threadlock:
+        while self.thread_lock:
             time.sleep(0.05)
         return
 
     def release(self):
-        self.threadlock = False
+        self.thread_lock = False
 
     @threaded
     def queue_write(self, data):
@@ -161,7 +160,7 @@ class Imdb:
 
     def get_page_by_name(self, name):
         # Searching page
-        html = urlopen(findurl + str(name).replace(" ", "+"))
+        html = urlopen(search_url + str(name).replace(" ", "+"))
         sp = BeautifulSoup(html, "html.parser")
 
         try:
@@ -177,7 +176,7 @@ class Imdb:
                 return self.cache[f].get("data")
 
         log.debug("requesting page for " + str(f))
-        html = urlopen(baseurl + f)
+        html = urlopen(base_url + f)
         sp = BeautifulSoup(html, "html.parser")
 
         # Figuring out the type
@@ -221,39 +220,39 @@ class Imdb:
         genres = [str(a.text).strip(" ") for a in sp.find("div", {"itemprop": "genre"}).find_all("a", href=True)]
         rating = sp.find("span", {"itemprop": "ratingValue"}).text
 
-        video = baseurl + str(sp.find("a", {"itemprop": "trailer"}, href=True).get("href")).strip("?ref_=tt_ov_vi")
+        video = base_url + str(sp.find("a", {"itemprop": "trailer"}, href=True).get("href")).strip("?ref_=tt_ov_vi")
 
         director = sp.find("div", {"class": "credit_summary_item"}).find("span", {"itemprop": "name"}).text
         cast = [a.text for a in sp.find("table", {"class": "cast_list"}).find_all("span", {"itemprop": "name"})]
 
-        #sh = sp.find("table", {"class": "cast_list"})
-        #odd = sh.find_all("tr", {"class": "odd"})
-        #even = sh.find_all("tr", {"class": "even"})
+        # sh = sp.find("table", {"class": "cast_list"})
+        # odd = sh.find_all("tr", {"class": "odd"})
+        # even = sh.find_all("tr", {"class": "even"})
 
-        #cast = []
-        #for rn in range(len(odd + even)):
-        #    try:
-        #        onee = odd.pop(0)
-        #        twoo = even.pop(0)
+        # cast = []
+        # for rn in range(len(odd + even)):
+        #     try:
+        #         onee = odd.pop(0)
+        #         twoo = even.pop(0)
         #
-        #        if not onee and not twoo:
-        #            break
+        #         if not onee and not twoo:
+        #             break
         #
-        #        if onee:
-        #            one = dict(name=onee.find("span", {"itemprop": "name"}).text,
-        #                        character=onee.find("td", {"class": "character"})) # .find("a", href=True).text)
+        #         if onee:
+        #             one = dict(name=onee.find("span", {"itemprop": "name"}).text,
+        #                         character=onee.find("td", {"class": "character"})) # .find("a", href=True).text)
         #
-        #            cast.append(one)
+        #             cast.append(one)
         #
-        #        if twoo:
-        #            two = dict(name=onee.find("span", {"itemprop": "name"}).text,
-        #                        character=onee.find("td", {"class": "character"})) # .find("a", href=True).text)
-        #            cast.append(two)
+        #         if twoo:
+        #             two = dict(name=onee.find("span", {"itemprop": "name"}).text,
+        #                         character=onee.find("td", {"class": "character"})) # .find("a", href=True).text)
+        #             cast.append(two)
         #
-        #        del onee
-        #        del twoo
-        #    except IndexError:
-        #        break
+        #         del onee
+        #         del twoo
+        #     except IndexError:
+        #         break
 
         summary = clean(sp.find("div", {"class": "summary_text"}).text)
         storyline = clean(sp.find("div", {"class": "inline canwrap", "itemprop": "description"}).text)
@@ -289,23 +288,22 @@ class Imdb:
 
         summary = clean(str(sp.find("div", {"itemprop": "description"}).text).strip("\n")).strip(" See full bio »")
 
-
         return Person(name=name, short_bio=summary, rank=rank, known_for=knownfor, type=PERSON)
 
 # Tests
-#logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.INFO)
 #
-#im = Imdb()
+# im = Imdb()
 #
-#while True:
-#    movie = im.get_page_by_name(input(">"))
+# while True:
+#     movie = im.get_page_by_name(input(">"))
 #
-#    if isinstance(movie, Movie) or isinstance(movie, TVSeries):
-#        print(get_type(movie.type))
-#        print(movie.cast, sep="\n")
+#     if isinstance(movie, Movie) or isinstance(movie, TVSeries):
+#         print(get_type(movie.type))
+#         print(movie.cast, sep="\n")
 #
-#    elif isinstance(movie, Person):
-#        print(movie.name, movie.rank, movie.short_bio, movie.known_for, sep="\n")
+#     elif isinstance(movie, Person):
+#         print(movie.name, movie.rank, movie.short_bio, movie.known_for, sep="\n")
 #
-#    else:
-#        print("NOTHING FOUND")
+#     else:
+#         print("NOTHING FOUND")

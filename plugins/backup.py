@@ -4,6 +4,9 @@ import logging
 from asyncio import sleep
 from datetime import datetime
 
+__author__ = "DefaltSimon"
+# Backup plugin for Nano
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 

@@ -1,10 +1,5 @@
 # coding=utf-8
 
-"""Server data handler for Nano"""
-
-
-# Optimized in v2.1.3
-
 import configparser
 import threading
 import time
@@ -13,8 +8,11 @@ import copy
 
 from yaml import load,dump
 
+__author__ = "DefaltSimon"
+# Server handler for Nano
 
 # Decorator
+
 
 def threaded(fn):
     def wrapper(*args, **kwargs):
@@ -29,6 +27,7 @@ words = (
     "turn on",
     "true",
 )
+
 
 def get_decision(content, wrd=words):
     if str(content).lower().startswith(wrd):
@@ -68,12 +67,16 @@ server_deprecated_settings = [
 ]
 
 # Singleton class
+
+
 class Singleton(type):
     _instances = {}
+
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
             cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
         return cls._instances[cls]
+
 
 class ServerHandler(metaclass=Singleton):
     def __init__(self):
@@ -98,7 +101,6 @@ class ServerHandler(metaclass=Singleton):
 
     def p_release(self):
         self.process_lock = False
-
 
     def lock(self):
         self.data_lock = True
@@ -371,7 +373,6 @@ class ServerHandler(metaclass=Singleton):
 
     def mute(self, user):
         data = self.cached_file
-            
 
         if not user.id in data[user.server.id]["muted"]:
             data[user.server.id]["muted"].append(user.id)
@@ -387,7 +388,6 @@ class ServerHandler(metaclass=Singleton):
 
     def unmute(self, user):
         data = self.cached_file
-            
 
         if user.id in data[user.server.id]["muted"]:
             data[user.server.id]["muted"].pop(user.id)
@@ -398,7 +398,6 @@ class ServerHandler(metaclass=Singleton):
 
     def mutelist(self, server):
         data = self.cached_file
-            
 
         return data[server.id]["muted"]
 
@@ -409,7 +408,6 @@ class ServerHandler(metaclass=Singleton):
 
     def update_name(self, sid, name):
         data = self.cached_file
-            
 
         data[sid]["name"] = name
         self.queue_write(data)
@@ -421,14 +419,12 @@ class ServerHandler(metaclass=Singleton):
 
     def update_owner(self, sid, name):
         data = self.cached_file
-            
 
         data[sid]["owner"] = name
         self.queue_write(data)
 
     def get_var(self, sid, var):
         data = self.cached_file
-            
 
         return data.get(sid).get(var)
 

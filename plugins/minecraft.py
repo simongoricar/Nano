@@ -1,7 +1,6 @@
 # coding=utf-8
 
 __author__ = "DefaltSimon"
-
 # Minecraft plugin for Nano
 
 import requests
@@ -12,11 +11,13 @@ log.setLevel(logging.INFO)
 
 # Exception class
 
+
 class MinecraftException(Exception):
     def __init__(self, *args, **kwargs):
         pass
 
 # Main class
+
 
 class Minecraft:
     def __init__(self):

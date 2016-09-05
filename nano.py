@@ -31,7 +31,7 @@ from data import serverhandler
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '2.2.2'
+__version__ = '2.2.3dev'
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
@@ -43,7 +43,7 @@ logging.getLogger("requests").setLevel(logging.WARNING)
 lg = logging.getLogger("discord")
 lg.setLevel(logging.INFO)
 h = logging.FileHandler(filename="data/debug.log", encoding="utf-8", mode="w")
-h.setFormatter(logging.Formatter('%(asctime)stm:%(levelname)stm:%(name)stm: %(message)stm'))
+h.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 lg.addHandler(h)
 
 # Instances and loop initialization
@@ -66,11 +66,6 @@ if os.path.isfile("cache/voting_state.cache"):
 else:
     vote = voting.Vote()
 
-#if os.path.isfile("cache/voting_state.cache"):
-#    with open("cache/reminder_state.cache", "rb") as vt:
-#        rem = pickle_load(vt)
-#    os.remove("cache/reminder_state.cache")
-#else:
 rem = timing.Reminder(None, loop)
 timebans = timing.TimedBan(None, loop)
 
@@ -92,7 +87,9 @@ DEFAULT_PREFIX = parser.get("Settings","defaultprefix")
 first = True
 
 # KeyboardInterrupt things
-def KeyboardItr(signal, frame):
+
+
+def keyboard_handler(*args):
     logger.critical("Exception: KeyboardInterrupt - Saving voting state to cache/voting_state.cache")
     # Quick state save
     if not os.path.isdir("cache"): os.mkdir("cache")
@@ -105,9 +102,10 @@ def KeyboardItr(signal, frame):
 
     sys.exit()
 
-signal.signal(signal.SIGINT, KeyboardItr)
+signal.signal(signal.SIGINT, keyboard_handler)
 
 # 'Special' uncaught exception logger (for easy debugging)
+
 
 def exc_logger(exctype, value, tb):
     with open("data/errors.log", "a") as log:
@@ -121,15 +119,18 @@ sys.excepthook = exc_logger
 
 # Decorator
 
+
 def threaded(fn):
     def wrapper(*args, **kwargs):
         threading.Thread(target=fn, args=args, kwargs=kwargs).start()
     return wrapper
 
+
 @threaded
 def save_submission(content):
     with open("data/submissions.txt", "a") as sf:
         sf.write(str(content))
+
 
 @threaded
 def log(content):
@@ -148,6 +149,7 @@ class MessageNotFoundError(Exception):
     """
     def __init__(self, *args, **kwargs):
         pass
+
 
 class PrefixNotSet(Exception):
     """
@@ -171,24 +173,24 @@ class Nano:
         if self.debug:
             self.debug_server = str(parser.get("Debug", "debugserver"))
 
-        self.updateprefixes()
-        self.updateadmins()
-        self.updatemutes()
+        self.update_prefixes()
+        self.update_admins()
+        self.update_mutes()
 
-        self.boottime = time.time()
-        self.ownerid = int(owner)
+        self.boot_time = time.time()
+        self.owner_id = int(owner)
 
         # TODO multi-server implementation and support for (redhat) linux
         self.vc = None
-        self.ytplayer = None
-        self.ytstatus = ""
+        self.yt_player = None
+        self.yt_status = ""
 
         # Locks
         self.checking = False
 
         self.softbans = {}
 
-    def updateadmins(self):
+    def update_admins(self):
         data = handler.get_all_data()
         for this in data.keys():
             # 'this' is id of the server
@@ -199,7 +201,7 @@ class Nano:
 
             self.admins[this] = [admin for admin in data[this]["admins"]]
 
-    def updateprefixes(self):
+    def update_prefixes(self):
         data = handler.get_all_data()
         for this in data:
 
@@ -210,7 +212,7 @@ class Nano:
             except TypeError:
                 pass
 
-    def updatemutes(self):
+    def update_mutes(self):
         data = handler.get_all_data()
         for this in data:
             try:
@@ -230,6 +232,32 @@ class Nano:
     async def ban(server, member):
         await client.ban(member)
 
+    @staticmethod
+    def is_server_owner(uid, server):
+        return str(uid) == str(server.owner.id)
+
+    @staticmethod
+    async def create_log_channel(server, name):
+        # Creates a log channel that only 'Nano Admins' and the Nano itself can see
+        logger.info("Creating a log channel for {} - {}".format(server.name, name))
+        them = discord.PermissionOverwrite(read_messages=False, send_messages=False, read_message_history=False)
+        us = discord.PermissionOverwrite(read_messages=True, send_messages=True, read_message_history=True,
+                                         attach_files=True, embed_links=True, manage_messages=True)
+
+        admins = discord.utils.find(lambda m: m.name == "Nano Admin", server.roles)
+
+        th = discord.ChannelPermissions(target=server.default_role, overwrite=them)
+        m = discord.ChannelPermissions(target=server.me, overwrite=us)
+        ad = discord.ChannelPermissions(target=admins, overwrite=us)
+
+        ln = handler.get_var(server.id, "logchannel")
+
+        if ln:
+            if not admins:
+                return await client.create_channel(server, ln, th, m)
+            else:
+                return await client.create_channel(server, ln, th, m, ad)
+
     def is_muted(self, message):
         try:
             return bool(message.author.id in self.mutes[message.channel.server.id])
@@ -237,14 +265,10 @@ class Nano:
             return False
 
     def is_bot_owner(self, uid):
-        return str(uid) == str(self.ownerid)
+        return str(uid) == str(self.owner_id)
 
-    @staticmethod
-    def is_server_owner(uid, server):
-        return str(uid) == str(server.owner.id)
-
-    def server_check(self, server, threaded=True):
-        if threaded:
+    def server_check(self, server, make_thread=True):
+        if make_thread:
             threading.Thread(target=self.server_check, args=[server, False]).start()
             return
 
@@ -274,28 +298,8 @@ class Nano:
             threading.Thread(target=self.server_check, args=[False]).start()
             return
 
-        serverslist = [srv.id for srv in client.servers]
-        handler._delete_old_servers(serverslist)
-
-    @staticmethod
-    async def create_log_channel(server, name):
-        logger.info("Creating a log channel for {} - {}".format(server.name, name))
-        them = discord.PermissionOverwrite(read_messages=False, send_messages=False, read_message_history=False)
-        us = discord.PermissionOverwrite(read_messages=True, send_messages=True, read_message_history=True, attach_files=True, embed_links=True, manage_messages=True)
-
-        admins = discord.utils.find(lambda m: m.name == "Nano Admin", server.roles)
-
-        th = discord.ChannelPermissions(target=server.default_role, overwrite=them)
-        m = discord.ChannelPermissions(target=server.me, overwrite=us)
-        ad = discord.ChannelPermissions(target=admins, overwrite=us)
-
-        ln = handler.get_var(server.id, "logchannel")
-
-        if ln:
-            if not admins:
-                return await client.create_channel(server, ln, th, m)
-            else:
-                return await client.create_channel(server, ln, th, m, ad)
+        servers = [srv.id for srv in client.servers]
+        handler._delete_old_servers(servers)
 
     def debug_blocked(self, sid):
         if self.debug:
@@ -311,33 +315,29 @@ class Nano:
         if message.channel.is_private:  # Ignore DMs
             return
 
-        if self.debug_blocked(message.channel.server.id):
+        elif self.debug_blocked(message.channel.server.id):
             return
 
-        if handler.isblacklisted(message.channel.server.id, message.channel):
-            return
-
-        if message.author.id == client.user.id:  # Ignore messages from yourself
+        elif handler.isblacklisted(message.channel.server.id, message.channel) or (message.author.id == client.user.id):
             return
 
         try:
-            isadmin = bool(message.author.id in self.admins.get(message.channel.server.id))
+            is_admin = bool(message.author.id in self.admins.get(message.channel.server.id))
         except TypeError:
-            isadmin = False
+            is_admin = False
 
-        if not isadmin:
+        if not is_admin:
             for role in message.author.roles:
                 if role.name == "Nano Admin":
-                    isadmin = True
+                    is_admin = True
                     continue
 
-        isowner = self.is_bot_owner(message.author.id)
+        is_owner = self.is_bot_owner(message.author.id)
 
-        isserverowner = self.is_server_owner(message.author.id, message.channel.server)
+        is_server_owner = self.is_server_owner(message.author.id, message.channel.server)
 
         # For debugging purposes
-        # print("Owner: " + str(isowner) + "\nServer owner: " + str(isserverowner) + "\nAdmin: " + str(isadmin))
-
+        logger.debug("Owner: " + str(is_owner) + "\nServer owner: " + str(is_server_owner) + "\nAdmin: " + str(is_admin))
 
         # Delete message if the member is muted.
         if self.is_muted(message) and not self.is_bot_owner(message.author.id):
@@ -349,7 +349,8 @@ class Nano:
             stat.plusonesupress()
             return
 
-        # Import code here
+        # All commands
+        # ALL THE SPEED
 
         normalcmds = ["_help", "_hello", "_uptime", "_randomgif", "_8ball", "_wiki", "_define", "_urban",
                       "_ping", "_cmd list", "_roll", "_nano", "nano.info", "_github", "_decide", "_cat", "_kappa",
@@ -370,10 +371,9 @@ class Nano:
         # To be implemented
         # privates = ["_help", "_uptime", "_randomgif", "_8ball", "_wiki", "_define", "_urban", "_github", "_bug", "_uptime", "_nano"]
 
-
         # Just so it cant be undefined
-        isacommand = False
-        isadmincommand = False
+        is_a_command = False
+        is_admin_command = False
 
         try:
             prefix = self.prefixes.get(message.channel.server.id)
@@ -381,34 +381,25 @@ class Nano:
             if not prefix:
                 self.prefixes[message.channel.server.id] = DEFAULT_PREFIX
                 prefix = DEFAULT_PREFIX
-                print("Server '{}' has been given the default prefix".format(message.channel.server.name))
+                log.info("Server '{}' has been given the default prefix".format(message.channel.server.name))
                 handler.change_prefix(message.channel.server, DEFAULT_PREFIX)
 
-                self.updateprefixes()
+                self.update_prefixes()
 
         except KeyError:
             handler.server_setup(message.channel.server)
             log("Server settings set up: {}".format(message.channel.server))
             prefix = DEFAULT_PREFIX
-            print("Server '{}' has been given the default prefix".format(message.channel.server.name))
+            log.info("Server '{}' has been given the default prefix".format(message.channel.server.name))
             handler.change_prefix(message.channel.server, DEFAULT_PREFIX)
 
-            self.updateprefixes()
+            self.update_prefixes()
 
         # Better safe than sorry
         if not prefix:
             raise PrefixNotSet("prefix for {} could not be found.".format(message.channel.server))
 
-        # Checks for private channel (to be implemented)
-        # if isinstance(message.channel, discord.PrivateChannel):
-        #     for this in privates:
-        #         this = this.replace("_", DEFAULT_PREFIX)
-        #         if str(message.content).startswith(this):
-        #             break
-        #     else:
-        #         return
-
-        # When it is not a private channel, check if a command even exists
+        # Else used just because reasons
         else:
             if client.user in message.mentions:
 
@@ -427,38 +418,41 @@ class Nano:
 
             else:
 
-                servercmd = handler.returncommands(message.channel.server)
+                sc = handler.returncommands(message.channel.server)
 
                 # Checks for server specific commands
-                for command in servercmd:
+                for command in sc:
                     if str(message.content).startswith(command):
                         # Maybe same replacement logic in the future update?
-                        await client.send_message(message.channel, servercmd[command])
+                        await client.send_message(message.channel, sc[command])
                         stat.plusmsg()
 
                         return
 
                 # Existing command check (two steps)
+
+                # 1.
                 for this in normalcmds:
                     this = this.replace("_", self.prefixes.get(message.channel.server.id))
                     if str(message.content).startswith(this):
                         stat.plusmsg()
 
-                        isacommand = True
+                        is_a_command = True
                         break
 
-                if not isacommand:
+                # 2.
+                if not is_a_command:
                     for this in admincmds:
                         this = this.replace("_", self.prefixes.get(message.channel.server.id))
                         if str(message.content).startswith(this):
                             stat.plusmsg()
 
-                            isadmincommand = True
-                            isacommand = False
+                            is_admin_command = True
+                            is_a_command = False
                             break
 
                 # APPLIES FILTERS and returns
-                if not isacommand and not isadmincommand:
+                if not is_a_command and not is_admin_command:
 
                     issf = iswf = isinv = invt = False
                     # If it is not a command, apply filters
@@ -491,7 +485,7 @@ class Nano:
                         except discord.errors.NotFound:
                             pass
 
-                    elif isinv and not (isadmin or isowner or isserverowner):
+                    elif isinv and not (is_admin or is_owner or is_server_owner):
                         logchannel = discord.utils.find(lambda channel: channel.name == handler.get_var(message.channel.server.id, "logchannel"), message.channel.server.channels)
                         try:
                             await client.delete_message(message)
@@ -508,14 +502,11 @@ class Nano:
             if not message:
                 raise MessageNotFoundError
 
-            if str(message.content).lower().startswith(str(string)):
-                return True
-            else:
-                return False
+            return str(message.content).lower().startswith(str(string))
 
         # nano.wake command check
         if startswith("nano.wake"):
-            if not (isadmin or isowner or isserverowner):
+            if not (is_admin or is_owner or is_server_owner):
                 await client.send_message(message.channel, "You are not allowed to use this command.")
                 return
 
@@ -527,9 +518,7 @@ class Nano:
             await client.send_message(message.channel, "I am back.")
             stat.plusslept()
 
-
         # Before checking for commands checks for sleep state and server file existence
-
         if handler.issleeping(message.channel.server):
             return
 
@@ -617,9 +606,7 @@ Description: {}```""".format(cmdn, desc)
                         print("How is this even possible?!")
                         return
 
-
                     await client.send_message(message.channel, preset)
-
 
                     stat.plushelpcommand()
                     return
@@ -666,9 +653,7 @@ Description: {}```""".format(cmdn, desc)
                         print("How is this even possible?!")
                         return
 
-
                     await client.send_message(message.channel, preset)
-
 
                     stat.plushelpcommand()
                     return
@@ -715,9 +700,7 @@ Description: {}```""".format(cmdn, desc)
                         print("How is this even possible?!")
                         return
 
-
                     await client.send_message(message.channel, preset)
-
 
                     stat.plushelpcommand()
                     return
@@ -781,7 +764,7 @@ Description: {}```""".format(cmdn, desc)
 
         # Calculates uptime
         elif startswith(prefix + "uptime"):
-            sec = timedelta(seconds=time.time()-self.boottime)
+            sec = timedelta(seconds=time.time() - self.boot_time)
             d = datetime(1, 1, 1) + sec
             uptime = "I have been tirelessly answering people for\n**{} days, {} hours, {} minutes and {} seconds!**".format(d.day - 1, d.hour, d.minute, d.second)
 
@@ -789,7 +772,7 @@ Description: {}```""".format(cmdn, desc)
 
         # Replies with a random quote
         elif startswith(prefix + "quote"):
-            chosen = str(quotes[randint(0,len(quotes)-1)])
+            chosen = str(quotes[randint(0, len(quotes)-1)])
             place = chosen.rfind("–")
             await client.send_message(message.channel, chosen[:place] + "\n__*" + chosen[place:] + "*__")
 
@@ -840,7 +823,7 @@ Description: {}```""".format(cmdn, desc)
         elif startswith(prefix + "nano") or startswith("nano.info"):
             await client.send_message(message.channel, nanoinfo.replace("<version>", __version__))
 
-        # Github repo link
+        # GitHub repo link
         elif startswith(prefix + "github"):
             await client.send_message(message.channel, githubinfo)
 
@@ -859,7 +842,7 @@ Description: {}```""".format(cmdn, desc)
 
         # Vote creation
         elif startswith(prefix + "vote start"):
-            if not (isowner or isadmin or isserverowner):
+            if not (is_owner or is_admin or is_server_owner):
                 await client.send_message(message.channel, "You are not permitted to use this command. :x:")
                 stat.pluswrongperms()
                 return
@@ -870,21 +853,21 @@ Description: {}```""".format(cmdn, desc)
 
             content = message.content[len(prefix + "vote start "):]
 
-            vote.create(message.author.name,message.channel.server,content)
+            vote.create(message.author.name, message.channel.server, content)
             ch = []
 
             n = 1
             for this in vote.getcontent(message.channel.server):
-                ch.append("{}. {}".format(n,this))
+                ch.append("{}. {}".format(n, this))
                 n += 1
 
             ch = "\n".join(ch).strip("\n")
 
-            await client.send_message(message.channel, "**{}**\n```{}```".format(vote.returnvoteheader(message.channel.server),ch))
+            await client.send_message(message.channel, "**{}**\n```{}```".format(vote.returnvoteheader(message.channel.server), ch))
 
         # Vote end
         elif startswith(prefix + "vote end"):
-            if not (isowner or isadmin or isserverowner):
+            if not (is_owner or is_admin or is_server_owner):
                 await client.send_message(message.channel, "You are not permitted to use this command. :x:")
                 stat.pluswrongperms()
                 return
@@ -901,9 +884,9 @@ Description: {}```""".format(cmdn, desc)
 
             cn = []
             for this in content:
-                cn.append("{} - `{} vote(stm)`".format(this,votes[this]))
+                cn.append("{} - `{} vote(stm)`".format(this, votes[this]))
 
-            combined = "Vote ended:\n**{}**\n\n{}".format(header,"\n".join(cn))
+            combined = "Vote ended:\n**{}**\n\n{}".format(header, "\n".join(cn))
 
             await client.send_message(message.channel, combined)
 
@@ -922,7 +905,6 @@ Description: {}```""".format(cmdn, desc)
                     # await client.send_message(message.channel, "Please select your choice and reply with it's number :upside_down:")
                     return
 
-
                 gotit = vote.countone(num, message.author.id, message.channel.server)
                 stat.plusonevote()
 
@@ -936,45 +918,42 @@ Description: {}```""".format(cmdn, desc)
 
         # Simple status (server, user count)
         elif startswith(prefix + "status") or startswith("nano.status"):
-            servercount = 0
+            server_count = 0
             members = 0
             channels = 0
 
             for server in client.servers:
-                servercount += 1
+                server_count += 1
                 members += int(server.member_count)
 
                 channels += len(server.channels)
 
-            dstats = "**Stats**```Servers: {}\nUsers: {}\nChannels: {}```".format(servercount, members, channels)
+            stats = "**Stats**```Servers: {}\nUsers: {}\nChannels: {}```".format(server_count, members, channels)
 
-            await client.send_message(message.channel, dstats)
+            await client.send_message(message.channel, stats)
 
         # Some interesting stats
         elif startswith(prefix + "stats") or startswith("nano.stats"):
-            with open("plugins/stats.yml", "r+") as file:
-                file = load(file)
 
-                # downsize = str(round(int(stat.sizeofdown()) / 1024 / 1024 / 1024, 3))
+            file = stat.get_data()
 
-                mcount = file.get("msgcount")
-                wrongargc = file.get("wrongargcount")
-                timesslept = file.get("timesslept")
-                wrongpermc = file.get("wrongpermscount")
-                pplhelp = file.get("peoplehelped")
-                imgc = file.get("imagessent")
-                votesc = file.get("votesgot")
-                pings = file.get("timespinged")
+            mcount = file.get("msgcount")
+            wrongargc = file.get("wrongargcount")
+            timesslept = file.get("timesslept")
+            wrongpermc = file.get("wrongpermscount")
+            pplhelp = file.get("peoplehelped")
+            imgc = file.get("imagessent")
+            votesc = file.get("votesgot")
+            pings = file.get("timespinged")
 
-            onetosend = "**Stats**\n```python\n{} messages sent\n{} people yelled at because of wrong args\n{} people denied because of wrong permissions\n{} people helped\n{} votes got\n{} times slept\n{} images uploaded\n{} times Pong!-ed```"\
+            to_send = "**Stats**\n```python\n{} messages sent\n{} people yelled at because of wrong args\n{} people denied because of wrong permissions\n{} people helped\n{} votes got\n{} times slept\n{} images uploaded\n{} times Pong!-ed```"\
                 .format(mcount, wrongargc, wrongpermc, pplhelp, votesc, timesslept, imgc, pings)
-            await client.send_message(message.channel, onetosend)
-
+            await client.send_message(message.channel, to_send)
 
         # MUSIC
         # Music commands! ALPHA, needs multi-server implementation; only the owner can use this set of commands
         elif startswith(prefix + "music join"):
-            if not isowner:
+            if not is_owner:
                 await client.send_message(message.channel, "This feature is not yet finished. Only the owner is permitted to use this command.")
                 return
 
@@ -998,18 +977,18 @@ Description: {}```""".format(cmdn, desc)
                 return
 
         elif startswith(prefix + "music leave"):
-            if not isowner:
+            if not is_owner:
                 await client.send_message(message.channel, "This feature is not yet finished. Only the owner is permitted to use this command.")
                 return
 
             # If self.vc exists
             if isinstance(self.vc, discord.VoiceClient):
                 try:
-                    self.ytplayer.stop()
+                    self.yt_player.stop()
                 except AttributeError:
                     pass
 
-                self.ytplayer = None
+                self.yt_player = None
                 await client.send_message(message.channel, "Left **" + self.vc.channel.name + "**")
 
                 await self.vc.disconnect()
@@ -1019,20 +998,20 @@ Description: {}```""".format(cmdn, desc)
                 await client.send_message(message.channel, ":warning: Not connected, please use `_music join channelname` to continue".replace("_", prefix))
 
         elif startswith(prefix + "music playing"):
-            if not isowner:
+            if not is_owner:
                 await client.send_message(message.channel, "This feature is not yet finished. Only the owner is permitted to use this command.")
                 return
 
             # If self.vc exists
             if isinstance(self.vc, discord.VoiceClient):
 
-                if self.ytplayer:  # If used 'music play'
-                    title = self.ytplayer.title
-                    uploader = self.ytplayer.uploader
-                    dur = str(int(self.ytplayer.duration/60)) + ":" + str(self.ytplayer.duration % 60)
-                    views = self.ytplayer.views
+                if self.yt_player:  # If used 'music play'
+                    title = self.yt_player.title
+                    uploader = self.yt_player.uploader
+                    dur = str(int(self.yt_player.duration / 60)) + ":" + str(self.yt_player.duration % 60)
+                    views = self.yt_player.views
 
-                    formatted = "{}: **{}**```\nDuration: {}\nUploader: {}\nViews: {}```".format(self.ytstatus, title, str(dur), uploader, views)
+                    formatted = "{}: **{}**```\nDuration: {}\nUploader: {}\nViews: {}```".format(self.yt_status, title, str(dur), uploader, views)
                     await client.send_message(message.channel, formatted)
 
                 else:
@@ -1041,7 +1020,7 @@ Description: {}```""".format(cmdn, desc)
                 await client.send_message(message.channel, ":warning: Not connected, please use `_music join channelname` to continue".replace("_",prefix))
 
         elif startswith(prefix + "music play"):
-            if not isowner:
+            if not is_owner:
                 await client.send_message(message.channel, "This feature is not yet finished. Only the owner is permitted to use this command.")
                 return
 
@@ -1049,66 +1028,65 @@ Description: {}```""".format(cmdn, desc)
             if isinstance(self.vc, discord.VoiceClient):
 
                 # If the song is still playing, ask the user to use !music skip
-                if self.ytplayer:
-                    if self.ytplayer.is_playing or not self.ytplayer.is_done:
-                        await client.send_message(message.channel, "*{}* is already playing, please **wait** or **skip** the song with `{}music skip`.".format(self.ytplayer.title, prefix))
+                if self.yt_player:
+                    if self.yt_player.is_playing or not self.yt_player.is_done:
+                        await client.send_message(message.channel, "*{}* is already playing, please **wait** or **skip** the song with `{}music skip`.".format(self.yt_player.title, prefix))
                         return
 
                 args = str(message.content)[len(prefix + "music play "):]
                 await client.send_typing(message.channel)
 
                 try:
-                    self.ytplayer = await self.vc.create_ytdl_player(args)
+                    self.yt_player = await self.vc.create_ytdl_player(args)
                 except ut.DownloadError:
                     await client.send_message(message.channel, "Not a valid URL or incompatible video :x:")
 
-                while self.ytplayer is None:
+                while self.yt_player is None:
                     await asyncio.sleep(0.1)
 
                 try:
-                    await self.ytplayer.start()
+                    await self.yt_player.start()
                 except TypeError:
                     pass
 
-                self.ytplayer.volume = 0.4
+                self.yt_player.volume = 0.4
 
-                duration = str(int(self.ytplayer.duration/60)) + ":" +  str(self.ytplayer.duration % 60 )
+                duration = str(int(self.yt_player.duration / 60)) + ":" + str(self.yt_player.duration % 60)
                 await client.send_message(message.channel, "Playing **{}**\n**Duration:** `{}`\n**Uploader:** `{}`\n**Views:** `{}`"
-                                                           .format(self.ytplayer.title, duration, self.ytplayer.uploader, self.ytplayer.views))
-                self.ytstatus = "Playing"
+                                          .format(self.yt_player.title, duration, self.yt_player.uploader, self.yt_player.views))
+                self.yt_status = "Playing"
 
             else:
                 await client.send_message(message.channel, ":warning: Not connected, please use `_music join channelname` to continue".replace("_", prefix))
 
         # Skips (ytplayer.stop()) / stops the current song
         elif startswith(prefix + "music skip") or startswith(prefix + "music stop"):
-            if not isowner:
+            if not is_owner:
                 await client.send_message(message.channel, "This feature is not yet finished. Only the owner is permitted to use this command.")
                 return
 
-            if isinstance(self.vc, discord.VoiceClient) and isinstance(self.ytplayer, StreamPlayer):
-                if self.ytplayer.is_playing():
-                    self.ytplayer.stop()
+            if isinstance(self.vc, discord.VoiceClient) and isinstance(self.yt_player, StreamPlayer):
+                if self.yt_player.is_playing():
+                    self.yt_player.stop()
 
-                    self.ytplayer = None
+                    self.yt_player = None
 
             else:
                 await client.send_message(message.channel, ":warning: Not connected, please use `_music join channelname` to continue".replace("_", prefix))
 
-
         # Set or figure out the current volume (accepts 0 - 150)
         elif startswith(prefix + "music volume"):
-            if not isowner:
+            if not is_owner:
                 await client.send_message(message.channel, "This feature is not yet finished. Only the owner is permitted to use this command.")
                 return
 
             # If self.vc exists
-            if isinstance(self.vc, discord.VoiceClient) and isinstance(self.ytplayer, StreamPlayer):
+            if isinstance(self.vc, discord.VoiceClient) and isinstance(self.yt_player, StreamPlayer):
                 args = str(message.content)[len(prefix + "music volume "):]
 
                 if args == "":
-                    if self.ytplayer is not None:
-                        await client.send_message(message.channel, "Current volume is **" + str(self.ytplayer.volume) + "**")
+                    if self.yt_player is not None:
+                        await client.send_message(message.channel, "Current volume is **" + str(self.yt_player.volume) + "**")
                     else:
                         await client.send_message(message.channel, "Not playing anything (default volume will be *40*)")
 
@@ -1121,7 +1099,7 @@ Description: {}```""".format(cmdn, desc)
                         await client.send_message(message.channel, "Not a number :x:")
 
                     argss = round(int(args)/100,2)
-                    self.ytplayer.volume = argss
+                    self.yt_player.volume = argss
 
                     await client.send_message(message.channel, "Volume set to " + str(args))
 
@@ -1130,16 +1108,16 @@ Description: {}```""".format(cmdn, desc)
 
         # Pauses the curent song (if any)
         elif startswith(prefix + "music pause"):
-            if not isowner:
+            if not is_owner:
                 await client.send_message(message.channel, "This feature is not yet finished. Only the owner is permitted to use this command.")
                 return
 
             # If self.vc exists
-            if isinstance(self.vc, discord.VoiceClient) and isinstance(self.ytplayer, StreamPlayer):
+            if isinstance(self.vc, discord.VoiceClient) and isinstance(self.yt_player, StreamPlayer):
 
-                if self.ytplayer.is_playing():
-                    self.ytplayer.pause()
-                    self.ytstatus = "Paused"
+                if self.yt_player.is_playing():
+                    self.yt_player.pause()
+                    self.yt_status = "Paused"
                 else:
                     pass
 
@@ -1148,16 +1126,16 @@ Description: {}```""".format(cmdn, desc)
 
         # Resumes the current song (if any)
         elif startswith(prefix + "music resume"):
-            if not isowner:
+            if not is_owner:
                 await client.send_message(message.channel, "This feature is not yet finished. Only the owner is permitted to use this command.")
                 return
 
             # If self.vc exists
-            if isinstance(self.vc, discord.VoiceClient) and isinstance(self.ytplayer, StreamPlayer):
+            if isinstance(self.vc, discord.VoiceClient) and isinstance(self.yt_player, StreamPlayer):
 
-                if not self.ytplayer.is_playing():
-                    self.ytplayer.resume()
-                    self.ytstatus = "Playing"
+                if not self.yt_player.is_playing():
+                    self.yt_player.resume()
+                    self.yt_status = "Playing"
                 else:
                     pass
 
@@ -1170,7 +1148,6 @@ Description: {}```""".format(cmdn, desc)
 
 
         # PICTURE COMMANDS
-
         elif startswith(prefix + "kappa"):
             await client.send_file(message.channel, "data/images/kappasmall.png")
 
@@ -1524,7 +1501,7 @@ Short bio:
 """.format(typ ,message.author.name, message.author.id, report, ts, message.channel.server.name, message.channel.server.member_count, "Yes" if message.author.id == message.channel.server.owner.id else message.channel.server.owner.id)
 
             # Saves the submission to disk
-            if int(ownerserver.owner.id) != int(self.ownerid):
+            if int(ownerserver.owner.id) != int(self.owner_id):
                 save_submission("Should have sent report, but {} would receive it: {}".format(ownerserver.owner.name, comp.replace(message.author.mention, str(message.author.name + "(" + message.author.id + ")")) + "\n"))
             else:
                 save_submission(comp.replace(message.author.mention, str(message.author.name + "(" + message.author.id + ")")) + "\n")
@@ -1620,11 +1597,11 @@ Short bio:
 
         # If a command was already executed, return
         # If it is not an admin command, return before sending 'no permission' message
-        if isacommand and not isadmincommand:
+        if is_a_command and not is_admin_command:
             return
 
-        if not (isowner or isserverowner):
-            if not isadmin:
+        if not (is_owner or is_server_owner):
+            if not is_admin:
                 await client.send_message(message.channel, "You are not permitted to use this command. :x:")
                 stat.pluswrongperms()
                 return
@@ -1717,9 +1694,13 @@ Short bio:
             if a:
 
                 if not self.softbans.get(message.server.id):
-                    self.softbans.update( { message.server.id : { usr.id : timing.resolve_time(md) }} )
+                    self.softbans.update(
+                        {message.server.id: {usr.id: timing.resolve_time(md)}}
+                        )
                 else:
-                    self.softbans[message.server.id].update( {usr.id : timing.resolve_time(md)} )
+                    self.softbans[message.server.id].update(
+                        {usr.id: timing.resolve_time(md)}
+                        )
 
                 await client.send_message(message.channel, "**{}** has been softbanned for `{}`".format(usr.name, timing.resolve_time(md)))
 
@@ -1818,22 +1799,22 @@ Short bio:
             user = message.mentions[0]
 
             if startswith(prefix + "role " + "add "):
-                gotrole = str(message.content[len(prefix + "role " + "add "):]).split("<")[0].strip()
-                role = discord.utils.find(lambda role: role.name == gotrole, message.channel.server.roles)
+                a_role = str(message.content[len(prefix + "role " + "add "):]).split("<")[0].strip()
+                role = discord.utils.find(lambda role: role.name == a_role, message.channel.server.roles)
 
                 await client.add_roles(user, role)
                 await client.send_message(message.channel, "Done :white_check_mark: ")
 
             elif startswith(prefix + "role " + "remove "):
-                gotrole = str(message.content[len(prefix + "role " + "remove "):]).split("<")[0].strip()
-                role = discord.utils.find(lambda role: role.name == gotrole, message.channel.server.roles)
+                a_role = str(message.content[len(prefix + "role " + "remove "):]).split("<")[0].strip()
+                role = discord.utils.find(lambda role: role.name == a_role, message.channel.server.roles)
 
                 await client.remove_roles(user, role)
                 await client.send_message(message.channel, "Done :white_check_mark: ")
 
             elif startswith(prefix + "role " + "replacewith "):
-                gotrole = str(message.content[len(prefix + "role replacewith "):]).split("<")[0].strip()
-                role = discord.utils.find(lambda role: role.name == gotrole, message.channel.server.roles)
+                a_role = str(message.content[len(prefix + "role replacewith "):]).split("<")[0].strip()
+                role = discord.utils.find(lambda role: role.name == a_role, message.channel.server.roles)
 
                 await client.replace_roles(user, role)
                 await client.send_message(message.channel, "Done :white_check_mark: ")
@@ -1844,9 +1825,9 @@ Short bio:
             log("Server settings set up: {}".format(message.channel.server))
             await client.send_message(message.channel, "Server settings reset :upside_down:")
 
-            self.updateadmins()
-            self.updateprefixes()
-            self.updatemutes()
+            self.update_admins()
+            self.update_prefixes()
+            self.update_mutes()
 
         # Command management
         elif startswith(prefix + "cmd"):
@@ -1896,7 +1877,7 @@ Short bio:
                 else:
                     await client.send_message(message.channel, "Added **{}** people to admins :white_check_mark: ".format(count))
 
-                self.updateadmins()
+                self.update_admins()
 
             elif startswith("nano.admins remove"):
                 if len(message.mentions) > 20:
@@ -1918,10 +1899,10 @@ Short bio:
                 else:
                     await client.send_message(message.channel, "Removed **{}** people from admins :white_check_mark: ".format(count))
 
-                self.updateadmins()
+                self.update_admins()
 
             elif startswith("nano.admins list"):
-                self.updateadmins()
+                self.update_admins()
                 admins = handler.returnadmins(message.server)
 
                 final = ""
@@ -2027,22 +2008,22 @@ Messages:
 
             auth = message.author
 
-            async def timeout(message):
-                await client.send_message(message.channel, "You ran out of time :upside_down: (FYI: the timeout is 20 seconds)")
+            async def timeout(msg):
+                await client.send_message(msg.channel, "You ran out of time :upside_down: (FYI: the timeout is 20 seconds)")
                 return
 
             answers = {}
 
-            stmsg = """**SERVER SETUP**
+            msg_intro = """**SERVER SETUP**
 You have started the server setup. It consists of a few steps, where you will be prompted to answer.
 **Let's get started, shall we?**"""""
-            await client.send_message(message.channel, stmsg)
+            await client.send_message(message.channel, msg_intro)
             await asyncio.sleep(2)
 
             # FIRST MESSAGE
-            frmsg = """Do you want to reset all bot-related settings for this server?
+            msg_one = """Do you want to reset all bot-related settings for this server?
 (this includes spam and swearing protection, admin list, blacklisted channels, log channel, prefix, welcome, ban and kick message). yes/no"""
-            await client.send_message(message.channel, frmsg)
+            await client.send_message(message.channel, msg_one)
 
             # First check
 
@@ -2065,9 +2046,9 @@ You have started the server setup. It consists of a few steps, where you will be
                 handler.server_setup(message.channel.server)
 
             # SECOND MESSAGE
-            secmsg = """What prefix would you like to use for all commands?
+            msg_two = """What prefix would you like to use for all commands?
 Type that prefix.\n(prefix example: **!** 'translates to' `!help`)"""
-            await client.send_message(message.channel,secmsg)
+            await client.send_message(message.channel,msg_two)
 
             # Second check, does not need yes/no filter
             ch2 = await client.wait_for_message(timeout=35, author=auth)
@@ -2078,9 +2059,9 @@ Type that prefix.\n(prefix example: **!** 'translates to' `!help`)"""
                 handler.change_prefix(message.channel.server, ch2.content)
 
             # THIRD MESSAGE
-            thrmsg = """What would you like me to say when a person joins your server?
+            msg_three = """What would you like me to say when a person joins your server?
 Reply with that message or with None if you want to disable welcome messages."""
-            await client.send_message(message.channel, thrmsg)
+            await client.send_message(message.channel, msg_three)
 
             ch3 = await client.wait_for_message(timeout=35, author=auth)
             if ch3 is None:
@@ -2092,8 +2073,8 @@ Reply with that message or with None if you want to disable welcome messages."""
                 handler.update_var(message.server.id, "welcomemsg", str(ch3.content))
 
             # FOURTH MESSAGE
-            fourmsg = """Would you like me to filter spam? yes/no"""
-            await client.send_message(message.channel, fourmsg)
+            msg_four = """Would you like me to filter spam? yes/no"""
+            await client.send_message(message.channel, msg_four)
 
             # Fourth check
 
@@ -2116,8 +2097,8 @@ Reply with that message or with None if you want to disable welcome messages."""
                 handler.update_moderation_settings(message.channel.server, "filterspam", False)
 
             # FIFTH MESSAGE
-            fifthmsg = """Would you like me to filter swearing? yes/no"""
-            await client.send_message(message.channel, fifthmsg)
+            msg_five = """Would you like me to filter swearing? yes/no"""
+            await client.send_message(message.channel, msg_five)
 
             # Fifth check check
 
@@ -2139,9 +2120,7 @@ Reply with that message or with None if you want to disable welcome messages."""
             else:
                 handler.update_moderation_settings(message.channel.server, "filterwords", False)
 
-
-
-            finalmsg = """**This concludes the basic server setup.**
+            msg_final = """**This concludes the basic server setup.**
 But there are a few more settings to set up if you need'em:
 ➤ channel blacklisting - `nano.blacklist add/remove channel_name`
 ➤ kick message - `_kickmsg message`
@@ -2153,11 +2132,10 @@ You and all admins can also add/remove/list custom commands with `_cmd add/remov
 For more detailed descriptions about all commands, type `_cmds`.
 """.replace("_", str(ch2.content))
 
-            await client.send_message(message.channel, finalmsg)
+            await client.send_message(message.channel, msg_final)
 
-            self.updateadmins()
-            self.updateprefixes()
-
+            self.update_admins()
+            self.update_prefixes()
 
         elif startswith("nano.changeprefix"):
             cut = str(message.content)[len("nano.changeprefix "):]
@@ -2165,12 +2143,12 @@ For more detailed descriptions about all commands, type `_cmds`.
 
             await client.send_message(message.channel, "Prefix has been changed :heavy_check_mark:")
 
-            self.updateprefixes()
+            self.update_prefixes()
 
         # Shuts the bot down
         elif startswith("nano.kill"):
             # Restricted to owner
-            if not isowner:
+            if not is_owner:
                 await client.send_message(message.channel, "You are not permitted to use this command. :x:")
                 return
 
@@ -2193,7 +2171,7 @@ For more detailed descriptions about all commands, type `_cmds`.
         # Restarts the bot
         elif startswith("nano.restart"):
             # Restricted to owner
-            if not isowner:
+            if not is_owner:
                 await client.send_message(message.channel, "You are not permitted to use this command. :x:")
                 return
 
@@ -2204,8 +2182,8 @@ For more detailed descriptions about all commands, type `_cmds`.
             with open("cache/voting_state.cache", "wb") as cache:
                 dump(vote, cache)  # Save instance of Vote
 
-            #with open("cache/reminder_state.cache", "wb") as cache:
-            #    dump(rem, cache)  # Save instance of Reminder
+            # with open("cache/reminder_state.cache", "wb") as cache:
+            #     dump(rem, cache)  # Save instance of Reminder
 
             await client.send_message(message.channel, "**DED**")
             await client.delete_message(m)
@@ -2222,7 +2200,7 @@ For more detailed descriptions about all commands, type `_cmds`.
         # Changes 'playing' status
         elif startswith(prefix + "playing"):
             # Restricted to owner
-            if not isowner:
+            if not is_owner:
                 await client.send_message(message.channel, "You are not permitted to use this command. :x:")
                 return
 
@@ -2234,16 +2212,16 @@ For more detailed descriptions about all commands, type `_cmds`.
         # Reloads settings.ini, prefixes and admins
         elif startswith(prefix + "reload") + startswith("nano.reload"):
             # Restricted to owner
-            if not isowner:
+            if not is_owner:
                 await client.send_message(message.channel, "You are not permitted to use this command. :x:")
                 return
 
             handler.reload()
 
             # Dependant on handler.reload()
-            self.updateadmins()
-            self.updateprefixes()
-            self.updatemutes()
+            self.update_admins()
+            self.update_prefixes()
+            self.update_mutes()
 
             parser.read("settings.ini")
 
@@ -2269,15 +2247,10 @@ For more detailed descriptions about all commands, type `_cmds`.
             mid = member.id
             avatar = str(member.avatar_url)
 
-            isbot = member.bot
-            if isbot:
-                bott = ":robot:"
-            else:
-                bott = ""
+            bott = ":robot" if member.bot else ""
 
             role = member.top_role
-            createdate = member.created_at
-            #joindate = member.joined_at
+            create_date = member.created_at
             st = "ONLINE" if member.status.online or member.status.idle else "OFFLINE"
 
             # 'Compiles' info
@@ -2287,13 +2260,13 @@ For more detailed descriptions about all commands, type `_cmds`.
 ➤ Avatar: {}
 
 ➤ Top role_: {}
-➤ Created at: {}""".format(name, member.discriminator, bott, st, mid, avatar, role, createdate)
+➤ Created at: {}""".format(name, member.discriminator, bott, st, mid, avatar, role, create_date)
 
             await client.send_message(message.channel, mixed)
 
         # Muting system
         elif startswith(prefix + "muted"):
-            self.updatemutes()
+            self.update_mutes()
             lst = handler.mutelist(message.channel.server)
 
             for c, el in enumerate(lst):
@@ -2321,12 +2294,12 @@ For more detailed descriptions about all commands, type `_cmds`.
             if not user:
                 return
 
-            if user.id == self.ownerid:
+            if user.id == self.owner_id:
                 return
 
             handler.mute(user)
             await client.send_message(message.channel, "{} has been muted :no_bell:".format(user.name))
-            self.updatemutes()
+            self.update_mutes()
 
         elif startswith(prefix + "unmute"):
             if len(message.mentions) == 1:
@@ -2345,7 +2318,7 @@ For more detailed descriptions about all commands, type `_cmds`.
 
             handler.unmute(user)
             await client.send_message(message.channel, "{} has been unmuted :bell:".format(user.name))
-            self.updatemutes()
+            self.update_mutes()
 
         elif startswith(prefix + "purge"):
             cut = str(message.content)[len(prefix + "purge "):]
@@ -2389,7 +2362,7 @@ For more detailed descriptions about all commands, type `_cmds`.
 
             await client.delete_message(message)
 
-            await client.send_message(message.channel, "Purgning last {} messages... :boom:".format(cut - 1))
+            await client.send_message(message.channel, "Purging last {} messages... :boom:".format(cut - 1))
             await client.purge_from(message.channel, limit=cut)
 
             m = await client.send_message(message.channel, "Purged {} messages :white_check_mark:".format(cut - 1))
@@ -2397,7 +2370,7 @@ For more detailed descriptions about all commands, type `_cmds`.
             await client.delete_message(m)
 
         elif startswith(prefix + "dev"):
-            if not isowner:
+            if not is_owner:
                 return
 
             if startswith(prefix + "dev get_all_servers"):
@@ -2412,10 +2385,10 @@ For more detailed descriptions about all commands, type `_cmds`.
                     await client.send_message(message.channel, "Error. :x:")
                     return
 
-                nanodata = handler.get_server_data(srv.id)
-                sdata = "{}\n```css\nMember count: {}\nChannels: {}\nOwner: {}```\nNano settings: ```{}```".format(srv.name, srv.member_count, ",".join([ch.name for ch in srv.channels]), srv.owner.name, nanodata)
+                nano_data = handler.get_server_data(srv.id)
+                to_send = "{}\n```css\nMember count: {}\nChannels: {}\nOwner: {}```\nNano settings: ```{}```".format(srv.name, srv.member_count, ",".join([ch.name for ch in srv.channels]), srv.owner.name, nano_data)
 
-                await client.send_message(message.channel, sdata)
+                await client.send_message(message.channel, to_send)
 
             elif startswith(prefix + "dev create_logchannel"):
                 await self.create_log_channel(message.channel.server, handler.get_var(message.channel.server.id, "logchannel"))
@@ -2437,7 +2410,7 @@ For more detailed descriptions about all commands, type `_cmds`.
                 await client.send_message(message.channel, "Checking...")
 
                 for server in client.servers:
-                    self.server_check(server, threaded=False)
+                    self.server_check(server, make_thread=False)
 
                 await client.send_message(message.channel, "Server integrity check :ok:")
 
@@ -2449,7 +2422,6 @@ For more detailed descriptions about all commands, type `_cmds`.
                 usr = discord.utils.find(lambda s: s.id == sid[1], srv.members)
 
                 await client.send_message(message.channel, "**{}**\nAvatar: {}\n".format(usr.name, usr.avatar_url))
-
 
 
 # When a member joins the server
@@ -2468,6 +2440,8 @@ async def on_member_join(member):
     await client.send_message(member.server.default_channel, msg)
 
 # When somebody gets banned
+
+
 @client.event
 async def on_member_ban(member):
     if nano.debug_blocked(member.server.id):
@@ -2478,15 +2452,15 @@ async def on_member_ban(member):
 
     if nano.softbans.get(member.server.id):
         if (member.id in nano.softbans.get(member.server.id).keys()) and handler.haslogging(member.server):
-                logchannel = discord.utils.find(lambda channel: channel.name == handler.get_var(member.server.id, "logchannel"), member.server.channels)
+                log_channel = discord.utils.find(lambda channel: channel.name == handler.get_var(member.server.id, "logchannel"), member.server.channels)
 
                 msg = "**{}** has been softbanned for `{}`".format(member.name, nano.softbans[member.server.id].get(member.id))
 
-                if logchannel:
-                    await client.send_message(logchannel, msg)
+                if log_channel:
+                    await client.send_message(log_channel, msg)
                 elif handler.get_var(member.server.id, "logchannel") is not None:
-                    logchannel = await nano.create_log_channel(member.server, handler.get_var(member.server.id, "logchannel"))
-                    await client.send_message(logchannel, msg)
+                    log_channel = await nano.create_log_channel(member.server, handler.get_var(member.server.id, "logchannel"))
+                    await client.send_message(log_channel, msg)
 
     else:
 
@@ -2495,13 +2469,14 @@ async def on_member_ban(member):
             return
 
         if handler.haslogging(member.server):
-            logchannel = discord.utils.find(lambda channel: channel.name == handler.get_var(member.server.id, "logchannel"), member.server.channels)
+            log_channel = discord.utils.find(lambda channel: channel.name == handler.get_var(member.server.id, "logchannel"), member.server.channels)
 
-            if logchannel:
-                await client.send_message(logchannel, msg)
+            if log_channel:
+                await client.send_message(log_channel, msg)
             elif handler.get_var(member.server.id, "logchannel") is not None:
-                logchannel = await nano.create_log_channel(member.server, handler.get_var(member.server.id, "logchannel"))
-                await client.send_message(logchannel, msg)
+                log_channel = await nano.create_log_channel(member.server, handler.get_var(member.server.id, "logchannel"))
+                await client.send_message(log_channel, msg)
+
 
 @client.event
 async def on_member_remove(member):
@@ -2521,13 +2496,14 @@ async def on_member_remove(member):
 
     else:
         if handler.haslogging(member.server):
-            logchannel = discord.utils.find(lambda channel: channel.name == handler.get_var(member.server.id, "logchannel"), member.server.channels)
+            log_channel = discord.utils.find(lambda channel: channel.name == handler.get_var(member.server.id, "logchannel"), member.server.channels)
 
-            if logchannel:
-                await client.send_message(logchannel, "**{}** left".format(member.name))
+            if log_channel:
+                await client.send_message(log_channel, "**{}** left".format(member.name))
             elif handler.get_var(member.server.id, "logchannel") is not None:
-                logchannel = await nano.create_log_channel(member.server, handler.get_var(member.server.id, "logchannel"))
-                await client.send_message(logchannel, "**{}** left".format(member.name))
+                log_channel = await nano.create_log_channel(member.server, handler.get_var(member.server.id, "logchannel"))
+                await client.send_message(log_channel, "**{}** left".format(member.name))
+
 
 @client.event
 async def on_server_join(server):
@@ -2541,6 +2517,7 @@ async def on_server_join(server):
     POSTServerCount.upload(len(client.servers))
 
     log("POSTed server count to bots.discord.pw : {}".format(len(client.servers)))
+
 
 @client.event
 async def on_server_remove(server):
@@ -2563,6 +2540,7 @@ nano = Nano(owner=parser.getint("Settings", "ownerid"), debug=parser.getboolean(
 #    else:
 #        exc_logger(typ, value, traceback)
 
+
 @client.event
 async def on_ready():
     rem._update_client(nano)
@@ -2571,7 +2549,7 @@ async def on_ready():
 
     def check_all_servers():
         for server in client.servers:
-            nano.server_check(server, threaded=False)
+            nano.server_check(server, make_thread=False)
         logger.info("Checked server data")
 
     global first
@@ -2590,11 +2568,10 @@ async def on_ready():
 
     # Sets the status on startup
     name = parser.get("Settings", "initialstatus")
-    roll = parser.get("Settings", "rollstatus")
-    if name and roll:
+    roller = parser.get("Settings", "rollstatus")
+    if name and roller:
         await client.change_status(game=discord.Game(name=name))
 
-    #await asyncio.sleep(3)
     await client.wait_until_ready()
     check_all_servers()
 
@@ -2609,6 +2586,7 @@ async def on_ready():
 @client.event
 async def on_message(message):
     await nano.on_message(message)
+
 
 async def start():
     # Will accept both forms of auth (token vs mail/pass)
@@ -2629,25 +2607,30 @@ async def start():
         print("[ERROR] Credentials are missing.")
         sys.exit()
 
-try:
-    print("Connecting...", end="")
+def main():
+    try:
+        print("Connecting...", end="")
 
-    # Playing status changer (1800 - twice an hour)
-    roll = parser.get("Settings", "rollstatus")
-    if roll and not nano.debug:
-        loop.create_task(playing.roll_statuses(client, time=1800))
+        # Playing status changer (1800 - twice an hour)
+        roll = parser.get("Settings", "rollstatus")
+        if roll and not nano.debug:
+            loop.create_task(playing.roll_statuses(client, time=1800))
 
-    # Runs scheduled backups (once a day)
-    backup = parser.get("Backup", "enable")
-    if backup:
-        loop.create_task(b.run_forever())
+        # Runs scheduled backups (once a day)
+        backup2 = parser.get("Backup", "enable")
+        if backup2:
+            loop.create_task(b.run_forever())
 
-    loop.run_until_complete(start())
-except:
-    #b.backup()
-    b.stop()  # Stops backups if active
-    logger.warn("Exception raised, logging out")
-    loop.run_until_complete(client.logout())
-finally:
-    logger.warn("Closing the loop")
-    loop.close()
+        loop.run_until_complete(start())
+
+    except:
+        #b.backup()
+        b.stop()  # Stops backups if active
+        logger.warn("Exception raised, logging out")
+        loop.run_until_complete(client.logout())
+    finally:
+        logger.warn("Closing the loop")
+        loop.close()
+
+if __name__ == '__main__':
+    main()
