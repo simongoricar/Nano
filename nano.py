@@ -31,7 +31,7 @@ from data import serverhandler
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '2.2.3dev'
+__version__ = '2.2.3'
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
