@@ -1,5 +1,7 @@
-# AyyBot (python) 0.9 api (now known as Nano)
+# AyyBot (now known as Nano)
 made by DefaltSimon, with [discord.py api](https://github.com/Rapptz/discord.py)
+
+#### This branch is based on the old version of discord.py (0.9) and is not maintained anymore  
 
 **1** Features:
 - Spam and swearing filter
