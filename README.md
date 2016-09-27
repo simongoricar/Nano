@@ -18,7 +18,7 @@ If you're confused or need help hop on the [Nano lounge](https://discord.gg/FZJB
 
 --
   
-###A list of all available commands is available [here](https://github.com/DefaltSimon/Nano/wiki/Commands-list)  
+###A list of all available commands is available [here](https://github.com/DefaltSimon/Nano/wiki/Commands)  
 
 --  
 
