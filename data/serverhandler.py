@@ -1,46 +1,26 @@
 # coding=utf-8
-
 import configparser
-import threading
 import time
 import logging
 import copy
+from yaml import load, dump
 
-from yaml import load,dump
+from .utils import threaded, Singleton, get_decision
 
 __author__ = "DefaltSimon"
+
 # Server handler for Nano
 
-# Decorator
-
-
-def threaded(fn):
-    def wrapper(*args, **kwargs):
-        threading.Thread(target=fn, args=args, kwargs=kwargs).start()
-    return wrapper
-
-
-words = (
-    "on",
-    "enabled",
-    "enable",
-    "turn on",
-    "true",
-)
-
-
-def get_decision(content, wrd=words):
-    if str(content).lower().startswith(wrd):
-        return True
-    else:
-        return False
-
 parser = configparser.ConfigParser()
-parser.read("settings.ini")
+parser.read("plugins/config.ini")
+
+par = configparser.ConfigParser()
+par.read("settings.ini")
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
+# CONSTANTS
 
 server_nondepend_defaults = {
     "filterwords": False,
@@ -58,7 +38,7 @@ server_nondepend_defaults = {
     "sleeping": 0,
     # "onban": 0, //removed
     # "sayhi": 0, //changed
-    "prefix": parser.get("Settings","defaultprefix")
+    "prefix": parser.get("Servers", "defaultprefix")
 }
 
 server_deprecated_settings = [
@@ -66,21 +46,11 @@ server_deprecated_settings = [
     "sayhi",
 ]
 
-# Singleton class
+# ServerHandler is a singleton, so it can have only one instance
 
 
-class Singleton(type):
-    _instances = {}
-
-    def __call__(cls, *args, **kwargs):
-        if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
-        return cls._instances[cls]
-
-
-class ServerHandler(metaclass=Singleton):
+class ServerHandler(metaclass=Singleton):  # Singleton is imported from utils
     def __init__(self):
-        log.info("Enabled")
         self.file = "data/servers.yml"
 
         with open(self.file, "r") as file:
@@ -91,17 +61,9 @@ class ServerHandler(metaclass=Singleton):
 
         self.process_lock = False
 
-    def p_lock(self):
-        self.process_lock = True
+        log.info("Enabled")
 
-    def wait_until_p_unlock(self):
-        while self.data_lock is True:
-            time.sleep(0.05)
-        return
-
-    def p_release(self):
-        self.process_lock = False
-
+    # All kinds of locks
     def lock(self):
         self.data_lock = True
 
@@ -116,22 +78,22 @@ class ServerHandler(metaclass=Singleton):
     def server_setup(self, server):
         data = self.cached_file
 
-        data[server.id] = {"name" : server.name,
-                           "owner" : server.owner.name,
-                           "filterwords" : False,
-                           "filterspam" : False,
+        data[server.id] = {"name": server.name,
+                           "owner": server.owner.name,
+                           "filterwords": False,
+                           "filterspam": False,
                            "filterinvite": False,
                            "welcomemsg": ":user, Welcome to :server!",
                            "kickmsg": "**:user** has been kicked.",
                            "banmsg": "**:user** has been banned.",
                            "leavemsg": "Bye, **:user**",
-                           "blacklisted" : [],
-                           "muted" : [],
-                           "customcmds" : {},
-                           "admins" : [],
-                           "logchannel" : "logs",
-                           "sleeping" : False,
-                           "prefix" : str(parser.get("Settings","defaultprefix"))}
+                           "blacklisted": [],
+                           "muted": [],
+                           "customcmds": {},
+                           "admins": [],
+                           "logchannel": "logs",
+                           "sleeping": False,
+                           "prefix": str(parser.get("Settings", "defaultprefix"))}
 
         log.info("Queued new server: {}".format(server.name))
 
@@ -159,11 +121,13 @@ class ServerHandler(metaclass=Singleton):
 
         log.info("Reloaded servers.yml")
 
-    def queue_modification(self, thing, *args):
-        self.wait_until_p_unlock()
-        self.p_lock()
-        thing(*args)
-        self.p_release()
+    def queue_modification(self, thing, *args, **kwargs):
+        self.wait_until_release()
+        self.lock()
+
+        thing(*args, **kwargs)
+
+        self.release_lock()
 
     def get_all_data(self):
         return self.cached_file
@@ -171,12 +135,9 @@ class ServerHandler(metaclass=Singleton):
     def get_server_data(self, server_id):
         return self.cached_file.get(server_id)
 
-    def serverexists(self, server):
+    def server_exists(self, server):
         try:
-            if server.id in self.cached_file:
-                return True
-            else:
-                return False
+            return server.id in self.cached_file
         except AttributeError:
             return True
 
@@ -208,19 +169,19 @@ class ServerHandler(metaclass=Singleton):
 
     def _check_server_vars(self, sid, delete_old=True):
         data = self.cached_file
-        mustwrite = False
+        must_write = False
 
         sd = data.get(sid)
         if data.get(sid):
             for var in server_nondepend_defaults.keys():
                 if sd.get(var) is None:
                     data[sid][var] = server_nondepend_defaults[var]
-                    mustwrite = True
+                    must_write = True
 
         if delete_old:
-            self._check_deprecated_vars(sid, data, changed=mustwrite)
+            self._check_deprecated_vars(sid, data, changed=must_write)
         else:
-            if mustwrite:
+            if must_write:
                 self.queue_write(data)
 
     def _check_deprecated_vars(self, server, data=None, changed=False):
@@ -238,7 +199,7 @@ class ServerHandler(metaclass=Singleton):
         data = self.cached_file
         ld = copy.deepcopy(self.cached_file)
 
-        for server in data.keys():
+        for server in list(data.keys()):
             if server not in current_servers:
                 data.pop(server)
 
@@ -260,7 +221,7 @@ class ServerHandler(metaclass=Singleton):
     def remove_command(self, server, trigger):
         data = self.cached_file
 
-        data[server.id]["customcmds"].pop(trigger,0)
+        data[server.id]["customcmds"].pop(trigger, 0)
         self.queue_write(data)
 
     def add_channel_blacklist(self, server, channel):
@@ -294,6 +255,11 @@ class ServerHandler(metaclass=Singleton):
 
         self.queue_write(data)
 
+    def get_prefix(self, server):
+        data = self.cached_file
+
+        return data.get(server.id).get("prefix")
+
     def change_prefix(self, server, prefix):
         data = self.cached_file
 
@@ -303,7 +269,7 @@ class ServerHandler(metaclass=Singleton):
 
         self.queue_write(data)
 
-    def isblacklisted(self, sid, channel):
+    def is_blacklisted(self, sid, channel):
         if channel.is_private:
             return
 
@@ -318,53 +284,53 @@ class ServerHandler(metaclass=Singleton):
         except KeyError:
             return False
 
-    def needspamfilter(self, server):
+    def has_spam_filter(self, server):
         data = self.cached_file
             
         return bool(data[server.id]["filterspam"])
 
-    def needwordfilter(self, server):
+    def has_word_filter(self, server):
         data = self.cached_file
             
         return bool(data[server.id]["filterwords"])
 
-    def needinvitefiler(self, server):
+    def has_invite_filter(self, server):
         data = self.cached_file
 
         return bool(data[server.id]["filterinvite"])
 
-    def returnsettings(self, sid):
+    def get_settings(self, sid):
         data = self.cached_file
             
         return data.get(sid)
 
-    def returncommands(self, server):
+    def get_custom_commands(self, server):
         data = self.cached_file
             
         return data[server.id]["customcmds"]
 
-    def returnadmins(self, server):
+    def get_admins(self, server):
         data = self.cached_file
             
         return data[server.id]["admins"]
 
-    def returnlogch(self, server):
+    def get_log_channel(self, server):
         data = self.cached_file
             
         return data[server.id]["logchannel"]
 
-    def issleeping(self, server):
+    def is_sleeping(self, server):
         data = self.cached_file
             
         return bool(data[server.id]["sleeping"])
 
-    def setsleeping(self, server, var):
+    def set_sleep_state(self, server, var):
         data = self.cached_file
 
         data[server.id]["sleeping"] = var
         self.queue_write(data)
 
-    def haslogging(self, server):
+    def has_logging(self, server):
         if server is None:
             return True
         data = self.cached_file
@@ -374,14 +340,11 @@ class ServerHandler(metaclass=Singleton):
     def mute(self, user):
         data = self.cached_file
 
-        if not user.id in data[user.server.id]["muted"]:
+        if user.id not in data[user.server.id]["muted"]:
             data[user.server.id]["muted"].append(user.id)
             self.queue_write(data)
 
-        else:
-            pass
-
-    def ismuted(self, user):  # Actually supposed to be a Member class (not User, because it doesn't have server property)
+    def is_muted(self, user):  # Actually supposed to be a Member instance (not User, because it doesn't have server property)
         data = self.cached_file
 
         return bool(user.id in data[user.server.id]["muted"])
@@ -390,32 +353,19 @@ class ServerHandler(metaclass=Singleton):
         data = self.cached_file
 
         if user.id in data[user.server.id]["muted"]:
-            data[user.server.id]["muted"].pop(user.id)
+            data[user.server.id]["muted"] = [u for u in data[user.server.id]["muted"] if user.id not in u]
             self.queue_write(data)
 
-        else:
-            pass
-
-    def mutelist(self, server):
+    def mute_list(self, server):
         data = self.cached_file
 
         return data[server.id]["muted"]
-
-    def get_name(self, sid):
-        data = self.cached_file
-            
-        return data.get(sid)["name"]
 
     def update_name(self, sid, name):
         data = self.cached_file
 
         data[sid]["name"] = name
         self.queue_write(data)
-
-    def get_owner(self, sid):
-        data = self.cached_file
-            
-        return data.get(sid)["owner"]
 
     def update_owner(self, sid, name):
         data = self.cached_file
@@ -434,3 +384,35 @@ class ServerHandler(metaclass=Singleton):
         data.pop(server.id)
 
         log.info("Removed {} from servers.yml".format(server.name))
+
+    # CHECKS
+
+    # MAIN check
+    def can_use_restricted_commands(self, user, server):
+        bo = self.is_bot_owner(user.id)
+        so = self.is_server_owner(user.id, server)
+        ia = self.is_admin(user, server)
+
+        return any([bo, so, ia])
+
+    @staticmethod
+    def is_bot_owner(uid):
+        return str(uid) == str(par.get("Settings", "ownerid"))
+
+    @staticmethod
+    def is_server_owner(uid, server):
+        return str(uid) == str(server.owner.id)
+
+    def is_admin(self, user, server):
+
+        try:
+            is_admin = bool(user.id in self.cached_file.get(server.id).get("admins"))
+        except TypeError:
+            is_admin = False
+
+        if not is_admin:
+            for role in user.roles:
+                if role.name == "Nano Admin":
+                    return True
+
+        return is_admin

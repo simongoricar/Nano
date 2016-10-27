@@ -1,19 +1,20 @@
 # coding=utf-8
-import logging
-import copy
-import time
-import threading
 import os
-from pickle import load, dump
+import time
+import copy
+import logging
 
-from urllib.request import urlopen
 from bs4 import BeautifulSoup
-
-__author__ = "DefaltSimon"
-# IMDb plugin for Nano
+from urllib.request import urlopen
+from discord import Message
+from pickle import load, dump
+from data.utils import threaded, is_valid_command
+from data.stats import MESSAGE
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
+
+# CONSTANTS
 
 base_url = "http://www.imdb.com"
 search_url = "http://www.imdb.com/find?&q="
@@ -25,8 +26,8 @@ PERSON = 3
 types = {
     1: "Movie",
     2: "TV Series",
-    3: "Person"
-}
+    3: "Person"}
+
 
 def get_type(typ):
     return str(types.get(int(typ)))
@@ -35,20 +36,20 @@ things = [
     "  ",
     "\n",
     "\t",
-    "\r"
-]
+    "\r"]
+
 
 def clean(text):
     for ch in things:
         text = str(text).replace(ch, "")
     return text.strip(" ").strip("\n")
 
-def threaded(fn):
-    def wrapper(*args, **kwargs):
-        threading.Thread(target=fn, args=args, kwargs=kwargs).start()
-    return wrapper
+valid_commands = [
+    "_imdb search", "_imdb trailer", "_imdb plot", "_imdb rating", "_imdb help"
+]
 
 # Objects
+
 
 class Movie:
     def __init__(self, **kwargs):
@@ -81,11 +82,13 @@ class Movie:
     def trailer(self):
         return self.video
 
+
 class TVSeries(Movie):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
         self.series = kwargs.get("series")
+
 
 class Person:
     def __init__(self, **kwargs):
@@ -101,7 +104,7 @@ class Person:
 
 # Main class
 
-class Imdb:
+class ImdbSearch:
     def __init__(self, max_age=86400, allow_local_cache=True):
         if os.path.isfile("cache/imdb.cache"):
             with open("cache/imdb.cache", "rb") as js:
@@ -202,7 +205,6 @@ class Imdb:
             # Impossible but k
             return None
 
-
         # Caching
         if not self.cache.get(f):
             self.cache[f] = {"data": data, "timestamp": time.time()}
@@ -224,35 +226,6 @@ class Imdb:
 
         director = sp.find("div", {"class": "credit_summary_item"}).find("span", {"itemprop": "name"}).text
         cast = [a.text for a in sp.find("table", {"class": "cast_list"}).find_all("span", {"itemprop": "name"})]
-
-        # sh = sp.find("table", {"class": "cast_list"})
-        # odd = sh.find_all("tr", {"class": "odd"})
-        # even = sh.find_all("tr", {"class": "even"})
-
-        # cast = []
-        # for rn in range(len(odd + even)):
-        #     try:
-        #         onee = odd.pop(0)
-        #         twoo = even.pop(0)
-        #
-        #         if not onee and not twoo:
-        #             break
-        #
-        #         if onee:
-        #             one = dict(name=onee.find("span", {"itemprop": "name"}).text,
-        #                         character=onee.find("td", {"class": "character"})) # .find("a", href=True).text)
-        #
-        #             cast.append(one)
-        #
-        #         if twoo:
-        #             two = dict(name=onee.find("span", {"itemprop": "name"}).text,
-        #                         character=onee.find("td", {"class": "character"})) # .find("a", href=True).text)
-        #             cast.append(two)
-        #
-        #         del onee
-        #         del twoo
-        #     except IndexError:
-        #         break
 
         summary = clean(sp.find("div", {"class": "summary_text"}).text)
         storyline = clean(sp.find("div", {"class": "inline canwrap", "itemprop": "description"}).text)
@@ -284,26 +257,131 @@ class Imdb:
     def _get_data_person(sp):
         name = sp.find("span", {"itemprop": "name"}).text
         rank = sp.find("a", {"id": "meterRank"}, href=True).text
-        knownfor = [a.text for a in sp.find("div", {"id": "knownfor"}).find_all("a", {"class": "knownfor-ellipsis"}, href=True)]
+        known_for = [a.text for a in sp.find("div", {"id": "knownfor"}).find_all("a", {"class": "knownfor-ellipsis"}, href=True)]
 
         summary = clean(str(sp.find("div", {"itemprop": "description"}).text).strip("\n")).strip(" See full bio »")
 
-        return Person(name=name, short_bio=summary, rank=rank, known_for=knownfor, type=PERSON)
+        return Person(name=name, short_bio=summary, rank=rank, known_for=known_for, type=PERSON)
 
-# Tests
-# logging.basicConfig(level=logging.INFO)
-#
-# im = Imdb()
-#
-# while True:
-#     movie = im.get_page_by_name(input(">"))
-#
-#     if isinstance(movie, Movie) or isinstance(movie, TVSeries):
-#         print(get_type(movie.type))
-#         print(movie.cast, sep="\n")
-#
-#     elif isinstance(movie, Person):
-#         print(movie.name, movie.rank, movie.short_bio, movie.known_for, sep="\n")
-#
-#     else:
-#         print("NOTHING FOUND")
+
+class IMDB:
+    def __init__(self, **kwargs):
+        self.client = kwargs.get("client")
+        self.nano = kwargs.get("nano")
+        self.stats = kwargs.get("stats")
+
+        self.imdb = ImdbSearch()
+
+    async def on_message(self, message, **kwargs):
+        assert isinstance(message, Message)
+
+        client = self.client
+        prefix = kwargs.get("prefix")
+
+        if not is_valid_command(message.content, valid_commands, prefix=prefix):
+            return
+        else:
+            self.stats.add(MESSAGE)
+
+        def startswith(*msg):
+            for a in msg:
+                if message.content.startswith(a):
+                    return True
+
+            return False
+
+        if startswith(prefix + "imdb"):
+            # The process can take some time so we show that something is happening
+            await client.send_typing(message.channel)
+
+            if startswith(prefix + "imdb plot") or startswith(prefix + "imdb story"):
+                if startswith(prefix + "imdb plot"):
+                    search = str(message.content[len(prefix + "imdb plot "):])
+                else:
+                    search = str(message.content[len(prefix + "imdb story "):])
+
+                data = self.imdb.get_page_by_name(search)
+
+                if not data:
+                    await client.send_message(message.channel, "No results.")
+                    return
+
+                if data.type == PERSON:
+                    return
+                else:
+                    await client.send_message(message.channel,
+                                              "**{}**'s story\n```{}```".format(data.name, data.storyline))
+
+            elif startswith(prefix + "imdb search"):
+                search = str(message.content[len(prefix + "imdb search "):])
+                data = self.imdb.get_page_by_name(search)
+
+                if not data:
+                    await client.send_message(message.channel, "No results.")
+                    return
+
+                if data.type == MOVIE:
+                    st = """**{}** ({})\n\nLength: `{}`\nGenres: {}\nRating: **{}/10**\n\nDirector: *{}*\nSummary:
+                    ```{}```""".format(data.name, data.year, data.length, str("`" + "`, `".join(data.genres) + "`"),
+                                       data.rating, data.director, data.summary)
+
+                elif data.type == SERIES:
+                    st = """**{}** series\n\nGenres: {}\nRating: **{}/10**\n\nDirector: *{}*\nSummary:
+                    ```{}```""".format(data.name, str("`" + "`, `".join(data.genres) + "`"), data.rating,
+                                       data.director, data.summary)
+
+                elif data.type == PERSON:
+                    st = """**{}**\n\nKnown for: {}\nIMDB Rank: **{}**\n\nShort bio:
+                    ```{}```""".format(data.name, str("`" + "`, `".join(data.known_for) + "`"), data.rank, data.short_bio)
+
+                else:
+                    return
+
+                # Send the details
+                await client.send_message(message.channel, st)
+
+            elif startswith(prefix + "imdb trailer"):
+                search = str(message.content[len(prefix + "imdb trailer "):])
+                data = self.imdb.get_page_by_name(search)
+
+                if not data:
+                    await client.send_message(message.channel, "No results.")
+                    return
+
+                if data.type == PERSON:
+                    return
+
+                await client.send_message(message.channel,
+                                          "**{}**'s trailer on IMDB: {}".format(data.name, data.trailer))
+
+            elif startswith(prefix + "imdb rating"):
+                search = str(message.content[len(prefix + "imdb rating "):])
+                data = self.imdb.get_page_by_name(search)
+
+                if not data:
+                    await client.send_message(message.channel, "No results.")
+                    return
+
+                if not data.type == MOVIE:
+                    await client.send_message(message.channel, "Only movies have Metascores.")
+                    return
+
+                await client.send_message(message.channel,
+                                          "**{}**'s ratings on IMDB\nUser ratings: __{} out of 10__\n"
+                                          "Metascore: __{}__".format(data.name, data.rating, data.metascore))
+
+            else:
+                await client.send_message(message.channel,
+                                          "**IMDB help**\n\n`_imdb search [name or title]`, `_imdb plot [title]`, "
+                                          "`_imdb trailer [title]`, `_imdb rating [title]`".replace("_", prefix))
+
+
+class NanoPlugin:
+    _name = "Imdb Commands"
+    _version = 0.1
+
+    handler = IMDB
+    events = {
+        "on_message": 10
+        # type : importance
+    }

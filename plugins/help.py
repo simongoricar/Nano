@@ -1,20 +1,12 @@
 # coding=utf-8
-
-__author__ = "DefaltSimon"
-# Messages file for Nano
-
-
-messagelist = {
-    "_rip": "Rest in *peperoni* indeed.",
-    "nano.prefix": "The prefix to use is **_**",
-    "_prefix": "You guessed it!",
-    "ayy lmao": "Ayy lmao, my great inspiration in the world of memes.",
-    "_cat": "meow! https://gif-avatars.com/img/90x90/cattypo.gif",
-    "_cmds": "A 'complete' list of commands is available here: https://github.com/DefaltSimon/Nano/wiki/Commands-list"
-}
+from datetime import datetime
+from discord import Message, utils
+from data.utils import threaded, is_valid_command
+from data.stats import MESSAGE
 
 
-helpmsg = """**Hey, I'm Nano!**
+# Strings
+help_nano = """**Hey, I'm Nano!**
 
 To get familiar with simple commands, type `>help simple`.
 If you want specific info about a command, do `>help command`.
@@ -24,7 +16,7 @@ If you are an admin and want to set up your server for Nano, type `>getstarted`.
 If you need additional help, you can visit "my official server" : https://discord.gg/FZJB6UJ
 """
 
-simples = """`_hello` - Welcomes you or the mentioned person.
+help_simple = """`_hello` - Welcomes you or the mentioned person.
 `_randomgif` - Posts a random gif from Giphy
 `_roll number` - rolls a random number
 `_wiki term` - gives you a description of a term from Wikipedia
@@ -35,8 +27,10 @@ simples = """`_hello` - Welcomes you or the mentioned person.
 
 These are just a few of some of the simpler commands. For more info about each command, use `_help command` or type `_cmds` to look at the wiki page with all the commands."""
 
+nano_bug = "Found a bug? Please report it to me, (**DefaltSimon**) on Discord.\nYou can find me here: https://discord.gg/FZJB6UJ"
+
 # Template: {"desc": "", "use": None, "alias": None},
-commandhelpsnormal = {
+cmd_help_normal = {
     "_help": {"desc": "This is here.", "use": None, "alias": None},
     "_hello": {"desc": "Welcomes a **mentioned** person, or if no mentions are present, you.", "use": "Use: <command> <mention>", "alias": None},
     "_uptime": {"desc": "Tells you for how long I have been running.", "use": None, "alias": None},
@@ -48,7 +42,7 @@ commandhelpsnormal = {
     "_avatar": {"desc": "Gives you the avatar url of a mentioned person", "use": "Use: <command> <mention or name>", "alias": None},
     "_ping": {"desc": "Just to check if I'm alive. fyi: I love ping-pong.", "use": None, "alias": None},
     "_roll": {"desc": "Replies with a random number in range from 0 to your number.", "use": "Use: <command> <number>", "alias": None},
-    "_ayybot": {"desc": "A little info about me.", "use": None, "alias": "Alias: `nano.info`"},
+    "_nano": {"desc": "A little info about me.", "use": None, "alias": "Alias: nano.info"},
     "_github": {"desc": "Link to my project on GitHub.", "use": None, "alias": None},
     "_decide": {"desc": "Decides between different choices so you don't have to.", "use": "Use: <command> word1|word2|word3|...", "alias": None},
     "_cmd list": {"desc": "Returns a server-specific command list.", "use": None, "alias": None},
@@ -62,8 +56,8 @@ commandhelpsnormal = {
     "_music volume": {"desc": "Returns the current volume or sets one.", "use": "Use: <command> <volume 0-150>", "alias": None},
     "_music pause": {"desc": "Pauses the current song.", "use": None, "alias": None},
     "_music resume": {"desc": "Resumes the paused song", "use": None, "alias": None},
-    "_music skip": {"desc": "Skips the current song.", "use": None, "alias": "Alias: `_music stop`"},
-    "_music stop": {"desc": "Skips the current song", "use": None, "alias": "Alias: `_music skip`"},
+    "_music skip": {"desc": "Skips the current song.", "use": None, "alias": "Alias: _music stop"},
+    "_music stop": {"desc": "Skips the current song", "use": None, "alias": "Alias: _music skip"},
     "_music playing": {"desc": "Gives you info about the current song.", "use": None, "alias": None},
     "_music help": {"desc": "Some help with all the music commands.", "use": None, "alias": None},
     "_prefix": {"desc": "No use whatsoever, but jk here you have it.", "use": None, "alias": None},
@@ -94,9 +88,13 @@ commandhelpsnormal = {
     "_remind here in": {"desc": "Adds a reminder (reminds everybody in current channel)", "use": "Use: <command> [time (ex: 3h 5min)] : [message]", "alias": None},
     "_remind list": {"desc": "Displays all ongoing timers.", "use": None, "alias": None},
     "_remind remove": {"desc": "Removes a timer with supplied description or time (or all timers with 'all')", "use": "Use: <command> [timer description or time in sec]", "alias": None},
+    "_cfh": {"desc": "Generates a custom lobby for Cards For Humanity", "use": None, "alias": None},
+    "_osu": {"desc": "Displays osu! user info", "use": "Use: <command> [user name]", "alias": None},
+    "_cmds": {"desc": "Displays a link to the wiki page where all commands are listed.", "use": None, "alias": "Alias: _commands"},
+    "_commands": {"desc": "Displays a link to the wiki page where all commands are listed.", "use": None, "alias": "Alias: _cmds"}
 }
 
-commandhelpsadmin = {
+cmd_help_admin = {
     "_ban": {"desc": "Bans a member.", "use": "Use: <command> <mention>", "alias": "Alias: nano.ban"},
     "nano.ban": {"desc": "Bans a member.", "use": "User: <command> <mention>", "alias": "Alias: _ban"},
     "_kick": {"desc": "Kicks a member.", "use": "Use: <command> <mention>", "alias": "Alias: nano.kick"},
@@ -140,71 +138,186 @@ commandhelpsadmin = {
     "_nuke": {"desc": "Nukes (deletes) last x messages.", "use": None, "alias": None},
 }
 
-commandhelpsowner = {
+cmd_help_owner = {
     "_playing": {"desc": "Restricted to owner(!), changes 'playing' status.", "use": "Use: <command> <status>", "alias": None},
     "nano.kill": {"desc": "Restricted to owner, shuts down the bot.", "use": "Use: <command>", "alias": None},
     "nano.restart": {"desc": "Restricted to owner, restarts down the bot.", "use": "Use: <command>", "alias": None},
     "nano.reload": {"desc": "Restricted to owner, reloads all settings from config file.", "use": None, "alias": "Alias: _reload"},
 }
 
-
-
-nanoinfo = """**Hey! My name is Nano!**
-I have a GitHub repo! `!github`
-My version is **<version>**.
-I have been coded by *DefaltSimon*.
-"""
-
-githubinfo = """Nano is being maintained and updated on **GitHub**
-Repo link: https://github.com/DefaltSimon/Nano
-"""
-
-appinfo = """You wanna invite Nano to your server, eh? Sure man.
-**Here's the link:** <link>
-"""
-
-
-musichelp = """"**Music Help:**
-```_music join <channel name> - joins the channel
-_music play <yt url> - starts playing
-_music pause/resume - pauses/resumes
-_music skip/stop - skips the current song
-_music playing - info
-_music leave - leaves the voice channel if in one```"""""
-
-bugreport = "Found a bug? Please report it to **DefaltSimon** on Discord.\n1. You may find him here: https://discord.gg/FZJB6UJ\n2. For small things you can simply use _notifydev [message]"
-
-featurereq = "Got an idea for a feature? Submit it here: https://discord.gg/FZJB6UJ"
-
-
-quotes = [
-    "You miss 100% of the shots you don’t take. –Wayne Gretzky",
-    "The most difficult thing is the decision to act, the rest is merely tenacity. –Amelia Earhart",
-    "Twenty years from now you will be more disappointed by the things that you didn’t do than by the ones you did do, so throw off the bowlines, sail away from safe harbor, catch the trade winds in your sails.  Explore, Dream, Discover. –Mark Twain",
-    "Life is 10% what happens to me and 90% of how I react to it. –Charles Swindoll",
-    "Eighty percent of success is showing up. –Woody Allen",
-    "The best time to plant a tree was 20 years ago. The second best time is now. –Chinese Proverb",
-    "Winning isn’t everything, but wanting to win is. –Vince Lombardi",
-    "I’ve learned that people will forget what you said, people will forget what you did, but people will never forget how you made them feel. –Maya Angelou",
-    "The two most important days in your life are the day you are born and the day you find out why. –Mark Twain",
-    "People often say that motivation doesn’t last. Well, neither does bathing.  That’stm why we recommend it daily. –Zig Ziglar",
-    "Everything you’ve ever wanted is on the other side of fear. –George Addair",
-    "We can easily forgive a child who is afraid of the dark; the real tragedy of life is when men are afraid of the light. –Plato",
-    "When I was 5 years old, my mother always told me that happiness was the key to life.  When I went to school, they asked me what I wanted to be when I grew up.  I wrote down ‘happy’.  They told me I didn’t understand the assignment, and I told them they didn’t understand life. –John Lennon",
-    "When one door of happiness closes, another opens, but often we look so long at the closed door that we do not see the one that has been opened for us. –Helen Keller",
-    "Life is not measured by the number of breaths we take, but by the moments that take our breath away. –Maya Angelou",
-    "Too many of us are not living our dreams because we are living our fears. –Les Brown",
-    "I didn’t fail the test. I just found 100 ways to do it wrong. –Benjamin Franklin",
-    "A person who never made a mistake never tried anything new. –Albert Einstein",
-    "A truly rich man is one whose children run into his arms when his hands are empty. –Unknown",
-    "If you want your children to turn out well, spend twice as much time with them, and half as much money. –Abigail Van Buren",
-    "It does not matter how slowly you go as long as you do not stop. –Confucius",
-    "You can’t use up creativity.  The more you use, the more you have. –Maya Angelou",
-    "Do what you can, where you are, with what you have. –Teddy Roosevelt",
-    "You may be disappointed if you fail, but you are doomed if you don’t try. –Beverly Sills",
+valid_commands = [
+    "_cmds", "_commands", "_help", "_notifydev", "_suggest", "_bug"
 ]
 
-eightball = [
-    "It is certain", "It is surely so", "Without a doubt", "You may rely on it", "Most likely", "Yes",
-    "Ask again later", "Cannot predict now", "Concentrate and ask again", "I would say yes", "JUST DO IT",
-    "My reply is no", "My sources say no", "Signs point to yes"]
+
+@threaded
+def save_submission(sub):
+    with open("data/submissions.txt", "a") as file:
+        file.write(str(sub) + "\n" + ("-" * 20))
+
+
+class Help:
+    def __init__(self, **kwargs):
+        self.loop = kwargs.get("loop")
+        self.client = kwargs.get("client")
+        self.nano = kwargs.get("nano")
+        self.stats = kwargs.get("stats")
+
+    async def on_message(self, message, *_, **kwargs):
+        assert isinstance(message, Message)
+        client = self.client
+
+        prefix = kwargs.get("prefix")
+
+        if not is_valid_command(message.content, valid_commands, prefix=prefix):
+            return
+        else:
+            self.stats.add(MESSAGE)
+
+        # A shortcut
+        def startswith(*msg):
+            for a in msg:
+                if message.content.startswith(a):
+                    return True
+
+            return False
+
+        # !help and @Nano
+        if message.content.strip(" ") == (prefix + "help"):
+            await client.send_message(message.channel, help_nano)
+
+        # @Nano help
+        elif self.client.user in message.mentions:
+            un_mentioned = str(message.content[21:])
+            if un_mentioned == "" or un_mentioned == " ":
+                await client.send_message(message.channel, help_nano)
+
+        # !cmds or !commands
+        elif startswith(prefix + "cmds", prefix + "commands"):
+            await client.send_message(message.channel, "A 'complete' list of commands is available here: https://github.com/DefaltSimon/Nano/wiki/Commands")
+
+        # !help simple
+        elif startswith(prefix + "help simple"):
+            await client.send_message(message.channel, help_simple)
+
+        # !help [command]
+        elif startswith(prefix + "help"):
+            search = str(message.content)[len(prefix + "help "):]
+
+            def get_command_info(cmd):
+
+                # Normal commands
+                cmd = cmd_help_normal.get(str(cmd.replace(prefix, "_").strip(" ")))
+                if cmd is not None:
+                    cmd_name = search.replace(prefix, "")
+
+                    description = cmd.get("desc")
+                    use = cmd.get("use")
+                    alias = cmd.get("alias")
+
+                    preset = "Command: **{}**\n```css\n" \
+                             "Description: {}{}{}```".format(cmd_name, description, "\n" + use if use else "", "\n" + alias if alias else "")
+
+                    # stat.plushelpcommand()
+                    return preset
+
+                # Admin commands
+                cmd = cmd_help_admin.get(str(cmd.replace(prefix, "_").strip(" ")))
+                if cmd is not None:
+                    cmd_name = search.replace(prefix, "")
+
+                    description = cmd.get("desc")
+                    use = cmd.get("use")
+                    alias = cmd.get("alias")
+
+                    preset = "Command: **{}** (admin only)\n```css\n" \
+                             "Description: {}{}{}```".format(cmd_name, description, "\n" + use if use else "", "\n" + alias if alias else "")
+
+                    # stat.plushelpcommand()
+                    return preset
+
+                # Owner commands
+                cmd = cmd_help_owner.get(str(cmd.replace(prefix, "_").strip(" ")))
+                if cmd is not None:
+                    cmd_name = search.replace(prefix, "")
+
+                    description = cmd.get("desc")
+                    use = cmd.get("use")
+                    alias = cmd.get("alias")
+
+                    preset = "Command: **{}** (owner only)\n```css\n" \
+                             "Description: {}{}{}```".format(cmd_name, description, "\n" + use if use else "", "\n" + alias if alias else "")
+                    # stat.plushelpcommand()
+                    return preset
+
+                if cmd is None:
+                    # stat.pluswrongarg()
+                    return None
+
+            # Allows for !help ping AND !help !ping
+            if search.startswith(prefix):
+                res = get_command_info(search)
+
+                if res:
+                    await client.send_message(message.channel, res)
+
+                else:
+                    await client.send_message(message.channel, "Command could not be found.\n"
+                                                               "**(Use: `>help command`)**".replace(">", prefix))
+
+            else:
+                res = get_command_info(prefix + search)
+
+                if res:
+                    await client.send_message(message.channel, res)
+
+                else:
+                    await client.send_message(message.channel, "Command could not be found.\n"
+                                                               "**(Use: `>help command`)**".replace(">", prefix))
+
+        # !notifydev
+        elif startswith((prefix + "notifydev", prefix + "suggest")):
+            if startswith(prefix + "notifydev"):
+                report = message.content[len(prefix + "notifydev "):]
+                typ = "Report"
+
+            elif startswith(prefix + "suggest"):
+                report = message.content[len(prefix + "suggest "):]
+                typ = "Suggestion"
+
+            else:
+                return
+
+            dev_server = utils.get(client.servers, id=self.nano.dev_server)
+
+            # Timestamp
+            ts = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+
+            # 'Compiled' report
+            comp = "{} from {} ({}):\n```{}```\n**__Timestamp__**: `{}`\n**__Server__**: `{}` ({} members)\n" \
+                   "**__Server Owner__**: {}".format(typ, message.author.name, message.author.id, report, ts,
+                                                     message.channel.server.name, message.channel.server.member_count,
+                                                     "Yes" if message.author.id == message.channel.server.owner.id
+                                                     else message.channel.server.owner.id)
+
+            # Saves the submission to disk
+            save_submission(comp.replace(message.author.mention, "{} ({})\n".format(message.author.name, message.author.id)))
+
+            await client.send_message(dev_server.owner, comp)
+            await client.send_message(message.channel, "**Thank you** for your *{}*.".format(
+                "submission" if typ == "Report" else "suggestion"))
+
+        # !bug
+        elif startswith(prefix + "bug"):
+            await client.send_message(message.channel, nano_bug.replace("_", prefix))
+
+
+class NanoPlugin:
+    _name = "Help Commands"
+    _version = 0.1
+
+    handler = Help
+    events = {
+        "on_message": 10
+        # type : importance
+    }

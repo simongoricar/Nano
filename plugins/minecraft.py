@@ -1,30 +1,29 @@
 # coding=utf-8
-
-__author__ = "DefaltSimon"
-# Minecraft plugin for Nano
-
 import requests
 import logging
+from discord import Client, Message
+from data.stats import MESSAGE
+from data.utils import is_valid_command
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
-# Exception class
+# CONSTANTS
+ITEM_ID_PAIR = 1
+ITEM_ID = 2
+ITEM_NAME = 3
+
+valid_commands = [
+    "_mc", "_minecraft"
+]
 
 
-class MinecraftException(Exception):
-    def __init__(self, *args, **kwargs):
-        pass
-
-# Main class
-
-
-class Minecraft:
+class McItems:
     def __init__(self):
         # Gets a fresh copy of items at each startup.
         log.info("Requesting JSON data from minecraft-ids")
-        jsondata = requests.get("http://minecraft-ids.grahamedgecombe.com/items.json")
-        self.data = jsondata.json()
+        json_data = requests.get("http://minecraft-ids.grahamedgecombe.com/items.json")
+        self.data = json_data.json()
 
     def id_to_data(self, num):
         if len(str(num).split(":")) > 1:
@@ -53,7 +52,8 @@ class Minecraft:
         return items
 
     def _items_to_list(self, **kwargs):
-        # Private for now, todo
+        # Not used,
+        # Private for now, /todo
         items = []
         for item in self.data:
             if kwargs.get(str(item.get("type"))) is not None:
@@ -61,9 +61,171 @@ class Minecraft:
 
     def id_to_pic(self, num):
         if num > len(self.data):
-            raise MinecraftException
+            return None
 
         data = self.data[num]
 
-        with open("plugins/mc_item_png/{}-{}.png".format(num, data.get("metadata"))) as pic:
+        with open("plugins/mc/{}-{}.png".format(num, data.get("metadata"))) as pic:
             return pic
+
+    def get_group_by_name(self, name):
+        data = None
+
+        # Group(ify)
+        if str(name).lower() == "wool":
+            data = self.group_to_list(35)
+        elif str(name).lower() == "stone":
+            data = self.group_to_list(1)
+        elif str(name).lower() == "wood plank":
+            data = self.group_to_list(5)
+        elif str(name).lower() == "sapling":
+            data = self.group_to_list(6)
+        elif str(name).lower() == "sand":
+            data = self.group_to_list(12)
+        elif str(name).lower() == "wood":
+            data = self.group_to_list(17)
+        elif str(name).lower() == "leaves":
+            data = self.group_to_list(18)
+        elif str(name).lower() == "sponge":
+            data = self.group_to_list(19)
+        elif str(name).lower() == "sandstone":
+            data = self.group_to_list(24)
+        elif str(name).lower() == "flower":
+            data = self.group_to_list(38)
+        elif str(name).lower() == "double slab":
+            data = self.group_to_list(43)
+        elif str(name).lower() == "slab":
+            data = self.group_to_list(44)
+        elif str(name).lower() == "stained glass":
+            data = self.group_to_list(95)
+        elif str(name).lower() == "monster egg":
+            data = self.group_to_list(97)
+        elif str(name).lower() == "stone brick":
+            data = self.group_to_list(98)
+        elif str(name).lower() == "double wood slab":
+            data = self.group_to_list(125)
+        elif str(name).lower() == "wood slab":
+            data = self.group_to_list(126)
+        elif str(name).lower() == "quartz block":
+            data = self.group_to_list(155)
+        elif str(name).lower() == "stained clay":
+            data = self.group_to_list(159)
+        elif str(name).lower() == "stained glass pane":
+            data = self.group_to_list(160)
+        elif str(name).lower() == "prismarine":
+            data = self.group_to_list(168)
+        elif str(name).lower() == "carpet":
+            data = self.group_to_list(171)
+        elif str(name).lower() == "plant":
+            data = self.group_to_list(175)
+        elif str(name).lower() == "sandstone":
+            data = self.group_to_list(179)
+        elif str(name).lower() == "fish":
+            data = self.group_to_list(349)
+        elif str(name).lower() == "dye":
+            data = self.group_to_list(351)
+        elif str(name).lower() == "egg":
+            data = self.group_to_list(383)
+        elif str(name).lower() == "head":
+            data = self.group_to_list(397)
+
+        return data
+
+
+class Minecraft:
+    def __init__(self, **kwargs):
+        self.handler = kwargs.get("handler")
+        self.nano = kwargs.get("nano")
+        self.client = kwargs.get("client")
+        self.stats = kwargs.get("stats")
+
+        self.mc = McItems()
+
+    async def on_message(self, message, **kwargs):
+        prefix = kwargs.get("prefix")
+        client = self.client
+        mc = self.mc
+
+        assert isinstance(client, Client)
+        assert isinstance(message, Message)
+
+        if not is_valid_command(message.content, valid_commands, prefix=prefix):
+            return
+        else:
+            self.stats.add(MESSAGE)
+
+        def startswith(*msg):
+            for a in msg:
+                if message.content.startswith(a):
+                    return True
+
+            return False
+
+        if startswith(prefix + "mc", prefix + "minecraft"):
+            if startswith(prefix + "mc help", prefix + "minecraft help"):
+                # Help message
+                await client.send_message(message.channel,
+                                          "**Minecraft**\n```css\n"
+                                          "_mc name/id:meta - search for items and display their details```".replace("_", prefix))
+                return
+
+            elif startswith(prefix + "mc "):
+                da = message.content[len(prefix + "mc "):]
+            elif startswith(prefix + "minecraft "):
+                da = message.content[len(prefix + "minecraft "):]
+
+            else:
+                return
+
+            # Determines if arg is id or name
+            if len(str(da).split(":")) > 1:
+                typ = ITEM_ID_PAIR
+
+            else:
+                try:
+                    int(da)
+                    typ = ITEM_ID
+                except ValueError:
+                    typ = ITEM_NAME
+
+            # Requests item data from minecraft plugin
+            if typ == ITEM_ID_PAIR or typ == ITEM_ID:
+                data = mc.id_to_data(da)
+            else:
+                # Check for groupings
+                if mc.get_group_by_name(da):
+                    data = mc.get_group_by_name(da)
+
+                else:
+                    data = mc.name_to_data(str(da))
+
+            if not data:
+                await client.send_message(message.channel, "**No item with that name/id**")
+                # stat.pluswrongarg()
+                return
+
+            if not isinstance(data, list):
+                details = "**{}**```css\nId: {}:{}```".format(data.get("name"), data.get("type"), data.get("meta"))
+
+                # Details are uploaded simultaneously with the picture
+                with open("plugins/mc/{}-{}.png".format(data.get("type"), data.get("meta") or 0), "rb") as pic:
+                    await client.send_file(message.channel, pic, content=details)
+                    # stat.plusimagesent()
+            else:
+                combined = []
+                for item in data:
+                    details = "**{}**```css\nId: {}:{}```".format(item.get("name"), item.get("type"), item.get("meta"))
+                    combined.append(details)
+
+                await client.send_message(message.channel, "".join(combined))
+
+
+class NanoPlugin:
+    _name = "Minecraft Commands"
+    _version = 0.1
+
+    handler = Minecraft
+    events = {
+        "on_message": 10
+        # type : importance
+    }

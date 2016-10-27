@@ -1,15 +1,22 @@
 # coding=utf-8
+# coding=utf-8
 import requests
 import time
-import threading
 import logging
+import configparser
 from json import load
+from discord import Message
+from data.utils import threaded, is_valid_command
+from data.stats import MESSAGE
 
 __author__ = "DefaltSimon"
 # Backpack.tf price plugin for Nano
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
+parser = configparser.ConfigParser()
+parser.read("plugins/config.ini")
 
 # Constants
 
@@ -39,6 +46,11 @@ quality_names = {0: "Stock",
               14: "Collector's",
               15: "Decorated"}
 
+valid_commands = [
+    "_tf"
+]
+
+
 def get_quality_name(num):
     """
     Gets the quality name corresponding to the number
@@ -47,12 +59,6 @@ def get_quality_name(num):
     """
     return str(quality_names.get(int(num)))
 
-# Decorator
-
-def threaded(fn):
-    def wrapper(*args, **kwargs):
-        threading.Thread(target=fn, args=args, kwargs=kwargs).start()
-    return wrapper
 
 # Exception classes
 
@@ -62,6 +68,7 @@ class ApiError(Exception):
     """
     pass
 
+
 class InvalidQuality(Exception):
     """
     Raised when specifying a non-existent quality (int).
@@ -69,6 +76,7 @@ class InvalidQuality(Exception):
     pass
 
 # Item object
+
 
 class Item(object):
     """
@@ -129,14 +137,17 @@ class Item(object):
 
     def get_all_qualities(self):
         qualities = []
-        for this in [STOCK, PROMOTIONAL, VINTAGE, EFFECT_OR_HALLOWEEN, UNIQUE, COMMUNITY, DEVELOPER, SELF_MADE, STRANGE, HAUNTED, COLLECTORS, DECORATED]:
+        for this in [STOCK, PROMOTIONAL, VINTAGE, EFFECT_OR_HALLOWEEN, UNIQUE, COMMUNITY,
+                     DEVELOPER, SELF_MADE, STRANGE, HAUNTED, COLLECTORS, DECORATED]:
+
             q = self.get_quality(this)
             if q:
                 qualities.append({this: q})
 
         return qualities
 
-# Main class
+# bp.tf class
+
 
 class CommunityPrices:
     """
@@ -152,7 +163,7 @@ class CommunityPrices:
         self.api_key = api_key
         self.max_age = max_age  # Defaults to 4 hours
 
-        self.dparams = {"key": api_key}
+        self.parameters = {"key": api_key}
         self.address = "https://backpack.tf/api/IGetPrices/v4"
 
         if allow_cache:  # Should this be a feature? (todo)
@@ -195,13 +206,12 @@ class CommunityPrices:
         if not self.cached_raw_items:
             raise ApiError("No items in response.")
 
-
     def _request(self, address=None, params=None):
         if not address:
             address = self.address
 
         if not params:
-            params = self.dparams
+            params = self.parameters
 
         resp = requests.get(address, params=params)
 
@@ -231,8 +241,6 @@ class CommunityPrices:
         Gets all items on backpack.tf
         :return: A list of un
         """
-        #print(self.cached_raw_items)
-        #return self.cached_raw_items
         self._check_cache()
 
         if not self.cached_items:
@@ -251,12 +259,61 @@ class CommunityPrices:
             return None
 
 
-#import configparser
-#parser = configparser.ConfigParser()
-#parser.read("settings.ini")
-#
-#bptf = CommunityPrices(parser.get("Credentials", "apikey"))
-#
-#prof = bptf.get_item_by_name("Sydney Sleeper")
-#
-#print(prof.get_all_qualities())
+class TeamFortress:
+    def __init__(self, **kwargs):
+        self.nano = kwargs.get("nano")
+        self.client = kwargs.get("client")
+        self.stats = kwargs.get("stats")
+
+        self.tf = CommunityPrices(api_key=parser.get("backpack.tf", "apikey"))
+
+    async def on_message(self, message, **kwargs):
+        assert isinstance(message, Message)
+        client = self.client
+
+        prefix = kwargs.get("prefix")
+
+        if not is_valid_command(message.content, valid_commands, prefix=prefix):
+            return
+        else:
+            self.stats.add(MESSAGE)
+
+        def startswith(*args):
+            for a in args:
+                if message.content.startswith(a):
+                    return True
+
+            return False
+
+        if startswith(prefix + "tf"):
+            item_name = message.content[len(prefix + "tf "):]
+
+            item = self.tf.get_item_by_name(str(item_name))
+
+            if not item:
+                await client.send_message(message.channel, "An item with that name *does not exist*.".format(item_name))
+                # stat.pluswrongarg()
+                return
+
+            ls = []
+            for qu in item.get_all_qualities():
+                down = qu.get(list(qu.keys())[0])
+                dt = "__**{}**__: `{} {}`".format(get_quality_name(list(qu.keys())[0]),
+                                                  down.get("price").get("value"),
+                                                  "ref" if down.get("price").get("currency") == "metal" else down.get(
+                                                      "price").get("currency"))
+                ls.append(dt)
+
+            det = """**{}** *(on bp.tf)*\n\n{}""".format(item.name, "\n".join(ls))
+            await client.send_message(message.channel, det)
+
+
+class NanoPlugin:
+    _name = "Team Fortress 2"
+    _version = 0.1
+
+    handler = TeamFortress
+    events = {
+        "on_message": 10
+        # type : importance
+    }
