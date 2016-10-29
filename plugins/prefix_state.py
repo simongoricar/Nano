@@ -29,6 +29,11 @@ class PrefixState:
         if message.channel.is_private:
             return "add_var", parser.get("Servers", "defaultprefix")
 
+
+        # Set up the server if it is not present in servers.yml
+        if not self.client.server_exists(message.server):
+            self.client.server_setup(message.server)
+
         # Ah, the shortcuts
         def startswith(*msg):
             for a in msg:

@@ -99,6 +99,9 @@ class ServerHandler(metaclass=Singleton):  # Singleton is imported from utils
 
         self.queue_write(data)
 
+    def server_exists(self, server):
+        return server.id in self.cached_file
+
     @threaded
     def queue_write(self, data):
         self.cached_file = copy.deepcopy(data)
@@ -265,6 +268,7 @@ class ServerHandler(metaclass=Singleton):  # Singleton is imported from utils
 
         if server.id not in data:
             self.server_setup(server)
+
         data[server.id]["prefix"] = prefix
 
         self.queue_write(data)
