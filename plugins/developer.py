@@ -121,6 +121,8 @@ class DevFeatures:
         self.backup = BackupManager()
         self.roller = StatusRoller(self.client)
 
+        self.mode = None
+
     async def on_message(self, message, **kwargs):
         if not is_valid_command(message.content, valid_commands, prefix=kwargs.get("prefix")):
             return
@@ -186,20 +188,17 @@ class DevFeatures:
 
             await client.logout()
 
-            # Launches a new instance of Nano...
-            if sys.platform == "win32":
-                p = subprocess.Popen("startbot.bat")
-            else:
-                p = subprocess.Popen(os.path.abspath("startbot.sh"), shell=True)
-
-            # ...and stops itself
-            sys.exit(0)
+            self.mode = "restart"
+            return "shutdown"
 
         # nano.kill
         elif startswith("nano.kill"):
             await client.send_message(message.channel, "**DED**")
 
             await client.logout()
+
+            self.mode = "exit"
+            return "shutdown"
 
         # nano.playing
         elif startswith("nano.playing"):
@@ -213,14 +212,24 @@ class DevFeatures:
         await self.backup.start()
         await self.roller.run()
 
+    async def on_shutdown(self):
+
+        if self.mode == "restart":
+            # Launches a new instance of Nano...
+            if sys.platform == "win32":
+                subprocess.Popen("startbot.bat")
+            else:
+                subprocess.Popen(os.path.abspath("startbot.sh"), shell=True)
+
 
 class NanoPlugin:
     _name = "Developer Commands"
-    _version = 0.1
+    _version = 0.2
 
     handler = DevFeatures
     events = {
         "on_message": 10,
         "on_ready": 5,
+        "on_shutdown": 15,
         # type : importance
     }

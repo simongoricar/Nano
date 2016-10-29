@@ -1,5 +1,6 @@
 # coding=utf-8
 import threading
+import os
 from datetime import datetime
 
 # Threading helper
@@ -145,3 +146,11 @@ def log_to_file(content):
         date = datetime.now()
         cn = date.strftime("%d-%m-%Y %H:%M:%S") + " - " + str(content)
         file.write(cn + "\n")
+
+
+def is_empty(path):
+    if os.path.isfile(path):
+        return os.stat(path).st_size == 0
+
+    else:
+        return False

@@ -1,17 +1,19 @@
 # coding=utf-8
 import time
+import os
 import asyncio
 import logging
+from pickle import load, dumps
 from discord import Message, Client, DiscordException
-from data.utils import resolve_time, convert_to_seconds, is_valid_command
+from data.utils import resolve_time, convert_to_seconds, is_valid_command, is_empty
 from data.stats import MESSAGE
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
 
 # CONSTANTS
 
-DEFAULT_REMINDER_LIMIT = 1
+DEFAULT_REMINDER_LIMIT = 2
 
 remind_help = "**Remind help**\n`_remind me in [sometime]: [message]` - reminds you in your DM\n" \
               "`_remind here in [sometime]: [message]` - reminds everyone in current channel"
@@ -46,6 +48,9 @@ class ReminderHandler:
     async def wait(self):
         while self.wait:
             await asyncio.sleep(0.01)
+
+    def is_active(self):
+        return bool(self.reminders)
 
     def get_reminders(self, user):
         return self.reminders.get(user.id)
@@ -125,7 +130,7 @@ class ReminderHandler:
 
     async def dispatch(self, reminder):
         try:
-            logger.debug("Dispatching")
+            log.debug("Dispatching")
             await self.client.send_message(reminder.get("receiver"), reminder.get("content"))
         except DiscordException:
             pass
@@ -161,6 +166,26 @@ class Reminder:
         self.stats = kwargs.get("stats")
 
         self.reminder = ReminderHandler(self.client, self.loop)
+
+        # Uses the cache if it exists
+
+        if os.path.isfile("cache/reminders.temp"):
+
+            # Removes the file if it is empty
+            if is_empty("cache/reminders.temp"):
+                os.remove("cache/reminders.temp")
+
+            # or uses it
+            else:
+                log.info("Using reminders.cache")
+
+                with open("cache/reminders.temp", "rb") as vote_cache:
+                    rem = load(vote_cache)
+
+                os.remove("cache/reminders.temp")
+
+                # Sets the reminders to the state before restart
+                self.reminder.reminders = rem
 
         self.loop.create_task(self.reminder.start_monitoring())
 
@@ -260,13 +285,23 @@ class Reminder:
         elif startswith(prefix + "remind", prefix + "remind help"):
             await client.send_message(message.channel, remind_help.replace("_", prefix))
 
+    async def on_shutdown(self, **_):
+        if not os.path.isdir("cache"):
+            os.mkdir("cache")
+
+        if self.reminder.is_active():
+            with open("cache/reminders.temp", "wb") as cache:
+                print(self.reminder.reminders)
+                cache.write(dumps(self.reminder.reminders))  # Save instance of Vote to be used on the next boot
+
 
 class NanoPlugin:
     _name = "Reminder Commands"
-    _version = 0.2
+    _version = "0.2.1"
 
     handler = Reminder
     events = {
-        "on_message": 10
+        "on_message": 10,
+        "on_shutdown": 5,
         # type : importance
     }

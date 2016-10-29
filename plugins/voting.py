@@ -1,17 +1,23 @@
 # coding=utf-8
 import asyncio
+import os
+import logging
+from pickle import dumps, load
 from discord import Message
 from data.serverhandler import ServerHandler
-from data.stats import MESSAGE
-from data.utils import is_valid_command
+from data.stats import MESSAGE, VOTE
+from data.utils import is_valid_command, is_empty
 
 __author__ = "DefaltSimon"
-# Voting plugin for Nano v2
+# Voting plugin
 
 valid_commands = [
     "_vote start",
     "_vote end", "_vote "
 ]
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
 
 
 class VoteHandler:
@@ -28,7 +34,7 @@ class VoteHandler:
         self.author = {}
 
     def need_save(self):
-        return bool(self.vote_header != {} or self.vote_content != {} or self.progress != {})
+        return bool(self.vote_header or self.vote_content or self.progress)
 
     def start_vote(self, author, server, vote):
 
@@ -116,7 +122,21 @@ class Vote:
         self.client = kwargs.get("client")
         self.stats = kwargs.get("stats")
 
-        self.vote = VoteHandler()
+        # Removes the file if it is empty
+        if is_empty("cache/voting.temp"):
+            os.remove("cache/voting.temp")
+
+        # Uses the cache if it exists
+        if os.path.isfile("cache/voting.temp"):
+            log.info("Using voting.cache")
+
+            with open("cache/voting.temp", "rb") as vote_cache:
+                self.vote = load(vote_cache)
+
+            os.remove("cache/voting.temp")
+
+        else:
+            self.vote = VoteHandler()
 
     async def on_message(self, message, **kwargs):
         assert isinstance(message, Message)
@@ -203,13 +223,24 @@ class Vote:
 
                 await client.delete_message(msg)
 
+            self.stats.add(VOTE)
+
+    async def on_shutdown(self):
+        if not os.path.isdir("cache"):
+            os.mkdir("cache")
+
+        if self.vote.need_save():
+            with open("cache/voting.temp", "wb") as cache:
+                cache.write(dumps(self.vote))  # Save instance of Vote to be used on the next boot
+
 
 class NanoPlugin:
     _name = "Voting"
-    _version = 0.1
+    _version = 0.2
 
     handler = Vote
     events = {
-        "on_message": 10
+        "on_message": 10,
+        "on_shutdown": 5,
         # type : importance
     }

@@ -1,3 +1,8 @@
+3.0.2
+- Reminders now persist between restarts!
+- Raised the reminder limit to 2 (temporarily?)
+- Added an event - ON_SHUTDOWN
+
 3.0.1
 - Softbanning and reminders were not reliable, this update fixes that
 - Some bugs?
