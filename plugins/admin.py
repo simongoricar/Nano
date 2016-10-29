@@ -2,7 +2,7 @@
 import asyncio
 import logging
 import time
-from discord import Message, utils, Client
+from discord import Message, utils, Client, DiscordException
 from data.serverhandler import ServerHandler
 from data.utils import convert_to_seconds, get_decision, is_valid_command
 
@@ -25,82 +25,84 @@ valid_commands = [
 ]
 
 
-class SoftBanTimer:
+class SoftBanScheduler:
     def __init__(self, client, loop=asyncio.get_event_loop()):
         self.client = client
         self.loop = loop
 
-        self.events = {}
+        self.bans = {}
 
-        self.must_wait = False
+        self.wait = False
 
-    def wait(self):
-        self.must_wait = True
+    def lock(self):
+        self.wait = True
 
-    def wait_release(self):
-        self.must_wait = False
+    def release(self):
+        self.wait = False
 
-    def get_reminders(self, user):
-        return self.events.get(user.id)
+    async def wait(self):
+        while self.wait:
+            await asyncio.sleep(0.01)
 
-    def remove_all_reminders(self, user):
-        if self.events.get(user.id):
-            self.events[user.id] = []
+    def get_ban(self, user):
+        return self.bans.get(user.id)
 
-    def remove_reminder(self, user, rem):
-        if self.events.get(user.id):
-
-            for c, rm in enumerate(self.events[user.id]):
-                if rem == rm[0] or rem == rm[1]:
-                    self.events[user.id].pop(c)
-                    return True
-
-        return False
+    def remove_ban(self, user):
+        self.loop.create_task(self.dispatch(self.bans.get(user.id)))
+        self.bans.pop(user.id)
 
     def set_softban(self, server, user, tim):
         t = time.time()
 
         tim = convert_to_seconds(tim)
 
-        if not (5 < tim < 259200):  # 5 sec to 3 days
+        if not (5 < tim < 172800):  # 5 sec to 2 days
             return False
 
         # Add the reminder to the list
-        if not self.events.get(server.id):
-            self.events[server.id] = []
-
-        if self.events.get(server.id).get(user.id):
-            return False
-
-        self.events[user.id] = [tim, int(round(t, 0))]
-
-        ttl = tim - (time.time() - t)
-
-        # Creates a coroutine task to unban that person
-        self.schedule(server, ttl, user)
+        self.bans[user.id] = {"member": user, "server": server, "time_target": int(t + tim)}
 
         return True
 
-    def schedule(self, server, user, ttl):
-        self.loop.create_task(self._schedule(server, user, ttl))
+    @staticmethod
+    async def tick(last_time):
+        """
+        Very simple implementation of a self-correcting tick system
+        :return: None
+        """
+        current_time = time.time()
+        delta = 1 - (current_time - last_time)
 
-    async def _schedule(self, server, user, ttl):
-        logger.info("Event scheduled")
-        await asyncio.sleep(ttl)
+        await asyncio.sleep(delta)
 
-        if not [user for user in self.events.get(server.id) if user[0] == ttl]:
-            logger.debug("Task deleted before execution, quitting")
-            return
+        return time.time()
 
-        while self.must_wait:
-            await asyncio.sleep(0.1)
-
+    async def dispatch(self, reminder):
         try:
-            await self.client.unban(server, user)
+            logger.debug("Dispatching")
+            await self.client.unban(reminder.get("server"), reminder.get("member"))
+        except DiscordException:
+            pass
 
-        # This MUST be done in all cases
-        finally:
-            self.events[server.id] = [a for a in self.events[server.id] if a[0] != ttl]
+    async def start_monitoring(self):
+        last_time = time.time()
+
+        while True:
+            # Iterate through users and their reminders
+            for ban in self.bans.values():
+
+                # If enough time has passed, send the reminder
+                if ban.get("time_target") <= last_time:
+
+                    await self.dispatch(ban)
+
+                    try:
+                        self.bans[ban.get("author")].remove(ban)
+                    except KeyError:
+                        pass
+
+            # And tick.
+            last_time = await self.tick(last_time)
 
 
 class Admin:
@@ -111,7 +113,8 @@ class Admin:
         self.nano = kwargs.get("nano")
         self.stats = kwargs.get("stats")
 
-        self.timer = SoftBanTimer(self.client, self.loop)
+        self.timer = SoftBanScheduler(self.client, self.loop)
+        self.loop.create_task(self.timer.start_monitoring())
 
     async def on_message(self, message, **kwargs):
         prefix = kwargs.get("prefix")
@@ -543,15 +546,20 @@ Messages:
                     await client.send_message(message.channel, "**Admins:** " + final)
 
 
-                    # /todo nano.serversetup
+        # /todo nano.serversetup
+
+    async def on_member_remove(self, member, **kwargs):
+        if self.timer.get_ban(member):
+            return "return"
 
 
 class NanoPlugin:
     _name = "Admin Commands"
-    _version = 0.1
+    _version = 0.2
 
     handler = Admin
     events = {
-        "on_message": 10
+        "on_message": 10,
+        "on_member_remove": 4
         # type : importance
     }

@@ -50,6 +50,9 @@ class ServerManagement:
             else:
                 return await self.client.create_channel(server, log_channel_name, then_perms, nano_perms)
 
+        else:
+            return discord.utils.find(lambda m: m.name == self.handler.get_var(server.id, "logchannel"), server.channels)
+
     async def on_message(self, message, **kwargs):
         assert isinstance(message, discord.Message)
         assert isinstance(self.stats, NanoStats)
@@ -165,7 +168,7 @@ class ServerManagement:
 
         leave_msg = str(self.handler.get_var(member.server.id, "leavemsg"))
 
-        for trigg, repl in replacement_logic:
+        for trigg, repl in replacement_logic.items():
             leave_msg = leave_msg.replace(trigg, repl)
 
         log_c = await self.handle_log_channel(member.server)
@@ -188,7 +191,7 @@ class ServerManagement:
 
 class NanoPlugin:
     _name = "Moderator"
-    _version = 0.1
+    _version = 0.2
 
     handler = ServerManagement
     events = {

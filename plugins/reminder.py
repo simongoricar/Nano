@@ -2,7 +2,7 @@
 import time
 import asyncio
 import logging
-from discord import Message, Client
+from discord import Message, Client, DiscordException
 from data.utils import resolve_time, convert_to_seconds, is_valid_command
 from data.stats import MESSAGE
 
@@ -28,20 +28,24 @@ valid_commands = [
 # Functions
 
 
-class RemindHandler:
+class ReminderHandler:
     def __init__(self, client, loop=asyncio.get_event_loop()):
         self.client = client
         self.loop = loop
 
         self.reminders = {}
 
-        self.must_wait = False
+        self.wait = False
 
-    def wait(self):
-        self.must_wait = True
+    def lock(self):
+        self.wait = True
 
-    def wait_release(self):
-        self.must_wait = False
+    def release(self):
+        self.wait = False
+
+    async def wait(self):
+        while self.wait:
+            await asyncio.sleep(0.01)
 
     def get_reminders(self, user):
         return self.reminders.get(user.id)
@@ -50,11 +54,11 @@ class RemindHandler:
         if self.reminders.get(user.id):
             self.reminders[user.id] = []
 
-    def remove_reminder(self, user, rem):
+    def remove_reminder(self, user, reminder):
         if self.reminders.get(user.id):
 
             for c, rm in enumerate(self.reminders[user.id]):
-                if rem == rm[0] or rem == rm[1]:
+                if reminder == rm.get("raw"):
                     self.reminders[user.id].pop(c)
                     return True
 
@@ -69,11 +73,8 @@ class RemindHandler:
         :return: bool
         """
         if self.reminders.get(user.id):
-            if len(self.reminders[user.id]) > limit+1:
-                return True
+            return len(self.reminders[user.id]) > limit+1
 
-            else:
-                return False
         else:
             return True
 
@@ -96,42 +97,59 @@ class RemindHandler:
         if not (5 < tim < 172800):  # 5 sec to 2 days
             return False
 
+        raw = str(content)
+        content = ":alarm_clock: You asked me to remind you: \n```{}```".format(content)
+
         # Add the reminder to the list
         if not self.reminders.get(author.id):
-            self.reminders[author.id] = [[tim, content, int(round(t, 0))]]
+            self.reminders[author.id] = [{"full_time": tim, "content": content, "raw": raw, "receiver": channel,
+                                          "time_created": int(t), "time_target": int(tim + t), "author": author.id}]
         else:
-            self.reminders[author.id].append([tim, content, int(round(t, 0))])
-
-        fulltext = ":alarm_clock: Reminder: \n```{}```".format(content)
-
-        ttl = tim - (time.time() - t)
-
-        # Creates a coroutine task
-        self.schedule(channel, fulltext, ttl, author.id)
+            self.reminders[author.id].append({"full_time": tim, "content": content, "raw": raw, "receiver": channel,
+                                              "time_created": int(t), "time_target": int(tim + t), "author": author.id})
 
         return True
 
-    def schedule(self, channel, content, tim, uid):
-        self.loop.create_task(self._schedule(channel, content, tim, uid))
+    @staticmethod
+    async def tick(last_time):
+        """
+        Very simple implementation of a self-correcting tick system
+        :return: None
+        """
+        current_time = time.time()
+        delta = 1 - (current_time - last_time)
 
-    async def _schedule(self, channel, content, tim, uid):
-        logger.info("Event scheduled")
-        await asyncio.sleep(tim)
+        await asyncio.sleep(delta)
 
-        if not [rem for rem in self.reminders.get(uid) if rem[0] == tim]:
-            logger.debug("Reminder deleted before execution, quitting")
-            return
+        return time.time()
 
-        while self.must_wait:
-            await asyncio.sleep(0.1)
-
+    async def dispatch(self, reminder):
         try:
             logger.debug("Dispatching")
-            await self.client.send_message(channel, content)
+            await self.client.send_message(reminder.get("receiver"), reminder.get("content"))
+        except DiscordException:
+            pass
 
-        # This MUST be done in all cases
-        finally:
-            self.reminders[uid] = [a for a in self.reminders[uid] if a[0] != tim]
+    async def start_monitoring(self):
+        last_time = time.time()
+
+        while True:
+            # Iterate through users and their reminders
+            for user in self.reminders.values():
+                for reminder in user:
+
+                    # If enough time has passed, send the reminder
+                    if reminder.get("time_target") <= last_time:
+
+                        await self.dispatch(reminder)
+
+                        try:
+                            self.reminders[reminder.get("author")].remove(reminder)
+                        except KeyError:
+                            pass
+
+            # And tick.
+            last_time = await self.tick(last_time)
 
 
 class Reminder:
@@ -142,7 +160,9 @@ class Reminder:
         self.nano = kwargs.get("nano")
         self.stats = kwargs.get("stats")
 
-        self.reminder = RemindHandler(self.client, self.loop)
+        self.reminder = ReminderHandler(self.client, self.loop)
+
+        self.loop.create_task(self.reminder.start_monitoring())
 
     async def on_message(self, message, **kwargs):
         client = self.client
@@ -216,8 +236,8 @@ class Reminder:
             rem = []
             for reminder in reminders:
                 # Gets the remaining time
-                ttl = reminder[0] - (time.time() - reminder[2])
-                rem.append("➤ {} (in **{}**)".format(reminder[1], resolve_time(ttl)))
+                ttl = reminder.get("time_target") - time.time()
+                rem.append("➤ {} (in **{}**)".format(reminder.get("raw"), resolve_time(ttl)))
 
             await client.send_message(message.channel, "Your reminders:\n" + "\n".join(rem))
 
@@ -243,7 +263,7 @@ class Reminder:
 
 class NanoPlugin:
     _name = "Reminder Commands"
-    _version = 0.1
+    _version = 0.2
 
     handler = Reminder
     events = {
