@@ -31,8 +31,8 @@ class PrefixState:
 
 
         # Set up the server if it is not present in servers.yml
-        if not self.client.server_exists(message.server):
-            self.client.server_setup(message.server)
+        if not self.handler.server_exists(message.server):
+            self.handler.server_setup(message.server)
 
         # Ah, the shortcuts
         def startswith(*msg):

@@ -17,7 +17,7 @@ from data.utils import log_to_file
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '3.0.2'
+__version__ = '3.0.3'
 
 
 # CONSTANTS
@@ -42,6 +42,7 @@ ON_MEMBER_UNBAN = "on_member_unban"
 ON_SERVER_JOIN = "on_server_join"
 ON_SERVER_REMOVE = "on_server_remove"
 
+ON_ERROR = "on_error"
 ON_SHUTDOWN = "on_shutdown"
 
 # Other
@@ -114,7 +115,7 @@ class Nano(metaclass=Singleton):
         self.plugin_events = dict(on_message=[], on_server_join=[], on_channel_create=[], on_channel_delete=[],
                                   on_channel_update=[], on_message_delete=[], on_message_edit=[], on_ready=[],
                                   on_member_join=[], on_member_remove=[], on_member_update=[], on_member_ban=[],
-                                  on_member_unban=[], on_server_remove=[], on_shutdown=[])
+                                  on_member_unban=[], on_server_remove=[], on_error=[], on_shutdown=[])
 
         # Updates the plugin list
         self.update_plugins()
@@ -299,6 +300,11 @@ async def on_server_join(server):
 @client.event
 async def on_server_remove(server):
     await nano.dispatch_event(ON_SERVER_REMOVE, server)
+
+
+@client.event
+async def on_error(event, *args, **kwargs):
+    await nano.dispatch_event(ON_ERROR, event, *args, **kwargs)
 
 # Do I really need all of this? No, I don't.
 

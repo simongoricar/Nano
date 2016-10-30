@@ -3,18 +3,21 @@ import os
 import sys
 import subprocess
 import logging
+import traceback
 from shutil import copy2
 from asyncio import sleep
 from random import shuffle
-from discord import Message, Game, utils
+from discord import Message, Game, utils, errors
 from data.serverhandler import ServerHandler
-from data.utils import is_valid_command
+from data.utils import is_valid_command, log_to_file
 from data.stats import MESSAGE
 
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
+
+initial_status = "Hi there!"
 
 game_list = [
     "(formerly AyyBot)",
@@ -42,10 +45,13 @@ class StatusRoller:
         log.info("Status roller enabled")
 
     async def change_status(self, name):
+        log.info("Changing status to {}".format(name))
         await self.client.change_presence(game=Game(name=str(name)))
 
     async def run(self):
         await self.client.wait_until_ready()
+
+        await self.change_status(initial_status)
 
         shuffle(game_list)
         await sleep(self.time)
@@ -60,6 +66,8 @@ class StatusRoller:
                 await sleep(self.time)
 
             shuffle(game_list)
+
+        log_to_file("Exited status roller")
 
 
 class BackupManager:
@@ -173,6 +181,10 @@ class DevFeatures:
 
             await client.send_message(message.channel, to_send)
 
+        # nano.dev.test_error
+        elif startswith("nano.dev.test_error"):
+            int("abcdef")
+
         # nano.reload
         elif startswith("nano.reload"):
             self.handler.reload()
@@ -221,15 +233,29 @@ class DevFeatures:
             else:
                 subprocess.Popen(os.path.abspath("startbot.sh"), shell=True)
 
+    @staticmethod
+    async def on_error(event, *args, **kwargs):
+        e_type, _, _ = sys.exc_info()
+
+        # Ignore Forbidden errors (but log them anyways)
+        if e_type == errors.Forbidden:
+            log.warn("Forbidden: 403")
+            log_to_file("Forbidden 403. Server: {}, channel: {}".format(args[0].server, args[0].channel))
+
+        else:
+            print('Ignoring exception in {}'.format(event), file=sys.stderr)
+            traceback.print_exc()
+
 
 class NanoPlugin:
     _name = "Developer Commands"
-    _version = 0.2
+    _version = "0.2.1"
 
     handler = DevFeatures
     events = {
         "on_message": 10,
         "on_ready": 5,
         "on_shutdown": 15,
+        "on_error": 5,
         # type : importance
     }

@@ -1,3 +1,9 @@
+3.0.3
+- Added !setup / nano.setup (previously as !getstarted)
+- Added Forbidden 403 error logging to log.txt
+- Updated !help [command]
+- Some bugfixes
+
 3.0.2
 - Reminders now persist between restarts!
 - Raised the reminder limit to 2 (temporarily?)

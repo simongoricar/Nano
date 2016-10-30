@@ -14,9 +14,11 @@ class Conversation:
         self.client = kwargs.get("client")
         self.nano = kwargs.get("nano")
 
-    async def on_message(self, message, **_):
+    async def on_message(self, message, **kwargs):
         assert isinstance(message, Message)
+
         client = self.client
+        prefix = kwargs.get("prefix")
 
         if self.client.user not in message.mentions:
             return
@@ -30,7 +32,14 @@ class Conversation:
 
         # RESPONSES
 
-        if has("how are you", "whats up"):
+        # If it is just a raw mention, send the help message
+        if str(message.content).replace("<@{}>".format(self.client.user.id), "").strip(" ") == "":
+            await client.send_message(message.channel, help_nano)
+
+        elif has("prefix"):
+            await client.send_message(message.channel, "The prefix for this server is **{}**".format(prefix))
+
+        elif has("how are you", "whats up"):
             lst = ["I'm awesome!", "Doing great.",
                    "Doing awesome. Pumpin' dem messages out like it's christmas babyyy!",
                    "It's been a beautiful day so far."]
@@ -73,7 +82,7 @@ class Conversation:
 
 class NanoPlugin:
     _name = "Conversation Commands"
-    _version = 0.1
+    _version = "0.2"
 
     handler = Conversation
     events = {

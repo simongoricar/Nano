@@ -78,22 +78,22 @@ class ServerHandler(metaclass=Singleton):  # Singleton is imported from utils
     def server_setup(self, server):
         data = self.cached_file
 
-        data[server.id] = {"name": server.name,
-                           "owner": server.owner.name,
-                           "filterwords": False,
-                           "filterspam": False,
-                           "filterinvite": False,
-                           "welcomemsg": ":user, Welcome to :server!",
-                           "kickmsg": "**:user** has been kicked.",
-                           "banmsg": "**:user** has been banned.",
-                           "leavemsg": "Bye, **:user**",
-                           "blacklisted": [],
-                           "muted": [],
-                           "customcmds": {},
-                           "admins": [],
-                           "logchannel": "logs",
-                           "sleeping": False,
-                           "prefix": str(parser.get("Settings", "defaultprefix"))}
+        self.cached_file[server.id] = {"name": server.name,
+                                       "owner": server.owner.name,
+                                       "filterwords": False,
+                                       "filterspam": False,
+                                       "filterinvite": False,
+                                       "welcomemsg": ":user, Welcome to :server!",
+                                       "kickmsg": "**:user** has been kicked.",
+                                       "banmsg": "**:user** has been banned.",
+                                       "leavemsg": "Bye, **:user**",
+                                       "blacklisted": [],
+                                       "muted": [],
+                                       "customcmds": {},
+                                       "admins": [],
+                                       "logchannel": "logs",
+                                       "sleeping": False,
+                                       "prefix": str(parser.get("Servers", "defaultprefix"))}
 
         log.info("Queued new server: {}".format(server.name))
 
@@ -138,12 +138,6 @@ class ServerHandler(metaclass=Singleton):  # Singleton is imported from utils
     def get_server_data(self, server_id):
         return self.cached_file.get(server_id)
 
-    def server_exists(self, server):
-        try:
-            return server.id in self.cached_file
-        except AttributeError:
-            return True
-
     def update_moderation_settings(self, server, key, value):
         data = self.cached_file
 
@@ -158,7 +152,7 @@ class ServerHandler(metaclass=Singleton):  # Singleton is imported from utils
             data[server.id]["filterspam"] = value
             self.queue_write(data)
 
-        elif get_decision(key, ("filterinvite", "filterinvites", "invite removal", "invite filter")):
+        elif get_decision(key, ("filterinvite", "filterinvites", "invite removal", "invite filter", "invitefilter")):
             data[server.id]["filterinvite"] = value
             self.queue_write(data)
 
@@ -212,12 +206,11 @@ class ServerHandler(metaclass=Singleton):  # Singleton is imported from utils
     def update_command(self, server, trigger, response):
         try:
             data = self.cached_file
-                
+
             data[server.id]["customcmds"][trigger] = response
-            if "nano.checkcmd" in data[server.id]["customcmds"]:
-                data[server.id]["customcmds"].pop("nano.checkcmds",0)
-            with open("data/servers.yml","w") as outfile:
-                outfile.write(dump(data,default_flow_style=False))
+
+            self.queue_write(data)
+
         except UnicodeEncodeError:
             pass
 
@@ -279,11 +272,7 @@ class ServerHandler(metaclass=Singleton):  # Singleton is imported from utils
 
         try:
             data = self.cached_file
-               
-            if channel.name in data[sid]["blacklisted"]:
-                return True
-            else:
-                return False
+            return channel.name in data[sid]["blacklisted"]
 
         except KeyError:
             return False

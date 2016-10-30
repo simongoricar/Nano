@@ -2,16 +2,16 @@
 import discord
 from data.stats import NanoStats, MESSAGE
 from data.serverhandler import ServerHandler
-from data.utils import is_valid_command
+from data.utils import is_valid_command, log_to_file
 
 nano_welcome = "**Hi!** I'm Nano!\nNow that you have invited me to your server, you might want to set up some things." \
                "Right now only the server owner can use my restricted commands. But no worries, you can add admin permissions" \
                "to others using `nano.admins add @mention` or by assigning them a role named **Nano Admin**!" \
-               "\nTo get started, type `!getstarted` as the server owner. It will help you set up most of the things. " \
+               "\nTo get started, type `!setup` as the server owner. It will help you set up most of the things. " \
                "After that, you might want to see `!cmds` to get familiar with my commands."
 
 valid_commands = [
-    "_stats", "_status", "_prefix", "_members", "<@"
+    "_stats", "_status", "_prefix", "_members", "nano.prefix",
 ]
 
 
@@ -112,23 +112,24 @@ class ServerManagement:
         elif startswith(prefix + "prefix"):
             await client.send_message(message.channel, "You guessed it!")
 
-        # @Nano prefix
-        elif self.client.user in message.mentions and str(message.content[22:]).startswith("prefix"):
+        # nano.prefix
+        elif startswith("nano.prefix"):
             await client.send_message(message.channel, "The prefix on this server is **{}**".format(prefix))
 
         # !members
         elif startswith(prefix + "members"):
             ls = [member.name for member in message.channel.server.members]
 
-            members = "*__Members__*:\n\n{}".format(", ".join(["`{}`".format(mem) for mem in ls]))
+            members = "*__Members__*:\n\n{}".format(", ".join(["`{}`".format(mem) for mem in ls])) + "\nTotal: **{}** members".format(len(ls))
 
             if len(members) > 2000:
-                await client.send_message(message.channel, ":warning: Too many members on this server to display!")
-                return
+                # Only send the number if the message is too long.
+                await client.send_message(message.channel, "This guild has a total number of **{}** members".format(len(ls)))
 
-            await client.send_message(message.channel, members)
+            else:
+                await client.send_message(message.channel, members)
 
-    async def on_member_join(self, member, **kwargs):
+    async def on_member_join(self, member, **_):
         assert isinstance(self.handler, ServerHandler)
 
         replacement_logic = {
@@ -143,7 +144,7 @@ class ServerManagement:
 
         await self.client.send_message(member.server.default_channel, welcome_msg)
 
-    async def on_member_ban(self, member, **kwargs):
+    async def on_member_ban(self, member, **_):
         assert isinstance(self.handler, ServerHandler)
 
         replacement_logic = {
@@ -159,7 +160,7 @@ class ServerManagement:
 
         await self.client.send_message(log_c, ban_msg)
 
-    async def on_member_remove(self, member, **kwargs):
+    async def on_member_remove(self, member, **_):
         assert isinstance(self.handler, ServerHandler)
 
         replacement_logic = {
@@ -175,23 +176,28 @@ class ServerManagement:
 
         await self.client.send_message(log_c, leave_msg)
 
-    async def on_server_join(self, server, **kwargs):
+    async def on_server_join(self, server, **_):
         # Say hi to the server
         await self.client.send_message(server.default_channel, nano_welcome)
 
         # Create server settings
         self.handler.server_setup(server)
 
-    async def on_server_remove(self, server, **kwargs):
-        assert isinstance(self.handler, ServerHandler)
+        # Log
+        log_to_file("Joined server: {}".format(server.name))
 
+    async def on_server_remove(self, server, **_):
+        # Deletes server data
         server_ids = [s.id for s in self.client.servers]
         self.handler._delete_old_servers(server_ids)
+
+        # Log
+        log_to_file("Removed from server: {}".format(server.name))
 
 
 class NanoPlugin:
     _name = "Moderator"
-    _version = 0.2
+    _version = "0.2.1"
 
     handler = ServerManagement
     events = {

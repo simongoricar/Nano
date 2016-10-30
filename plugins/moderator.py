@@ -157,6 +157,7 @@ class Moderator:
         # Muting
         if handler.is_muted(message.author):
             await client.delete_message(message)
+            return "return"
 
         # Spam, swearing and invite filter
         needs_spam_filter = handler.has_spam_filter(message.channel.server)

@@ -15,13 +15,15 @@ error_hierarchy = ":warning: You are not allowed to mess with this role (you are
 
 CHECK_MARK = ":white_check_mark:"
 CROSS_MARK = ":negative_squared_cross_mark:"
+WARNING = ":warning:"
 
 valid_commands = [
     "_welcomemsg", "_kickmsg", "_banmsg", "_leavemsg",
     "_nuke", "_kick", "_ban", "_unban", "_softban", "_unmute",
     "_mute", "_user", "_role add", "_role remove", "_role replaceall",
     "_cmd add", "_cmd remove", "_cmd list", "nano.settings", "nano.displaysettings",
-    "nano.admins add", "nano.admins remove", "nano.admins list"
+    "nano.admins add", "nano.admins remove", "nano.admins list", "_setup", "nano.setup",
+    "nano.serverreset"
 ]
 
 
@@ -137,11 +139,11 @@ class Admin:
             return False
 
         if not handler.can_use_restricted_commands(message.author, message.channel.server):
+            await client.send_message(message.channel, WARNING + " You do not have the correct permissions to use this command (must be a server admin).")
             return
 
         # !welcomemsg
         if startswith(prefix + "welcomemsg"):
-            print("ok")
             change = message.content[len(prefix + "welcomemsg "):]
             handler.update_var(message.channel.server.id, "welcomemsg", change)
 
@@ -184,7 +186,7 @@ class Admin:
             await client.purge_from(message.channel, limit=amount)
 
             # Show success
-            m = await client.send_message(message.channel, "Purged {} messages :white_check_mark:".format(amount - 1))
+            m = await client.send_message(message.channel, "Purged {} messages {}".format(CHECK_MARK, amount - 1))
             # Wait 1.5 sec and delete the message
             await asyncio.sleep(1.5)
             await client.delete_message(m)
@@ -315,7 +317,7 @@ class Admin:
 
             # If the member does not exist
             if not member:
-                await client.send_message(message.channel, ":warning: Member does not exist.")
+                await client.send_message(message.channel, "Member does not exist.")
                 return
 
             # Gets info
@@ -373,7 +375,7 @@ class Admin:
                     return
 
                 await client.add_roles(user, role)
-                await client.send_message(message.channel, "Done :white_check_mark: ")
+                await client.send_message(message.channel, "Done " + CHECK_MARK)
 
             elif startswith(prefix + "role " + "remove "):
                 a_role = str(message.content[len(prefix + "role remove "):]).split("<")[0].strip()
@@ -384,7 +386,7 @@ class Admin:
                     return
 
                 await client.remove_roles(user, role)
-                await client.send_message(message.channel, "Done :white_check_mark: ")
+                await client.send_message(message.channel, "Done " + CHECK_MARK)
 
             elif startswith(prefix + "role " + "replaceall "):
                 a_role = str(message.content[len(prefix + "role replaceall "):]).split("<")[0].strip()
@@ -395,7 +397,7 @@ class Admin:
                     return
 
                 await client.replace_roles(user, role)
-                await client.send_message(message.channel, "Done :white_check_mark: ")
+                await client.send_message(message.channel, "Done " + CHECK_MARK)
 
         # !cmd add
         elif startswith(prefix + "cmd add"):
@@ -414,7 +416,7 @@ class Admin:
             cut = str(message.content)[len(prefix + "cmd remove "):]
             handler.remove_command(message.server, cut)
 
-            await client.send_message(message.channel, "Ok :white_check_mark: ")
+            await client.send_message(message.channel, "Ok " + CHECK_MARK)
 
         # !cmd list
         elif startswith(prefix + "cmd list"):
@@ -450,7 +452,7 @@ class Admin:
             elif get_decision(cut[0], ("spam filter", "spamfilter", "filter spam")):
                 await client.send_message(message.channel, "Spam filter {}".format(CHECK_MARK if value else CROSS_MARK))
 
-            elif get_decision(cut[0], ("filterinvite", "filterinvites", "invite removal", "invite filter")):
+            elif get_decision(cut[0], ("filterinvite", "filterinvites", "invite removal", "invite filter", "invitefilter")):
                 await client.send_message(message.channel,
                                           "Invite filter {}".format(CHECK_MARK if value else CROSS_MARK))
 
@@ -545,8 +547,134 @@ Messages:
                 else:
                     await client.send_message(message.channel, "**Admins:** " + final)
 
+        # nano.reset
+        elif startswith("nano.serverreset"):
+            await client.send_message(message.channel, WARNING + " Are you sure you want to reset all Nano-related sever settings to default? Confirm by replying 'CONFIRM'.")
 
-        # /todo nano.serversetup
+            followup = await client.wait_for_message(author=message.author, channel=message.channel,
+                                                     timeout=15, content="CONFIRM")
+
+            if followup is None:
+                await client.send_message(message.channel, "Confirmation not received, NOT resetting :upside_down:")
+
+            handler.server_setup(message.server)
+
+            await client.send_message(message.channel, "Reset. :white_check_mark: ")
+
+        # !setup, nano.setup
+        elif startswith(prefix + "setup", "nano.setup"):
+            auth = message.author
+
+            async def timeout(msg):
+                await client.send_message(msg.channel,
+                                          "You ran out of time :upside_down: (FYI: the timeout is 35 seconds)")
+
+            msg_intro = "**SERVER SETUP**\nYou have started the server setup. It consists of a few steps, " \
+                        "where you will be prompted to answer.\n**Let's get started, shall we?**"
+            await client.send_message(message.channel, msg_intro)
+            await asyncio.sleep(2)
+
+            # FIRST MESSAGE
+            msg_one = "Do you want to reset all bot-related settings for this server?\n" \
+                      "(this includes spam and swearing protection, admin list, blacklisted channels, \n" \
+                      "log channel, prefix, welcome, ban and kick message). **yes / no**"
+            await client.send_message(message.channel, msg_one)
+
+            # First check
+
+            def check_yes1(msg):
+                # yes or no
+                if str(msg.content).lower().strip(" ") == "yes":
+                    handler.server_setup(message.channel.server)
+
+                return True
+
+            ch1 = await client.wait_for_message(timeout=35, author=auth, check=check_yes1)
+            if ch1 is None:
+                timeout(message)
+                return
+
+            # SECOND MESSAGE
+            msg_two = "What prefix would you like to use for all commands?\n" \
+                      "Type that prefix.\n(prefix example: **!** 'translates to' `!help`, `!ping`, ...)"
+            await client.send_message(message.channel, msg_two)
+
+            # Second check, does not need yes/no filter
+            ch2 = await client.wait_for_message(timeout=35, author=auth)
+            if ch2 is None:
+                timeout(message)
+
+            if ch2.content:
+                handler.change_prefix(message.channel.server, str(ch2.content).strip(" "))
+
+            # THIRD MESSAGE
+            msg_three = "What would you like me to say when a person joins your server?\n" \
+                        "Reply with that message or with None if you want to disable welcome messages. \n" \
+                        "(:user translates to a mention of the joined user; for example -> :user, welcome to this server!)"
+            await client.send_message(message.channel, msg_three)
+
+            ch3 = await client.wait_for_message(timeout=35, author=auth)
+            if ch3 is None:
+                timeout(message)
+
+            if ch3.content.strip(" ").lower() == "none":
+                handler.update_var(message.server.id, "welcomemsg", None)
+            else:
+                handler.update_var(message.server.id, "welcomemsg", str(ch3.content))
+
+            # FOURTH MESSAGE
+            msg_four = """Would you like me to filter spam? **yes / no**"""
+            await client.send_message(message.channel, msg_four)
+
+            # Fourth check
+
+            def check_yes3(msg):
+                # yes or no
+
+                if str(msg.content).lower().strip(" ") == "yes":
+                    handler.update_moderation_settings(message.channel.server, "filterspam", True)
+                else:
+                    handler.update_moderation_settings(message.channel.server, "filterspam", False)
+
+                return True
+
+            ch3 = await client.wait_for_message(timeout=35, author=auth, check=check_yes3)
+            if ch3 is None:
+                timeout(message)
+
+            # FIFTH MESSAGE
+            msg_five = """Would you like me to filter swearing? **yes / no**"""
+            await client.send_message(message.channel, msg_five)
+
+            # Fifth check check
+
+            def check_yes4(msg):
+                # yes or no
+
+                if str(msg.content).lower().strip(" ") == "yes":
+                    handler.update_moderation_settings(message.channel.server, "filterwords", True)
+                else:
+                    handler.update_moderation_settings(message.channel.server, "filterwords", False)
+
+                return True
+
+            ch4 = await client.wait_for_message(timeout=35, author=auth, check=check_yes4)
+            if ch4 is None:
+                timeout(message)
+
+            msg_final = """**This concludes the basic server setup.**
+But there are a few more settings to set up if you need'em:
+➤ channel blacklisting - `nano.blacklist add/remove channel_name`
+➤ kick message - `_kickmsg message`
+➤ ban message - `_banmsg message`
+
+The prefix can simply be changed again with `nano.changeprefix prefix`.
+Admin commands can only be used by people with a role named "Nano Admin". If you do not want to assign roles, use `nano.admins add @mention`.
+
+You and all admins can also add/remove/list custom commands with `_cmd add/remove/list command|response`.
+For a list of all commands, use `_cmds`.""".replace("_", str(ch2.content))
+
+            await client.send_message(message.channel, msg_final)
 
     async def on_member_remove(self, member, **kwargs):
         if self.timer.get_ban(member):
@@ -555,7 +683,7 @@ Messages:
 
 class NanoPlugin:
     _name = "Admin Commands"
-    _version = 0.2
+    _version = "0.2.1"
 
     handler = Admin
     events = {

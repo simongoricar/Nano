@@ -2,20 +2,25 @@
 import requests
 import json
 import configparser
+import logging
 
 parser = configparser.ConfigParser()
 parser.read("plugins/config.ini")
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
 
 
 class POST:
     def __init__(self, **kwargs):
         self.client = kwargs.get("client")
 
-    async def on_server_join(self, _):
+    async def on_server_join(self, server):
         amount = len(self.client.servers)
         token = parser.get("bots.discord.pw", "token")
 
         self.upload(amount, token)
+        log.info("Updated guild count: {} (joined {})".format(amount, server.name))
 
     @staticmethod
     def upload(num, token):

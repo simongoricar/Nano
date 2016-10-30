@@ -57,7 +57,7 @@ quotes = [
 
 valid_commands = [
     "_hello", "_uptime", "_github", "_roll", "_dice", "_ping", "_decide", "_8ball",
-    "_quote", "_invite", "_avatar", "_say", "nano.info", "_nano"
+    "_quote", "_invite", "_avatar", "_say", "nano.info", "_nano", "_invite", "nano.invite"
 ]
 
 # Common commands plugin
