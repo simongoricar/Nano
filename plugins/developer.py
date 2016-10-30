@@ -7,7 +7,7 @@ import traceback
 from shutil import copy2
 from asyncio import sleep
 from random import shuffle
-from discord import Message, Game, utils, errors
+from discord import Message, Game, Member, utils, errors
 from data.serverhandler import ServerHandler
 from data.utils import is_valid_command, log_to_file
 from data.stats import MESSAGE
@@ -93,7 +93,7 @@ class BackupManager:
     def stop(self):
         self.running = False
 
-    def backup(self):
+    async def backup(self):
         if not self.running:
             return
 
@@ -116,7 +116,8 @@ class BackupManager:
             # Run the backup every day
             await sleep(self.time)
 
-            self.backup()
+            log_to_file("Creating a backup...")
+            await self.backup()
 
 
 class DevFeatures:
@@ -240,7 +241,15 @@ class DevFeatures:
         # Ignore Forbidden errors (but log them anyways)
         if e_type == errors.Forbidden:
             log.warn("Forbidden: 403")
-            log_to_file("Forbidden 403. Server: {}, channel: {}".format(args[0].server, args[0].channel))
+
+            if isinstance(args[0], Message):
+                log_to_file("Forbidden 403. Server: {}, channel: {}".format(args[0].server, args[0].channel))
+
+            elif isinstance(args[0], Member):
+                log_to_file("Forbidden 403. Server: {}, member: {}:{}".format(args[0].server, args[0].name, args[0].id))
+
+            else:
+                log_to_file("Forbidden 403. Unknown instance: {}:{}".format(type(args[0]), args[0].__dict__))
 
         else:
             print('Ignoring exception in {}'.format(event), file=sys.stderr)
