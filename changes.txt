@@ -1,3 +1,13 @@
+3.1.0
+- Added !debug (ram, cpu, reminder, voting, versions, uptime info)
+- Fixed status roller and upped it up to 6 hours for one status
+- Added some stats integrations back
+- A success of a vote is now acknowledged with :ok_hand: for 1.5 sec
+- Moderation logs are now sent to the log channel every minute
+
+3.0.4
+- Improved spam detection (now excludes links and messages shorter than 10 characters)
+
 3.0.3
 - Added !setup / nano.setup (previously as !getstarted)
 - Added Forbidden 403 error logging to log.txt

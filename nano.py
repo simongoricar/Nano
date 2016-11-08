@@ -17,7 +17,7 @@ from data.utils import log_to_file
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '3.0.3'
+__version__ = '3.1.0'
 
 
 # CONSTANTS
@@ -188,6 +188,9 @@ class Nano(metaclass=Singleton):
             sorted_list = [it.get("plugin") for it in list(sorted_list)]
 
             self.plugin_events[el] = sorted_list
+
+    def get_plugin(self, name):
+        return self.plugins.get(str(name) + ".py")
 
     async def dispatch_event(self, event_type, *args, **kwargs):
         """

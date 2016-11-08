@@ -30,7 +30,7 @@ valid_commands = [
 # Functions
 
 
-class ReminderHandler:
+class ReminderHandler():
     def __init__(self, client, loop=asyncio.get_event_loop()):
         self.client = client
         self.loop = loop

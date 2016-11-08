@@ -5,7 +5,7 @@ import logging
 from pickle import dumps, load
 from discord import Message
 from data.serverhandler import ServerHandler
-from data.stats import MESSAGE, VOTE
+from data.stats import MESSAGE, VOTE, WRONG_PERMS
 from data.utils import is_valid_command, is_empty
 
 __author__ = "DefaltSimon"
@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 
-class VoteHandler:
+class VoteHandler():
     def __init__(self, **_):
 
         # Plugin-related
@@ -93,6 +93,8 @@ class VoteHandler:
             except KeyError:
                 self.votes[server.id][item] = 1
 
+            return True
+
     def get_votes(self, server):
         return self.votes.get(server.id)
 
@@ -159,7 +161,8 @@ class Vote:
         if startswith(prefix + "vote start"):
             if not self.handler.can_use_restricted_commands(message.author, message.channel.server):
                 await client.send_message(message.content, "You are not permitted to use this command.")
-                # /todo add stats integration
+
+                self.stats.add(WRONG_PERMS)
                 return
 
             if self.vote.in_progress(message.channel.server):
@@ -184,7 +187,8 @@ class Vote:
         elif startswith(prefix + "vote end"):
             if not self.handler.can_use_restricted_commands(message.author, message.channel.server):
                 await client.send_message(message.content, "You are not permitted to use this command.")
-                # /todo add stats integration
+
+                self.stats.add(WRONG_PERMS)
                 return
 
             if not self.vote.in_progress(message.channel.server):
@@ -198,7 +202,7 @@ class Vote:
             # Actually end the voting
             self.vote.end_voting(message.channel.server)
 
-            # Compile results
+            # Put results together
             cn = ["{} - `{} votes`".format(a, votes[a]) for a in content]
 
             combined = "Vote ended:\n__{}__\n\n{}".format(header, "\n".join(cn))
@@ -220,7 +224,12 @@ class Vote:
                 msg = await client.send_message(message.channel, "Cheater :smile:")
 
                 await asyncio.sleep(1)
+                await client.delete_message(msg)
 
+            elif res:
+                msg = await client.send_message(message.channel, ":ok_hand:")
+
+                await asyncio.sleep(1.5)
                 await client.delete_message(msg)
 
             self.stats.add(VOTE)
@@ -236,7 +245,7 @@ class Vote:
 
 class NanoPlugin:
     _name = "Voting"
-    _version = 0.2
+    _version = "0.2.1"
 
     handler = Vote
     events = {

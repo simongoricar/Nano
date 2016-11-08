@@ -38,14 +38,16 @@ valid_commands = [
 
 
 class StatusRoller:
-    def __init__(self, client, time=10800):  # 3 Hours
+    def __init__(self, client, time=21600):  # 6 Hours
         self.time = time
         self.client = client
 
         log.info("Status roller enabled")
 
     async def change_status(self, name):
-        log.info("Changing status to {}".format(name))
+        log.debug("Changing status to {}".format(name))
+        log_to_file("Changing status to {}".format(name))
+
         await self.client.change_presence(game=Game(name=str(name)))
 
     async def run(self):
@@ -53,6 +55,7 @@ class StatusRoller:
 
         await self.change_status(initial_status)
 
+        # Shuffle the game list
         shuffle(game_list)
         await sleep(self.time)
 
@@ -126,6 +129,7 @@ class DevFeatures:
         self.handler = kwargs.get("handler")
         self.client = kwargs.get("client")
         self.stats = kwargs.get("stats")
+        self.loop = kwargs.get("loop")
 
         self.backup = BackupManager()
         self.roller = StatusRoller(self.client)
@@ -222,8 +226,8 @@ class DevFeatures:
             await client.send_message(message.channel, "Status changed :+1:")
 
     async def on_ready(self):
-        await self.backup.start()
-        await self.roller.run()
+        self.loop.create_task(self.backup.start())
+        self.loop.create_task(self.roller.run())
 
     async def on_shutdown(self):
 

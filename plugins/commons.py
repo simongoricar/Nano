@@ -6,7 +6,7 @@ from datetime import timedelta, datetime
 from random import randint
 from discord import Message, utils
 from data.serverhandler import ServerHandler
-from data.stats import MESSAGE, NanoStats
+from data.stats import MESSAGE, PING
 from data.utils import is_valid_command
 
 log = logging.getLogger(__name__)
@@ -156,6 +156,8 @@ class Commons:
         # !ping
         elif startswith(prefix + "ping"):
             await client.send_message(message.channel, "**Pong!**")
+
+            self.stats.add(PING)
 
         # !decide
         elif startswith(prefix + "decide"):

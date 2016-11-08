@@ -1,10 +1,12 @@
 # coding=utf-8
 import logging
 import re
+import asyncio
 from pickle import load
-
+from discord import Message, Client, Server, utils
 from data.serverhandler import ServerHandler
-from discord import Message, Client
+from data.stats import SUPPRESS
+
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -31,6 +33,8 @@ def two_chars(line):
 
 class NanoModerator:
     def __init__(self):
+
+        # Other
         with open("plugins/banned_words.txt", "r") as file:
             self.word_list = [line.strip("\n") for line in file.readlines()]
 
@@ -44,6 +48,8 @@ class NanoModerator:
         # Entropy calculator
         self.chars2 = "abcdefghijklmnopqrstuvwxyz,.-!?_;:|1234567890*=)(/&%$#\"~<> "
         self.pos2 = dict([(c, index) for index, c in enumerate(self.chars2)])
+
+        self.invite_regex = re.compile(r'(http(s)?://)?discord.gg/\w+')
 
     def check_swearing(self, message):
         """Returns True if there is a banned word
@@ -74,11 +80,21 @@ class NanoModerator:
         if isinstance(message, Message):
             message = str(message.content)
 
-        result = bool(self._detect_gib(message))  # Currently uses only the gibberish detector since the other one does not have much (or enough) better detection of repeated chars
+        # 1. Should exclude links
+        message = " ".join([word for word in message.split(" ") if
+                            (not word.startswith("https://")) and (not word.startswith("http://"))])
+
+        # 2. Should always ignore short sentences
+        if len(message) < 10:
+            return False
+
+        result = self.detect_gib(message)
+        # Currently uses only the gibberish detector since the other one
+        # does not have a good detection of repeated chars
 
         return result
 
-    def _detect_gib(self, message):
+    def detect_gib(self, message):
         """Returns True if spam is found
         :param message: string
         """
@@ -121,8 +137,7 @@ class NanoModerator:
 
         return False
 
-    @staticmethod
-    def check_invite(message):
+    def check_invite(self, message):
         """
         Checks for invites
         :param message: string
@@ -131,11 +146,67 @@ class NanoModerator:
         if isinstance(message, Message):
             message = str(message.content)
 
-        rg = re.compile(r'(http(s)?://)?discord.gg/\w+')
-
-        res = rg.search(str(message))
+        res = self.invite_regex.search(str(message))
 
         return res if res else None
+
+
+class LogManager:
+    def __init__(self, client, loop, handler):
+        self.client = client
+        self.loop = loop
+        self.handler = handler
+
+        self.running = True
+
+        self.logs = {}
+        self.servers = {}
+
+    def add_entry(self, server, message):
+        if not isinstance(server, Server):
+            return False
+
+        self.servers[server.id] = server
+
+        # Create a new list if one does not exist
+        if not self.logs.get(server.id):
+            self.logs[server.id] = [message]
+
+        else:
+            self.logs[server.id].append(message)
+
+    async def send_combined(self, channel, message):
+        await self.client.send_message(channel, message)
+
+    async def send_logs(self):
+        # /todo/ think about this shit first
+        for server_id, logs in self.logs.items():
+
+            log_channel_name = self.handler.get_log_channel(self.servers.get(server_id))
+            log_channel = utils.find(lambda m: m.name == log_channel_name, self.servers.get(server_id).channels)
+
+            # Keep in this iteration until all messages have been taken care of
+            while logs:
+
+                batch = []
+                for log in list(logs):
+                    # Keep adding to the batch until messages total 1000 characters
+                    if sum([len(l) for l in batch]) < 1000:
+                        batch.append(log)
+                        logs.remove(log)
+
+                    else:
+                        break
+                print("\n".join(batch))
+                print("Sending logs for {}".format(self.servers.get(server_id)))
+                await self.send_combined(log_channel, "\n".join(batch))
+
+
+    async def start(self):
+        while self.running:
+            await asyncio.sleep(60)
+
+            await self.send_logs()
 
 
 class Moderator:
@@ -147,6 +218,9 @@ class Moderator:
         self.stats = kwargs.get("stats")
 
         self.checker = NanoModerator()
+        self.log = LogManager(self.client, self.loop, self.handler)
+
+        self.loop.create_task(self.log.start())
 
     async def on_message(self, message, **_):
         handler = self.handler
@@ -157,6 +231,8 @@ class Moderator:
         # Muting
         if handler.is_muted(message.author):
             await client.delete_message(message)
+
+            self.stats.add(SUPPRESS)
             return "return"
 
         # Spam, swearing and invite filter
@@ -190,12 +266,32 @@ class Moderator:
             await client.delete_message(message)
             logger.debug("Deleting message, sending return message.")
 
+            # Check if current channel is the logging channel
+            log_channel_name = self.handler.get_log_channel(message.server)
+            if log_channel_name == message.channel.name:
+                return
+
+            # Make correct messages
+            if spam:
+                msg = "{}'s message was deleted: spam\n```{}```\n".format(message.author.name, message.content)
+
+            elif swearing:
+                msg = "{}'s message was deleted: banned words\n```{}```\n".format(message.author.name, message.content)
+
+            elif invite:
+                msg = "{}'s message was deleted: invite link\n```{}```\n".format(message.author.name, message.content)
+
+            else:  pass # Lolwat
+
+            # Add them to the queue
+            self.log.add_entry(message.server, msg)
+
             return "return"
 
 
 class NanoPlugin:
     _name = "Moderator"
-    _version = 0.1
+    _version = "0.2.1"
 
     handler = Moderator
     events = {

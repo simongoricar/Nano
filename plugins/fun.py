@@ -2,7 +2,7 @@
 import giphypop
 from discord import Message
 from data.utils import is_valid_command
-from data.stats import NanoStats, PRAYER, MESSAGE
+from data.stats import NanoStats, PRAYER, MESSAGE, IMAGE_SENT
 
 simple_commands = {
     "_johncena": "ITS JOHN CENA",
@@ -52,12 +52,18 @@ class Fun:
         if startswith(prefix + "kappa"):
             await client.send_file(message.channel, "data/images/kappasmall.png")
 
+            self.stats.add(IMAGE_SENT)
+
         elif startswith(prefix + "cat"):
             await client.send_file(message.channel, "data/images/cattypo.gif")
+
+            self.stats.add(IMAGE_SENT)
 
         elif startswith(prefix + "randomgif"):
             random_gif = self.gif.screensaver().media_url
             await client.send_message(message.channel, str(random_gif))
+
+            self.stats.add(IMAGE_SENT)
 
         elif startswith(prefix + "rip"):
             if len(message.mentions) == 1:

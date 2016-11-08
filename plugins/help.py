@@ -2,7 +2,7 @@
 from datetime import datetime
 from discord import Message, utils
 from data.utils import threaded, is_valid_command
-from data.stats import MESSAGE
+from data.stats import MESSAGE, HELP
 
 
 # Strings
@@ -183,23 +183,33 @@ class Help:
         if message.content.strip(" ") == (prefix + "help"):
             await client.send_message(message.channel, help_nano)
 
+            self.stats.add(HELP)
+
         # @Nano help
         elif self.client.user in message.mentions:
             un_mentioned = str(message.content[21:])
             if un_mentioned == "" or un_mentioned == " ":
                 await client.send_message(message.channel, help_nano)
 
+            self.stats.add(HELP)
+
         # !cmds or !commands
         elif startswith(prefix + "cmds", prefix + "commands"):
             await client.send_message(message.channel, "A 'complete' list of commands is available here: https://github.com/DefaltSimon/Nano/wiki/Commands")
+
+            self.stats.add(HELP)
 
         # !help simple
         elif startswith(prefix + "help simple"):
             await client.send_message(message.channel, help_simple)
 
+            self.stats.add(HELP)
+
         # !help [command]
         elif startswith(prefix + "help"):
             search = str(message.content)[len(prefix + "help "):]
+
+            self.stats.add(HELP)
 
             def get_command_info(cmd):
 

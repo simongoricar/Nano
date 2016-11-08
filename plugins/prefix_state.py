@@ -1,8 +1,10 @@
 # coding=utf-8
 import logging
 import configparser
-from data.serverhandler import ServerHandler
 from discord import Message
+from data.serverhandler import ServerHandler
+from data.stats import SLEPT
+
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -17,8 +19,9 @@ class PrefixState:
     def __init__(self, *_, **kwargs):
         self.client = kwargs.get("client")
         self.handler = kwargs.get("handler")
+        self.stats = kwargs.get("stats")
 
-    async def on_message(self, message, **kwargs):
+    async def on_message(self, message, **_):
         assert isinstance(self.handler, ServerHandler)
         assert isinstance(message, Message)
 
@@ -33,6 +36,7 @@ class PrefixState:
         # Set up the server if it is not present in servers.yml
         if not self.handler.server_exists(message.server):
             self.handler.server_setup(message.server)
+
 
         # Ah, the shortcuts
         def startswith(*msg):
@@ -52,6 +56,8 @@ class PrefixState:
         elif startswith("nano.wake"):
             self.handler.set_sleep_state(message.server, 0)
             await self.client.send_message(message.channel, ":wave:")
+
+            self.stats.add(SLEPT)
 
 
         # Quit if the bot is sleeping

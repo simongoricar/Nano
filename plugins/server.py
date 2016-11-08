@@ -1,8 +1,14 @@
 # coding=utf-8
 import discord
+import os
+import psutil
+import time
+import gc
+from datetime import datetime, timedelta
 from data.stats import NanoStats, MESSAGE
 from data.serverhandler import ServerHandler
 from data.utils import is_valid_command, log_to_file
+
 
 nano_welcome = "**Hi!** I'm Nano!\nNow that you have invited me to your server, you might want to set up some things." \
                "Right now only the server owner can use my restricted commands. But no worries, you can add admin permissions" \
@@ -11,7 +17,7 @@ nano_welcome = "**Hi!** I'm Nano!\nNow that you have invited me to your server, 
                "After that, you might want to see `!cmds` to get familiar with my commands."
 
 valid_commands = [
-    "_stats", "_status", "_prefix", "_members", "nano.prefix",
+    "_stats", "_stats more", "_status", "_prefix", "_members", "nano.prefix", "_debug"
 ]
 
 
@@ -72,27 +78,9 @@ class ServerManagement:
 
             return False
 
-        # !stats
-        if startswith(prefix + "stats"):
-            file = self.stats.get_data()
-
-            messages = file.get("msgcount")
-            wrong_args = file.get("wrongargcount")
-            sleeps = file.get("timesslept")
-            wrong_permissions = file.get("wrongpermscount")
-            helps = file.get("peoplehelped")
-            images = file.get("imagessent")
-            votes = file.get("votesgot")
-            pings = file.get("timespinged")
-
-            to_send = "**Stats**\n```python\n{} messages sent\n{} people yelled at because of wrong args\n" \
-                      "{} people denied because of wrong permissions\n{} people helped\n{} votes got\n{} times slept\n" \
-                      "{} images uploaded\n{} times Pong!-ed```".format(messages, wrong_args, wrong_permissions, helps, votes, sleeps, images, pings)
-
-            await client.send_message(message.channel, to_send)
 
         # !status
-        elif startswith(prefix + "status"):
+        if startswith(prefix + "status"):
             server_count = 0
             members = 0
             channels = 0
@@ -107,6 +95,66 @@ class ServerManagement:
             stats = "**Stats**\n\nServers: `{}`\nUsers: `{}`\nChannels: `{}`".format(server_count, members, channels)
 
             await client.send_message(message.channel, stats)
+
+        # !debug
+        elif startswith(prefix + "debug", prefix + "stats more"):
+            # Some more debug data
+
+            # RAM
+            def check_ram():
+                nano_process = psutil.Process(os.getpid())
+                return round(nano_process.memory_info()[0] / float(2 ** 20), 1)  # Converts to MB
+
+            mem_before = check_ram()
+            # Attempt garbage collection
+            gc.collect()
+
+            mem_after = check_ram()
+            garbage = round(mem_after - mem_before, 2)
+
+            # CPU
+            cpu = psutil.cpu_percent(interval=0.5)
+
+            # OTHER
+            d = datetime(1, 1, 1) + timedelta(seconds=time.time() - self.nano.boot_time)
+            uptime = "{} days, {}:{}:{}".format(d.day - 1, d.hour, d.minute, d.second)
+
+            nano_version = self.nano.version
+            discord_version = discord.__version__
+
+            reminders = len(self.nano.get_plugin("reminder").get("instance").reminder.reminders)
+            polls = len(self.nano.get_plugin("voting").get("instance").vote.progress)
+
+            debug_data = """```
+Nano:                  {}
+discord.py:            {}
+RAM usage:             {} MB (garbage collected {} MB)
+Cpu usage:             {} %
+Uptime:                {}
+Current reminders:     {}
+Current votes:         {}```""".format(nano_version, discord_version, mem_after, garbage, cpu, uptime, reminders, polls)
+
+            await client.send_message(message.channel, debug_data)
+
+        # !stats
+        elif startswith(prefix + "stats"):
+            file = self.stats.get_data()
+
+            messages = file.get("msgcount")
+            wrong_args = file.get("wrongargcount")
+            sleeps = file.get("timesslept")
+            wrong_permissions = file.get("wrongpermscount")
+            helps = file.get("peoplehelped")
+            images = file.get("imagessent")
+            votes = file.get("votesgot")
+            pings = file.get("timespinged")
+
+            to_send = "**Stats**\n```python\n{} messages sent\n{} people yelled at because of wrong args\n" \
+                      "{} people denied because of wrong permissions\n{} people helped\n{} votes got\n{} times slept\n" \
+                      "{} images uploaded\n{} times Pong!-ed```".format(messages, wrong_args, wrong_permissions,
+                                                                        helps, votes, sleeps, images, pings)
+
+            await client.send_message(message.channel, to_send)
 
         # !prefix
         elif startswith(prefix + "prefix"):
@@ -197,7 +245,7 @@ class ServerManagement:
 
 class NanoPlugin:
     _name = "Moderator"
-    _version = "0.2.1"
+    _version = "0.2.2"
 
     handler = ServerManagement
     events = {
