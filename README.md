@@ -1,4 +1,8 @@
 # Nano
+
+[![Version](https://img.shields.io/badge/version-3.1.0-green.svg)](https://defaltsimon.github.io/Nano/)
+[![license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/DefaltSimon/Nano/blob/master/LICENSE)
+
 by DefaltSimon, made in python with [discord.py api](https://github.com/Rapptz/discord.py) .
 
 ###Main features  
@@ -26,4 +30,4 @@ If you're confused or need help hop on the [Nano lounge](https://discord.gg/FZJB
 If you really want to run Nano by yourself, a wiki page will be dedicated to that subject in the future.  
   
 ---
-######fyi: Nano was formerly AyyBot
+######fyi: Nano was formerly named AyyBot
