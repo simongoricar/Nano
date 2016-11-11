@@ -195,7 +195,7 @@ Current votes:         {}```""".format(nano_version, discord_version, mem_after,
         for trigg, repl in replacement_logic.items():
             welcome_msg = welcome_msg.replace(trigg, repl)
 
-        log_c = await self.client.handler_log_channel(member.server)
+        log_c = await self.handle_log_channel(member.server)
 
         await self.client.send_message(log_c, welcome_msg)
         await self.client.send_message(member.server.default_channel, welcome_msg)
