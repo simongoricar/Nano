@@ -7,6 +7,14 @@ from discord import Message, Client, Server, utils
 from data.serverhandler import ServerHandler
 from data.stats import SUPPRESS
 
+#from .admin import valid_commands as admin_valid
+#from .commons import valid_commands as commons_valid
+#from .developer import valid_commands as dev_valid
+#from .fun import valid_commands as fun_valid
+#from .help import valid_commands as help_valid
+#from .imdb import valid_commands as imdb_valid
+#from .minecraft import valid_commands as 
+
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -30,6 +38,11 @@ def two_chars(line):
     for rn in range(0, len(norm) - 1):
         yield norm[rn:rn + 1], norm[rn + 1:rn + 2]
 
+def get_valid_commands(plugin):
+        try:
+            return plugin.valid_commands
+        except AttributeError:
+            return None
 
 class NanoModerator:
     def __init__(self):
@@ -197,7 +210,6 @@ class LogManager:
 
                     else:
                         break
-                print("\n".join(batch))
                 print("Sending logs for {}".format(self.servers.get(server_id)))
                 await self.send_combined(log_channel, "\n".join(batch))
 
@@ -222,9 +234,10 @@ class Moderator:
 
         self.loop.create_task(self.log.start())
 
-    async def on_message(self, message, **_):
+    async def on_message(self, message, **kwargs):
         handler = self.handler
         client = self.client
+        prefix = kwargs.get("prefix")
         assert isinstance(client, Client)
         assert isinstance(handler, ServerHandler)
 
@@ -234,6 +247,21 @@ class Moderator:
 
             self.stats.add(SUPPRESS)
             return "return"
+
+        # Ignore existing commands
+        plugins = [a.get("plugin") for a in self.nano.plugins.values() if a.get("plugin")]
+        valid_commands = [item for sub in [get_valid_commands(b) for b in plugins if get_valid_commands(b)] for item in sub]
+
+        def is_command(msg, valids):
+            for a in valids:
+                if str(msg).startswith(a.replace("_", prefix)):
+                    return True
+
+            return False
+
+        # Ignore the filter if user is executing a command
+        if is_command(message.content, valid_commands):
+            return
 
         # Spam, swearing and invite filter
         needs_spam_filter = handler.has_spam_filter(message.channel.server)
@@ -291,7 +319,7 @@ class Moderator:
 
 class NanoPlugin:
     _name = "Moderator"
-    _version = "0.2.1"
+    _version = "0.2.2"
 
     handler = Moderator
     events = {

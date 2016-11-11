@@ -29,8 +29,9 @@ server_nondepend_defaults = {
     "welcomemsg": "Welcome to :server, :user!",
     "kickmsg": ":user has been kicked.",
     "banmsg": ":user has been banned.",
-    "leavemsg": "Bye, **:user**",
+    "leavemsg": "**:user** has left the server :cry:",
     "blacklisted": [],
+    "disabled": [],
     "muted": [],
     "customcmds": {},
     "admins": [],
@@ -40,11 +41,6 @@ server_nondepend_defaults = {
     # "sayhi": 0, //changed
     "prefix": parser.get("Servers", "defaultprefix")
 }
-
-server_deprecated_settings = [
-    "onban",
-    "sayhi",
-]
 
 # ServerHandler is a singleton, so it can have only one instance
 
@@ -86,7 +82,7 @@ class ServerHandler(metaclass=Singleton):  # Singleton is imported from utils
                                        "welcomemsg": ":user, Welcome to :server!",
                                        "kickmsg": "**:user** has been kicked.",
                                        "banmsg": "**:user** has been banned.",
-                                       "leavemsg": "Bye, **:user**",
+                                       "leavemsg": "**:user** has left the server :cry:",
                                        "blacklisted": [],
                                        "muted": [],
                                        "customcmds": {},
@@ -180,17 +176,6 @@ class ServerHandler(metaclass=Singleton):  # Singleton is imported from utils
         else:
             if must_write:
                 self.queue_write(data)
-
-    def _check_deprecated_vars(self, server, data=None, changed=False):
-        if not data:
-            data = self.cached_file
-        ld = copy.deepcopy(self.cached_file)
-
-        data[server] = {key: value for key, value in data[server].items() if key not in server_deprecated_settings}
-
-        nw = bool(data != ld)
-        if changed or nw:
-            self.queue_write(data)
 
     def _delete_old_servers(self, current_servers):
         data = self.cached_file

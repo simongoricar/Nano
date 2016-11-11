@@ -403,6 +403,11 @@ class Admin:
         elif startswith(prefix + "cmd add"):
             try:
                 cut = str(message.content)[len(prefix + "cmd add "):].split("|")
+
+                if len(cut) != 2:
+                    await client.send_message(message.channel, "Incorrect parameters.\n`_cmd add trigger|response`".replace("_", prefix))
+                    return
+
                 handler.update_command(message.server, cut[0], cut[1])
 
                 await client.send_message(message.channel, "Command '{}' added.".format(cut[0]))
@@ -431,7 +436,7 @@ class Admin:
 
             final = "\n".join(["{} : {}".format(name, content) for name, content in custom_cmds.items()])
 
-            await client.send_message(message.channel, "*Custom commands:*\n" + final)
+            await client.send_message(message.channel, "*Custom commands:*\n```" + final + "```")
 
         # nano.settings
         elif startswith("nano.settings"):
@@ -603,6 +608,7 @@ Messages:
             ch2 = await client.wait_for_message(timeout=35, author=auth)
             if ch2 is None:
                 timeout(message)
+                return
 
             if ch2.content:
                 handler.change_prefix(message.channel.server, str(ch2.content).strip(" "))
@@ -616,6 +622,7 @@ Messages:
             ch3 = await client.wait_for_message(timeout=35, author=auth)
             if ch3 is None:
                 timeout(message)
+                return
 
             if ch3.content.strip(" ").lower() == "none":
                 handler.update_var(message.server.id, "welcomemsg", None)
@@ -641,6 +648,7 @@ Messages:
             ch3 = await client.wait_for_message(timeout=35, author=auth, check=check_yes3)
             if ch3 is None:
                 timeout(message)
+                return
 
             # FIFTH MESSAGE
             msg_five = """Would you like me to filter swearing? **yes / no**"""
@@ -661,6 +669,7 @@ Messages:
             ch4 = await client.wait_for_message(timeout=35, author=auth, check=check_yes4)
             if ch4 is None:
                 timeout(message)
+                return
 
             msg_final = """**This concludes the basic server setup.**
 But there are a few more settings to set up if you need'em:

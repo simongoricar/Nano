@@ -1,14 +1,19 @@
 # coding=utf-8
 import discord
 import os
+import logging
 import psutil
 import time
 import gc
+import asyncio
 from datetime import datetime, timedelta
 from data.stats import NanoStats, MESSAGE
 from data.serverhandler import ServerHandler
 from data.utils import is_valid_command, log_to_file
 
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
 
 nano_welcome = "**Hi!** I'm Nano!\nNow that you have invited me to your server, you might want to set up some things." \
                "Right now only the server owner can use my restricted commands. But no worries, you can add admin permissions" \
@@ -190,6 +195,9 @@ Current votes:         {}```""".format(nano_version, discord_version, mem_after,
         for trigg, repl in replacement_logic.items():
             welcome_msg = welcome_msg.replace(trigg, repl)
 
+        log_c = await self.client.handler_log_channel(member.server)
+
+        await self.client.send_message(log_c, welcome_msg)
         await self.client.send_message(member.server.default_channel, welcome_msg)
 
     async def on_member_ban(self, member, **_):
@@ -223,6 +231,7 @@ Current votes:         {}```""".format(nano_version, discord_version, mem_after,
         log_c = await self.handle_log_channel(member.server)
 
         await self.client.send_message(log_c, leave_msg)
+        await self.client.send_message(member.server.default_channel, leave_msg)
 
     async def on_server_join(self, server, **_):
         # Say hi to the server
@@ -242,14 +251,25 @@ Current votes:         {}```""".format(nano_version, discord_version, mem_after,
         # Log
         log_to_file("Removed from server: {}".format(server.name))
 
+    async def on_ready(self):
+        pass
+        
+        #await self.client.wait_until_ready()
+
+        #log.info("Checking server vars...")
+        #for server in self.client.servers:
+        #    self.handler._check_server_vars(server.id, delete_old=False)
+        #log.info("Finished checking server data.")
+
 
 class NanoPlugin:
     _name = "Moderator"
-    _version = "0.2.2"
+    _version = "0.2.4"
 
     handler = ServerManagement
     events = {
         "on_message": 10,
+        "on_ready": 11,
         "on_member_join": 10,
         "on_member_ban": 10,
         "on_member_remove": 10,

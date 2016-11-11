@@ -17,7 +17,7 @@ from data.utils import log_to_file
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '3.1.0'
+__version__ = '3.1.1'
 
 
 # CONSTANTS
@@ -160,6 +160,7 @@ class Nano(metaclass=Singleton):
                            stats=stats)
 
             self.plugins[plugin] = {
+                "plugin": plug,
                 "handler": cls,
                 "instance": instance,
                 "events": events,

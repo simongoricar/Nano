@@ -96,16 +96,23 @@ class BackupManager:
     def stop(self):
         self.running = False
 
-    async def backup(self):
+    def backup(self):
         if not self.running:
             return
 
         if not os.path.isdir("backup"):
             os.mkdir("backup")
 
-        # Create double backups
-        copy2(self.servers, self.servers_double)
-        copy2(self.stats, self.stats_double)
+        # Create double backups if possible
+        try:
+            copy2(self.servers, self.servers_double)
+        except FileNotFoundError:
+            pass
+        
+        try:  
+            copy2(self.stats, self.stats_double)
+        except FileNotFoundError:
+            pass
 
         copy2(self.real_servers, self.servers)
         copy2(self.real_stats, self.stats)
@@ -120,7 +127,7 @@ class BackupManager:
             await sleep(self.time)
 
             log_to_file("Creating a backup...")
-            await self.backup()
+            self.backup()
 
 
 class DevFeatures:
@@ -189,6 +196,11 @@ class DevFeatures:
         # nano.dev.test_error
         elif startswith("nano.dev.test_error"):
             int("abcdef")
+
+        # nano.dev.backup
+        elif startswith("nano.dev.backup"):
+            self.backup.manual_backup()
+            await client.send_message(message.channel, "Backup completed :ok_hand:")
 
         # nano.reload
         elif startswith("nano.reload"):
