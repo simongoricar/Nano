@@ -154,3 +154,14 @@ def is_empty(path):
 
     else:
         return False
+
+dis = [
+    "none", "false", "off", "disabled"
+]
+
+def is_disabled(ct):
+    for a in dis:
+        if str(ct).startswith(a):
+            return True
+
+    return False

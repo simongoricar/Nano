@@ -286,18 +286,19 @@ class Reminder:
             await client.send_message(message.channel, remind_help.replace("_", prefix))
 
     async def on_shutdown(self, **_):
+        # Saves the state
         if not os.path.isdir("cache"):
             os.mkdir("cache")
 
         if self.reminder.is_active():
             with open("cache/reminders.temp", "wb") as cache:
                 print(self.reminder.reminders)
-                cache.write(dumps(self.reminder.reminders))  # Save instance of Vote to be used on the next boot
+                cache.write(dumps(self.reminder.reminders))  # Save instance of ReminderHandler to be used on the next boot
 
 
 class NanoPlugin:
     _name = "Reminder Commands"
-    _version = "0.2.1"
+    _version = "0.2.2"
 
     handler = Reminder
     events = {

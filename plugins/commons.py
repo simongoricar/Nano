@@ -88,9 +88,9 @@ class Commons:
         for command in server_commands:
             if str(message.content).startswith(command):
                 # Maybe same replacement logic in the future update?
-                # /todo
+                # /todo implement advanced replacement logic
                 await client.send_message(message.channel, server_commands.get(command))
-                # stat.plusmsg()
+                self.stats.add(MESSAGE)
 
                 return
 

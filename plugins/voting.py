@@ -186,7 +186,7 @@ class Vote:
 
         elif startswith(prefix + "vote end"):
             if not self.handler.can_use_restricted_commands(message.author, message.channel.server):
-                await client.send_message(message.content, "You are not permitted to use this command.")
+                await client.send_message(message.channel, "You are not permitted to use this command.")
 
                 self.stats.add(WRONG_PERMS)
                 return
@@ -210,15 +210,19 @@ class Vote:
             await client.send_message(message.channel, combined)
 
         elif startswith(prefix + "vote"):
-            choice = message.content[len(prefix + "vote "):]
-
-            if not choice:
+            # Get the choice, but tell the author if he/she didnt supply a number
+            try:
+                choice = int(message.content[len(prefix + "vote "):])
+            except ValueError:
+                m = await client.send_message(message.channel, "Vote argument must be a number.")
+                await asyncio.sleep(1.5)
+                await client.delete_message(m)
                 return
 
-            if not self.vote.in_progress(message.channel.server):
+            if (not choice) or (not self.vote.in_progress(message.channel.server)):
                 return
 
-            res = self.vote.plus_one(int(choice), message.author.id, message.channel.server)
+            res = self.vote.plus_one(choice, message.author.id, message.channel.server)
 
             if res == -1:
                 msg = await client.send_message(message.channel, "Cheater :smile:")
@@ -235,6 +239,7 @@ class Vote:
             self.stats.add(VOTE)
 
     async def on_shutdown(self):
+        # Saves the state of votes
         if not os.path.isdir("cache"):
             os.mkdir("cache")
 
@@ -245,7 +250,7 @@ class Vote:
 
 class NanoPlugin:
     _name = "Voting"
-    _version = "0.2.1"
+    _version = "0.2.2"
 
     handler = Vote
     events = {

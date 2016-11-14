@@ -49,36 +49,39 @@ class ServerHandler(metaclass=Singleton):  # Singleton is imported from utils
     def __init__(self):
         self.file = "data/servers.yml"
 
+        # Loads the file into memory
         with open(self.file, "r") as file:
             self.cached_file = load(file)
 
-        self.is_old = False
-        self.data_lock = False
-
-        self.process_lock = False
+        # Used for thread-safe file writing
+        self.thread_lock = False
 
         log.info("Enabled")
 
-    # All kinds of locks
+    # Used to queue the file writes
     def lock(self):
-        self.data_lock = True
+        self.thread_lock = True
 
     def wait_until_release(self):
-        while self.data_lock is True:
+        while self.thread_lock is True:
             time.sleep(0.05)
-        return
 
     def release_lock(self):
-        self.data_lock = False
+        self.thread_lock = False
 
+    # Here begins the class with all its real methods
     def server_setup(self, server):
         data = self.cached_file
+
+        # These are server defaults
+        default_prefix = str(parser.get("Servers", "defaultprefix"))
 
         self.cached_file[server.id] = {"name": server.name,
                                        "owner": server.owner.name,
                                        "filterwords": False,
                                        "filterspam": False,
                                        "filterinvite": False,
+                                       "sleeping": False,
                                        "welcomemsg": ":user, Welcome to :server!",
                                        "kickmsg": "**:user** has been kicked.",
                                        "banmsg": "**:user** has been banned.",
@@ -88,10 +91,9 @@ class ServerHandler(metaclass=Singleton):  # Singleton is imported from utils
                                        "customcmds": {},
                                        "admins": [],
                                        "logchannel": "logs",
-                                       "sleeping": False,
-                                       "prefix": str(parser.get("Servers", "defaultprefix"))}
+                                       "prefix": default_prefix}
 
-        log.info("Queued new server: {}".format(server.name))
+        log.info("New server: {}".format(server.name))
 
         self.queue_write(data)
 
@@ -120,7 +122,8 @@ class ServerHandler(metaclass=Singleton):  # Singleton is imported from utils
 
         log.info("Reloaded servers.yml")
 
-    def queue_modification(self, thing, *args, **kwargs):
+    def _queue_modification(self, thing, *args, **kwargs):
+        # Not used anymore, kept as "private"
         self.wait_until_release()
         self.lock()
 
@@ -137,9 +140,11 @@ class ServerHandler(metaclass=Singleton):  # Singleton is imported from utils
     def update_moderation_settings(self, server, key, value):
         data = self.cached_file
 
+        # Check server existence
         if server.id not in data:
             self.server_setup(server)
 
+        # Detects the type of the setting
         if get_decision(key, ("word filter", "filter words", "wordfilter")):
             data[server.id]["filterwords"] = value
             self.queue_write(data)
@@ -162,30 +167,33 @@ class ServerHandler(metaclass=Singleton):  # Singleton is imported from utils
 
     def _check_server_vars(self, sid, delete_old=True):
         data = self.cached_file
-        must_write = False
+        modified = False
 
-        sd = data.get(sid)
+        server = data.get(sid)
         if data.get(sid):
             for var in server_nondepend_defaults.keys():
-                if sd.get(var) is None:
+                # Check each var; add it if it does not exist
+                if server.get(var) is None:
                     data[sid][var] = server_nondepend_defaults[var]
-                    must_write = True
+                    modified = True
 
         if delete_old:
-            self._check_deprecated_vars(sid, data, changed=must_write)
+            self._check_deprecated_vars(sid, data, changed=modified)
         else:
-            if must_write:
+            if modified:
                 self.queue_write(data)
 
     def _delete_old_servers(self, current_servers):
         data = self.cached_file
-        ld = copy.deepcopy(self.cached_file)
+        modified = False
 
+        # Iterate through servers and remove them if they are not in the current_servers list
         for server in list(data.keys()):
             if server not in current_servers:
                 data.pop(server)
+                modified = True
 
-        if data != ld:
+        if modified:
             self.queue_write(data)
 
     def update_command(self, server, trigger, response):
@@ -220,8 +228,10 @@ class ServerHandler(metaclass=Singleton):  # Singleton is imported from utils
     def add_admin(self, server, user):
         data = self.cached_file
 
+        # Ignore if user is already in admins
         if user.id in data[server.id]["admins"]:
             return
+
         data[server.id]["admins"].append(str(user.id))
 
         self.queue_write(data)
@@ -232,7 +242,7 @@ class ServerHandler(metaclass=Singleton):  # Singleton is imported from utils
         try:
             data[server.id]["admins"].remove(user.id)
         except ValueError:
-            return  # If user is not admin
+            return  # Ignore if the admin did not exist
 
         self.queue_write(data)
 
@@ -244,6 +254,7 @@ class ServerHandler(metaclass=Singleton):  # Singleton is imported from utils
     def change_prefix(self, server, prefix):
         data = self.cached_file
 
+        # Check server existence
         if server.id not in data:
             self.server_setup(server)
 
@@ -276,11 +287,6 @@ class ServerHandler(metaclass=Singleton):  # Singleton is imported from utils
         data = self.cached_file
 
         return bool(data[server.id]["filterinvite"])
-
-    def get_settings(self, sid):
-        data = self.cached_file
-            
-        return data.get(sid)
 
     def get_custom_commands(self, server):
         data = self.cached_file
@@ -322,7 +328,8 @@ class ServerHandler(metaclass=Singleton):  # Singleton is imported from utils
             data[user.server.id]["muted"].append(user.id)
             self.queue_write(data)
 
-    def is_muted(self, user):  # Actually supposed to be a Member instance (not User, because it doesn't have server property)
+    def is_muted(self, user):
+        # user if actually supposed to be a an instance of discord.Member (not User, because it doesn't have server property)
         data = self.cached_file
 
         return bool(user.id in data[user.server.id]["muted"])

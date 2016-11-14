@@ -53,7 +53,7 @@ class McItems:
 
     def _items_to_list(self, **kwargs):
         # Not used,
-        # Private for now, /todo
+        # Private for now, /todo cant find a use for this
         items = []
         for item in self.data:
             if kwargs.get(str(item.get("type"))) is not None:

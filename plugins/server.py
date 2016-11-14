@@ -9,7 +9,7 @@ import asyncio
 from datetime import datetime, timedelta
 from data.stats import NanoStats, MESSAGE
 from data.serverhandler import ServerHandler
-from data.utils import is_valid_command, log_to_file
+from data.utils import is_valid_command, log_to_file, is_disabled
 
 
 log = logging.getLogger(__name__)
@@ -38,6 +38,9 @@ class ServerManagement:
         # Check if the channel already exists
         if not [ch for ch in server.channels if ch.name == self.handler.get_var(server.id, "logchannel")]:
 
+            if not self.handler.get_var(server.id, "logchannel"):
+                return None
+
             # Creates permission overwrites: normal users cannot see the channel, only users with the role "Nano Admin" and the bot
             them = discord.PermissionOverwrite(read_messages=False, send_messages=False, read_message_history=False)
             us = discord.PermissionOverwrite(read_messages=True, send_messages=True, read_message_history=True,
@@ -50,16 +53,16 @@ class ServerManagement:
             else:
                 admin_perms = None
 
-            then_perms = discord.ChannelPermissions(target=server.default_role, overwrite=them)
+            them_perms = discord.ChannelPermissions(target=server.default_role, overwrite=them)
             nano_perms = discord.ChannelPermissions(target=server.me, overwrite=us)
 
             log_channel_name = self.handler.get_var(server.id, "logchannel")
 
             if admins:
-                return await self.client.create_channel(server, log_channel_name, admin_perms, then_perms, nano_perms)
+                return await self.client.create_channel(server, log_channel_name, admin_perms, them_perms, nano_perms)
 
             else:
-                return await self.client.create_channel(server, log_channel_name, then_perms, nano_perms)
+                return await self.client.create_channel(server, log_channel_name, them_perms, nano_perms)
 
         else:
             return discord.utils.find(lambda m: m.name == self.handler.get_var(server.id, "logchannel"), server.channels)
@@ -187,6 +190,7 @@ Current votes:         {}```""".format(nano_version, discord_version, mem_after,
 
         replacement_logic = {
             ":user": member.mention,
+            ":username": member.name,
             ":server": member.server.name }
 
         welcome_msg = str(self.handler.get_var(member.server.id, "welcomemsg"))
@@ -197,14 +201,17 @@ Current votes:         {}```""".format(nano_version, discord_version, mem_after,
 
         log_c = await self.handle_log_channel(member.server)
 
-        await self.client.send_message(log_c, welcome_msg)
-        await self.client.send_message(member.server.default_channel, welcome_msg)
+        await self.client.send_message(log_c, "{} has joined the server".format(member.mention))
+        
+        if not is_disabled(leave_msg):
+            await self.client.send_message(member.server.default_channel, welcome_msg)
 
     async def on_member_ban(self, member, **_):
         assert isinstance(self.handler, ServerHandler)
 
         replacement_logic = {
             ":user": member.mention,
+            ":username": member.name,
             ":server": member.server.name}
 
         ban_msg = str(self.handler.get_var(member.server.id, "banmsg"))
@@ -216,11 +223,15 @@ Current votes:         {}```""".format(nano_version, discord_version, mem_after,
 
         await self.client.send_message(log_c, ban_msg)
 
+        if not is_disabled(leave_msg):
+            await self.client.send_message(member.server.default_channel, ban_msg)
+
     async def on_member_remove(self, member, **_):
         assert isinstance(self.handler, ServerHandler)
 
         replacement_logic = {
             ":user": member.mention,
+            ":username": member.name,
             ":server": member.server.name}
 
         leave_msg = str(self.handler.get_var(member.server.id, "leavemsg"))
@@ -230,8 +241,10 @@ Current votes:         {}```""".format(nano_version, discord_version, mem_after,
 
         log_c = await self.handle_log_channel(member.server)
 
-        await self.client.send_message(log_c, leave_msg)
-        await self.client.send_message(member.server.default_channel, leave_msg)
+        await self.client.send_message(log_c, "{} left the server.".format(member.mention))
+        
+        if not is_disabled(leave_msg):
+            await self.client.send_message(member.server.default_channel, leave_msg)
 
     async def on_server_join(self, server, **_):
         # Say hi to the server

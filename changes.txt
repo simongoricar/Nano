@@ -1,3 +1,8 @@
+3.1.2
+- Bugfixes
+- :username can now also be used as a join/leave/...-message variable
+- Setting any of the join/leave/...-messages to None/Off/False will disable that command
+
 3.1.1
 - Fixed backup plugin
 - Fixed moderation (now ignores all commands)

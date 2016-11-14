@@ -163,13 +163,13 @@ class DevFeatures:
         assert isinstance(self.handler, ServerHandler)
 
         if not self.handler.is_bot_owner(message.author.id):
-            # /todo/ fix
             await client.send_message(message.channel, "You are not permitted to use this feature. (must be bot owner)")
             return
 
 
         # nano.dev.get_servers
         if startswith("nano.dev.get_servers"):
+            # /fixme message is still too long
             servers = ["{} ({} u) - `{}`".format(srv.name, srv.member_count, srv.id) for srv in client.servers]
 
             final = ["\n".join(a) for a in [servers[i:i+1500] for i in range(0, len(servers), 1500)]]
@@ -189,7 +189,7 @@ class DevFeatures:
 
             nano_data = self.handler.get_server_data(srv.id)
             to_send = "{}\n```css\nMember count: {}\nChannels: {}\nOwner: {}```\n" \
-                      "Nano settings: ```{}```".format(srv.name, srv.member_count, ",".join([ch.name for ch in srv.channels]), srv.owner.name, nano_data)
+                      "*Settings*: ```{}```".format(srv.name, srv.member_count, ",".join([ch.name for ch in srv.channels]), srv.owner.name, nano_data)
 
             await client.send_message(message.channel, to_send)
 

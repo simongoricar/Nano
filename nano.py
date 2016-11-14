@@ -17,10 +17,10 @@ from data.utils import log_to_file
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '3.1.1'
+__version__ = '3.1.2'
 
 
-# CONSTANTS
+# CONSTANTS and EVENTS
 
 ON_MESSAGE = "on_message"
 ON_READY = "on_ready"
@@ -59,7 +59,7 @@ logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("discord").setLevel(logging.INFO)
 logging.getLogger("websockets.protocol").setLevel(logging.INFO)
 
-# Loop initialization
+# Loop initialization and other things
 
 loop = asyncio.get_event_loop()
 client = discord.Client(loop=loop)
@@ -220,6 +220,7 @@ class Nano(metaclass=Singleton):
             if resp == "return":
                 log.debug("Exiting")
                 return
+
             elif resp == "add_var":
                 # Add/Set new kwargs
                 for k, v in ag[0].items():
@@ -292,8 +293,8 @@ async def on_member_ban(member):
 
 
 @client.event
-async def on_member_unban(member):
-    await nano.dispatch_event(ON_MEMBER_UNBAN, member)
+async def on_member_unban(server, member):
+    await nano.dispatch_event(ON_MEMBER_UNBAN, server, member)
 
 
 @client.event

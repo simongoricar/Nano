@@ -166,7 +166,7 @@ class CommunityPrices:
         self.parameters = {"key": api_key}
         self.address = "https://backpack.tf/api/IGetPrices/v4"
 
-        if allow_cache:  # Should this be a feature? (todo)
+        if allow_cache:
             try:
 
                 with open("cache/bptf_cache.temp", "r") as d:

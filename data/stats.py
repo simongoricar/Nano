@@ -25,8 +25,6 @@ SUPPRESS = "messagessuppressed"
 DOWNLOAD = "imagesize"
 PRAYER = "prayerssaid"
 
-# /todo Integrate new system
-
 
 class NanoStats:
     def __init__(self):

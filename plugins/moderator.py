@@ -192,7 +192,6 @@ class LogManager:
         await self.client.send_message(channel, message)
 
     async def send_logs(self):
-        # /todo/ think about this shit first
         for server_id, logs in self.logs.items():
 
             log_channel_name = self.handler.get_log_channel(self.servers.get(server_id))
