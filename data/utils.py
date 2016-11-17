@@ -161,7 +161,7 @@ dis = [
 
 def is_disabled(ct):
     for a in dis:
-        if str(ct).startswith(a):
+        if str(ct).lower().startswith(a):
             return True
 
     return False

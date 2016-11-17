@@ -73,6 +73,22 @@ class Commons:
 
         assert isinstance(self.handler, ServerHandler)
 
+    def at_everyone_filter(self, content, author, server):
+        # See if the user is allowed to do @everyone
+        ok = False
+        for role in author.roles:
+            if role.permissions.mention_everyone:
+                ok = True
+                break
+
+        if server.owner == author:
+            ok = True
+
+        if not ok:
+            content = str(content).replace("@everyone", "").replace("@here", "")
+
+        return content
+
     async def on_message(self, message, **kwargs):
         # Things
         assert isinstance(message, Message)
@@ -219,18 +235,9 @@ class Commons:
         elif startswith(prefix + "say"):
             content = message.content[len(prefix + "say "):]
 
-            # See if the user is allowed to do @everyone
-            ok = False
-            for roles in message.author.roles:
-                if roles.permissions.mention_everyone:
-                    ok = True
-                    break
+            content = self.at_everyone_filter(content, message.author, message.server)
 
-            if message.channel.server.owner == message.author:
-                ok = True
-
-            # Filters if the author does not have permission to do @everyone
-            await client.send_message(message.channel, content.replace("@", "") if not ok else content)
+            await client.send_message(message.channel, content)
 
 
 class NanoPlugin:

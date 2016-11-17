@@ -75,6 +75,8 @@ class Fun:
             else:
                 ripperoni = ""
 
+            ripperoni = self.nano.get_plugin("commons").get("instance").at_everyone_filter(ripperoni, message.author, message.server)
+
             prays = self.stats.get_amount(PRAYER)
             await client.send_message(message.channel, "Rest in pepperoni{}{}.\n`{}` *prayers said so far*...".format(", " if ripperoni else "", ripperoni, prays))
 

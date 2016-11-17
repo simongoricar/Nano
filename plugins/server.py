@@ -203,7 +203,7 @@ Current votes:         {}```""".format(nano_version, discord_version, mem_after,
 
         await self.client.send_message(log_c, "{} has joined the server".format(member.mention))
         
-        if not is_disabled(leave_msg):
+        if not is_disabled(welcome_msg):
             await self.client.send_message(member.server.default_channel, welcome_msg)
 
     async def on_member_ban(self, member, **_):
@@ -223,7 +223,7 @@ Current votes:         {}```""".format(nano_version, discord_version, mem_after,
 
         await self.client.send_message(log_c, ban_msg)
 
-        if not is_disabled(leave_msg):
+        if not is_disabled(ban_msg):
             await self.client.send_message(member.server.default_channel, ban_msg)
 
     async def on_member_remove(self, member, **_):

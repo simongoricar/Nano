@@ -49,11 +49,17 @@ class PrefixState:
         # SLEEP/WAKE Commands!
         # nano.sleep
         if startswith("nano.sleep"):
+            if not self.handler.is_bot_owner(message.author.id):
+                return
+
             self.handler.set_sleep_state(message.server, 1)
             await self.client.send_message(message.channel, "G'night! :sleeping:")
 
         # nano.wake
         elif startswith("nano.wake"):
+            if not self.handler.is_bot_owner(message.author.id):
+                return
+
             self.handler.set_sleep_state(message.server, 0)
             await self.client.send_message(message.channel, ":wave:")
 

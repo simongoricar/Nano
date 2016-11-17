@@ -2,7 +2,7 @@
 from datetime import datetime
 from discord import Message, utils
 from data.utils import threaded, is_valid_command
-from data.stats import MESSAGE, HELP
+from data.stats import MESSAGE, HELP, WRONG_ARG
 
 
 # Strings
@@ -214,51 +214,52 @@ class Help:
             def get_command_info(cmd):
 
                 # Normal commands
-                cmd = cmd_help_normal.get(str(cmd.replace(prefix, "_").strip(" ")))
-                if cmd is not None:
+                cmd1 = cmd_help_normal.get(str(cmd.replace(prefix, "_").strip(" ")))
+                if cmd1 is not None:
                     cmd_name = search.replace(prefix, "")
 
-                    description = cmd.get("desc")
-                    use = cmd.get("use")
-                    alias = cmd.get("alias")
+                    description = cmd1.get("desc")
+                    use = cmd1.get("use")
+                    alias = cmd1.get("alias")
 
                     preset = "Command: **{}**\n```css\n" \
                              "Description: {}{}{}```".format(cmd_name, description, "\n" + use if use else "", "\n" + alias if alias else "")
 
-                    # stat.plushelpcommand()
+                    self.stats.add(HELP)
                     return preset
 
                 # Admin commands
-                cmd = cmd_help_admin.get(str(cmd.replace(prefix, "_").strip(" ")))
-                if cmd is not None:
+                cmd2 = cmd_help_admin.get(str(cmd.replace(prefix, "_").strip(" ")))
+                if cmd2 is not None:
                     cmd_name = search.replace(prefix, "")
 
-                    description = cmd.get("desc")
-                    use = cmd.get("use")
-                    alias = cmd.get("alias")
+                    description = cmd2.get("desc")
+                    use = cmd2.get("use")
+                    alias = cmd2.get("alias")
 
                     preset = "Command: **{}** (admin only)\n```css\n" \
                              "Description: {}{}{}```".format(cmd_name, description, "\n" + use if use else "", "\n" + alias if alias else "")
 
-                    # stat.plushelpcommand()
+                    self.stats.add(HELP)
                     return preset
 
                 # Owner commands
-                cmd = cmd_help_owner.get(str(cmd.replace(prefix, "_").strip(" ")))
-                if cmd is not None:
+                cmd3 = cmd_help_owner.get(str(cmd.replace(prefix, "_").strip(" ")))
+                if cmd3 is not None:
                     cmd_name = search.replace(prefix, "")
 
-                    description = cmd.get("desc")
-                    use = cmd.get("use")
-                    alias = cmd.get("alias")
+                    description = cmd3.get("desc")
+                    use = cmd3.get("use")
+                    alias = cmd3.get("alias")
 
                     preset = "Command: **{}** (owner only)\n```css\n" \
                              "Description: {}{}{}```".format(cmd_name, description, "\n" + use if use else "", "\n" + alias if alias else "")
-                    # stat.plushelpcommand()
+                    
+                    self.stats.add(HELP)
                     return preset
 
-                if cmd is None:
-                    # stat.pluswrongarg()
+                if not cmd1 or not cmd2 or not cmd3:
+                    self.stats.add(WRONG_ARG)
                     return None
 
             # Allows for !help ping AND !help !ping
@@ -283,7 +284,7 @@ class Help:
                                                                "**(Use: `>help command`)**".replace(">", prefix))
 
         # !notifydev
-        elif startswith((prefix + "notifydev", prefix + "suggest")):
+        elif startswith(prefix + "notifydev", prefix + "suggest"):
             if startswith(prefix + "notifydev"):
                 report = message.content[len(prefix + "notifydev "):]
                 typ = "Report"

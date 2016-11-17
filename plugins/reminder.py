@@ -262,7 +262,10 @@ class Reminder:
             for reminder in reminders:
                 # Gets the remaining time
                 ttl = reminder.get("time_target") - time.time()
-                rem.append("➤ {} (in **{}**)".format(reminder.get("raw"), resolve_time(ttl)))
+
+                cont = self.nano.get_plugin("commons").get("instance").at_everyone_filter(reminder.get("raw"), message.author, message.server)
+
+                rem.append("➤ {} (in **{}**)".format(cont, resolve_time(ttl)))
 
             await client.send_message(message.channel, "Your reminders:\n" + "\n".join(rem))
 
