@@ -17,7 +17,9 @@ log.setLevel(logging.INFO)
 nano_info = """**Hey! My name is Nano!**
 I have a GitHub repo! `!github`
 My current version is **<version>**.
-I have been coded by *DefaltSimon*."""
+I have been coded by *DefaltSimon*.
+
+Gif command powered by **Giphy**"""
 
 nano_github = """Nano's code is being maintained and updated on **GitHub**: https://github.com/DefaltSimon/Nano"""
 

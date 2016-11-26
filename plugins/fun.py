@@ -1,8 +1,13 @@
 # coding=utf-8
 import giphypop
+import configparser
 from discord import Message
 from data.utils import is_valid_command
 from data.stats import NanoStats, PRAYER, MESSAGE, IMAGE_SENT
+
+parser = configparser.ConfigParser()
+parser.read("plugins/config.ini")
+
 
 simple_commands = {
     "_johncena": "ITS JOHN CENA",
@@ -21,7 +26,8 @@ class Fun:
         self.client = kwargs.get("client")
         self.stats = kwargs.get("stats")
 
-        self.gif = giphypop.Giphy()
+        key = parser.get("giphy", "api-key")
+        self.gif = giphypop.Giphy(api_key=key if key else giphypop.GIPHY_PUBLIC_KEY)
 
     async def on_message(self, message, **kwargs):
         assert isinstance(message, Message)
