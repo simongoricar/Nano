@@ -7,7 +7,7 @@ import traceback
 from shutil import copy2
 from asyncio import sleep
 from random import shuffle
-from discord import Message, Game, Member, utils, errors
+from discord import Message, Game, Member, utils, errors, Embed, Colour
 from data.serverhandler import ServerHandler
 from data.utils import is_valid_command, log_to_file
 from data.stats import MESSAGE
@@ -196,6 +196,13 @@ class DevFeatures:
         # nano.dev.test_error
         elif startswith("nano.dev.test_error"):
             int("abcdef")
+
+        # nano.dev.embed_test
+        elif startswith("nano.dev.embed_test"):
+            emb = Embed(title="Stats", colour=Colour.darker_grey())
+            emb.add_field(name="Messages Sent", value="sample messages")
+
+            await client.send_message(message.channel, "Stats", embed=emb)
 
         # nano.dev.backup
         elif startswith("nano.dev.backup"):

@@ -2,7 +2,8 @@
 import asyncio
 import logging
 import time
-from discord import Message, utils, Client, DiscordException
+import datetime
+from discord import Message, utils, Client, DiscordException, Embed, Colour
 from data.serverhandler import ServerHandler
 from data.utils import convert_to_seconds, get_decision, is_valid_command
 
@@ -263,7 +264,7 @@ class Admin:
             user = message.mentions[0]
             tim = message.content[len(prefix + "softban "):].replace("<@{}>".format(user.id), "").strip()
 
-            await client.ban(user)
+            await client.ban(user, delete_message_days=0)
 
             self.timer.set_softban(message.channel.server, user, tim)
 
@@ -323,24 +324,36 @@ class Admin:
             # Gets info
             name = member.name
             mid = member.id
-            avatar = str(member.avatar_url)
+            bot = ":robot:" if member.bot else ":cowboy:"
 
-            is_bot = ":robot:" if member.bot else ""
+            # Just removes the @ in @everyone
+            role = str(member.top_role).rstrip("@")
 
-            role = member.top_role
-            account_created = member.created_at
-            status = "Online" if member.status.online or member.status.idle else "Offline"
+            account_created = str(member.created_at).rsplit(".")[0]
+            status = str(member.status).capitalize()
 
-            # Filter @everyone out
-            if role == "@everyone":
-                role = "None"
+            if status == "Online":
+                color = Colour.green()
+            elif status == "Idle":
+                color = Colour.gold()
+            elif status == "Offline":
+                color = Colour.darker_grey()
+            else:
+                color = Colour.red()
 
-            # 'Compiles' info
-            final = "User: **{}** #{} {}\n➤ Status: {}\n➤ Id: `{}`\n➤ Avatar: {}\n\n➤ Top role_: **{}**\n" \
-                    "➤ Created at: `{}`".format(name, member.discriminator, is_bot, status, mid,
-                                                avatar, role, account_created)
+            embed = Embed(colour=color)
+            embed.set_author(name="{} #{}".format(name, member.discriminator), icon_url=member.avatar_url)
 
-            await client.send_message(message.channel, final)
+            embed.add_field(name="Status", value=status)
+            embed.add_field(name="Id", value=mid)
+            embed.add_field(name="Account Type", value=bot)
+            embed.add_field(name="Top Role", value=role)
+            embed.add_field(name="Account Creation Date", value=account_created)
+
+            embed.set_footer(text="Data pulled at {} UTC".format(
+                datetime.datetime.now(datetime.timezone.utc).strftime("%a, %d %B %Y")))
+
+            await client.send_message(message.channel, "**User info:**", embed=embed)
 
         # !role
         elif startswith(prefix + "role"):
@@ -440,9 +453,17 @@ class Admin:
 
         # nano.settings
         elif startswith("nano.settings"):
+            # todo optimize this
             try:
                 cut = str(message.content)[len("nano.settings "):].rsplit(" ", 1)
             except IndexError:
+                return
+
+            if get_decision(cut[0], "logchannel", "log channel", "logging channel"):
+                handler.update_var(message.server.id, "logchannel", cut[1])
+                await client.send_message(message.channel,
+                                          "Log channel set to {} {}".format(cut[1], ":ok_hand:"))
+
                 return
 
             try:
@@ -451,15 +472,18 @@ class Admin:
                 # stat.pluswrongarg()
                 return
 
-            if get_decision(cut[0], ("word filter", "filter words", "wordfilter")):
+            if get_decision(cut[0], "word filter", "filter words", "wordfilter"):
                 await client.send_message(message.channel, "Word filter {}".format(CHECK_MARK if value else CROSS_MARK))
 
-            elif get_decision(cut[0], ("spam filter", "spamfilter", "filter spam")):
+            elif get_decision(cut[0], "spam filter", "spamfilter", "filter spam"):
                 await client.send_message(message.channel, "Spam filter {}".format(CHECK_MARK if value else CROSS_MARK))
 
-            elif get_decision(cut[0], ("filterinvite", "filterinvites", "invite removal", "invite filter", "invitefilter")):
+            elif get_decision(cut[0], "filterinvite", "filterinvites", "invite removal", "invite filter", "invitefilter"):
                 await client.send_message(message.channel,
                                           "Invite filter {}".format(CHECK_MARK if value else CROSS_MARK))
+
+            else:
+                await client.send_message(message.channel, "Not a setting. (wordfilter/spamfilter/invitefilter)")
 
         # nano.displaysettings
         elif startswith("nano.displaysettings"):

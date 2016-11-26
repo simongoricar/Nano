@@ -17,7 +17,7 @@ from data.utils import log_to_file
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '3.1.3'
+__version__ = '3.1.4'
 
 
 # CONSTANTS and EVENTS
@@ -191,11 +191,14 @@ class Nano(metaclass=Singleton):
             self.plugin_events[el] = sorted_list
 
     def get_plugin(self, name):
-        return self.plugins.get(str(name) + ".py")
+        if not str(name).endswith(".py"):
+            return self.plugins.get(str(name) + ".py")
+        else:
+            return self.plugins.get(str(name))
 
     async def dispatch_event(self, event_type, *args, **kwargs):
         """
-        Dispatches any discord event (on_message, for example)
+        Dispatches any discord event (for example: on_message)
         """
         if not self.plugin_events.get(event_type):
             return
@@ -211,7 +214,7 @@ class Nano(metaclass=Singleton):
             # If data is passed, assign proper variables
             if isinstance(resp, tuple):
                 ag = resp[1:]
-                resp = resp[0]
+                resp = str(resp[0])
 
             else:
                 ag = list()
@@ -223,8 +226,18 @@ class Nano(metaclass=Singleton):
 
             elif resp == "add_var":
                 # Add/Set new kwargs
-                for k, v in ag[0].items():
-                    kwargs[k] = v
+                try:
+                    if isinstance(ag, tuple):
+                        for k, v in ag[0].items():
+                            kwargs[k] = v
+
+                    else:
+                        for k, v in ag.items():
+                            kwargs[k] = v
+                except AttributeError as e:
+                    print("Exception: " + str(e))
+                    # debugme remove this after it has been fixed
+                    print("DEBUG!! {} at plugin {}".format(ag, plugin))
 
             elif resp == "shutdown":
                 try:

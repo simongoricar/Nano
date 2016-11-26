@@ -71,6 +71,7 @@ possibilities = [
     "d", "day"]
 
 def convert_to_seconds(string):
+    # /todo urgent fix
     if str(string).isnumeric():
         return int(string)
 
@@ -86,6 +87,15 @@ def convert_to_seconds(string):
     total_seconds = 0
     for el in cp:
         el = str(el).replace(" ", "").replace("\n", "")
+
+        if el.endswith("seconds"):
+            total_seconds += int(el[:-7])
+        elif el.endswith("minutes"):
+            total_seconds += int(el[:-7]) * 60
+        elif el.endswith("hours"):
+            total_seconds += int(el[:-5]) * 60 * 60
+        elif el.endswith("days"):
+            total_seconds += int(el[:-4]) * 60 * 60 * 24
 
         if el.endswith("s"):
             total_seconds += int(el[:-1])
@@ -119,8 +129,8 @@ words = (
 )
 
 
-def get_decision(content, wrd=words):
-    return str(content).lower().startswith(wrd)
+def get_decision(content, *lst):
+    return str(content).lower().startswith(lst)
 
 
 def is_valid_command(msg, commands, **kwargs):
@@ -159,9 +169,15 @@ dis = [
     "none", "false", "off", "disabled"
 ]
 
+
 def is_disabled(ct):
     for a in dis:
         if str(ct).lower().startswith(a):
             return True
 
     return False
+
+
+class Object:
+    def __init__(self, **keywords):
+        self.__dict__.update(keywords)

@@ -102,7 +102,8 @@ class Commons:
 
         # Checks for server specific commands
         for command in server_commands:
-            if str(message.content).startswith(command):
+            # UPDATE 2.1.4: not .startswith anymore!
+            if str(message.content) == command:
                 # Maybe same replacement logic in the future update?
                 # /todo implement advanced replacement logic
                 await client.send_message(message.channel, server_commands.get(command))

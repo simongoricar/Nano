@@ -6,15 +6,7 @@ from pickle import load
 from discord import Message, Client, Server, utils
 from data.serverhandler import ServerHandler
 from data.stats import SUPPRESS
-
-#from .admin import valid_commands as admin_valid
-#from .commons import valid_commands as commons_valid
-#from .developer import valid_commands as dev_valid
-#from .fun import valid_commands as fun_valid
-#from .help import valid_commands as help_valid
-#from .imdb import valid_commands as imdb_valid
-#from .minecraft import valid_commands as 
-
+from data.utils import is_disabled, Object
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -165,8 +157,9 @@ class NanoModerator:
 
 
 class LogManager:
-    def __init__(self, client, loop, handler):
+    def __init__(self, client, nano, loop, handler):
         self.client = client
+        self.nano = nano
         self.loop = loop
         self.handler = handler
 
@@ -195,7 +188,14 @@ class LogManager:
         for server_id, logs in self.logs.items():
 
             log_channel_name = self.handler.get_log_channel(self.servers.get(server_id))
-            log_channel = utils.find(lambda m: m.name == log_channel_name, self.servers.get(server_id).channels)
+
+            # Skip the server if no log channel is present
+            if is_disabled(log_channel_name):
+                continue
+
+            server = utils.find(lambda m: m.id == server_id, self.client.servers)
+
+            log_channel = await self.nano.get_plugin("server").get("instance").handle_log_channel(server)
 
             # Keep in this iteration until all messages have been taken care of
             while logs:
@@ -211,7 +211,6 @@ class LogManager:
                         break
                 print("Sending logs for {}".format(self.servers.get(server_id)))
                 await self.send_combined(log_channel, "\n".join(batch))
-
 
     async def start(self):
         while self.running:
@@ -229,9 +228,13 @@ class Moderator:
         self.stats = kwargs.get("stats")
 
         self.checker = NanoModerator()
-        self.log = LogManager(self.client, self.loop, self.handler)
+        self.log = LogManager(self.client, self.nano, self.loop, self.handler)
 
         self.loop.create_task(self.log.start())
+
+        # Collect all valid commands
+        plugins = [a.get("plugin") for a in self.nano.plugins.values() if a.get("plugin")]
+        self.valid_commands = [item for sub in [get_valid_commands(b) for b in plugins if get_valid_commands(b)] for item in sub]
 
     async def on_message(self, message, **kwargs):
         handler = self.handler
@@ -248,18 +251,15 @@ class Moderator:
             return "return"
 
         # Ignore existing commands
-        plugins = [a.get("plugin") for a in self.nano.plugins.values() if a.get("plugin")]
-        valid_commands = [item for sub in [get_valid_commands(b) for b in plugins if get_valid_commands(b)] for item in sub]
-
-        def is_command(msg, valids):
+        def is_command(content, valids):
             for a in valids:
-                if str(msg).startswith(a.replace("_", prefix)):
+                if str(content).startswith(str(a).replace("_", prefix)):
                     return True
 
             return False
 
         # Ignore the filter if user is executing a command
-        if is_command(message.content, valid_commands):
+        if is_command(message.content, self.valid_commands):
             return
 
         # Spam, swearing and invite filter
@@ -300,15 +300,17 @@ class Moderator:
 
             # Make correct messages
             if spam:
-                msg = "{}'s message was deleted: spam\n```{}```\n".format(message.author.name, message.content)
+                msg = "{}'s message was deleted: spam\n`{}`\n".format(message.author.name, message.content)
 
             elif swearing:
-                msg = "{}'s message was deleted: banned words\n```{}```\n".format(message.author.name, message.content)
+                msg = "{}'s message was deleted: banned words\n`{}`\n".format(message.author.name, message.content)
 
             elif invite:
-                msg = "{}'s message was deleted: invite link\n```{}```\n".format(message.author.name, message.content)
+                msg = "{}'s message was deleted: invite link\n`{}`\n".format(message.author.name, message.content)
 
-            else:  pass # Lolwat
+            else:
+                # Lol wat
+                return
 
             # Add them to the queue
             self.log.add_entry(message.server, msg)
@@ -318,7 +320,7 @@ class Moderator:
 
 class NanoPlugin:
     _name = "Moderator"
-    _version = "0.2.2"
+    _version = "0.2.3"
 
     handler = Moderator
     events = {

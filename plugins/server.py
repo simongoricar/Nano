@@ -26,6 +26,7 @@ valid_commands = [
 ]
 
 
+# noinspection PyTypeChecker
 class ServerManagement:
     def __init__(self, **kwargs):
         self.client = kwargs.get("client")
@@ -34,11 +35,14 @@ class ServerManagement:
         self.nano = kwargs.get("nano")
         self.stats = kwargs.get("stats")
 
+        # Debug
+        self.lt = time.time()
+
     async def handle_log_channel(self, server):
         # Check if the channel already exists
         if not [ch for ch in server.channels if ch.name == self.handler.get_var(server.id, "logchannel")]:
 
-            if not self.handler.get_var(server.id, "logchannel"):
+            if is_disabled(self.handler.get_var(server.id, "logchannel")):
                 return None
 
             # Creates permission overwrites: normal users cannot see the channel, only users with the role "Nano Admin" and the bot
@@ -100,13 +104,21 @@ class ServerManagement:
                 members += int(server.member_count)
                 channels += len(server.channels)
 
-            stats = "**Stats**\n\nServers: `{}`\nUsers: `{}`\nChannels: `{}`".format(server_count, members, channels)
+            embed = discord.Embed(name="Stats", colour=discord.Colour.dark_blue())
+            embed.add_field(name="Servers", value="{} servers".format(server_count), inline=True)
+            embed.add_field(name="Users", value="{} members".format(members), inline=True)
+            embed.add_field(name="Channels", value="{} channels".format(channels), inline=True)
 
-            await client.send_message(message.channel, stats)
+            await client.send_message(message.channel, "**Stats**", embed=embed)
 
         # !debug
         elif startswith(prefix + "debug", prefix + "stats more"):
             # Some more debug data
+
+            if ((self.lt - time.time()) < 360) and not self.handler.is_bot_owner(message.author.id):
+                return
+            else:
+                self.lt = time.time()
 
             # RAM
             def check_ram():
@@ -133,16 +145,16 @@ class ServerManagement:
             reminders = len(self.nano.get_plugin("reminder").get("instance").reminder.reminders)
             polls = len(self.nano.get_plugin("voting").get("instance").vote.progress)
 
-            debug_data = """```
-Nano:                  {}
-discord.py:            {}
-RAM usage:             {} MB (garbage collected {} MB)
-Cpu usage:             {} %
-Uptime:                {}
-Current reminders:     {}
-Current votes:         {}```""".format(nano_version, discord_version, mem_after, garbage, cpu, uptime, reminders, polls)
+            embed = discord.Embed(colour=discord.Colour.green())
+            embed.add_field(name="Nano version", value=nano_version)
+            embed.add_field(name="discord.py", value=discord_version)
+            embed.add_field(name="RAM usage", value="{} MB (garbage collected {} MB)".format(mem_after, garbage))
+            embed.add_field(name="CPU usage", value="{} %".format(cpu))
+            embed.add_field(name="Uptime", value=uptime)
+            embed.add_field(name="Ongoing reminders", value=reminders, inline=False)
+            embed.add_field(name="Ongoing votes", value=polls)
 
-            await client.send_message(message.channel, debug_data)
+            await client.send_message(message.channel, "**Debug data:**", embed=embed)
 
         # !stats
         elif startswith(prefix + "stats"):
@@ -153,16 +165,21 @@ Current votes:         {}```""".format(nano_version, discord_version, mem_after,
             sleeps = file.get("timesslept")
             wrong_permissions = file.get("wrongpermscount")
             helps = file.get("peoplehelped")
-            images = file.get("imagessent")
             votes = file.get("votesgot")
             pings = file.get("timespinged")
 
-            to_send = "**Stats**\n```python\n{} messages sent\n{} people yelled at because of wrong args\n" \
-                      "{} people denied because of wrong permissions\n{} people helped\n{} votes got\n{} times slept\n" \
-                      "{} images uploaded\n{} times Pong!-ed```".format(messages, wrong_args, wrong_permissions,
-                                                                        helps, votes, sleeps, images, pings)
+            embed = discord.Embed(colour=discord.Colour.gold())
 
-            await client.send_message(message.channel, to_send)
+            embed.add_field(name="Messages sent", value=messages)
+            embed.add_field(name="Wrong arguments got", value=wrong_args)
+            embed.add_field(name="Command abuses tried", value=wrong_permissions)
+            embed.add_field(name="People Helped", value=helps)
+            embed.add_field(name="Votes got", value=votes)
+            embed.add_field(name="Times slept", value=sleeps)
+            embed.add_field(name="Times Pong!-ed", value=pings)
+            # Left out "images uploaded" because there was no use
+
+            await client.send_message(message.channel, "**Stats**", embed=embed)
 
         # !prefix
         elif startswith(prefix + "prefix"):

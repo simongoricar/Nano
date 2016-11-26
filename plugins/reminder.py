@@ -6,7 +6,7 @@ import logging
 from pickle import load, dumps
 from discord import Message, Client, DiscordException
 from data.utils import resolve_time, convert_to_seconds, is_valid_command, is_empty
-from data.stats import MESSAGE
+from data.stats import MESSAGE, WRONG_ARG
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -212,6 +212,11 @@ class Reminder:
         if startswith(prefix + "remind me in"):
             args = str(message.content)[len(prefix + "remind me in "):].strip().split(":")
 
+            if len(args) != 2:
+                await client.send_message(message.channel, "Incorrect command use. See `_help remind me in` for usage".replace("_", prefix))
+                self.stats.add(WRONG_ARG)
+                return
+
             if not args[0].isnumeric():
                 ttr = convert_to_seconds(args[0])
             else:
@@ -232,6 +237,11 @@ class Reminder:
         # !remind here in [time]:[reminder]
         elif startswith(prefix + "remind here in"):
             args = str(message.content)[len(prefix + "remind here in "):].strip().split(":")
+
+            if len(args) != 2:
+                await client.send_message(message.channel, "Incorrect command use. See `_help remind here in` for usage".replace("_", prefix))
+                self.stats.add(WRONG_ARG)
+                return
 
             if not args[0].isnumeric():
                 ttr = convert_to_seconds(args[0])

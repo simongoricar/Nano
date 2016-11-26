@@ -30,7 +30,8 @@ class PrefixState:
             return "return"
 
         if message.channel.is_private:
-            return "add_var", parser.get("Servers", "defaultprefix")
+            return "return"
+            #return "add_var", parser.get("Servers", "defaultprefix")
 
 
         # Set up the server if it is not present in servers.yml

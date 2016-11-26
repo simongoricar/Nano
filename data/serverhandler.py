@@ -145,15 +145,15 @@ class ServerHandler(metaclass=Singleton):  # Singleton is imported from utils
             self.server_setup(server)
 
         # Detects the type of the setting
-        if get_decision(key, ("word filter", "filter words", "wordfilter")):
+        if get_decision(key, "word filter", "filter words", "wordfilter"):
             data[server.id]["filterwords"] = value
             self.queue_write(data)
 
-        elif get_decision(key, ("spam filter", "spamfilter", "filter spam")):
+        elif get_decision(key, "spam filter", "spamfilter", "filter spam"):
             data[server.id]["filterspam"] = value
             self.queue_write(data)
 
-        elif get_decision(key, ("filterinvite", "filterinvites", "invite removal", "invite filter", "invitefilter")):
+        elif get_decision(key, "filterinvite", "filterinvites", "invite removal", "invite filter", "invitefilter"):
             data[server.id]["filterinvite"] = value
             self.queue_write(data)
 
@@ -177,11 +177,11 @@ class ServerHandler(metaclass=Singleton):  # Singleton is imported from utils
                     data[sid][var] = server_nondepend_defaults[var]
                     modified = True
 
-        if delete_old:
-            self._check_deprecated_vars(sid, data, changed=modified)
-        else:
-            if modified:
-                self.queue_write(data)
+        #if delete_old:
+        #    self._check_deprecated_vars(sid, data, changed=modified)
+        #else:
+        if modified:
+            self.queue_write(data)
 
     def _delete_old_servers(self, current_servers):
         data = self.cached_file
