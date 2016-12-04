@@ -31,7 +31,7 @@ class PrefixState:
 
         if message.channel.is_private:
             return "return"
-            #return "add_var", parser.get("Servers", "defaultprefix")
+            # return "add_var", parser.get("Servers", "defaultprefix")
 
 
         # Set up the server if it is not present in servers.yml
@@ -50,7 +50,7 @@ class PrefixState:
         # SLEEP/WAKE Commands!
         # nano.sleep
         if startswith("nano.sleep"):
-            if not self.handler.is_bot_owner(message.author.id):
+            if not self.handler.can_use_restricted_commands(message.author, message.server):
                 return
 
             self.handler.set_sleep_state(message.server, 1)
@@ -58,7 +58,7 @@ class PrefixState:
 
         # nano.wake
         elif startswith("nano.wake"):
-            if not self.handler.is_bot_owner(message.author.id):
+            if not self.handler.can_use_restricted_commands(message.author, message.server):
                 return
 
             self.handler.set_sleep_state(message.server, 0)

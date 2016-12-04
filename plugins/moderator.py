@@ -243,6 +243,9 @@ class Moderator:
         assert isinstance(client, Client)
         assert isinstance(handler, ServerHandler)
 
+        if message.channel.is_private:
+            return "return"
+
         # Muting
         if handler.is_muted(message.author):
             await client.delete_message(message)
@@ -291,7 +294,7 @@ class Moderator:
         # Delete if necessary
         if any([spam, swearing, invite]):
             await client.delete_message(message)
-            logger.debug("Deleting message, sending return message.")
+            logger.debug("Message filtered")
 
             # Check if current channel is the logging channel
             log_channel_name = self.handler.get_log_channel(message.server)
@@ -320,7 +323,7 @@ class Moderator:
 
 class NanoPlugin:
     _name = "Moderator"
-    _version = "0.2.3"
+    _version = "0.2.4"
 
     handler = Moderator
     events = {

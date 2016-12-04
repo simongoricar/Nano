@@ -172,7 +172,7 @@ class DevFeatures:
             # /fixme message is still too long
             servers = ["{} ({} u) - `{}`".format(srv.name, srv.member_count, srv.id) for srv in client.servers]
 
-            final = ["\n".join(a) for a in [servers[i:i+1500] for i in range(0, len(servers), 1500)]]
+            final = ["\n".join(a) for a in [servers[i:i+1000] for i in range(0, len(servers), 1000)]]
 
             for chunk in final:
                 await client.send_message(message.channel, chunk)
@@ -204,10 +204,41 @@ class DevFeatures:
 
             await client.send_message(message.channel, "Stats", embed=emb)
 
+        ## nano.dev.msg_test
+        #elif startswith("nano.dev.msg_test"):
+        #    await client.send_message(message.channel, "Message :ok_hand:")
+
         # nano.dev.backup
         elif startswith("nano.dev.backup"):
             self.backup.manual_backup()
             await client.send_message(message.channel, "Backup completed :ok_hand:")
+
+        # nano.dev.leave_server
+        elif startswith("nano.dev.leave_server"):
+            sid = int(message.content[len("nano.dev.leave_server "):])
+
+            srv = utils.find(lambda a: a.id == sid, client.servers)
+            await client.leave_server(srv)
+            await client.send_message(message.channel, "Left {}".format(srv.name))
+
+        # nano.dev.tf.reload
+        elif startswith("nano.dev.tf.clean"):
+            self.nano.get_plugin("tf2").get("instance").tf.request()
+
+            await client.send_message(message.channel, "Re-downloading data...")
+
+        # nano.dev.plugin.reload
+        elif startswith("nano.dev.plugin.reload"):
+            name = str(message.content)[len("nano.dev.plugin.reload "):]
+
+            v_old = self.nano.get_plugin(name).get("plugin").NanoPlugin._version
+            s = await self.nano.reload_plugin(name)
+            v_new = self.nano.get_plugin(name).get("plugin").NanoPlugin._version
+
+            if s:
+                await client.send_message(message.channel, "Successfully reloaded **{}**\nFrom version *{}* to *{}*.".format(name, v_old, v_new))
+            else:
+                await client.send_message(message.channel, "Something went wrong, check the logs.")
 
         # nano.reload
         elif startswith("nano.reload"):
@@ -258,12 +289,12 @@ class DevFeatures:
                 subprocess.Popen(os.path.abspath("startbot.sh"), shell=True)
 
     @staticmethod
-    async def on_error(event, *args, **kwargs):
+    async def on_error(event, *args, **_):
         e_type, _, _ = sys.exc_info()
 
         # Ignore Forbidden errors (but log them anyways)
         if e_type == errors.Forbidden:
-            log.warn("Forbidden: 403")
+            log.warning("Forbidden 403")
 
             if isinstance(args[0], Message):
                 log_to_file("Forbidden 403. Server: {}, channel: {}".format(args[0].server, args[0].channel))

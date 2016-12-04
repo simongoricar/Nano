@@ -174,7 +174,11 @@ class Commons:
 
         # !ping
         elif startswith(prefix + "ping"):
-            await client.send_message(message.channel, "**Pong!**")
+            tm = datetime.now() - message.timestamp
+            # Converts to ms
+            time_taken = int(divmod(tm.total_seconds(), 60)[1] * 100)
+
+            await client.send_message(message.channel, "**Pong!** ({} ms)".format(time_taken))
 
             self.stats.add(PING)
 
@@ -236,16 +240,25 @@ class Commons:
 
         # !say
         elif startswith(prefix + "say"):
-            content = message.content[len(prefix + "say "):]
+            content = str(message.content[len(prefix + "say "):])
+
+            if "<#" in content:
+                raw = content.split(">")
+                channel_id = raw[0].replace("<#", "")
+                content = raw[1].strip(" ")
+
+                channel = utils.find(lambda a: a.id == channel_id, message.server.channels)
+            else:
+                channel = message.channel
 
             content = self.at_everyone_filter(content, message.author, message.server)
 
-            await client.send_message(message.channel, content)
+            await client.send_message(channel, content)
 
 
 class NanoPlugin:
     _name = "Common Commands"
-    _version = 0.1
+    _version = "0.2.1"
 
     handler = Commons
     events = {

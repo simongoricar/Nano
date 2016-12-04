@@ -17,7 +17,7 @@ from data.utils import log_to_file
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '3.1.4'
+__version__ = '3.2'
 
 
 # CONSTANTS and EVENTS
@@ -116,11 +116,18 @@ class Nano(metaclass=Singleton):
                                   on_channel_update=[], on_message_delete=[], on_message_edit=[], on_ready=[],
                                   on_member_join=[], on_member_remove=[], on_member_update=[], on_member_ban=[],
                                   on_member_unban=[], on_server_remove=[], on_error=[], on_shutdown=[])
+        self.plugin_events_ = dict(self.plugin_events)
 
         # Updates the plugin list
         self.update_plugins()
 
     def update_plugins(self):
+        self.plugin_names = [pl for pl in os.listdir("plugins")
+                             if os.path.isfile(os.path.join("plugins", pl)) and str(pl).endswith(".py")]
+
+        self._update_plugins(self.plugin_names)
+
+    def _update_plugins(self, plugin_names):
         """
         Updates all plugins (imports them).
         """
@@ -128,10 +135,7 @@ class Nano(metaclass=Singleton):
 
         failed = []
 
-        self.plugin_names = [pl for pl in os.listdir("plugins")
-                             if os.path.isfile(os.path.join("plugins", pl)) and str(pl).endswith(".py")]
-
-        for plugin in list(self.plugin_names):
+        for plugin in list(plugin_names):
             # Use the importlib to dynamically import all plugins
             try:
                 plug = importlib.import_module("plugins.{}".format(plugin[:-3]))
@@ -167,19 +171,71 @@ class Nano(metaclass=Singleton):
             }
 
             for event, importance in events.items():
-                self.plugin_events[event].append({"plugin": plugin, "importance": importance})
+                self.plugin_events_[event].append({"plugin": plugin, "importance": importance})
 
         log.debug("Registered plugins: {}".format([str(p).rstrip(".py") for p in self.plugin_names]))
 
         if failed:
-            log.warn("Failed plugins: {}".format(failed))
+            log.warning("Failed plugins: {}".format(failed))
 
         self._parse_priorities()
+
+    async def reload_plugin(self, plugin):
+        if not str(plugin).endswith(".py"):
+            plugin = str(plugin) + ".py"
+        else:
+            plugin = str(plugin)
+
+        p = self.get_plugin(plugin)
+        if not p:
+            return False
+
+        # Gracefully reload if the plugin has ON_SHUTDOWN event
+        if ON_SHUTDOWN in p.get("events").keys():
+            await getattr(p.get("instance"), ON_SHUTDOWN)()
+
+        for event, imp in p.get("events").items():
+            self.plugin_events_[event].remove({"plugin": plugin, "importance": imp})
+
+        try:
+            plug = importlib.reload(p.get("plugin"))
+        except ImportError:
+            return False
+
+        # If this file is not a plugin, ignore it
+        try:
+            plug.NanoPlugin
+        except AttributeError:
+            return False
+
+        cls = plug.NanoPlugin.handler
+        events = plug.NanoPlugin.events
+
+        # Instantiate the plugin
+        instance = cls(client=client,
+                       loop=loop,
+                       handler=handler,
+                       nano=self,
+                       stats=stats)
+
+        self.plugins[plugin] = {
+            "plugin": plug,
+            "handler": cls,
+            "instance": instance,
+            "events": events,
+        }
+
+        for event, importance in events.items():
+            self.plugin_events_[event].append({"plugin": plugin, "importance": importance})
+
+        self._parse_priorities()
+
+        return True
 
     def _parse_priorities(self):
         log.info("Parsing priorities...")
 
-        pe = copy.deepcopy(self.plugin_events)
+        pe = copy.deepcopy(self.plugin_events_)
         for el, thing in pe.items():
             # Skip if empty
             if not el or not thing:

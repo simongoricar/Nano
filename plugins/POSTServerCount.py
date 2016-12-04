@@ -37,9 +37,9 @@ class POST:
 
 class NanoPlugin:
     _name = "POST module for bots.discord.pw"
-    _version = 0.1
+    _version = "0.2"
 
     handler = POST
     events = {
-        "on_server_join": 9
+        "on_server_join": 9,
     }

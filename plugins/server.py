@@ -218,6 +218,10 @@ class ServerManagement:
 
         log_c = await self.handle_log_channel(member.server)
 
+        # Ignore if disabled
+        if not log_c:
+            return
+
         await self.client.send_message(log_c, "{} has joined the server".format(member.mention))
         
         if not is_disabled(welcome_msg):
@@ -238,6 +242,10 @@ class ServerManagement:
 
         log_c = await self.handle_log_channel(member.server)
 
+        # Ignore if disabled
+        if not log_c:
+            return
+
         await self.client.send_message(log_c, ban_msg)
 
         if not is_disabled(ban_msg):
@@ -257,6 +265,10 @@ class ServerManagement:
             leave_msg = leave_msg.replace(trigg, repl)
 
         log_c = await self.handle_log_channel(member.server)
+
+        # Ignore if disabled
+        if not log_c:
+            return
 
         await self.client.send_message(log_c, "{} left the server.".format(member.mention))
         
@@ -282,14 +294,16 @@ class ServerManagement:
         log_to_file("Removed from server: {}".format(server.name))
 
     async def on_ready(self):
-        pass
-        
-        #await self.client.wait_until_ready()
+        await self.client.wait_until_ready()
 
-        #log.info("Checking server vars...")
-        #for server in self.client.servers:
-        #    self.handler._check_server_vars(server.id, delete_old=False)
-        #log.info("Finished checking server data.")
+        log.info("Checking server vars...")
+        for server in self.client.servers:
+            if not self.handler.server_exists(server):
+                self.handler.server_setup(server)
+
+            self.handler.check_server_vars(server)
+
+        log.info("Finished checking server data.")
 
 
 class NanoPlugin:

@@ -130,6 +130,9 @@ words = (
 
 
 def get_decision(content, *lst):
+    if not lst:
+        lst = words
+
     return str(content).lower().startswith(lst)
 
 
@@ -166,7 +169,7 @@ def is_empty(path):
         return False
 
 dis = [
-    "none", "false", "off", "disabled"
+    "none", "false", "off", "disabled", "", " "
 ]
 
 
@@ -181,3 +184,15 @@ def is_disabled(ct):
 class Object:
     def __init__(self, **keywords):
         self.__dict__.update(keywords)
+
+
+def invert_num(integer):
+    return int(str(integer)[::-1])
+
+
+def invert_str(str_):
+    return str(str_[::-1])
+
+
+def split_every(content, num):
+    return [content[i:i + num] for i in range(0, len(content), num)]

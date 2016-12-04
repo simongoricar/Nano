@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 
-class VoteHandler():
+class VoteHandler:
     def __init__(self, **_):
 
         # Plugin-related
@@ -135,7 +135,8 @@ class Vote:
             with open("cache/voting.temp", "rb") as vote_cache:
                 self.vote = load(vote_cache)
 
-            os.remove("cache/voting.temp")
+            # 3.1.5 : disabled
+            # os.remove("cache/voting.temp")
 
         else:
             self.vote = VoteHandler()
@@ -182,7 +183,7 @@ class Vote:
             ch = "\n".join(ch).strip("\n")
 
             await client.send_message(message.channel, "**{}**\n"
-                                                       "```{}```".format(self.vote.get_vote_header(message.channel.server), ch))
+                                                       "```{}```".format(self.vote.get_vote_header(message.server), ch))
 
         elif startswith(prefix + "vote end"):
             if not self.handler.can_use_restricted_commands(message.author, message.channel.server):
@@ -210,7 +211,7 @@ class Vote:
             await client.send_message(message.channel, combined)
 
         elif startswith(prefix + "vote"):
-            # Get the choice, but tell the author if he/she didnt supply a number
+            # Get the choice, but tell the author if he/she didn't supply a number
             try:
                 choice = int(message.content[len(prefix + "vote "):])
             except ValueError:

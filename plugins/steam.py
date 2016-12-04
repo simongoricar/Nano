@@ -4,7 +4,7 @@ import configparser
 import logging
 from discord import Message, HTTPException
 from data.utils import is_valid_command
-from data.stats import MESSAGE
+from data.stats import MESSAGE, WRONG_ARG
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -14,7 +14,7 @@ parser.read("plugins/config.ini")
 
 valid_commands = [
     "_steam user", "_steam games", "_steam help",
-    "_steam friends",
+    "_steam friends", "_steam avatar"
 ]
 
 
@@ -53,7 +53,6 @@ class SteamSearch:
             return user.name, [game.name for game in user.owned_games]
         except steamapi.errors.UserNotFoundError:
             return None, None
-
 
 class Steam:
     def __init__(self, **kwargs):
@@ -94,7 +93,7 @@ class Steam:
 
                 if not username:
                     await client.send_message(message.channel, "User **does not exist**.")
-                    # stat.pluswrongarg()
+                    self.stats.add(WRONG_ARG)
                     return
 
                 await client.send_message(message.channel,
@@ -109,7 +108,7 @@ class Steam:
 
                 if not username:
                     await client.send_message(message.channel, "User **does not exist**.")
-                    # stat.pluswrongarg()
+                    self.stats.add(WRONG_ARG)
                     return
 
                 games = ["`{}`".format(game) for game in games]
@@ -130,19 +129,19 @@ class Steam:
 
                 if not steam_user:
                     await client.send_message(message.channel, "User **does not exist**.")
-                    # stat.pluswrongarg()
+                    self.stats.add(WRONG_ARG)
                     return
 
                 info = "User: **{}**\n```css\nStatus: {}\nLevel: {}\nGames: {} owned (including free games)\nFriends: {}```\n" \
                        "Direct link: http://steamcommunity.com/id/{}/".format(steam_user.name, "Online" if steam_user.state else "Offline",
                                                                               steam_user.level, len(steam_user.games), len(steam_user.friends), uid)
 
-                try:
-                    await client.send_message(message.channel, info)
-
-                except HTTPException:
+                if len(info) > 2000:
                     await client.send_message(message.channel,
                                               "This message can not fit onto Discord: **user has too many friends to display (lol)**")
+
+                else:
+                    await client.send_message(message.channel, info)
 
             elif startswith(prefix + "steam") or startswith(prefix + "steam help"):
                 await client.send_message(message.channel,
@@ -151,7 +150,7 @@ class Steam:
 
 class NanoPlugin:
     _name = "Steam Commands"
-    _version = 0.1
+    _version = "0.1"
 
     handler = Steam
     events = {

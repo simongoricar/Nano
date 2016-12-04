@@ -1,6 +1,6 @@
 # coding=utf-8
 from datetime import datetime
-from discord import Message, utils
+from discord import Message, utils, Embed, Colour
 from data.utils import threaded, is_valid_command
 from data.stats import MESSAGE, HELP, WRONG_ARG
 
@@ -32,114 +32,115 @@ nano_bug = "Found a bug? Please report it to me, (**DefaltSimon**) on Discord.\n
 # Template: {"desc": "", "use": None, "alias": None},
 cmd_help_normal = {
     "_help": {"desc": "This is here.", "use": None, "alias": None},
-    "_hello": {"desc": "Welcomes a **mentioned** person, or if no mentions are present, you.", "use": "Use: <command> <mention>", "alias": None},
+    "_hello": {"desc": "Welcomes a **mentioned** person, or if no mentions are present, you.", "use": "[command] [mention]", "alias": None},
     "_uptime": {"desc": "Tells you for how long I have been running.", "use": None, "alias": None},
     "_randomgif": {"desc": "Sends a random gif from Giphy.", "use": None, "alias": None},
-    "_8ball": {"desc": "Answers your question. 8ball style.", "use": "Use: <command> <question>", "alias": None},
-    "_wiki": {"desc": "Gives you the definition of a word from Wikipedia.", "use": "Use: <command> <word>", "alias": "Aliases: _define"},
-    "_define": {"desc": "Gives you the definition of a word from Wikipedia.", "use": "Use: <command> <word>", "alias": "Aliases: _wiki"},
-    "_urban": {"desc": "Gives you the definition of a word from Urban Dictionary.", "use": "Use: <command> <word>", "alias": None},
-    "_avatar": {"desc": "Gives you the avatar url of a mentioned person", "use": "Use: <command> <mention or name>", "alias": None},
+    "_8ball": {"desc": "Answers your questions. 8ball style.", "use": "[command] [question]", "alias": None},
+    "_wiki": {"desc": "Gives you the definition of a word from Wikipedia.", "use": "[command] [word]", "alias": "_define"},
+    "_define": {"desc": "Gives you the definition of a word from Wikipedia.", "use": "[command] [word]", "alias": "_wiki"},
+    "_urban": {"desc": "Gives you the definition of a word from Urban Dictionary.", "use": "[command] [word]", "alias": None},
+    "_avatar": {"desc": "Gives you the avatar url of a mentioned person", "use": "[command] [mention or name]", "alias": None},
     "_ping": {"desc": "Just to check if I'm alive. fyi: I love ping-pong.", "use": None, "alias": None},
-    "_roll": {"desc": "Replies with a random number in range from 0 to your number.", "use": "Use: <command> <number>", "alias": None},
-    "_nano": {"desc": "A little info about me.", "use": None, "alias": "Alias: nano.info"},
+    "_roll": {"desc": "Replies with a random number in range from 0 to your number.", "use": "[command] [number]", "alias": None},
+    "_nano": {"desc": "A little info about me.", "use": None, "alias": "nano.info"},
     "_github": {"desc": "Link to my project on GitHub.", "use": None, "alias": None},
-    "_decide": {"desc": "Decides between different choices so you don't have to.", "use": "Use: <command> word1|word2|word3|...", "alias": None},
+    "_decide": {"desc": "Decides between different choices so you don't have to.", "use": "[command] word1|word2|word3|...", "alias": None},
     "_cmd list": {"desc": "Returns a server-specific command list.", "use": None, "alias": None},
     "_cat": {"desc": "I love cats. And this is a gif of a cat.", "use": None, "alias": None},
     "_kappa": {"desc": "I couldn't resist it.", "use": None, "alias": None},
     "_johncena": {"desc": "I have to remove this someday. dun dun dun dun, dun dun dun dun", "use": None, "alias": None},
-    "_rip": {"desc": "Rest in peperoni, man.", "use": "Use: <command> <mention>", "alias": None},
-    "ayy lmao": {"desc": "Yes, it'stm the ayy lmao meme.", "use": None, "alias": None},
-    "_music join": {"desc": "Joins a voice channel.", "use": "Use: <command> <channel name>", "alias": None},
+    "_rip": {"desc": "Rest in peperoni, man.", "use": "[command] [mention]", "alias": None},
+    "ayy lmao": {"desc": "Yes, it's the ayy lmao meme.", "use": None, "alias": None},
+    "_music join": {"desc": "Joins a voice channel.", "use": "[command] [channel name]", "alias": None},
     "_music leave": {"desc": "Leaves a music channel.", "use": None, "alias": None},
-    "_music volume": {"desc": "Returns the current volume or sets one.", "use": "Use: <command> <volume 0-150>", "alias": None},
+    "_music volume": {"desc": "Returns the current volume or sets one.", "use": "[command] [volume 0-150]", "alias": None},
     "_music pause": {"desc": "Pauses the current song.", "use": None, "alias": None},
     "_music resume": {"desc": "Resumes the paused song", "use": None, "alias": None},
-    "_music skip": {"desc": "Skips the current song.", "use": None, "alias": "Alias: _music stop"},
-    "_music stop": {"desc": "Skips the current song", "use": None, "alias": "Alias: _music skip"},
+    "_music skip": {"desc": "Skips the current song.", "use": None, "alias": "_music stop"},
+    "_music stop": {"desc": "Skips the current song", "use": None, "alias": "_music skip"},
     "_music playing": {"desc": "Gives you info about the current song.", "use": None, "alias": None},
     "_music help": {"desc": "Some help with all the music commands.", "use": None, "alias": None},
     "_prefix": {"desc": "No use whatsoever, but jk here you have it.", "use": None, "alias": None},
-    "_vote": {"desc": "One up for your choice, if there'stm a vote running.", "use": "Use: <command> <choice>", "alias": None},
-    "_status": {"desc": "Displays current status: server, user and channel count.", "use": None, "alias": "Alias: nano.status"},
-    "nano.status": {"desc": "Displays current status: server, user and channel count.", "use": None, "alias": "Alias: _status"},
-    "_stats": {"desc": "Some stats like message count and stuff like that.", "use": None, "alias": "Alias: nano.stats"},
-    "nano.stats": {"desc": "Some stats like message count and stuff like that.", "use": None, "alias": "Alias: _stats"},
-    "_bug": {"desc": "Place where you can report bugs.", "use": None, "alias": "Alias: nano.bug"},
-    "nano.bug": {"desc": "Place where you can report bugs.", "use": None, "alias": "Alias: _bug"},
+    "_vote": {"desc": "One up for your choice, if there's a vote running.", "use": "[command] [choice]", "alias": None},
+    "_status": {"desc": "Displays current status: server, user and channel count.", "use": None, "alias": "nano.status"},
+    "nano.status": {"desc": "Displays current status: server, user and channel count.", "use": None, "alias": "_status"},
+    "_stats": {"desc": "Some stats like message count and stuff like that.", "use": None, "alias": "nano.stats"},
+    "nano.stats": {"desc": "Some stats like message count and stuff like that.", "use": None, "alias": "_stats"},
+    "_bug": {"desc": "Place where you can report bugs.", "use": None, "alias": "nano.bug"},
+    "nano.bug": {"desc": "Place where you can report bugs.", "use": None, "alias": "_bug"},
     "_feature": {"desc": "Place where you can submit your ideas for this bot", "use": None, "alias": None},
-    "nano.info": {"desc": "A little info about me.", "use": None, "alias": "Alias: _ayybot"},
+    "nano.info": {"desc": "A little info about me.", "use": None, "alias": "_ayybot"},
     "nano.prefix": {"desc": "Helps you figure out the prefix.", "use": None, "alias": None},
-    "_changes": {"desc": "A list of changes in the recent versions.", "use": None, "alias": "Alias: _changelog"},
-    "_changelog": {"desc": "A list of changes in the recent versions.", "use": None, "alias": "Alias: _changes"},
-    "_steam": {"desc": "Searches for the specified steam id.\nSubcommands: 'steam user', 'steam games', 'steam friends'", "use": "Use: <command> <end of user url/id>", "alias": None},
-    "_steam user": {"desc": "Searches for general info about the user.", "use": "Use: <command> <end of user url/id>", "alias": None},
-    "_steam games": {"desc": "Searches for all owned games in user's account.", "use": "Use: <command> <end of user url/id>", "alias": None},
-    "_steam friends": {"desc": "Searches for all friends that the user has.", "use": "Use: <command> <end of user url/id>", "alias": None},
-    "_mc": {"desc": "Searches for items and displays their details", "use": "Use: <command> <item name or id:meta>", "alias": "Alias: _minecraft"},
-    "_minecraft": {"desc": "Searches for items and displays their details", "use": "Use: <command> <item name or id:meta>", "alias": "Alias: _mc"},
-    "_tf": {"desc": "Gets item prices from backpack.tf (not perfect for items with unusual effects/shines)", "use": "Use: <command> <item name>", "alias": None},
+    "_changes": {"desc": "A list of changes in the recent versions.", "use": None, "alias": "_changelog"},
+    "_changelog": {"desc": "A list of changes in the recent versions.", "use": None, "alias": "_changes"},
+    "_steam": {"desc": "Searches for the specified steam id.\nSubcommands: 'steam user', 'steam games', 'steam friends'", "use": "[command] [end of user url/id]", "alias": None},
+    "_steam user": {"desc": "Searches for general info about the user.", "use": "[command] [end of user url/id]", "alias": None},
+    "_steam games": {"desc": "Searches for all owned games in user's account.", "use": "[command] [end of user url/id]", "alias": None},
+    "_steam friends": {"desc": "Searches for all friends that the user has.", "use": "[command] [end of user url/id]", "alias": None},
+    "_mc": {"desc": "Searches for items and displays their details", "use": "[command] [item name or id:meta]", "alias": "_minecraft"},
+    "_minecraft": {"desc": "Searches for items and displays their details", "use": "[command] [item name or id:meta]", "alias": "_mc"},
+    "_tf": {"desc": "Gets item prices from backpack.tf (not perfect for items with unusual effects/shines)", "use": "[command] [item name]", "alias": None},
     "_quote": {"desc": "Brightens your day with a random quote.", "use": None, "alias": None},
-    "_notifydev": {"desc": "Sends a message to the developer", "use": "Use: <command> <message>", "alias": "Alias: _suggest"},
-    "_suggest": {"desc": "Sends a message to the developer", "use": "Use: <command> <message>", "alias": "Alias: _notifydev"},
+    "_notifydev": {"desc": "Sends a message to the developer", "use": "[command] [message]", "alias": "_suggest"},
+    "_suggest": {"desc": "Sends a message to the developer", "use": "[command] [message]", "alias": "_notifydev"},
     "_remind": {"desc": "General module for timers\nSubcommands: remind me in, remind here in, remind list, remind remove", "use": None, "alias": None},
     "_remind me": {"desc": "Subcommands: remind me in, remind here in", "use": None, "alias": None},
-    "_remind me in": {"desc": "Adds a reminder (reminds you in dm)", "use": "Use: <command> [time (ex: 3h 5min)] : [message]", "alias": None},
-    "_remind here in": {"desc": "Adds a reminder (reminds everybody in current channel)", "use": "Use: <command> [time (ex: 3h 5min)] : [message]", "alias": None},
+    "_remind me in": {"desc": "Adds a reminder (reminds you in dm)", "use": "[command] [time (ex: 3h 5min)] : [message]", "alias": None},
+    "_remind here in": {"desc": "Adds a reminder (reminds everybody in current channel)", "use": "[command] [time (ex: 3h 5min)] : [message]", "alias": None},
     "_remind list": {"desc": "Displays all ongoing timers.", "use": None, "alias": None},
-    "_remind remove": {"desc": "Removes a timer with supplied description or time (or all timers with 'all')", "use": "Use: <command> [timer description or time in sec]", "alias": None},
-    "_cmds": {"desc": "Displays a link to the wiki page where all commands are listed.", "use": None, "alias": "Alias: _commands"},
-    "_commands": {"desc": "Displays a link to the wiki page where all commands are listed.", "use": None, "alias": "Alias: _cmds"}
+    "_remind remove": {"desc": "Removes a timer with supplied description or time (or all timers with 'all')", "use": "[command] [timer description or time in sec]", "alias": None},
+    "_cmds": {"desc": "Displays a link to the wiki page where all commands are listed.", "use": None, "alias": "_commands"},
+    "_commands": {"desc": "Displays a link to the wiki page where all commands are listed.", "use": None, "alias": "_cmds"},
+    "_say": {"desc": "Says something (#channel is optional)", "use": "[command] (#channel) [message]", "alias": None}
 }
 
 cmd_help_admin = {
-    "_ban": {"desc": "Bans a member.", "use": "Use: <command> <mention>", "alias": "Alias: nano.ban"},
-    "nano.ban": {"desc": "Bans a member.", "use": "User: <command> <mention>", "alias": "Alias: _ban"},
-    "_kick": {"desc": "Kicks a member.", "use": "Use: <command> <mention>", "alias": "Alias: nano.kick"},
-    "nano.kick": {"desc": "Kicks a member", "use": "Use: <command> <mention>", "alias": "Alias: _kick"},
-    # "_unban": {"desc": "Unbans a member.", "use": "Use: <command> <mention>", "alias": "Alias: nano.unban"},
-    # "nano.unban": {"desc": "Unbans a member.", "use": "Use: <command> <mention>", "alias": "Alias: _unban"},
-    "_softban": {"desc": "Temporarily bans a member (for time formatting see reminders)", "use": "Use: <command> <time> @mention", "alias": "Alias: nano.softban"},
-    "nano.softban": {"desc": "Temporarily bans a member (for time formatting see reminders)", "use": "Use: <command> <time> @mention", "alias": "Alias: _softban"},
-    "_role add": {"desc": "Adds a role to the user.", "use": "Use: <command> <role name> <mention>", "alias": None},
-    "_role remove": {"desc": "Removes a role from the user.", "use": "Use: <command> <role name> <mention>", "alias": None},
-    "_role replacewith": {"desc": "Replace all roles with the specified one for a user.", "use": "Use: <command> <role name> <mention>", "alias": None},
-    "_cmd add": {"desc": "Adds a command to the server.", "use": "Use: <command> command|response", "alias": None},
-    "_cmd remove": {"desc": "Removes a command from the server.", "use": "Use: <command> command", "alias": None},
-    "_invite": {"desc": "Gives you a link to invite Nano to another (your) server.", "use": None, "alias": "Alias: nano.invite"},
-    "_vote start": {"desc": "Starts a vote on the server.", "use": "Use: <command> \"question\" choice1|choice2|...", "alias": None},
+    "_ban": {"desc": "Bans a member.", "use": "[command] [mention]", "alias": "nano.ban"},
+    "nano.ban": {"desc": "Bans a member.", "use": "User: [command] [mention]", "alias": "_ban"},
+    "_kick": {"desc": "Kicks a member.", "use": "[command] [mention]", "alias": "nano.kick"},
+    "nano.kick": {"desc": "Kicks a member", "use": "[command] [mention]", "alias": "_kick"},
+    # "_unban": {"desc": "Unbans a member.", "use": "[command] [mention]", "alias": "nano.unban"},
+    # "nano.unban": {"desc": "Unbans a member.", "use": "[command] [mention]", "alias": "_unban"},
+    "_softban": {"desc": "Temporarily bans a member (for time formatting see reminders)", "use": "[command] [time] @mention", "alias": "nano.softban"},
+    "nano.softban": {"desc": "Temporarily bans a member (for time formatting see reminders)", "use": "[command] [time] @mention", "alias": "_softban"},
+    "_role add": {"desc": "Adds a role to the user.", "use": "[command] [role name] [mention]", "alias": None},
+    "_role remove": {"desc": "Removes a role from the user.", "use": "[command] [role name] [mention]", "alias": None},
+    "_role replacewith": {"desc": "Replace all roles with the specified one for a user.", "use": "[command] [role name] [mention]", "alias": None},
+    "_cmd add": {"desc": "Adds a command to the server.", "use": "[command] command|response", "alias": None},
+    "_cmd remove": {"desc": "Removes a command from the server.", "use": "[command] command", "alias": None},
+    "_invite": {"desc": "Gives you a link to invite Nano to another (your) server.", "use": None, "alias": "nano.invite"},
+    "_vote start": {"desc": "Starts a vote on the server.", "use": "[command] \"question\" choice1|choice2|...", "alias": None},
     "_vote end": {"desc": "Simply ends the current vote on the server.", "use": None, "alias": None},
-    "_setup": {"desc": "Helps admins set up basic settings for the bot (guided setup).", "use": None, "alias": "Alias: nano.getstarted"},
-    "_user": {"desc": "Gives info about the user", "use": "Use: <command> <mention or name>", "alias": None},
-    "nano.setup": {"desc": "(Re)sets all server related bot settings to default.", "use": None, "alias": "Alias: _setup"},
-    "nano.admins add": {"desc": "Adds a user to admins on the server.", "use": "Use: <command> <mention>", "alias": None},
-    "nano.admins remove": {"desc": "Removes a user from admins on the server.", "use": "Use: <command> <mention>", "alias": None},
+    "_setup": {"desc": "Helps admins set up basic settings for the bot (guided setup).", "use": None, "alias": "nano.getstarted"},
+    "_user": {"desc": "Gives info about the user", "use": "[command] [mention or name]", "alias": None},
+    "nano.setup": {"desc": "(Re)sets all server related bot settings to default.", "use": None, "alias": "_setup"},
+    "nano.admins add": {"desc": "Adds a user to admins on the server.", "use": "[command] [mention]", "alias": None},
+    "nano.admins remove": {"desc": "Removes a user from admins on the server.", "use": "[command] [mention]", "alias": None},
     "nano.admins list": {"desc": "Lists all admins on the server.", "use": None, "alias": None},
     "nano.sleep": {"desc": "Puts Nano to sleep. (per-server basis)", "use": None, "alias": None},
     "nano.wake": {"desc": "Wakes Nano up. (per-server basis)", "use": None, "alias": None},
-    "nano.invite": {"desc": "Gives you a link to invite Nano to another (your) server.", "use": None, "alias": "Alias: _invite"},
-    "nano.settings": {"desc": "Sets server settings like word and spam filtering, enables or disables welcome message and ban announcement", "use": "Use: <command> <setting> True/False", "alias": None},
+    "nano.invite": {"desc": "Gives you a link to invite Nano to another (your) server.", "use": None, "alias": "_invite"},
+    "nano.settings": {"desc": "Sets server settings like word, spam and invite filtering and changes log channel.", "use": "[command] [setting] True/False", "alias": None},
     "nano.displaysettings": {"desc": "Displays all server settings.", "use": None, "alias": None},
-    "nano.blacklist add": {"desc": "Adds a channel to command blacklist.", "use": "Use: <command> <channel name>", "alias": None},
-    "nano.blacklist remove": {"desc": "Removes a channel from command blacklist", "use": "Use: <command> <channel name>", "alias": None},
-    "nano.changeprefix": {"desc": "Changes the prefix on the server.", "use": "Use: <command> prefix", "alias": None},
-    "_mute": {"desc": "Mutes the user - deletes all future messages from the user until he/she is un-muted.", "use": "Use: <command> <mention or name>", "alias": None},
-    "_unmute": {"desc": "Un-mutes the user (see mute help for more info).", "use": "Use: <command> <mention or name>", "alias": None},
+    "nano.blacklist add": {"desc": "Adds a channel to command blacklist.", "use": "[command] [channel name]", "alias": None},
+    "nano.blacklist remove": {"desc": "Removes a channel from command blacklist", "use": "[command] [channel name]", "alias": None},
+    "nano.changeprefix": {"desc": "Changes the prefix on the server.", "use": "[command] prefix", "alias": None},
+    "_mute": {"desc": "Mutes the user - deletes all future messages from the user until he/she is un-muted.", "use": "[command] [mention or name]", "alias": None},
+    "_unmute": {"desc": "Un-mutes the user (see mute help for more info).", "use": "[command] [mention or name]", "alias": None},
     "_muted": {"desc": "Displays a list of all members currently muted.", "use": None, "alias": None},
-    "_purge": {"desc": "Deletes the messages from the specified user in the last x messages", "use": "Use: <command> <amount> <user name>", "alias": None},
-    "_welcomemsg": {"desc": "Sets the message sent when a member joins the server.\nFormatting: ':user' = @userthatjoined, ':server' = server name", "use": "Use: <command> <content>", "alias": None},
-    "_banmsg": {"desc": "Sets the message sent when a member is banned.\nFormatting: ':user' = user name", "use": "Use: <command> <content>", "alias": None},
-    "_kickmsg": {"desc": "Sets the message sent when a member is kicked.\nFormatting: ':user' = user name", "use": "Use: <command> <content>", "alias": None},
+    "_purge": {"desc": "Deletes the messages from the specified user in the last x messages", "use": "[command] [amount] [user name]", "alias": None},
+    "_welcomemsg": {"desc": "Sets the message sent when a member joins the server.\nFormatting: ':user' = @userthatjoined, ':server' = server name", "use": "[command] [content]", "alias": None},
+    "_banmsg": {"desc": "Sets the message sent when a member is banned.\nFormatting: ':user' = user name", "use": "[command] [content]", "alias": None},
+    "_kickmsg": {"desc": "Sets the message sent when a member is kicked.\nFormatting: ':user' = user name", "use": "[command] [content]", "alias": None},
     "_nuke": {"desc": "Nukes (deletes) last x messages.", "use": None, "alias": None},
 }
 
 cmd_help_owner = {
-    "_playing": {"desc": "Restricted to owner(!), changes 'playing' status.", "use": "Use: <command> <status>", "alias": None},
-    "nano.kill": {"desc": "Restricted to owner, shuts down the bot.", "use": "Use: <command>", "alias": None},
-    "nano.restart": {"desc": "Restricted to owner, restarts down the bot.", "use": "Use: <command>", "alias": None},
-    "nano.reload": {"desc": "Restricted to owner, reloads all settings from config file.", "use": None, "alias": "Alias: _reload"},
-    "_reload": {"desc": "Restricted to owner, reloads all settings from config file.", "use": None, "alias": "Alias: nano.reload"},
+    "_playing": {"desc": "Restricted to owner(!), changes 'playing' status.", "use": "[command] [status]", "alias": None},
+    "nano.kill": {"desc": "Restricted to owner, shuts down the bot.", "use": "[command]", "alias": None},
+    "nano.restart": {"desc": "Restricted to owner, restarts down the bot.", "use": "[command]", "alias": None},
+    "nano.reload": {"desc": "Restricted to owner, reloads all settings from config file.", "use": None, "alias": "_reload"},
+    "_reload": {"desc": "Restricted to owner, reloads all settings from config file.", "use": None, "alias": "nano.reload"},
 }
 
 valid_commands = [
@@ -195,7 +196,8 @@ class Help:
 
         # !cmds or !commands
         elif startswith(prefix + "cmds", prefix + "commands"):
-            await client.send_message(message.channel, "A 'complete' list of commands is available here: https://github.com/DefaltSimon/Nano/wiki/Commands")
+            await client.send_message(message.channel, "A 'complete' list of commands is available here: "
+                                                       "https://github.com/DefaltSimon/Nano/wiki/Commands")
 
             self.stats.add(HELP)
 
@@ -216,68 +218,89 @@ class Help:
                 # Normal commands
                 cmd1 = cmd_help_normal.get(str(cmd.replace(prefix, "_").strip(" ")))
                 if cmd1 is not None:
-                    cmd_name = search.replace(prefix, "")
+                    cmd_name = cmd.replace(prefix, "")
 
                     description = cmd1.get("desc")
-                    use = cmd1.get("use")
+                    use = cmd1.get("use").replace("[command]",
+                                                  prefix + cmd_name if not cmd_name.startswith("nano.") else cmd_name)
                     alias = cmd1.get("alias")
 
-                    preset = "Command: **{}**\n```css\n" \
-                             "Description: {}{}{}```".format(cmd_name, description, "\n" + use if use else "", "\n" + alias if alias else "")
+                    emb = Embed(colour=Colour.blue())
+
+                    emb.add_field(name="Description", value=description)
+
+                    if use:
+                        emb.add_field(name="Use", value=use, inline=False)
+                    if alias:
+                        emb.add_field(name="Aliases", value=alias, inline=False)
 
                     self.stats.add(HELP)
-                    return preset
+                    return "**{}**".format(cmd_name), emb
 
                 # Admin commands
                 cmd2 = cmd_help_admin.get(str(cmd.replace(prefix, "_").strip(" ")))
                 if cmd2 is not None:
-                    cmd_name = search.replace(prefix, "")
+                    cmd_name = cmd.replace(prefix, "")
 
                     description = cmd2.get("desc")
-                    use = cmd2.get("use")
+                    use = cmd2.get("use").replace("[command]",
+                                                  prefix + cmd_name if not cmd_name.startswith("nano.") else cmd_name)
                     alias = cmd2.get("alias")
 
-                    preset = "Command: **{}** (admin only)\n```css\n" \
-                             "Description: {}{}{}```".format(cmd_name, description, "\n" + use if use else "", "\n" + alias if alias else "")
+                    emb = Embed(colour=Colour.green())
+
+                    emb.add_field(name="Description", value=description)
+
+                    if use:
+                        emb.add_field(name="Use", value=use, inline=False)
+                    if alias:
+                        emb.add_field(name="Aliases", value=alias, inline=False)
 
                     self.stats.add(HELP)
-                    return preset
+                    return "**{}** (admin only)".format(cmd_name), emb
 
                 # Owner commands
                 cmd3 = cmd_help_owner.get(str(cmd.replace(prefix, "_").strip(" ")))
                 if cmd3 is not None:
-                    cmd_name = search.replace(prefix, "")
+                    cmd_name = cmd.replace(prefix, "")
 
                     description = cmd3.get("desc")
-                    use = cmd3.get("use")
+                    use = cmd3.get("use").replace("[command]",
+                                                  prefix + cmd_name if not cmd_name.startswith("nano.") else cmd_name)
                     alias = cmd3.get("alias")
 
-                    preset = "Command: **{}** (owner only)\n```css\n" \
-                             "Description: {}{}{}```".format(cmd_name, description, "\n" + use if use else "", "\n" + alias if alias else "")
-                    
+                    emb = Embed(colour=Colour.magenta())
+
+                    emb.add_field(name="Description", value=description)
+
+                    if use:
+                        emb.add_field(name="Use", value=use, inline=False)
+                    if alias:
+                        emb.add_field(name="Aliases", value=alias, inline=False)
+
                     self.stats.add(HELP)
-                    return preset
+                    return "**{}** (owner only)".format(cmd_name), emb
 
                 if not cmd1 or not cmd2 or not cmd3:
                     self.stats.add(WRONG_ARG)
-                    return None
+                    return None, None
 
             # Allows for !help ping AND !help !ping
-            if search.startswith(prefix):
-                res = get_command_info(search)
+            if search.startswith(prefix) or search.startswith("nano."):
+                name, embed = get_command_info(search)
 
-                if res:
-                    await client.send_message(message.channel, res)
+                if name:
+                    await client.send_message(message.channel, name, embed=embed)
 
                 else:
                     await client.send_message(message.channel, "Command could not be found.\n"
                                                                "**(Use: `>help command`)**".replace(">", prefix))
 
             else:
-                res = get_command_info(prefix + search)
+                name, embed = get_command_info(prefix + search)
 
-                if res:
-                    await client.send_message(message.channel, res)
+                if name:
+                    await client.send_message(message.channel, name, embed=embed)
 
                 else:
                     await client.send_message(message.channel, "Command could not be found.\n"
@@ -322,7 +345,7 @@ class Help:
 
 class NanoPlugin:
     _name = "Help Commands"
-    _version = 0.1
+    _version = "0.2"
 
     handler = Help
     events = {

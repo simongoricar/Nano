@@ -345,12 +345,15 @@ class Admin:
             embed.set_author(name="{} #{}".format(name, member.discriminator), icon_url=member.avatar_url)
 
             embed.add_field(name="Status", value=status)
+            embed.add_field(name="Mention", value=member.mention)
             embed.add_field(name="Id", value=mid)
             embed.add_field(name="Account Type", value=bot)
             embed.add_field(name="Top Role", value=role)
             embed.add_field(name="Account Creation Date", value=account_created)
 
-            embed.set_footer(text="Data pulled at {} UTC".format(
+            embed.set_image(url=member.avatar_url)
+
+            embed.set_footer(text="Data got at {} UTC".format(
                 datetime.datetime.now(datetime.timezone.utc).strftime("%a, %d %B %Y")))
 
             await client.send_message(message.channel, "**User info:**", embed=embed)
@@ -709,14 +712,14 @@ For a list of all commands, use `_cmds`.""".replace("_", str(ch2.content))
 
             await client.send_message(message.channel, msg_final)
 
-    async def on_member_remove(self, member, **kwargs):
+    async def on_member_remove(self, member, **_):
         if self.timer.get_ban(member):
             return "return"
 
 
 class NanoPlugin:
     _name = "Admin Commands"
-    _version = "0.2.1"
+    _version = "0.2.2"
 
     handler = Admin
     events = {

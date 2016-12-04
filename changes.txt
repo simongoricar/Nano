@@ -1,3 +1,14 @@
+3.2
+- Can now RELOAD plugins! (nano.dev.plugin.reload <name> as owner)
+- More bugs fixed (they never stop coming)
+- ping command now includes difference between message timestamp and sending time in ms
+- fixed and stylised help command
+- Fixed !tf issues
+- Added !osu
+
+3.1.post4
+- A bugfix
+
 3.1.4
 - Updated some commands to the new Embed format
 - More bugfixes

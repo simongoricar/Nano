@@ -182,7 +182,8 @@ class Reminder:
                 with open("cache/reminders.temp", "rb") as vote_cache:
                     rem = load(vote_cache)
 
-                os.remove("cache/reminders.temp")
+                # 3.1.5 : disabled
+                # os.remove("cache/reminders.temp")
 
                 # Sets the reminders to the state before restart
                 self.reminder.reminders = rem

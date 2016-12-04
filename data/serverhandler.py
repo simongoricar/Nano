@@ -4,6 +4,7 @@ import time
 import logging
 import copy
 from yaml import load, dump
+from discord import Member, User
 
 from .utils import threaded, Singleton, get_decision
 
@@ -31,21 +32,41 @@ server_nondepend_defaults = {
     "banmsg": ":user has been banned.",
     "leavemsg": "**:user** has left the server :cry:",
     "blacklisted": [],
-    "disabled": [],
     "muted": [],
     "customcmds": {},
     "admins": [],
     "logchannel": "logs",
-    "sleeping": 0,
+    "sleeping": False,
     # "onban": 0, //removed
     # "sayhi": 0, //changed
     "prefix": parser.get("Servers", "defaultprefix")
 }
 
-# ServerHandler is a singleton, so it can have only one instance
+
+server_defaults = {
+    "name": "<servername>",
+    "owner": "<ownerid>",
+    "filterwords": False,
+    "filterspam": False,
+    "filterinvite": False,
+    "sleeping": False,
+    "welcomemsg": ":user, Welcome to :server!",
+    "kickmsg": "**:user** has been kicked.",
+    "banmsg": "**:user** has been banned.",
+    "leavemsg": "**:user** has left the server :cry:",
+    "blacklisted": [],
+    "muted": [],
+    "customcmds": {},
+    "admins": [],
+    "logchannel": "logs",
+    "prefix": str(parser.get("Servers", "defaultprefix"))
+}
+
+# ServerHandler is a singleton, --> only one instance
+# imported from utils
 
 
-class ServerHandler(metaclass=Singleton):  # Singleton is imported from utils
+class ServerHandler(metaclass=Singleton):
     def __init__(self):
         self.file = "data/servers.yml"
 
@@ -74,24 +95,12 @@ class ServerHandler(metaclass=Singleton):  # Singleton is imported from utils
         data = self.cached_file
 
         # These are server defaults
-        default_prefix = str(parser.get("Servers", "defaultprefix"))
+        s_data = dict(server_defaults)
 
-        self.cached_file[server.id] = {"name": server.name,
-                                       "owner": server.owner.name,
-                                       "filterwords": False,
-                                       "filterspam": False,
-                                       "filterinvite": False,
-                                       "sleeping": False,
-                                       "welcomemsg": ":user, Welcome to :server!",
-                                       "kickmsg": "**:user** has been kicked.",
-                                       "banmsg": "**:user** has been banned.",
-                                       "leavemsg": "**:user** has left the server :cry:",
-                                       "blacklisted": [],
-                                       "muted": [],
-                                       "customcmds": {},
-                                       "admins": [],
-                                       "logchannel": "logs",
-                                       "prefix": default_prefix}
+        s_data["owner"] = server.owner.id
+        s_data["name"] = server.name
+
+        self.cached_file[server.id] = s_data
 
         log.info("New server: {}".format(server.name))
 
@@ -131,7 +140,7 @@ class ServerHandler(metaclass=Singleton):  # Singleton is imported from utils
 
         self.release_lock()
 
-    def get_all_data(self):
+    def get_data(self):
         return self.cached_file
 
     def get_server_data(self, server_id):
@@ -165,21 +174,25 @@ class ServerHandler(metaclass=Singleton):  # Singleton is imported from utils
         data[sid][key] = value
         self.queue_write(data)
 
-    def _check_server_vars(self, sid, delete_old=True):
+    def check_server_vars(self, server):
         data = self.cached_file
         modified = False
 
-        server = data.get(sid)
-        if data.get(sid):
-            for var in server_nondepend_defaults.keys():
-                # Check each var; add it if it does not exist
-                if server.get(var) is None:
-                    data[sid][var] = server_nondepend_defaults[var]
-                    modified = True
+        # Checks for settings that are not where they should be
+        srv = data.get(server.id)
+        # if data.get(sid):
+        #     for var in server_nondepend_defaults.keys():
+        #         # Check each var, add it if it does not exist
+        #         if server.get(var) is None:
+        #             data[sid][var] = server_nondepend_defaults[var]
+        #             modified = True
 
-        #if delete_old:
-        #    self._check_deprecated_vars(sid, data, changed=modified)
-        #else:
+        if str(srv.get("owner")) != str(server.owner.id):
+            data[server.id]["owner"] = server.owner.id
+
+        if str(srv.get("name")) != str(server.name):
+            data[server.id]["name"] = server.name
+
         if modified:
             self.queue_write(data)
 
@@ -322,6 +335,8 @@ class ServerHandler(metaclass=Singleton):  # Singleton is imported from utils
         return bool(data[server.id]["logchannel"])
 
     def mute(self, user):
+        assert isinstance(user, Member)
+
         data = self.cached_file
 
         if user.id not in data[user.server.id]["muted"]:
@@ -329,12 +344,16 @@ class ServerHandler(metaclass=Singleton):  # Singleton is imported from utils
             self.queue_write(data)
 
     def is_muted(self, user):
+        if isinstance(user, User):
+            return False
         # user if actually supposed to be a an instance of discord.Member (not User, because it doesn't have server property)
         data = self.cached_file
 
         return bool(user.id in data[user.server.id]["muted"])
 
     def unmute(self, user):
+        assert isinstance(user, Member)
+
         data = self.cached_file
 
         if user.id in data[user.server.id]["muted"]:
