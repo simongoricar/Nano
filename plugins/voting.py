@@ -5,8 +5,8 @@ import logging
 from pickle import dumps, load
 from discord import Message
 from data.serverhandler import ServerHandler
-from data.stats import MESSAGE, VOTE, WRONG_PERMS
-from data.utils import is_valid_command, is_empty
+from data.stats import MESSAGE, VOTE, WRONG_PERMS, WRONG_ARG
+from data.utils import is_valid_command, is_empty, StandardEmoji
 
 __author__ = "DefaltSimon"
 # Voting plugin
@@ -36,39 +36,29 @@ class VoteHandler:
     def need_save(self):
         return bool(self.vote_header or self.vote_content or self.progress)
 
-    def start_vote(self, author, server, vote):
-
+    def start_vote(self, author, server, title, choices):
         # Reference - !vote start "Vote for this mate" one|two|three
-        self.vote_header[server.id] = str(vote).split("\"")[1]
-        vote_names = str(vote).split("\"")[2]
+        self.vote_header[server.id] = title
 
-        vote_split = vote_names.split("|")
-
+        # Assumes there is no ongoing vote
         self.votes[server.id] = {}
         self.voters[server.id] = []
-        count = 0
-        for this in vote_split:
-            vote_split[count] = this.strip(" ")
+        self.vote_content[server.id] = []
+        self.author[server.id] = None
 
+        for this in choices:
             try:
-                self.votes[server.id][str(this).strip(" ")] = 0
+                self.votes[server.id][this] = 0
             except KeyError:
                 self.votes[server.id] = []
 
-            count += 1
-
-        self.vote_content[server.id] = vote_split
-
+        self.vote_content[server.id] = choices
         self.author[server.id] = str(author)
-
         self.progress[server.id] = True
 
     def in_progress(self, server):
         try:
-            if self.progress[server.id] is True:
-                return True
-            else:
-                return False
+            return self.progress[server.id] is True
         except KeyError:
             return False
 
@@ -161,7 +151,7 @@ class Vote:
 
         if startswith(prefix + "vote start"):
             if not self.handler.can_use_restricted_commands(message.author, message.channel.server):
-                await client.send_message(message.content, "You are not permitted to use this command.")
+                await client.send_message(message.channel, "You are not permitted to use this command.")
 
                 self.stats.add(WRONG_PERMS)
                 return
@@ -171,8 +161,18 @@ class Vote:
                 return
 
             vote_content = message.content[len(prefix + "vote start "):]
+            base = str(vote_content).split("\"")
 
-            self.vote.start_vote(message.author.name, message.channel.server, vote_content)
+            if len(base) != 3:
+                await client.send_message(message.channel, "Incorrect usage. Check {}help vote start for info.".format(prefix))
+                self.stats.add(WRONG_ARG)
+                return
+
+            title = str(base[1])
+            vote_items = str(base[2]).split("|")
+            vote_items = [a.strip(" ") for a in list(vote_items)]
+
+            self.vote.start_vote(message.author.name, message.channel.server, title, vote_items)
 
             ch = []
             n = 1
@@ -226,13 +226,13 @@ class Vote:
             res = self.vote.plus_one(choice, message.author.id, message.channel.server)
 
             if res == -1:
-                msg = await client.send_message(message.channel, "Cheater :smile:")
+                msg = await client.send_message(message.channel, "Cheater " + StandardEmoji.NORMAL_SMILE)
 
                 await asyncio.sleep(1)
                 await client.delete_message(msg)
 
             elif res:
-                msg = await client.send_message(message.channel, ":ok_hand:")
+                msg = await client.send_message(message.channel, StandardEmoji.PERFECT)
 
                 await asyncio.sleep(1.5)
                 await client.delete_message(msg)
@@ -247,11 +247,16 @@ class Vote:
         if self.vote.need_save():
             with open("cache/voting.temp", "wb") as cache:
                 cache.write(dumps(self.vote))  # Save instance of Vote to be used on the next boot
+        else:
+            try:
+                os.remove("cache/voting.temp")
+            except OSError:
+                pass
 
 
 class NanoPlugin:
     _name = "Voting"
-    _version = "0.2.2"
+    _version = "0.2.3"
 
     handler = Vote
     events = {

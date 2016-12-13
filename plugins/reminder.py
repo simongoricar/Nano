@@ -5,7 +5,7 @@ import asyncio
 import logging
 from pickle import load, dumps
 from discord import Message, Client, DiscordException
-from data.utils import resolve_time, convert_to_seconds, is_valid_command, is_empty
+from data.utils import resolve_time, convert_to_seconds, is_valid_command, is_empty, StandardEmoji
 from data.stats import MESSAGE, WRONG_ARG
 
 log = logging.getLogger(__name__)
@@ -103,7 +103,7 @@ class ReminderHandler():
             return False
 
         raw = str(content)
-        content = ":alarm_clock: You asked me to remind you: \n```{}```".format(content)
+        content = "{} You asked me to remind you: \n```{}```".format(StandardEmoji.ALARM, content)
 
         # Add the reminder to the list
         if not self.reminders.get(author.id):
@@ -218,12 +218,14 @@ class Reminder:
                 self.stats.add(WRONG_ARG)
                 return
 
+            content = str(args[1]).strip(" ")
+
             if not args[0].isnumeric():
                 ttr = convert_to_seconds(args[0])
             else:
                 ttr = int(args[0])
 
-            resp = self.reminder.set_reminder(message.author, message.author, args[1], ttr)
+            resp = self.reminder.set_reminder(message.author, message.author, content, ttr)
 
             if resp == -1:
                 await client.send_message(message.channel,
@@ -238,6 +240,7 @@ class Reminder:
         # !remind here in [time]:[reminder]
         elif startswith(prefix + "remind here in"):
             args = str(message.content)[len(prefix + "remind here in "):].strip().split(":")
+            content = str(args[1]).strip(" ")
 
             if len(args) != 2:
                 await client.send_message(message.channel, "Incorrect command use. See `_help remind here in` for usage".replace("_", prefix))
@@ -249,7 +252,7 @@ class Reminder:
             else:
                 ttr = int(args[0])
 
-            resp = self.reminder.set_reminder(message.channel, message.author, args[1].strip(), ttr)
+            resp = self.reminder.set_reminder(message.channel, message.author, content, ttr)
 
             if resp == -1:
                 await client.send_message(message.channel,
@@ -308,11 +311,16 @@ class Reminder:
             with open("cache/reminders.temp", "wb") as cache:
                 print(self.reminder.reminders)
                 cache.write(dumps(self.reminder.reminders))  # Save instance of ReminderHandler to be used on the next boot
+        else:
+            try:
+                os.remove("cache/reminders.temp")
+            except OSError:
+                pass
 
 
 class NanoPlugin:
     _name = "Reminder Commands"
-    _version = "0.2.2"
+    _version = "0.2.3"
 
     handler = Reminder
     events = {

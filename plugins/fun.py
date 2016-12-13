@@ -1,6 +1,9 @@
 # coding=utf-8
 import giphypop
 import configparser
+import aiohttp
+import logging
+import asyncio
 from discord import Message
 from data.utils import is_valid_command
 from data.stats import NanoStats, PRAYER, MESSAGE, IMAGE_SENT
@@ -8,6 +11,8 @@ from data.stats import NanoStats, PRAYER, MESSAGE, IMAGE_SENT
 parser = configparser.ConfigParser()
 parser.read("plugins/config.ini")
 
+log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
 
 simple_commands = {
     "_johncena": "ITS JOHN CENA",
@@ -16,8 +21,68 @@ simple_commands = {
 }
 
 valid_commands = [
-    "_kappa", "_cat", "_randomgif", "_rip"
+    "_kappa", "_cat", "_randomgif", "_rip", "_meme", "_caption"
 ]
+
+
+class MemeGenerator:
+    def __init__(self, username, password, loop=asyncio.get_event_loop()):
+        self.meme_endpoint = "https://api.imgflip.com/get_memes"
+        self.caption_endpoint = "https://api.imgflip.com/caption_image"
+
+        self.loop = loop
+
+        self.username = str(username)
+        self.password = str(password)
+
+        self.meme_list = []
+        self.meme_name_id_pairs = {}
+
+        asyncio.ensure_future(self.prepare())
+
+    async def prepare(self):
+        raw = await self.get_memes()
+
+        if raw.get("success") is not True:
+            raise LookupError("could not get meme list")
+
+        self.meme_list = list(raw.get("data").get("memes"))
+
+        for m_dict in self.meme_list:
+            self.meme_name_id_pairs[str(m_dict.get("name")).lower()] = m_dict.get("id")
+
+        log.info("Ready to make memes")
+
+    async def get_memes(self):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(self.meme_endpoint) as resp:
+                return await resp.json()
+
+    async def caption_meme(self, name, top, bottom):
+        meme_id = self.meme_name_id_pairs.get(str(name).lower())
+
+        if not meme_id:
+            return None
+
+        resp = await self._caption_meme(meme_id, top, bottom)
+
+        if resp.get("success") is not True:
+            raise LookupError("failed: {}".format(resp.get("error_message")))
+
+        return str(resp.get("data").get("url"))
+
+    async def _caption_meme(self, meme_id, top, bottom):
+        payload = dict(
+            username=self.username,
+            password=self.password,
+            text0=top,
+            text1=bottom,
+            template_id=meme_id,
+        )
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(self.caption_endpoint, data=payload) as req:
+                return await req.json()
 
 
 class Fun:
@@ -25,9 +90,19 @@ class Fun:
         self.nano = kwargs.get("nano")
         self.client = kwargs.get("client")
         self.stats = kwargs.get("stats")
+        self.loop = kwargs.get("loop")
+
+        if not parser.has_section("giphy") or not parser.has_section("imgflip"):
+            log.critical("Missing giphy or imgflip section! fix and RELOAD!")
+            return
 
         key = parser.get("giphy", "api-key")
         self.gif = giphypop.Giphy(api_key=key if key else giphypop.GIPHY_PUBLIC_KEY)
+
+        username = parser.get("imgflip", "username")
+        password = parser.get("imgflip", "password")
+
+        self.generator = MemeGenerator(username, password, loop=self.loop)
 
     async def on_message(self, message, **kwargs):
         assert isinstance(message, Message)
@@ -70,6 +145,31 @@ class Fun:
             await client.send_message(message.channel, str(random_gif))
 
             self.stats.add(IMAGE_SENT)
+
+        elif startswith(prefix + "meme", prefix + "caption"):
+            if startswith(prefix + "meme"):
+                query = message.content[len(prefix + "meme "):]
+            elif startswith(prefix + "caption"):
+                query = message.content[len(prefix + "caption "):]
+            else:
+                # u wot pycharm
+                return
+
+            middle = [str(a).strip(" ") for a in str(query).split("|")]
+
+            if len(middle) != 3:
+                await client.send_message(message.channel, "Incorrect usage. See _help caption/_help meme for info".replace("_", prefix))
+                return
+
+            name = middle[0]
+            top = middle[1]
+            bottom = middle[2]
+            meme = await self.generator.caption_meme(name, top, bottom)
+
+            if not meme:
+                await client.send_message(message.channel, "Meme is non-existent. rip")
+            else:
+                await client.send_message(message.channel, meme)
 
         elif startswith(prefix + "rip"):
             if len(message.mentions) == 1:

@@ -24,6 +24,40 @@ class Singleton(type):
         return cls._instances[cls]
 
 
+class StandardEmoji:
+    """
+    Includes standard emojis to use
+    """
+    # Success indicators
+    OK = ":white_check_mark:"
+    OK_BLUE = ":ballot_box_with_check:"
+    GREEN_FAIL = ":negative_squared_cross_mark:"
+    CROSS = ":x:"
+    WARNING = ":warning:"
+    PERFECT = ":ok_hand:"
+
+    # Face emojis
+    SMILEY = ":smiley"
+    NORMAL_SMILE = ":smile:"
+    TONGUE = ":stuck_out_tongue:"
+    THINKING = ":thinking:"
+    SCREAM = ":scream:"
+    CRY = ":sob:"
+    EXPRESSIONLESS = ":expressionless:"
+    SLEEP = ":sleeping:"
+
+    ZIP_MOUTH = ":zipper_mouth:"
+    ROFL = ":rofl:"
+
+    # Other
+    THUMBS_UP = ":+1:"
+    MUSCLE = ":muscle:"
+    BOT = ":robot:"
+    ALIEN = ":alien:"
+    SPY = ":spy:"
+    ALARM = ":alarm_clock:"
+
+
 def resolve_time(tm):
     try:
         tm = int(round(tm, 0))
@@ -65,13 +99,13 @@ def resolve_time(tm):
 
 
 possibilities = [
-    "s", "sec",
-    "m", "min",
-    "h", "hr",
-    "d", "day"]
+    "s", "sec", "seconds",
+    "m", "min", "minutes",
+    "h", "hr", "hours",
+    "d", "day", "days"]
+
 
 def convert_to_seconds(string):
-    # /todo urgent fix
     if str(string).isnumeric():
         return int(string)
 
@@ -90,12 +124,16 @@ def convert_to_seconds(string):
 
         if el.endswith("seconds"):
             total_seconds += int(el[:-7])
+            continue
         elif el.endswith("minutes"):
             total_seconds += int(el[:-7]) * 60
+            continue
         elif el.endswith("hours"):
             total_seconds += int(el[:-5]) * 60 * 60
+            continue
         elif el.endswith("days"):
             total_seconds += int(el[:-4]) * 60 * 60 * 24
+            continue
 
         if el.endswith("s"):
             total_seconds += int(el[:-1])

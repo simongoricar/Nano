@@ -7,7 +7,7 @@ from random import randint
 from discord import Message, utils
 from data.serverhandler import ServerHandler
 from data.stats import MESSAGE, PING
-from data.utils import is_valid_command
+from data.utils import is_valid_command, StandardEmoji
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -236,7 +236,7 @@ class Commons:
                 await client.send_message(message.channel, "**{}**'s avatar: {}".format(member.name, url))
             else:
                 await client.send_message(message.channel,
-                                          "**{}** does not have an avatar. :expressionless:".format(member.name))
+                                          "**{}** does not have an avatar. {}".format(member.name, StandardEmoji.EXPRESSIONLESS))
 
         # !say
         elif startswith(prefix + "say"):
@@ -258,7 +258,7 @@ class Commons:
 
 class NanoPlugin:
     _name = "Common Commands"
-    _version = "0.2.1"
+    _version = "0.2.2"
 
     handler = Commons
     events = {

@@ -1,4 +1,5 @@
 # coding=utf-8
+import time
 from datetime import datetime
 from discord import Message, utils, Embed, Colour
 from data.utils import threaded, is_valid_command
@@ -91,7 +92,9 @@ cmd_help_normal = {
     "_remind remove": {"desc": "Removes a timer with supplied description or time (or all timers with 'all')", "use": "[command] [timer description or time in sec]", "alias": None},
     "_cmds": {"desc": "Displays a link to the wiki page where all commands are listed.", "use": None, "alias": "_commands"},
     "_commands": {"desc": "Displays a link to the wiki page where all commands are listed.", "use": None, "alias": "_cmds"},
-    "_say": {"desc": "Says something (#channel is optional)", "use": "[command] (#channel) [message]", "alias": None}
+    "_say": {"desc": "Says something (#channel is optional)", "use": "[command] (#channel) [message]", "alias": None},
+    "_meme": {"desc": "Captions a meme with your text. Take a look at <https://imgflip.com/memegenerator>'s list of memes if you want.", "use": "[command] [meme name]|[top text]|[bottom text]", "alias": "_caption"},
+    "_caption": {"desc": "Captions a meme with your text. Take a look at <https://imgflip.com/memegenerator>'s list of memes if you want.", "use": "[command] [meme name]|[top text]|[bottom text]", "alias": "_meme"},
 }
 
 cmd_help_admin = {
@@ -161,6 +164,8 @@ class Help:
         self.nano = kwargs.get("nano")
         self.stats = kwargs.get("stats")
 
+        self.last_times = {}
+
     async def on_message(self, message, *_, **kwargs):
         assert isinstance(message, Message)
         client = self.client
@@ -221,9 +226,15 @@ class Help:
                     cmd_name = cmd.replace(prefix, "")
 
                     description = cmd1.get("desc")
-                    use = cmd1.get("use").replace("[command]",
-                                                  prefix + cmd_name if not cmd_name.startswith("nano.") else cmd_name)
+
+                    use = cmd1.get("use")
+                    if use:
+                        use = cmd1.get("use").replace("[command]",
+                                                      prefix + cmd_name if not cmd_name.startswith("nano.") else cmd_name)
+
                     alias = cmd1.get("alias")
+                    if alias:
+                        alias = cmd1.get("alias").replace("_", prefix)
 
                     emb = Embed(colour=Colour.blue())
 
@@ -243,9 +254,16 @@ class Help:
                     cmd_name = cmd.replace(prefix, "")
 
                     description = cmd2.get("desc")
-                    use = cmd2.get("use").replace("[command]",
-                                                  prefix + cmd_name if not cmd_name.startswith("nano.") else cmd_name)
+
+                    use = cmd2.get("use")
+                    if use:
+                        use = cmd2.get("use").replace("[command]",
+                                                      prefix + cmd_name if not cmd_name.startswith(
+                                                          "nano.") else cmd_name)
+
                     alias = cmd2.get("alias")
+                    if alias:
+                        alias = cmd2.get("alias").replace("_", prefix)
 
                     emb = Embed(colour=Colour.green())
 
@@ -265,9 +283,16 @@ class Help:
                     cmd_name = cmd.replace(prefix, "")
 
                     description = cmd3.get("desc")
-                    use = cmd3.get("use").replace("[command]",
-                                                  prefix + cmd_name if not cmd_name.startswith("nano.") else cmd_name)
+
+                    use = cmd3.get("use")
+                    if use:
+                        use = cmd3.get("use").replace("[command]",
+                                                      prefix + cmd_name if not cmd_name.startswith(
+                                                          "nano.") else cmd_name)
+
                     alias = cmd3.get("alias")
+                    if alias:
+                        alias = cmd3.get("alias").replace("_", prefix)
 
                     emb = Embed(colour=Colour.magenta())
 
@@ -308,6 +333,18 @@ class Help:
 
         # !notifydev
         elif startswith(prefix + "notifydev", prefix + "suggest"):
+            # Cooldown implementation
+            if not self.last_times.get(message.author.id):
+                self.last_times[message.author.id] = time.time()
+            else:
+                # 300 seconds --> 5 minute cooldown
+                if (time.time() - self.last_times[message.author.id]) < 300:
+                    await client.send_message(message.channel, "You are being rate limited. Try again in 5 minutes.")
+                    return
+
+                else:
+                    self.last_times[message.author.id] = time.time()
+
             if startswith(prefix + "notifydev"):
                 report = message.content[len(prefix + "notifydev "):]
                 typ = "Report"
@@ -345,7 +382,7 @@ class Help:
 
 class NanoPlugin:
     _name = "Help Commands"
-    _version = "0.2"
+    _version = "0.2.2"
 
     handler = Help
     events = {

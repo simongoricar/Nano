@@ -9,7 +9,7 @@ from asyncio import sleep
 from random import shuffle
 from discord import Message, Game, Member, utils, errors, Embed, Colour
 from data.serverhandler import ServerHandler
-from data.utils import is_valid_command, log_to_file
+from data.utils import is_valid_command, log_to_file, StandardEmoji
 from data.stats import MESSAGE
 
 
@@ -184,7 +184,7 @@ class DevFeatures:
             srv = utils.find(lambda s: s.id == id, client.servers)
 
             if not srv:
-                await client.send_message(message.channel, "Error. :x:")
+                await client.send_message(message.channel, "Error. " + StandardEmoji.CROSS)
                 return
 
             nano_data = self.handler.get_server_data(srv.id)
@@ -211,7 +211,7 @@ class DevFeatures:
         # nano.dev.backup
         elif startswith("nano.dev.backup"):
             self.backup.manual_backup()
-            await client.send_message(message.channel, "Backup completed :ok_hand:")
+            await client.send_message(message.channel, "Backup completed " + StandardEmoji.PERFECT)
 
         # nano.dev.leave_server
         elif startswith("nano.dev.leave_server"):
@@ -236,7 +236,8 @@ class DevFeatures:
             v_new = self.nano.get_plugin(name).get("plugin").NanoPlugin._version
 
             if s:
-                await client.send_message(message.channel, "Successfully reloaded **{}**\nFrom version *{}* to *{}*.".format(name, v_old, v_new))
+                await client.send_message(message.channel, "Successfully reloaded **{}**\n"
+                                                           "From version *{}* to *{}*.".format(name, v_old, v_new))
             else:
                 await client.send_message(message.channel, "Something went wrong, check the logs.")
 
@@ -244,7 +245,7 @@ class DevFeatures:
         elif startswith("nano.reload"):
             self.handler.reload()
 
-            await client.send_message(message.channel, "Refreshed :muscle: :smile:")
+            await client.send_message(message.channel, "Refreshed server data {} {}".format(StandardEmoji.MUSCLE, StandardEmoji.NORMAL_SMILE))
 
         # nano.restart
         elif startswith("nano.restart"):
@@ -273,7 +274,7 @@ class DevFeatures:
 
             await client.change_presence(game=Game(name=str(status)))
 
-            await client.send_message(message.channel, "Status changed :+1:")
+            await client.send_message(message.channel, "Status changed " + StandardEmoji.THUMBS_UP)
 
     async def on_ready(self):
         self.loop.create_task(self.backup.start())

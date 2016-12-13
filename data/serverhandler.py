@@ -223,8 +223,24 @@ class ServerHandler(metaclass=Singleton):
     def remove_command(self, server, trigger):
         data = self.cached_file
 
-        data[server.id]["customcmds"].pop(trigger, 0)
+        ok = False
+
+        try:
+            del data[server.id]["customcmds"][trigger]
+
+            ok = True
+        except KeyError:
+            # Discord ignores spaces, so >cmd remove something  will not work, here we check for these commands
+            try:
+                cmd = [a for a in data[server.id]["customcmds"] if str(a).startswith(trigger)][0]
+                del data[server.id]["customcmds"][cmd]
+
+                ok = True
+            except IndexError:
+                pass
+
         self.queue_write(data)
+        return ok
 
     def add_channel_blacklist(self, server, channel):
         data = self.cached_file
@@ -343,13 +359,11 @@ class ServerHandler(metaclass=Singleton):
             data[user.server.id]["muted"].append(user.id)
             self.queue_write(data)
 
-    def is_muted(self, user):
-        if isinstance(user, User):
-            return False
+    def is_muted(self, user, server):
         # user if actually supposed to be a an instance of discord.Member (not User, because it doesn't have server property)
         data = self.cached_file
 
-        return bool(user.id in data[user.server.id]["muted"])
+        return bool(user.id in data[server.id]["muted"])
 
     def unmute(self, user):
         assert isinstance(user, Member)

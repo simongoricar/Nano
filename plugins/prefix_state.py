@@ -3,6 +3,7 @@ import logging
 import configparser
 from discord import Message
 from data.serverhandler import ServerHandler
+from data.utils import StandardEmoji
 from data.stats import SLEPT
 
 
@@ -54,7 +55,7 @@ class PrefixState:
                 return
 
             self.handler.set_sleep_state(message.server, 1)
-            await self.client.send_message(message.channel, "G'night! :sleeping:")
+            await self.client.send_message(message.channel, "G'night! " + StandardEmoji.SLEEP)
 
         # nano.wake
         elif startswith("nano.wake"):

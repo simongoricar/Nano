@@ -1,3 +1,9 @@
+3.2.1
+- !suggest and !report cooldown implementation because people were spamming it
+- Bugfixes
+- Utils now includes StandardEmoji for quick access to emojis
+- Added meme generator
+
 3.2
 - Can now RELOAD plugins! (nano.dev.plugin.reload <name> as owner)
 - More bugs fixed (they never stop coming)

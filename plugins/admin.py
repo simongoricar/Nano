@@ -5,18 +5,14 @@ import time
 import datetime
 from discord import Message, utils, Client, DiscordException, Embed, Colour
 from data.serverhandler import ServerHandler
-from data.utils import convert_to_seconds, get_decision, is_valid_command
+from data.utils import convert_to_seconds, get_decision, is_valid_command, StandardEmoji
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 # CONSTANTS
 
-error_hierarchy = ":warning: You are not allowed to mess with this role (you are lower in the \"hierarchy\"). ¯\_(ツ)_/¯"
-
-CHECK_MARK = ":white_check_mark:"
-CROSS_MARK = ":negative_squared_cross_mark:"
-WARNING = ":warning:"
+error_hierarchy = StandardEmoji.WARNING + " You are not allowed to mess with this role (you are lower in the \"hierarchy\"). ¯\_(ツ)_/¯"
 
 valid_commands = [
     "_welcomemsg", "_kickmsg", "_banmsg", "_leavemsg",
@@ -24,7 +20,7 @@ valid_commands = [
     "_mute", "_user", "_role add", "_role remove", "_role replaceall",
     "_cmd add", "_cmd remove", "_cmd list", "nano.settings", "nano.displaysettings",
     "nano.admins add", "nano.admins remove", "nano.admins list", "_setup", "nano.setup",
-    "nano.serverreset"
+    "nano.serverreset", "nano.changeprefix"
 ]
 
 
@@ -140,7 +136,7 @@ class Admin:
             return False
 
         if not handler.can_use_restricted_commands(message.author, message.channel.server):
-            await client.send_message(message.channel, WARNING + " You do not have the correct permissions to use this command (must be a server admin).")
+            await client.send_message(message.channel, StandardEmoji.WARNING + " You do not have the correct permissions to use this command (must be a server admin).")
             return
 
         # !welcomemsg
@@ -187,7 +183,7 @@ class Admin:
             await client.purge_from(message.channel, limit=amount)
 
             # Show success
-            m = await client.send_message(message.channel, "Purged {} messages {}".format(CHECK_MARK, amount - 1))
+            m = await client.send_message(message.channel, "Purged {} messages {}".format(StandardEmoji.OK, amount - 1))
             # Wait 1.5 sec and delete the message
             await asyncio.sleep(1.5)
             await client.delete_message(m)
@@ -239,6 +235,7 @@ class Admin:
 
         # !unban
         # but wait, you cant really mention the person so this is practically useless lmao
+        # /todo add this back by user name
         #elif startswith(prefix + "unban"):
         #    if len(message.mentions) >= 1:
         #        user = message.mentions[0]
@@ -274,10 +271,16 @@ class Admin:
         elif startswith(prefix + "mute list"):
             mutes = handler.mute_list(message.server)
 
+            muted_ppl = []
+            for a in mutes:
+                usr = utils.find(lambda b: b.id == a, message.server.members)
+                if usr:
+                    muted_ppl.append(usr.name)
+
             if mutes:
-                final = "Muted members: \n" + ", ".join(["`{}`".format(u) for u in mutes])
+                final = "Muted members: \n" + "\n".join(["➤ {}".format(u) for u in muted_ppl])
             else:
-                final = "No members are muted."
+                final = "No members are muted on this server."
 
             await client.send_message(message.channel, final)
 
@@ -391,7 +394,7 @@ class Admin:
                     return
 
                 await client.add_roles(user, role)
-                await client.send_message(message.channel, "Done " + CHECK_MARK)
+                await client.send_message(message.channel, "Done " + StandardEmoji.OK)
 
             elif startswith(prefix + "role " + "remove "):
                 a_role = str(message.content[len(prefix + "role remove "):]).split("<")[0].strip()
@@ -402,7 +405,7 @@ class Admin:
                     return
 
                 await client.remove_roles(user, role)
-                await client.send_message(message.channel, "Done " + CHECK_MARK)
+                await client.send_message(message.channel, "Done " + StandardEmoji.OK)
 
             elif startswith(prefix + "role " + "replaceall "):
                 a_role = str(message.content[len(prefix + "role replaceall "):]).split("<")[0].strip()
@@ -413,7 +416,7 @@ class Admin:
                     return
 
                 await client.replace_roles(user, role)
-                await client.send_message(message.channel, "Done " + CHECK_MARK)
+                await client.send_message(message.channel, "Done " + StandardEmoji.OK)
 
         # !cmd add
         elif startswith(prefix + "cmd add"):
@@ -424,9 +427,9 @@ class Admin:
                     await client.send_message(message.channel, "Incorrect parameters.\n`_cmd add trigger|response`".replace("_", prefix))
                     return
 
-                handler.update_command(message.server, cut[0], cut[1])
+                handler.update_command(message.server, cut[0].strip(" "), cut[1])
 
-                await client.send_message(message.channel, "Command '{}' added.".format(cut[0]))
+                await client.send_message(message.channel, "Command '{}' added.".format(cut[0].strip(" ")))
 
             except (KeyError or IndexError):
                 await client.send_message(message.channel,
@@ -435,9 +438,11 @@ class Admin:
         # !cmd remove
         elif startswith(prefix + "cmd remove"):
             cut = str(message.content)[len(prefix + "cmd remove "):]
-            handler.remove_command(message.server, cut)
+            success = handler.remove_command(message.server, cut)
 
-            await client.send_message(message.channel, "Ok " + CHECK_MARK)
+            final = "Ok " + StandardEmoji.OK if success else "Failed to remove command (does not exist) " + StandardEmoji.WARNING
+
+            await client.send_message(message.channel, final)
 
         # !cmd list
         elif startswith(prefix + "cmd list"):
@@ -476,14 +481,14 @@ class Admin:
                 return
 
             if get_decision(cut[0], "word filter", "filter words", "wordfilter"):
-                await client.send_message(message.channel, "Word filter {}".format(CHECK_MARK if value else CROSS_MARK))
+                await client.send_message(message.channel, "Word filter {}".format(StandardEmoji.OK if value else StandardEmoji.GREEN_FAIL))
 
             elif get_decision(cut[0], "spam filter", "spamfilter", "filter spam"):
-                await client.send_message(message.channel, "Spam filter {}".format(CHECK_MARK if value else CROSS_MARK))
+                await client.send_message(message.channel, "Spam filter {}".format(StandardEmoji.OK if value else StandardEmoji.GREEN_FAIL))
 
             elif get_decision(cut[0], "filterinvite", "filterinvites", "invite removal", "invite filter", "invitefilter"):
                 await client.send_message(message.channel,
-                                          "Invite filter {}".format(CHECK_MARK if value else CROSS_MARK))
+                                          "Invite filter {}".format(StandardEmoji.OK if value else StandardEmoji.GREEN_FAIL))
 
             else:
                 await client.send_message(message.channel, "Not a setting. (wordfilter/spamfilter/invitefilter)")
@@ -581,7 +586,7 @@ Messages:
 
         # nano.reset
         elif startswith("nano.serverreset"):
-            await client.send_message(message.channel, WARNING + " Are you sure you want to reset all Nano-related sever settings to default? Confirm by replying 'CONFIRM'.")
+            await client.send_message(message.channel, StandardEmoji.WARNING + " Are you sure you want to reset all Nano-related sever settings to default? Confirm by replying 'CONFIRM'.")
 
             followup = await client.wait_for_message(author=message.author, channel=message.channel,
                                                      timeout=15, content="CONFIRM")
@@ -591,7 +596,15 @@ Messages:
 
             handler.server_setup(message.server)
 
-            await client.send_message(message.channel, "Reset. :white_check_mark: ")
+            await client.send_message(message.channel, "Reset. :white_StandardEmoji.OK: ")
+
+        # nano.changeprefix
+        elif startswith("nano.changeprefix"):
+            pref = message.content[len("nano.changeprefix "):]
+
+            self.handler.change_prefix(message.server, pref)
+
+            await client.send_message(message.channel, "Prefix has been changed to {} :ok_hand:".format(pref))
 
         # !setup, nano.setup
         elif startswith(prefix + "setup", "nano.setup"):

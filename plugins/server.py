@@ -22,7 +22,7 @@ nano_welcome = "**Hi!** I'm Nano!\nNow that you have invited me to your server, 
                "After that, you might want to see `!cmds` to get familiar with my commands."
 
 valid_commands = [
-    "_stats", "_stats more", "_status", "_prefix", "_members", "nano.prefix", "_debug"
+    "_stats", "_stats more", "_status", "_prefix", "_members", "nano.prefix", "_debug",
 ]
 
 

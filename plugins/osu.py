@@ -70,6 +70,7 @@ class Osu:
             ranked_score = prepare(user.ranked_score)
 
             acc = str(round(float(user.accuracy), 2)) + " %"
+            pp_ammount = str(int(float(user.pp)))
 
             osu_level = int(float(user.level))
             avatar_url = "http://a.ppy.sh/{}".format(user.id)
@@ -93,7 +94,8 @@ class Osu:
 
             desc = "**Level**: {}\n**Rank**: \n\t" \
                    "**Global**:            #{}\n\t" \
-                   "**Country** (**{}**): #{}".format(osu_level, global_rank, user.country, country_rank)
+                   "**Country** (**{}**): #{}\n" \
+                   "Total PP: **{}**".format(osu_level, global_rank, user.country, country_rank, pp_ammount)
 
             embed = Embed(url=user.profile_url, description=desc, colour=color)
             embed.set_author(name=user.name)
@@ -111,7 +113,7 @@ class Osu:
 
 class NanoPlugin:
     _name = "osu!"
-    _version = "0.1"
+    _version = "0.1.1"
 
     handler = Osu
     events = {

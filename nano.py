@@ -17,7 +17,7 @@ from data.utils import log_to_file
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '3.2'
+__version__ = '3.2.1'
 
 
 # CONSTANTS and EVENTS
@@ -282,18 +282,13 @@ class Nano(metaclass=Singleton):
 
             elif resp == "add_var":
                 # Add/Set new kwargs
-                try:
-                    if isinstance(ag, tuple):
-                        for k, v in ag[0].items():
-                            kwargs[k] = v
+                if isinstance(ag, tuple):
+                    for k, v in ag[0].items():
+                        kwargs[k] = v
 
-                    else:
-                        for k, v in ag.items():
-                            kwargs[k] = v
-                except AttributeError as e:
-                    print("Exception: " + str(e))
-                    # debugme remove this after it has been fixed
-                    print("DEBUG!! {} at plugin {}".format(ag, plugin))
+                else:
+                    for k, v in ag.items():
+                        kwargs[k] = v
 
             elif resp == "shutdown":
                 try:

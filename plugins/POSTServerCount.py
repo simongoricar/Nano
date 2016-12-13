@@ -41,5 +41,5 @@ class NanoPlugin:
 
     handler = POST
     events = {
-        "on_server_join": 9,
+        "on_server_join": 9
     }
