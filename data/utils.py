@@ -56,6 +56,7 @@ class StandardEmoji:
     ALIEN = ":alien:"
     SPY = ":spy:"
     ALARM = ":alarm_clock:"
+    NO_ENTRY = ":no_entry_sign:"
 
 
 def resolve_time(tm):
@@ -207,7 +208,7 @@ def is_empty(path):
         return False
 
 dis = [
-    "none", "false", "off", "disabled", "", " "
+    "none", "false", "off", "disabled", "nothing"
 ]
 
 

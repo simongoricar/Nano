@@ -304,7 +304,12 @@ class DevFeatures:
                 log_to_file("Forbidden 403. Server: {}, member: {}:{}".format(args[0].server, args[0].name, args[0].id))
 
             else:
-                log_to_file("Forbidden 403. Unknown instance: {}:{}".format(type(args[0]), args[0].__dict__))
+                try:
+                    items = args[0].__dict__
+                except AttributeError:
+                    items = args[0].__slots__
+
+                log_to_file("Forbidden 403. Unknown instance: {}:{}".format(type(args[0]), items))
 
         else:
             print('Ignoring exception in {}'.format(event), file=sys.stderr)

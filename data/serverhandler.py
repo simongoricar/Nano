@@ -178,14 +178,8 @@ class ServerHandler(metaclass=Singleton):
         data = self.cached_file
         modified = False
 
-        # Checks for settings that are not where they should be
+        # Checks for settings that are not what they should be
         srv = data.get(server.id)
-        # if data.get(sid):
-        #     for var in server_nondepend_defaults.keys():
-        #         # Check each var, add it if it does not exist
-        #         if server.get(var) is None:
-        #             data[sid][var] = server_nondepend_defaults[var]
-        #             modified = True
 
         if str(srv.get("owner")) != str(server.owner.id):
             data[server.id]["owner"] = server.owner.id

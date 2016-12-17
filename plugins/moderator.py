@@ -234,6 +234,7 @@ class Moderator:
 
         self.loop.create_task(self.log.start())
 
+    async def on_plugins_loaded(self):
         # Collect all valid commands
         plugins = [a.get("plugin") for a in self.nano.plugins.values() if a.get("plugin")]
         self.valid_commands = [item for sub in [get_valid_commands(b) for b in plugins if get_valid_commands(b)] for item in sub]
@@ -329,6 +330,7 @@ class NanoPlugin:
 
     handler = Moderator
     events = {
+        "on_plugins_loaded": 5,
         "on_message": 6
         # type : importance
     }

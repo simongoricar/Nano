@@ -1,3 +1,9 @@
+3.2.2
+- Added back !unban
+- There is now a command (35) and vote option limit (10)
+- Added !vote status and !cmd status
+- Bugfixes
+
 3.2.1
 - !suggest and !report cooldown implementation because people were spamming it
 - Bugfixes

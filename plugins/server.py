@@ -219,10 +219,8 @@ class ServerManagement:
         log_c = await self.handle_log_channel(member.server)
 
         # Ignore if disabled
-        if not log_c:
-            return
-
-        await self.client.send_message(log_c, "{} has joined the server".format(member.mention))
+        if log_c:
+            await self.client.send_message(log_c, "{} has joined the server".format(member.mention))
         
         if not is_disabled(welcome_msg):
             await self.client.send_message(member.server.default_channel, welcome_msg)
@@ -243,10 +241,8 @@ class ServerManagement:
         log_c = await self.handle_log_channel(member.server)
 
         # Ignore if disabled
-        if not log_c:
-            return
-
-        await self.client.send_message(log_c, ban_msg)
+        if log_c:
+            await self.client.send_message(log_c, ban_msg)
 
         if not is_disabled(ban_msg):
             await self.client.send_message(member.server.default_channel, ban_msg)
@@ -267,10 +263,8 @@ class ServerManagement:
         log_c = await self.handle_log_channel(member.server)
 
         # Ignore if disabled
-        if not log_c:
-            return
-
-        await self.client.send_message(log_c, "{} left the server.".format(member.mention))
+        if log_c:
+            await self.client.send_message(log_c, "{} left the server.".format(member.mention))
         
         if not is_disabled(leave_msg):
             await self.client.send_message(member.server.default_channel, leave_msg)
@@ -308,7 +302,7 @@ class ServerManagement:
 
 class NanoPlugin:
     _name = "Moderator"
-    _version = "0.2.4"
+    _version = "0.2.5"
 
     handler = ServerManagement
     events = {

@@ -12,9 +12,14 @@ __author__ = "DefaltSimon"
 # Voting plugin
 
 valid_commands = [
-    "_vote start",
+    "_vote start", "_vote status"
     "_vote end", "_vote "
 ]
+
+NO_VOTE = StandardEmoji.WARNING + " There is no vote in progress."
+IN_PROGRESS = StandardEmoji.WARNING + " A vote is already in progress."
+
+VOTE_ITEM_LIMIT = 10
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -149,6 +154,7 @@ class Vote:
 
             return False
 
+        # !vote start
         if startswith(prefix + "vote start"):
             if not self.handler.can_use_restricted_commands(message.author, message.channel.server):
                 await client.send_message(message.channel, "You are not permitted to use this command.")
@@ -157,7 +163,7 @@ class Vote:
                 return
 
             if self.vote.in_progress(message.channel.server):
-                await client.send_message(message.channel, "A vote is already in progress.")
+                await client.send_message(message.channel, IN_PROGRESS)
                 return
 
             vote_content = message.content[len(prefix + "vote start "):]
@@ -172,6 +178,11 @@ class Vote:
             vote_items = str(base[2]).split("|")
             vote_items = [a.strip(" ") for a in list(vote_items)]
 
+            if len(vote_items) > VOTE_ITEM_LIMIT:
+                await client.send_message(message.channel, StandardEmoji.WARNING + " The vote options are bigger than allowed "
+                                                           "(max is **{}**, you put *{}*)".format(VOTE_ITEM_LIMIT, len(vote_items)))
+                return
+
             self.vote.start_vote(message.author.name, message.channel.server, title, vote_items)
 
             ch = []
@@ -185,23 +196,24 @@ class Vote:
             await client.send_message(message.channel, "**{}**\n"
                                                        "```{}```".format(self.vote.get_vote_header(message.server), ch))
 
+        # !vote end
         elif startswith(prefix + "vote end"):
-            if not self.handler.can_use_restricted_commands(message.author, message.channel.server):
+            if not self.handler.can_use_restricted_commands(message.author, message.server):
                 await client.send_message(message.channel, "You are not permitted to use this command.")
 
                 self.stats.add(WRONG_PERMS)
                 return
 
-            if not self.vote.in_progress(message.channel.server):
-                await client.send_message(message.channel, "There is no vote in progress.")
+            if not self.vote.in_progress(message.server):
+                await client.send_message(message.channel, NO_VOTE)
                 return
 
-            votes = self.vote.get_votes(message.channel.server)
-            header = self.vote.get_vote_header(message.channel.server)
-            content = self.vote.get_content(message.channel.server)
+            votes = self.vote.get_votes(message.server)
+            header = self.vote.get_vote_header(message.server)
+            content = self.vote.get_content(message.server)
 
             # Actually end the voting
-            self.vote.end_voting(message.channel.server)
+            self.vote.end_voting(message.server)
 
             # Put results together
             cn = ["{} - `{} votes`".format(a, votes[a]) for a in content]
@@ -210,7 +222,29 @@ class Vote:
 
             await client.send_message(message.channel, combined)
 
+        # !vote status
+        elif startswith(prefix + "vote status"):
+            if not self.vote.in_progress(message.server):
+                await client.send_message(message.channel, )
+
+            header = self.vote.get_vote_header(message.server)
+            votes = sum(self.vote.get_votes(message.server).values())
+
+            if votes == 0:
+                vote_disp = "no-one has voted yet"
+            elif votes == 1:
+                vote_disp = "only one person has voted"
+            else:
+                vote_disp = "{} people have voted".format(votes)
+
+            await client.send_message(message.channel, "**Vote:** \"{}\"\n```So far, {}.```".format(header, vote_disp))
+
+        # !vote
         elif startswith(prefix + "vote"):
+            # Ignore if there is no vote going on instead of getting an exception
+            if not self.vote.in_progress(message.server):
+                return
+
             # Get the choice, but tell the author if he/she didn't supply a number
             try:
                 choice = int(message.content[len(prefix + "vote "):])
@@ -256,7 +290,7 @@ class Vote:
 
 class NanoPlugin:
     _name = "Voting"
-    _version = "0.2.3"
+    _version = "0.2.4"
 
     handler = Vote
     events = {

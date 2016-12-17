@@ -14,11 +14,14 @@ logger.setLevel(logging.INFO)
 
 error_hierarchy = StandardEmoji.WARNING + " You are not allowed to mess with this role (you are lower in the \"hierarchy\"). ¯\_(ツ)_/¯"
 
+CMD_LIMIT = 35
+
 valid_commands = [
     "_welcomemsg", "_kickmsg", "_banmsg", "_leavemsg",
     "_nuke", "_kick", "_ban", "_unban", "_softban", "_unmute",
     "_mute", "_user", "_role add", "_role remove", "_role replaceall",
-    "_cmd add", "_cmd remove", "_cmd list", "nano.settings", "nano.displaysettings",
+    "_cmd add", "_cmd remove", "_cmd list", "_cmd status",
+    "nano.settings", "nano.displaysettings",
     "nano.admins add", "nano.admins remove", "nano.admins list", "_setup", "nano.setup",
     "nano.serverreset", "nano.changeprefix"
 ]
@@ -115,6 +118,8 @@ class Admin:
         self.timer = SoftBanScheduler(self.client, self.loop)
         self.loop.create_task(self.timer.start_monitoring())
 
+        self.bans = []
+
     async def on_message(self, message, **kwargs):
         prefix = kwargs.get("prefix")
         client = self.client
@@ -129,8 +134,8 @@ class Admin:
             return
 
         def startswith(*msg):
-            for a in msg:
-                if message.content.startswith(a):
+            for om in msg:
+                if message.content.startswith(om):
                     return True
 
             return False
@@ -216,6 +221,7 @@ class Admin:
                 user = utils.find(lambda u: u.name == str(user_name), message.channel.server.members)
 
             if not user:
+                await client.send_message(message.channel, StandardEmoji.WARNING + " User does not exist.")
                 return
 
             await client.send_message(message.channel,
@@ -228,28 +234,25 @@ class Admin:
                 await client.send_message(message.channel, "Confirmation not received, NOT banning :upside_down:")
 
             else:
+                self.bans.append(user.id)
+
                 await client.ban(user, delete_message_days=0)
-                await client.send_message(message.channel,
-                                          handler.get_var(message.channel.server.id, "banmsg").replace(":user",
-                                                                                                       user.name))
 
         # !unban
-        # but wait, you cant really mention the person so this is practically useless lmao
-        # /todo add this back by user name
-        #elif startswith(prefix + "unban"):
-        #    if len(message.mentions) >= 1:
-        #        user = message.mentions[0]
-        #
-        #    else:
-        #        user_name = str(str(message.content)[len(prefix + "kick "):])
-        #
-        #        user = utils.find(lambda u: u.name == str(user_name), message.channel.server.members)
-        #
-        #    if not user:
-        #        return
-        #
-        #    await client.unban(user)
-        #    await client.send_message(message.channel, "{} has been unbanned.".format(user.name))
+        elif startswith(prefix + "unban"):
+            name = message.content[len(prefix + "unban "):]
+
+            user = None
+            for ban in await self.client.get_bans(message.server):
+                if ban.name == name:
+                    user = ban
+
+            if not user:
+                await client.send_message(message.channel, StandardEmoji.WARNING + " Could not unban: user with such name does not exist.")
+                return
+
+            await client.unban(message.server, user)
+            await client.send_message(message.channel, "**{}** has been unbanned.".format(user.name))
 
         # !softban
         elif startswith(prefix + "softban"):
@@ -271,14 +274,15 @@ class Admin:
         elif startswith(prefix + "mute list"):
             mutes = handler.mute_list(message.server)
 
-            muted_ppl = []
-            for a in mutes:
-                usr = utils.find(lambda b: b.id == a, message.server.members)
-                if usr:
-                    muted_ppl.append(usr.name)
-
             if mutes:
+                muted_ppl = []
+                for a in mutes:
+                    usr = utils.find(lambda b: b.id == a, message.server.members)
+                    if usr:
+                        muted_ppl.append(usr.name)
+
                 final = "Muted members: \n" + "\n".join(["➤ {}".format(u) for u in muted_ppl])
+
             else:
                 final = "No members are muted on this server."
 
@@ -292,10 +296,17 @@ class Admin:
 
             user = message.mentions[0]
 
+            if message.server.owner.id == user.id:
+                await client.send_message(message.channel, StandardEmoji.WARNING + " You cannot mute the owner of the server.")
+                return
+
+            elif message.author.id == user.id:
+                await client.send_message(message.channel, "Trying to mute yourself? Not gonna work " + StandardEmoji.ROFL)
+
             handler.mute(user)
 
             await client.send_message(message.channel,
-                                      "**{}** can now not speak here. :zipper_mouth:".format(user.name))
+                                      "**{}** can now not speak here. {}".format(user.name, StandardEmoji.ZIP_MOUTH))
 
         # !unmute
         elif startswith(prefix + "unmute"):
@@ -307,7 +318,7 @@ class Admin:
 
             handler.unmute(user)
 
-            await client.send_message(message.channel, "**{}** can now speak here again :rofl:".format(user.name))
+            await client.send_message(message.channel, "**{}** can now speak here again {}".format(user.name, StandardEmoji.ROFL))
 
         # !user
         elif startswith(prefix + "user"):
@@ -427,6 +438,10 @@ class Admin:
                     await client.send_message(message.channel, "Incorrect parameters.\n`_cmd add trigger|response`".replace("_", prefix))
                     return
 
+                if len(handler.get_custom_commands(message.server)) + 1 >= CMD_LIMIT:
+                    await client.send_message(message.channel, "{} You have reached the maximum limit of custom commands ({}).".format(StandardEmoji.WARNING, CMD_LIMIT))
+                    return
+
                 handler.update_command(message.server, cut[0].strip(" "), cut[1])
 
                 await client.send_message(message.channel, "Command '{}' added.".format(cut[0].strip(" ")))
@@ -458,6 +473,13 @@ class Admin:
             final = "\n".join(["{} : {}".format(name, content) for name, content in custom_cmds.items()])
 
             await client.send_message(message.channel, "*Custom commands:*\n```" + final + "```")
+
+        # !cmd status
+        elif startswith(prefix + "cmd status"):
+            cc = handler.get_custom_commands(message.server)
+            percent = int((len(cc) / CMD_LIMIT) * 100)
+
+            await client.send_message(message.channel, "You have **{}** out of *{}* custom commands (*{}%*)".format(len(cc), CMD_LIMIT, percent))
 
         # nano.settings
         elif startswith("nano.settings"):
@@ -726,13 +748,19 @@ For a list of all commands, use `_cmds`.""".replace("_", str(ch2.content))
             await client.send_message(message.channel, msg_final)
 
     async def on_member_remove(self, member, **_):
+        # check for softban
         if self.timer.get_ban(member):
+            return "return"
+
+        # check for normal ban
+        elif member.id in self.bans:
+            self.bans.remove(member.id)
             return "return"
 
 
 class NanoPlugin:
     _name = "Admin Commands"
-    _version = "0.2.2"
+    _version = "0.2.3"
 
     handler = Admin
     events = {

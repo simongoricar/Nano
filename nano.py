@@ -17,7 +17,7 @@ from data.utils import log_to_file
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '3.2.1'
+__version__ = '3.2.2'
 
 
 # CONSTANTS and EVENTS
@@ -44,6 +44,7 @@ ON_SERVER_REMOVE = "on_server_remove"
 
 ON_ERROR = "on_error"
 ON_SHUTDOWN = "on_shutdown"
+ON_PLUGINS_LOADED = "on_plugins_loaded"
 
 # Other
 
@@ -74,21 +75,7 @@ parser.read("settings.ini")
 # Constants
 first = True
 
-# Decorator
-
-
-def threaded(fn):
-    def wrapper(*args, **kwargs):
-        threading.Thread(target=fn, args=args, kwargs=kwargs).start()
-    return wrapper
-
-
-@threaded
-def save_submission(content):
-    with open("data/submissions.txt", "a") as sf:
-        sf.write(str(content))
-
-# Singleton class
+# Singleton metaclass
 
 
 class Singleton(type):
@@ -115,7 +102,8 @@ class Nano(metaclass=Singleton):
         self.plugin_events = dict(on_message=[], on_server_join=[], on_channel_create=[], on_channel_delete=[],
                                   on_channel_update=[], on_message_delete=[], on_message_edit=[], on_ready=[],
                                   on_member_join=[], on_member_remove=[], on_member_update=[], on_member_ban=[],
-                                  on_member_unban=[], on_server_remove=[], on_error=[], on_shutdown=[])
+                                  on_member_unban=[], on_server_remove=[], on_error=[], on_shutdown=[],
+                                  on_plugins_loaded=[])
         self.plugin_events_ = dict(self.plugin_events)
 
         # Updates the plugin list
@@ -179,6 +167,8 @@ class Nano(metaclass=Singleton):
             log.warning("Failed plugins: {}".format(failed))
 
         self._parse_priorities()
+
+        asyncio.ensure_future(self.dispatch_event(ON_PLUGINS_LOADED))
 
     async def reload_plugin(self, plugin):
         if not str(plugin).endswith(".py"):
@@ -415,7 +405,7 @@ def main():
     except Exception as e:
         loop.run_until_complete(client.logout())
         log.fatal("Something went wrong, quitting (see log for exception info).")
-        log_to_file("Something went wrong: {}".format(e))
+        log_to_file("FATAL, shutting down: {}".format(e))
 
     finally:
         loop.close()

@@ -1,8 +1,9 @@
 # coding=utf-8
 import time
+import asyncio
 from datetime import datetime
 from discord import Message, utils, Embed, Colour
-from data.utils import threaded, is_valid_command
+from data.utils import is_valid_command
 from data.stats import MESSAGE, HELP, WRONG_ARG
 
 
@@ -151,8 +152,7 @@ valid_commands = [
 ]
 
 
-@threaded
-def save_submission(sub):
+async def save_submission(sub):
     with open("data/submissions.txt", "a") as file:
         file.write(str(sub) + "\n" + ("-" * 20))
 
@@ -368,8 +368,8 @@ class Help:
                                                      "Yes" if message.author.id == message.channel.server.owner.id
                                                      else message.channel.server.owner.id)
 
-            # Saves the submission to disk
-            save_submission(comp.replace(message.author.mention, "{} ({})\n".format(message.author.name, message.author.id)))
+            # Saves the submission
+            await save_submission(comp.replace(message.author.mention, "{} ({})\n".format(message.author.name, message.author.id)))
 
             await client.send_message(dev_server.owner, comp)
             await client.send_message(message.channel, "**Thank you** for your *{}*.".format(
@@ -382,7 +382,7 @@ class Help:
 
 class NanoPlugin:
     _name = "Help Commands"
-    _version = "0.2.2"
+    _version = "0.2.3"
 
     handler = Help
     events = {
