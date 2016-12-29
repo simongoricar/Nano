@@ -208,7 +208,7 @@ def is_empty(path):
         return False
 
 dis = [
-    "none", "false", "off", "disabled", "nothing"
+    "none", "false", "off", "disabled", "nothing", ""
 ]
 
 
@@ -235,3 +235,4 @@ def invert_str(str_):
 
 def split_every(content, num):
     return [content[i:i + num] for i in range(0, len(content), num)]
+

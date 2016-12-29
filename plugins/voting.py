@@ -136,6 +136,10 @@ class Vote:
         else:
             self.vote = VoteHandler()
 
+    def save_state(self):
+        with open("cache/voting.temp", "wb") as cache:
+            cache.write(dumps(self.vote))  # Save instance of Vote to be used on the next boot
+
     async def on_message(self, message, **kwargs):
         assert isinstance(message, Message)
         assert isinstance(self.handler, ServerHandler)
@@ -225,7 +229,8 @@ class Vote:
         # !vote status
         elif startswith(prefix + "vote status"):
             if not self.vote.in_progress(message.server):
-                await client.send_message(message.channel, )
+                await client.send_message(message.channel, NO_VOTE)
+                return
 
             header = self.vote.get_vote_header(message.server)
             votes = sum(self.vote.get_votes(message.server).values())
@@ -279,8 +284,9 @@ class Vote:
             os.mkdir("cache")
 
         if self.vote.need_save():
-            with open("cache/voting.temp", "wb") as cache:
-                cache.write(dumps(self.vote))  # Save instance of Vote to be used on the next boot
+            print("saving")
+            print(self.vote.__dict__)
+            self.save_state()
         else:
             try:
                 os.remove("cache/voting.temp")

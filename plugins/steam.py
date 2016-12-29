@@ -12,6 +12,8 @@ logger.setLevel(logging.INFO)
 parser = configparser.ConfigParser()
 parser.read("plugins/config.ini")
 
+NOT_WHOLE_URL = "Argument must be the **ending** of a (vanity) URL, not the *entire* URL!"
+
 valid_commands = [
     "_steam user", "_steam games", "_steam help",
     "_steam friends", "_steam avatar"
@@ -29,6 +31,8 @@ class SteamSearch:
             return user
         except steamapi.errors.UserNotFoundError:
             return None
+        except ValueError:
+            raise ValueError
 
     @staticmethod
     def get_friends(uid):
@@ -37,6 +41,8 @@ class SteamSearch:
             return user.name, [friend.name for friend in user.friends]
         except steamapi.errors.UserNotFoundError:
             return None, None
+        except ValueError:
+            raise ValueError
 
     @staticmethod
     def get_games(uid):
@@ -45,6 +51,8 @@ class SteamSearch:
             return user.name, [game.name for game in user.games]
         except steamapi.errors.UserNotFoundError:
             return None, None
+        except ValueError:
+            raise ValueError
 
     @staticmethod
     def get_owned_games(uid):
@@ -53,6 +61,9 @@ class SteamSearch:
             return user.name, [game.name for game in user.owned_games]
         except steamapi.errors.UserNotFoundError:
             return None, None
+        except ValueError:
+            raise ValueError
+
 
 class Steam:
     def __init__(self, **kwargs):
@@ -87,7 +98,11 @@ class Steam:
 
                 # Friend search
                 await client.send_typing(message.channel)
-                username, friends = self.steam.get_friends(uid)
+                try:
+                    username, friends = self.steam.get_friends(uid)
+                except ValueError:
+                    await client.send_message(message.channel, NOT_WHOLE_URL)
+                    return
 
                 friends = ["`" + friend + "`" for friend in friends]
 
@@ -104,7 +119,12 @@ class Steam:
 
                 # Game search
                 await client.send_typing(message.channel)
-                username, games = self.steam.get_owned_games(uid)
+
+                try:
+                    username, games = self.steam.get_owned_games(uid)
+                except ValueError:
+                    await client.send_message(message.channel, NOT_WHOLE_URL)
+                    return
 
                 if not username:
                     await client.send_message(message.channel, "User **does not exist**.")
@@ -125,7 +145,12 @@ class Steam:
 
                 # Basic search
                 await client.send_typing(message.channel)
-                steam_user = self.steam.get_user(uid)
+
+                try:
+                    steam_user = self.steam.get_user(uid)
+                except ValueError:
+                    await client.send_message(message.channel, NOT_WHOLE_URL)
+                    return
 
                 if not steam_user:
                     await client.send_message(message.channel, "User **does not exist**.")

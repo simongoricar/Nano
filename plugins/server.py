@@ -45,17 +45,13 @@ class ServerManagement:
             if is_disabled(self.handler.get_var(server.id, "logchannel")):
                 return None
 
-            # Creates permission overwrites: normal users cannot see the channel, only users with the role "Nano Admin" and the bot
+            # Creates permission overwrites: normal users cannot see the channel,
+            # only users with the role "Nano Admin" and the bot
             them = discord.PermissionOverwrite(read_messages=False, send_messages=False, read_message_history=False)
             us = discord.PermissionOverwrite(read_messages=True, send_messages=True, read_message_history=True,
                                              attach_files=True, embed_links=True, manage_messages=True)
 
             admins = discord.utils.find(lambda m: m.name == "Nano Admin", server.roles)
-
-            if admins:
-                admin_perms = discord.ChannelPermissions(target=admins, overwrite=us)
-            else:
-                admin_perms = None
 
             them_perms = discord.ChannelPermissions(target=server.default_role, overwrite=them)
             nano_perms = discord.ChannelPermissions(target=server.me, overwrite=us)
@@ -63,6 +59,8 @@ class ServerManagement:
             log_channel_name = self.handler.get_var(server.id, "logchannel")
 
             if admins:
+                admin_perms = discord.ChannelPermissions(target=admins, overwrite=us)
+
                 return await self.client.create_channel(server, log_channel_name, admin_perms, them_perms, nano_perms)
 
             else:

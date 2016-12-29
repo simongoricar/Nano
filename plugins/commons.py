@@ -6,7 +6,7 @@ from datetime import timedelta, datetime
 from random import randint
 from discord import Message, utils
 from data.serverhandler import ServerHandler
-from data.stats import MESSAGE, PING
+from data.stats import MESSAGE, PING, WRONG_ARG
 from data.utils import is_valid_command, StandardEmoji
 
 log = logging.getLogger(__name__)
@@ -21,7 +21,7 @@ I have been coded by *DefaltSimon*.
 
 Gif command powered by **Giphy**"""
 
-nano_github = """Nano's code is being maintained and updated on **GitHub**: https://github.com/DefaltSimon/Nano"""
+nano_github = """Nano's code is available on **GitHub**: https://github.com/DefaltSimon/Nano"""
 
 invite = """You wanna invite Nano to your server, eh? Sure.
 **Just follow the link:** <link>"""
@@ -248,6 +248,11 @@ class Commons:
                 content = raw[1].strip(" ")
 
                 channel = utils.find(lambda a: a.id == channel_id, message.server.channels)
+
+                if not channel:
+                    await client.send_message(message.channel, "Invalid channel name.")
+                    self.stats.add(WRONG_ARG)
+
             else:
                 channel = message.channel
 

@@ -204,10 +204,6 @@ class DevFeatures:
 
             await client.send_message(message.channel, "Stats", embed=emb)
 
-        ## nano.dev.msg_test
-        #elif startswith("nano.dev.msg_test"):
-        #    await client.send_message(message.channel, "Message :ok_hand:")
-
         # nano.dev.backup
         elif startswith("nano.dev.backup"):
             self.backup.manual_backup()
@@ -290,8 +286,8 @@ class DevFeatures:
                 subprocess.Popen(os.path.abspath("startbot.sh"), shell=True)
 
     @staticmethod
-    async def on_error(event, *args, **_):
-        e_type, _, _ = sys.exc_info()
+    async def on_error(event, *args, **kwargs):
+        e_type, value, _ = sys.exc_info()
 
         # Ignore Forbidden errors (but log them anyways)
         if e_type == errors.Forbidden:
@@ -311,6 +307,14 @@ class DevFeatures:
 
                 log_to_file("Forbidden 403. Unknown instance: {}:{}".format(type(args[0]), items))
 
+        elif e_type == errors.HTTPException and str(value).startswith("BAD REQUEST"):
+            log.warning("Bad Request 400")
+            log_to_file("Bad Request 400: {}".format(kwargs.get("text")))
+
+        elif e_type == errors.NotFound:
+            log.warning("Not Found 404")
+            log_to_file("Not Found 404: {}".format(value))
+
         else:
             print('Ignoring exception in {}'.format(event), file=sys.stderr)
             traceback.print_exc()
@@ -318,7 +322,7 @@ class DevFeatures:
 
 class NanoPlugin:
     _name = "Developer Commands"
-    _version = "0.2.1"
+    _version = "0.2.2"
 
     handler = DevFeatures
     events = {

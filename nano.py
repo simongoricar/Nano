@@ -6,7 +6,6 @@ import importlib
 import logging
 import os
 import sys
-import threading
 import time
 import discord
 
@@ -17,7 +16,7 @@ from data.utils import log_to_file
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '3.2.2'
+__version__ = '3.2.3'
 
 
 # CONSTANTS and EVENTS
@@ -378,8 +377,7 @@ async def on_ready():
     is_resume = True
 
     print("connected!")
-    print("Username: " + str(client.user.name))
-    print("ID: " + str(client.user.id))
+    print("BOT name: {} ({})".format(client.user.name, client.user.id))
 
     log_to_file("Connected as {} ({})".format(client.user.name, client.user.id))
 
@@ -404,8 +402,13 @@ def main():
 
     except Exception as e:
         loop.run_until_complete(client.logout())
-        log.fatal("Something went wrong, quitting (see log for exception info).")
+        log.critical("Something went wrong, quitting (see log for exception info).")
         log_to_file("FATAL, shutting down: {}".format(e))
+
+        # Attempts to save plugin state
+        log.critical("Saving state with ON_SHUTDOWN")
+        loop.run_until_complete(nano.dispatch_event(ON_SHUTDOWN))
+        log.critical("complete, shutting down...")
 
     finally:
         loop.close()

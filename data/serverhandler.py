@@ -262,8 +262,15 @@ class ServerHandler(metaclass=Singleton):
     def remove_admin(self, server, user):
         data = self.cached_file
 
+        if type(user) is int:
+            user_id = int(user)
+        elif isinstance(user, (Member, User)):
+            user_id = int(user.id)
+        else:
+            return
+
         try:
-            data[server.id]["admins"].remove(user.id)
+            data[server.id]["admins"].remove(user_id)
         except ValueError:
             return  # Ignore if the admin did not exist
 
@@ -415,7 +422,7 @@ class ServerHandler(metaclass=Singleton):
     def is_server_owner(uid, server):
         return str(uid) == str(server.owner.id)
 
-    def is_admin(self, user, server):
+    def has_role(self, user, server, role_name):
 
         try:
             is_admin = bool(user.id in self.cached_file.get(server.id).get("admins"))
@@ -424,7 +431,13 @@ class ServerHandler(metaclass=Singleton):
 
         if not is_admin:
             for role in user.roles:
-                if role.name == "Nano Admin":
+                if role.name == role_name:
                     return True
 
         return is_admin
+
+    def is_admin(self, user, server):
+        return self.has_role(user, server, "Nano Admin")
+
+    def is_mod(self, user, server):
+        return self.has_role(user, server, "Nano Mod")

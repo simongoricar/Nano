@@ -3,8 +3,9 @@ import asyncio
 import logging
 import time
 import datetime
-from discord import Message, utils, Client, DiscordException, Embed, Colour
+from discord import Message, utils, Client, Embed, Colour, DiscordException, HTTPException
 from data.serverhandler import ServerHandler
+from data.stats import WRONG_ARG
 from data.utils import convert_to_seconds, get_decision, is_valid_command, StandardEmoji
 
 logger = logging.getLogger(__name__)
@@ -14,7 +15,7 @@ logger.setLevel(logging.INFO)
 
 error_hierarchy = StandardEmoji.WARNING + " You are not allowed to mess with this role (you are lower in the \"hierarchy\"). ¯\_(ツ)_/¯"
 
-CMD_LIMIT = 35
+CMD_LIMIT = 40
 
 valid_commands = [
     "_welcomemsg", "_kickmsg", "_banmsg", "_leavemsg",
@@ -400,6 +401,11 @@ class Admin:
                 a_role = str(message.content[len(prefix + "role add "):]).split("<")[0].strip()
                 role = utils.find(lambda r: r.name == a_role, message.channel.server.roles)
 
+                if not role:
+                    await client.send_message(message.channel, "No such role: '{}'".format(a_role))
+                    self.stats.add(WRONG_ARG)
+                    return
+
                 if not can_change_role(message.author, role):
                     await client.send_message(message.channel, error_hierarchy)
                     return
@@ -472,7 +478,12 @@ class Admin:
 
             final = "\n".join(["{} : {}".format(name, content) for name, content in custom_cmds.items()])
 
-            await client.send_message(message.channel, "*Custom commands:*\n```" + final + "```")
+            try:
+                await client.send_message(message.channel, "*Custom commands:*\n```" + final + "```")
+            except HTTPException:
+                await client.send_message(message.channel, "Your commands are too long to display. Consider cleaning "
+                                                           "some of them or ask the bot owner to do it for you "
+                                                           "if you don't remember the commands.")
 
         # !cmd status
         elif startswith(prefix + "cmd status"):
@@ -499,7 +510,7 @@ class Admin:
             try:
                 value = handler.update_moderation_settings(message.channel.server, cut[0], get_decision(cut[1]))
             except IndexError:
-                # stat.pluswrongarg()
+                self.stats.add(WRONG_ARG)
                 return
 
             if get_decision(cut[0], "word filter", "filter words", "wordfilter"):
@@ -596,6 +607,11 @@ Messages:
 
                 for usr in admins:
                     user = utils.find(lambda u: u.id == usr, message.channel.server.members)
+
+                    # user is None when an admin leaves the server before being removed from admins
+                    if not user:
+                        handler.remove_admin(message.server, usr)
+
                     final += "{}, ".format(user.name)
 
                 # Remove last comma and space
@@ -658,7 +674,7 @@ Messages:
 
             ch1 = await client.wait_for_message(timeout=35, author=auth, check=check_yes1)
             if ch1 is None:
-                timeout(message)
+                await timeout(message)
                 return
 
             # SECOND MESSAGE
@@ -669,7 +685,7 @@ Messages:
             # Second check, does not need yes/no filter
             ch2 = await client.wait_for_message(timeout=35, author=auth)
             if ch2 is None:
-                timeout(message)
+                await timeout(message)
                 return
 
             if ch2.content:
@@ -683,7 +699,7 @@ Messages:
 
             ch3 = await client.wait_for_message(timeout=35, author=auth)
             if ch3 is None:
-                timeout(message)
+                await timeout(message)
                 return
 
             if ch3.content.strip(" ").lower() == "none":
@@ -709,7 +725,7 @@ Messages:
 
             ch3 = await client.wait_for_message(timeout=35, author=auth, check=check_yes3)
             if ch3 is None:
-                timeout(message)
+                await timeout(message)
                 return
 
             # FIFTH MESSAGE
@@ -730,7 +746,7 @@ Messages:
 
             ch4 = await client.wait_for_message(timeout=35, author=auth, check=check_yes4)
             if ch4 is None:
-                timeout(message)
+                await timeout(message)
                 return
 
             msg_final = """**This concludes the basic server setup.**
@@ -760,7 +776,7 @@ For a list of all commands, use `_cmds`.""".replace("_", str(ch2.content))
 
 class NanoPlugin:
     _name = "Admin Commands"
-    _version = "0.2.3"
+    _version = "0.2.5"
 
     handler = Admin
     events = {
