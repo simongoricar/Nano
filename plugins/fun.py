@@ -15,14 +15,21 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 simple_commands = {
-    "_johncena": "ITS JOHN CENA",
     "ayy lmao": "My inspiration in the world of memes.",
     "( ͡° ͜ʖ ͡°)": "¯\_(ツ)_/¯ indeed"
 }
 
-valid_commands = [
-    "_kappa", "_cat", "_randomgif", "_rip", "_meme", "_caption"
-]
+commands = {
+    "_cat": {"desc": "I love cats. And this is a gif of a cat.", "use": None, "alias": None},
+    "_kappa": {"desc": "I couldn't resist it.", "use": None, "alias": None},
+    "_rip": {"desc": "Rest in peperoni, man.", "use": "[command] [mention]", "alias": None},
+    "ayy lmao": {"desc": "Yes, it's the ayy lmao meme.", "use": None, "alias": None},
+    "_meme": {"desc": "Captions a meme with your text. Take a look at <https://imgflip.com/memegenerator>'s list of memes if you want.", "use": "[command] [meme name]|[top text]|[bottom text]", "alias": "_caption"},
+    "_caption": {"desc": "Captions a meme with your text. Take a look at <https://imgflip.com/memegenerator>'s list of memes if you want.", "use": "[command] [meme name]|[top text]|[bottom text]", "alias": "_meme"},
+    "_randomgif": {"desc": "Sends a random gif from Giphy.", "use": None, "alias": None},
+}
+
+valid_commands = commands.keys()
 
 
 class MemeGenerator:

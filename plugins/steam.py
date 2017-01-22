@@ -12,12 +12,17 @@ logger.setLevel(logging.INFO)
 parser = configparser.ConfigParser()
 parser.read("plugins/config.ini")
 
-NOT_WHOLE_URL = "Argument must be the **ending** of a (vanity) URL, not the *entire* URL!"
+NOT_WHOLE_URL = "Please put in the **ending** of a (\"vanity\") URL, not the *entire* URL!"
 
-valid_commands = [
-    "_steam user", "_steam games", "_steam help",
-    "_steam friends", "_steam avatar"
-]
+commands = {
+    "_steam": {"desc": "Searches for the specified steam id.\nSubcommands: 'steam user', 'steam games', 'steam friends'", "use": "[command] [end of user url/id]", "alias": None},
+    "_steam user": {"desc": "Searches for general info about the user.", "use": "[command] [end of user url/id]", "alias": None},
+    "_steam games": {"desc": "Searches for all owned games in user's account.", "use": "[command] [end of user url/id]", "alias": None},
+    "_steam friends": {"desc": "Searches for all friends that the user has.", "use": "[command] [end of user url/id]", "alias": None},
+    "_steam help": {"desc": "Displays help for all steam commands.", "use": "[command]", "alias": None},
+}
+
+valid_commands = commands.keys()
 
 
 class SteamSearch:

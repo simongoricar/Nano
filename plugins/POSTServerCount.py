@@ -19,6 +19,9 @@ class POST:
         amount = len(self.client.servers)
         token = parser.get("bots.discord.pw", "token")
 
+        if not token:
+            return
+
         self.upload(amount, token)
         log.info("Updated guild count: {} (joined {})".format(amount, server.name))
 

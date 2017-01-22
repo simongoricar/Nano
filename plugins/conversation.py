@@ -30,6 +30,9 @@ class Conversation:
 
             return False
 
+        async def reply(msg: str):
+            await client.send_message(message.channel, msg)
+
         # RESPONSES
 
         # If it is just a raw mention, send the help message
@@ -47,37 +50,40 @@ class Conversation:
             # Choose random reply
             rn = randint(0, len(lst) - 1)
 
-            await client.send_message(message.channel, str(lst[rn]))
+            await reply(str(lst[rn]))
 
         elif has("do you wanna build a snowman", "do you want to build a snowman"):
-            await client.send_message(message.channel, "C'mon lets go out and play!")
+            await reply("C'mon lets go out and play!")
 
         elif has("die"):
-            await client.send_message(message.channel, "Nah :wink:")
+            await reply("Nah :wink:")
 
         elif has("do you ever stop", "do you ever get tired", "do you even sleep", "do you sleep"):
-            await client.send_message(message.channel, "Nope.")
+            await reply("Nope.")
 
         elif has("ayy"):
-            await client.send_message(message.channel, "Ayy. Lmao.")
+            await reply("Ayy. Lmao.")
 
         elif has("rip"):
-            await client.send_message(message.channel, "Rest in pepperoni indeed **pays respects**")
+            await reply("Rest in pepperoni indeed **pays respects**")
 
         elif has("do you have a master"):
-            await client.send_message(message.channel, "Dobby has no master.")
+            await reply("Dobby has no master.")
 
         elif has("what is this"):
-            await client.send_message(message.channel, "THIS IS SPARTA!")
+            await reply("THIS IS SPARTA!")
 
         elif has("help"):
-            await client.send_message(message.channel, help_nano)
+            await reply(help_nano)
 
         elif has("i love you", "<3"):
-            await client.send_message(message.channel, "<3")
+            await reply("<3")
 
         elif has("fuck you"):
-            await client.send_message(message.channel, "I cri everytiem.")
+            await reply("I cri everytiem.")
+
+        elif has("hi", "hello"):
+            await reply("Hi there!")
 
 
 class NanoPlugin:

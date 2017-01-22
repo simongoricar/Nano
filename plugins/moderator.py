@@ -33,7 +33,7 @@ def two_chars(line):
 
 def get_valid_commands(plugin):
         try:
-            return plugin.valid_commands
+            return plugin.commands
         except AttributeError:
             return None
 
@@ -234,8 +234,11 @@ class Moderator:
 
         self.loop.create_task(self.log.start())
 
+        self.valid_commands = []
+
     async def on_plugins_loaded(self):
         # Collect all valid commands
+        # /todo adopt the new system
         plugins = [a.get("plugin") for a in self.nano.plugins.values() if a.get("plugin")]
         self.valid_commands = [item for sub in [get_valid_commands(b) for b in plugins if get_valid_commands(b)] for item in sub]
 
@@ -254,6 +257,10 @@ class Moderator:
             await client.delete_message(message)
 
             self.stats.add(SUPPRESS)
+            return "return"
+
+        # Channel blacklisting
+        if handler.is_blacklisted(message.server, message.channel):
             return "return"
 
         # Ignore existing commands

@@ -1,3 +1,8 @@
+3.3
+- New !help system
+- Added back nano.blacklist
+- Added "Nano Mod" permission
+
 3.2.3
 - Bugfixes
 

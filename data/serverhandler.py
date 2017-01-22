@@ -236,17 +236,28 @@ class ServerHandler(metaclass=Singleton):
         self.queue_write(data)
         return ok
 
-    def add_channel_blacklist(self, server, channel):
+    def add_channel_blacklist(self, server, channel_id):
         data = self.cached_file
 
-        data[server.id]["blacklisted"].append(str(channel))
+        data[server.id]["blacklisted"].append(str(channel_id))
         self.queue_write(data)
 
-    def remove_channel_blacklist(self, server, channel):
+    def remove_channel_blacklist(self, server, channel_id):
         data = self.cached_file
 
-        data[server.id]["blacklisted"].pop(str(channel))
+        data[server.id]["blacklisted"].remove(str(channel_id))
         self.queue_write(data)
+
+    def is_blacklisted(self, server, channel):
+        if channel.is_private:
+            return False
+
+        try:
+            data = self.cached_file
+            return channel.id in data[server.id]["blacklisted"]
+
+        except KeyError:
+            return False
 
     def add_admin(self, server, user):
         data = self.cached_file
@@ -291,17 +302,6 @@ class ServerHandler(metaclass=Singleton):
         data[server.id]["prefix"] = prefix
 
         self.queue_write(data)
-
-    def is_blacklisted(self, sid, channel):
-        if channel.is_private:
-            return
-
-        try:
-            data = self.cached_file
-            return channel.name in data[sid]["blacklisted"]
-
-        except KeyError:
-            return False
 
     def has_spam_filter(self, server):
         data = self.cached_file
@@ -405,25 +405,7 @@ class ServerHandler(metaclass=Singleton):
         log.info("Removed {} from servers.yml".format(server.name))
 
     # CHECKS
-
-    # MAIN check
-    def can_use_restricted_commands(self, user, server):
-        bo = self.is_bot_owner(user.id)
-        so = self.is_server_owner(user.id, server)
-        ia = self.is_admin(user, server)
-
-        return any([bo, so, ia])
-
-    @staticmethod
-    def is_bot_owner(uid):
-        return str(uid) == str(par.get("Settings", "ownerid"))
-
-    @staticmethod
-    def is_server_owner(uid, server):
-        return str(uid) == str(server.owner.id)
-
     def has_role(self, user, server, role_name):
-
         try:
             is_admin = bool(user.id in self.cached_file.get(server.id).get("admins"))
         except TypeError:
@@ -435,6 +417,22 @@ class ServerHandler(metaclass=Singleton):
                     return True
 
         return is_admin
+
+    # MAIN check
+    def can_use_restricted_commands(self, user, server):
+        bo = self.is_bot_owner(user.id)
+        so = self.is_server_owner(user.id, server)
+        ia = self.is_admin(user, server)
+
+        return bo or so or ia
+
+    @staticmethod
+    def is_bot_owner(uid):
+        return str(uid) == str(par.get("Settings", "ownerid"))
+
+    @staticmethod
+    def is_server_owner(uid, server):
+        return str(uid) == str(server.owner.id)
 
     def is_admin(self, user, server):
         return self.has_role(user, server, "Nano Admin")

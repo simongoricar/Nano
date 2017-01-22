@@ -18,14 +18,17 @@ DEFAULT_REMINDER_LIMIT = 2
 remind_help = "**Remind help**\n`_remind me in [sometime]: [message]` - reminds you in your DM\n" \
               "`_remind here in [sometime]: [message]` - reminds everyone in current channel"
 
-valid_commands = [
-    "_remind here in",
-    "_remind me in",
-    "_remind help",
-    "_remind list",
-    "_reminder list",
-    "_remind remove",
-]
+commands = {
+    "_remind": {"desc": "General module for timers\nSubcommands: remind me in, remind here in, remind list, remind remove", "use": None, "alias": None},
+    "_remind me in": {"desc": "Adds a reminder (reminds you in dm)", "use": "[command] [time (ex: 3h 5min)] : [message]", "alias": None},
+    "_remind here in": {"desc": "Adds a reminder (reminds everybody in current channel)", "use": "[command] [time (ex: 3h 5min)] : [message]", "alias": None},
+    "_remind list": {"desc": "Displays all ongoing timers.", "use": None, "alias": "_reminder list"},
+    "_reminder list": {"desc": "Displays all ongoing timers.", "use": None, "alias": "_remind list"},
+    "_remind help": {"desc": "Displays help for reminders.", "use": None, "alias": None},
+    "_remind remove": {"desc": "Removes a timer with supplied description or time (or all timers with 'all')", "use": "[command] [timer description or time in sec]", "alias": None},
+}
+
+valid_commands = commands.keys()
 
 # Functions
 
@@ -240,12 +243,13 @@ class Reminder:
         # !remind here in [time]:[reminder]
         elif startswith(prefix + "remind here in"):
             args = str(message.content)[len(prefix + "remind here in "):].strip().split(":")
-            content = str(args[1]).strip(" ")
 
             if len(args) != 2:
                 await client.send_message(message.channel, "Incorrect command use. See `_help remind here in` for usage".replace("_", prefix))
                 self.stats.add(WRONG_ARG)
                 return
+
+            content = str(args[1]).strip(" ")
 
             if not args[0].isnumeric():
                 ttr = convert_to_seconds(args[0])

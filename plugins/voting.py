@@ -11,10 +11,14 @@ from data.utils import is_valid_command, is_empty, StandardEmoji
 __author__ = "DefaltSimon"
 # Voting plugin
 
-valid_commands = [
-    "_vote start", "_vote status"
-    "_vote end", "_vote "
-]
+commands = {
+    "_vote start": {"desc": "Starts a vote on the server.", "use": "[command] \"question\" choice1|choice2|...", "alias": None},
+    "_vote end": {"desc": "Simply ends the current vote on the server.", "use": None, "alias": None},
+    "_vote status": {"desc": "Shows info about the current voting.", "use": None, "alias": None},
+    "_vote": {"desc": "Votes for an option if there is voting going on.", "use": "[command] [1,2,3,...]", "alias": None},
+}
+
+valid_commands = commands.keys()
 
 NO_VOTE = StandardEmoji.WARNING + " There is no vote in progress."
 IN_PROGRESS = StandardEmoji.WARNING + " A vote is already in progress."

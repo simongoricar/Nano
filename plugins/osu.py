@@ -17,9 +17,11 @@ logger.setLevel(logging.INFO)
 parser = configparser.ConfigParser()
 parser.read("plugins/config.ini")
 
-valid_commands = [
-    "_osu"
-]
+commands = {
+    "_osu": {"desc": "Displays stats for that osu! user.", "use": "[command] [username/id]", "alias": None},
+}
+
+valid_commands = commands.keys()
 
 
 class Osu:

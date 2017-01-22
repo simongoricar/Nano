@@ -31,11 +31,15 @@ game_list = [
     "get a 'nano.invite'"
 ]
 
+commands = {
+    "nano.dev.": {},
+    "nano.playing": {"desc": "Restricted to owner(!), changes 'playing' status.", "use": "[command] [status]", "alias": None},
+    "nano.restart": {"desc": "Restricted to owner, restarts down the bot.", "use": "[command]", "alias": None},
+    "nano.reload": {"desc": "Restricted to owner, reloads all settings from config file.", "use": None, "alias": "_reload"},
+    "nano.kill": {"desc": "Restricted to owner, shuts down the bot.", "use": "[command]", "alias": None},
+}
 
-valid_commands = [
-    "nano.dev.", "nano.playing", "nano.reload", "nano.restart", "nano.kill"
-]
-
+valid_commands = commands.keys()
 
 class StatusRoller:
     def __init__(self, client, time=21600):  # 6 Hours
@@ -194,7 +198,7 @@ class DevFeatures:
             await client.send_message(message.channel, to_send)
 
         # nano.dev.test_error
-        elif startswith("nano.dev.test_error"):
+        elif startswith("nano.dev.test_exception"):
             int("abcdef")
 
         # nano.dev.embed_test
@@ -221,7 +225,7 @@ class DevFeatures:
         elif startswith("nano.dev.tf.clean"):
             self.nano.get_plugin("tf2").get("instance").tf.request()
 
-            await client.send_message(message.channel, "Re-downloading data...")
+            await client.send_message(message.channel, "Re-downloaded data...")
 
         # nano.dev.plugin.reload
         elif startswith("nano.dev.plugin.reload"):

@@ -15,6 +15,13 @@ parser.read("plugins/config.ini")
 
 # Prefix getter plugin
 
+commands = {
+    "nano.sleep": {"desc": "Puts Nano to sleep. (per-server basis)", "use": None, "alias": None},
+    "nano.wake": {"desc": "Wakes Nano up. (per-server basis)", "use": None, "alias": None},
+}
+
+valid_commands = commands.keys()
+
 
 class PrefixState:
     def __init__(self, *_, **kwargs):

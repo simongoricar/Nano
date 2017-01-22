@@ -16,6 +16,8 @@ log.setLevel(logging.INFO)
 
 # CONSTANTS
 
+IMDB_PROBLEMS = "Something went wrong. Keep in mind that IMDb search is far from perfect."
+
 base_url = "http://www.imdb.com"
 search_url = "http://www.imdb.com/find?&q="
 
@@ -44,9 +46,16 @@ def clean(text):
         text = str(text).replace(ch, "")
     return text.strip(" ").strip("\n")
 
-valid_commands = [
-    "_imdb search", "_imdb trailer", "_imdb plot", "_imdb rating", "_imdb help"
-]
+commands = {
+    "_imdb search": {"desc": "Searches for a film/series/person and displays general info", "use": "[command] [film/series/person name]", "alias": None},
+    "_imdb trailer": {"desc": "Gives you a link to the trailer of a film/series.", "use": "[command] [film/series/person name]", "alias": None},
+    "_imdb plot": {"desc": "Displays more plot info about a film/series.", "use": "[command] [film/series/person name]", "alias": None},
+    "_imdb rating": {"desc": "Displays different ratings for the film/series.", "use": "[command] [film/series/person name]", "alias": None},
+    "_imdb help": {"desc": "Displays available commands regarding IMDb.", "use": "[command]", "alias": None},
+    "_imdb": {"desc": "The IMDb module\nSubcommands: search trailer plot rating help", "use": None, "alias": None},
+}
+
+valid_commands = commands.keys()
 
 # Objects
 
@@ -300,7 +309,11 @@ class IMDB:
                 else:
                     search = str(message.content[len(prefix + "imdb story "):])
 
-                data = self.imdb.get_page_by_name(search)
+                try:
+                    data = self.imdb.get_page_by_name(search)
+                except:
+                    await client.send_message(message.channel, IMDB_PROBLEMS)
+                    return
 
                 if not data:
                     await client.send_message(message.channel, "No results.")
@@ -314,7 +327,12 @@ class IMDB:
 
             elif startswith(prefix + "imdb search"):
                 search = str(message.content[len(prefix + "imdb search "):])
-                data = self.imdb.get_page_by_name(search)
+
+                try:
+                    data = self.imdb.get_page_by_name(search)
+                except:
+                    await client.send_message(message.channel, IMDB_PROBLEMS)
+                    return
 
                 if not data:
                     await client.send_message(message.channel, "No results.")
@@ -342,7 +360,12 @@ class IMDB:
 
             elif startswith(prefix + "imdb trailer"):
                 search = str(message.content[len(prefix + "imdb trailer "):])
-                data = self.imdb.get_page_by_name(search)
+
+                try:
+                    data = self.imdb.get_page_by_name(search)
+                except:
+                    await client.send_message(message.channel, IMDB_PROBLEMS)
+                    return
 
                 if not data:
                     await client.send_message(message.channel, "No results.")

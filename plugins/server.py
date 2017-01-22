@@ -21,10 +21,18 @@ nano_welcome = "**Hi!** I'm Nano!\nNow that you have invited me to your server, 
                "\nTo get started, type `!setup` as the server owner. It will help you set up most of the things. " \
                "After that, you might want to see `!cmds` to get familiar with my commands."
 
-valid_commands = [
-    "_stats", "_stats more", "_status", "_prefix", "_members", "nano.prefix", "_debug",
-]
+commands = {
+    "_debug": {"desc": "Displays EVEN MORE stats about Nano.", "use": None, "alias": None},
+    "_status": {"desc": "Displays current status: server, user and channel count.", "use": None, "alias": "nano.status"},
+    "nano.status": {"desc": "Displays current status: server, user and channel count.", "use": None, "alias": "_status"},
+    "_stats": {"desc": "Some stats like message count and stuff like that.", "use": None, "alias": "nano.stats"},
+    "nano.stats": {"desc": "Some stats like message count and stuff like that.", "use": None, "alias": "_stats"},
+    "_prefix": {"desc": "No use whatsoever, but jk here you have it.", "use": None, "alias": None},
+    "nano.prefix": {"desc": "Helps you figure out the prefix.", "use": None, "alias": None},
+    "_members": {"desc": "Lists all members on the server.", "use": None, "alias": None},
+}
 
+valid_commands = commands.keys()
 
 # noinspection PyTypeChecker
 class ServerManagement:

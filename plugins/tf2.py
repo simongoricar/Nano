@@ -34,21 +34,24 @@ COLLECTORS = 14
 DECORATED = 15
 
 quality_names = {0: "Stock",
-              1: "Promotional",
-              3: "Vintage",
-              5: "Effect/Halloween",
-              6: "Unique",
-              7: "Community",
-              8: "Developer",
-              9: "Self-made",
-              11: "Strange",
-              13: "Haunted",
-              14: "Collector's",
-              15: "Decorated"}
+                 1: "Promotional",
+                 3: "Vintage",
+                 5: "Effect/Halloween",
+                 6: "Unique",
+                 7: "Community",
+                 8: "Developer",
+                 9: "Self-made",
+                 11: "Strange",
+                 13: "Haunted",
+                 14: "Collector's",
+                 15: "Decorated"}
 
-valid_commands = [
-    "_tf"
-]
+commands = {
+    "_tf": {"desc": "Gets item prices from backpack.tf (not perfect for items with unusual effects/sheens)",
+            "use": "[command] [item name]", "alias": None},
+}
+
+valid_commands = commands.keys()
 
 
 def get_quality_name(num):

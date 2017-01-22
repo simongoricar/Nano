@@ -16,7 +16,7 @@ from data.utils import log_to_file
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '3.2.3'
+__version__ = '3.3'
 
 
 # CONSTANTS and EVENTS
@@ -47,7 +47,7 @@ ON_PLUGINS_LOADED = "on_plugins_loaded"
 
 # Other
 
-is_resume = False
+IS_RESUME = False
 
 # LOGGING
 
@@ -175,30 +175,30 @@ class Nano(metaclass=Singleton):
         else:
             plugin = str(plugin)
 
-        p = self.get_plugin(plugin)
-        if not p:
+        c_plug = self.get_plugin(plugin)
+        if not c_plug:
             return False
 
         # Gracefully reload if the plugin has ON_SHUTDOWN event
-        if ON_SHUTDOWN in p.get("events").keys():
-            await getattr(p.get("instance"), ON_SHUTDOWN)()
+        if ON_SHUTDOWN in c_plug.get("events").keys():
+            await getattr(c_plug.get("instance"), ON_SHUTDOWN)()
 
-        for event, imp in p.get("events").items():
+        for event, imp in c_plug.get("events").items():
             self.plugin_events_[event].remove({"plugin": plugin, "importance": imp})
 
         try:
-            plug = importlib.reload(p.get("plugin"))
+            c_plug = importlib.reload(c_plug.get("plugin"))
         except ImportError:
             return False
 
         # If this file is not a plugin, ignore it
         try:
-            plug.NanoPlugin
+            c_plug.NanoPlugin
         except AttributeError:
             return False
 
-        cls = plug.NanoPlugin.handler
-        events = plug.NanoPlugin.events
+        cls = c_plug.NanoPlugin.handler
+        events = c_plug.NanoPlugin.events
 
         # Instantiate the plugin
         instance = cls(client=client,
@@ -208,7 +208,7 @@ class Nano(metaclass=Singleton):
                        stats=stats)
 
         self.plugins[plugin] = {
-            "plugin": plug,
+            "plugin": c_plug,
             "handler": cls,
             "instance": instance,
             "events": events,
@@ -224,16 +224,16 @@ class Nano(metaclass=Singleton):
     def _parse_priorities(self):
         log.info("Parsing priorities...")
 
-        pe = copy.deepcopy(self.plugin_events_)
-        for el, thing in pe.items():
+        pe_copy = copy.deepcopy(self.plugin_events_)
+        for element, thing in pe_copy.items():
             # Skip if empty
-            if not el or not thing:
+            if not element or not thing:
                 continue
 
             sorted_list = sorted(thing, key=lambda a: a.get("importance"))
             sorted_list = [it.get("plugin") for it in list(sorted_list)]
 
-            self.plugin_events[el] = sorted_list
+            self.plugin_events[element] = sorted_list
 
     def get_plugin(self, name):
         if not str(name).endswith(".py"):
@@ -258,11 +258,11 @@ class Nano(metaclass=Singleton):
             # COMMUNICATION
             # If data is passed, assign proper variables
             if isinstance(resp, tuple):
-                ag = resp[1:]
+                var_addons = resp[1:]
                 resp = str(resp[0])
 
             else:
-                ag = list()
+                var_addons = list()
 
             # Makes communication between the core and plugins possible
             if resp == "return":
@@ -271,12 +271,12 @@ class Nano(metaclass=Singleton):
 
             elif resp == "add_var":
                 # Add/Set new kwargs
-                if isinstance(ag, tuple):
-                    for k, v in ag[0].items():
+                if isinstance(var_addons, tuple):
+                    for k, v in var_addons[0].items():
                         kwargs[k] = v
 
                 else:
-                    for k, v in ag.items():
+                    for k, v in var_addons.items():
                         kwargs[k] = v
 
             elif resp == "shutdown":
@@ -370,11 +370,11 @@ async def on_error(event, *args, **kwargs):
 @client.event
 async def on_ready():
     # Just prints "Resumed connection" if that's the way it is
-    global is_resume
-    if is_resume:
+    global IS_RESUME
+    if IS_RESUME:
         print("Resumed connection...")
         return
-    is_resume = True
+    IS_RESUME = True
 
     print("connected!")
     print("BOT name: {} ({})".format(client.user.name, client.user.id))

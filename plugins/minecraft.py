@@ -13,9 +13,12 @@ ITEM_ID_PAIR = 1
 ITEM_ID = 2
 ITEM_NAME = 3
 
-valid_commands = [
-    "_mc", "_minecraft"
-]
+commands = {
+    "_mc": {"desc": "Searches for items and displays their details", "use": "[command] [item name or id:meta]", "alias": "_minecraft"},
+    "_minecraft": {"desc": "Searches for items and displays their details", "use": "[command] [item name or id:meta]", "alias": "_mc"},
+}
+
+valid_commands = commands.keys()
 
 
 class McItems:

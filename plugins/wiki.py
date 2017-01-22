@@ -14,9 +14,13 @@ logger.setLevel(logging.INFO)
 parser = configparser.ConfigParser()
 parser.read("plugins/config.ini")
 
-valid_commands = [
-    "_urban", "_wiki", "_define"
-]
+commands = {
+    "_wiki": {"desc": "Gives you the definition of a word from Wikipedia.", "use": "[command] [word]", "alias": "_define"},
+    "_define": {"desc": "Gives you the definition of a word from Wikipedia.", "use": "[command] [word]", "alias": "_wiki"},
+    "_urban": {"desc": "Gives you the definition of a word from Urban Dictionary.", "use": "[command] [word]", "alias": None},
+}
+
+valid_commands = commands.keys()
 
 
 class Definitions:

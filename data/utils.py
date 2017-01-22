@@ -208,7 +208,7 @@ def is_empty(path):
         return False
 
 dis = [
-    "none", "false", "off", "disabled", "nothing", ""
+    "none", "false", "off", "disabled"
 ]
 
 

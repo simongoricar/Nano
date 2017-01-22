@@ -57,10 +57,25 @@ quotes = [
     "Do what you can, where you are, with what you have. –Teddy Roosevelt",
     "You may be disappointed if you fail, but you are doomed if you don’t try. –Beverly Sills"]
 
-valid_commands = [
-    "_hello", "_uptime", "_github", "_roll", "_dice", "_ping", "_decide", "_8ball",
-    "_quote", "_invite", "_avatar", "_say", "nano.info", "_nano", "_invite", "nano.invite"
-]
+commands = {
+    "_hello": {"desc": "Welcomes a **mentioned** person, or if no mentions are present, you.", "use": "[command] [mention]", "alias": None},
+    "_uptime": {"desc": "Tells you for how long I have been running.", "use": None, "alias": None},
+    "_github": {"desc": "Link to my project on GitHub.", "use": None, "alias": None},
+    "_ping": {"desc": "Just to check if I'm alive. fyi: I love ping-pong.", "use": None, "alias": None},
+    "_roll": {"desc": "Replies with a random number in range from 0 to your number.", "use": "[command] [number]", "alias": None},
+    "_dice": {"desc": "Rolls the dice", "use": "[command]", "alias": None},
+    "_decide": {"desc": "Decides between different choices so you don't have to.", "use": "[command] word1|word2|word3|...", "alias": None},
+    "_8ball": {"desc": "Answers your questions. 8ball style.", "use": "[command] [question]", "alias": None},
+    "_quote": {"desc": "Brightens your day with a random quote.", "use": None, "alias": None},
+    "_invite": {"desc": "Gives you a link to invite Nano to another (your) server.", "use": None, "alias": "nano.invite"},
+    "nano.invite": {"desc": "Gives you a link to invite Nano to another (your) server.", "use": None, "alias": "_invite"},
+    "_avatar": {"desc": "Gives you the avatar url of a mentioned person", "use": "[command] [mention or name]", "alias": None},
+    "_say": {"desc": "Says something (#channel is optional)", "use": "[command] (#channel) [message]", "alias": None},
+    "nano.info": {"desc": "A little info about me.", "use": None, "alias": "_ayybot"},
+    "_nano": {"desc": "A little info about me.", "use": None, "alias": "nano.info"},
+}
+
+valid_commands = commands.keys()
 
 # Common commands plugin
 
@@ -75,7 +90,8 @@ class Commons:
 
         assert isinstance(self.handler, ServerHandler)
 
-    def at_everyone_filter(self, content, author, server):
+    @staticmethod
+    def at_everyone_filter(content, author, server):
         # See if the user is allowed to do @everyone
         ok = False
         for role in author.roles:
@@ -212,7 +228,7 @@ class Commons:
             application = await client.application_info()
 
             # Most of the permissions that Nano uses
-            perms = str("0x510917638")
+            perms = "8"
             url = "https://discordapp.com/oauth2/" \
                   "authorize?client_id={}&scope=bot&permissions={}".format(application.id, perms)
 
@@ -263,7 +279,7 @@ class Commons:
 
 class NanoPlugin:
     _name = "Common Commands"
-    _version = "0.2.2"
+    _version = "0.2.3"
 
     handler = Commons
     events = {

@@ -14,18 +14,57 @@ logger.setLevel(logging.INFO)
 # CONSTANTS
 
 error_hierarchy = StandardEmoji.WARNING + " You are not allowed to mess with this role (you are lower in the \"hierarchy\"). ¯\_(ツ)_/¯"
+CHANNEL_NOT_FOUND = "Channel could not be found."
+
+not_admin = " You do not have the correct permissions to use this command (must be an admin)."
+not_mod = " You do not have the correct permissions to use this command (must be a mod)."
 
 CMD_LIMIT = 40
 
-valid_commands = [
-    "_welcomemsg", "_kickmsg", "_banmsg", "_leavemsg",
-    "_nuke", "_kick", "_ban", "_unban", "_softban", "_unmute",
-    "_mute", "_user", "_role add", "_role remove", "_role replaceall",
-    "_cmd add", "_cmd remove", "_cmd list", "_cmd status",
-    "nano.settings", "nano.displaysettings",
-    "nano.admins add", "nano.admins remove", "nano.admins list", "_setup", "nano.setup",
-    "nano.serverreset", "nano.changeprefix"
-]
+commands = {
+    "_ban": {"desc": "Bans a member.", "use": "[command] [mention]", "alias": "nano.ban"},
+    "nano.ban": {"desc": "Bans a member.", "use": "User: [command] [mention]", "alias": "_ban"},
+    "_kick": {"desc": "Kicks a member.", "use": "[command] [mention]", "alias": "nano.kick"},
+    "nano.kick": {"desc": "Kicks a member", "use": "[command] [mention]", "alias": "_kick"},
+    "_unban": {"desc": "Unbans a member.", "use": "[command] [mention]", "alias": "nano.unban"},
+    "nano.unban": {"desc": "Unbans a member.", "use": "[command] [mention]", "alias": "_unban"}, "_softban": {"desc": "Temporarily bans a member (for time formatting see reminders)", "use": "[command] [time] @mention", "alias": "nano.softban"},
+    "nano.softban": {"desc": "Temporarily bans a member (for time formatting see reminders)", "use": "[command] [time] @mention", "alias": "_softban"},
+
+    "_cmd add": {"desc": "Adds a command to the server.", "use": "[command] command|response", "alias": None},
+    "_cmd remove": {"desc": "Removes a command from the server.", "use": "[command] command", "alias": None},
+    "_cmd status": {"desc": "Displays how many commands you have and how many more you can register.", "use": "[command] command", "alias": None},
+    "_cmd list": {"desc": "Returns a server-specific command list.", "use": None, "alias": None},
+
+    "_mute": {"desc": "Mutes the user - deletes all future messages from the user until he/she is un-muted.", "use": "[command] [mention or name]", "alias": None},
+    "_unmute": {"desc": "Un-mutes the user (see mute help for more info).", "use": "[command] [mention or name]", "alias": None},
+    "_muted": {"desc": "Displays a list of all members currently muted.", "use": None, "alias": None},
+    # "_purge": {"desc": "Deletes the messages from the specified user in the last x messages", "use": "[command] [amount] [user name]", "alias": None},
+
+    "_setup": {"desc": "Helps admins set up basic settings for the bot (guided setup).", "use": None, "alias": "nano.setup"},
+    "nano.setup": {"desc": "Helps admins set up basic settings for the bot (guided setup).", "use": None, "alias": "_setup"},
+    "_user": {"desc": "Displays info about the user", "use": "[command] [@mention or name]", "alias": None},
+    "_welcomemsg": {"desc": "Sets the message sent when a member joins the server.\nFormatting: ':user' = @user, ':server' = server name", "use": "[command] [content]", "alias": None},
+    "_banmsg": {"desc": "Sets the message sent when a member is banned.\nFormatting: ':user' = user name", "use": "[command] [content]", "alias": None},
+    "_kickmsg": {"desc": "Sets the message sent when a member is kicked.\nFormatting: ':user' = user name", "use": "[command] [content]", "alias": None},
+    "_leavemsg": {"desc": "Sets the message sent when a member leaves the server.\nFormatting: ':user' = user name", "use": "[command] [content]", "alias": None},
+    "_nuke": {"desc": "Nukes (deletes) last x messages.", "use": None, "alias": None},
+
+    "nano.admins add": {"desc": "Adds a user to admins on the server.", "use": "[command] [mention]", "alias": None},
+    "nano.admins remove": {"desc": "Removes a user from admins on the server.", "use": "[command] [mention]", "alias": None},
+    "nano.admins list": {"desc": "Lists all admins on the server.", "use": None, "alias": None},
+
+    "nano.blacklist add": {"desc": "Adds a channel to command blacklist.", "use": "[command] [channel name]", "alias": None},
+    "nano.blacklist remove": {"desc": "Removes a channel from command blacklist", "use": "[command] [channel name]", "alias": None},
+
+    "nano.settings": {"desc": "Sets server settings like word, spam and invite filtering and changes log channel.", "use": "[command] [setting] True/False", "alias": None},
+    "nano.displaysettings": {"desc": "Displays all server settings.", "use": None, "alias": None},
+    "nano.changeprefix": {"desc": "Changes the prefix on the server.", "use": "[command] prefix", "alias": None},
+    "nano.serverreset": {"desc": "Resets all server settings to the default.", "use": None, "alias": None},
+
+    "_role add": {"desc": "Adds a role to the user.", "use": "[command] [role name] [mention]", "alias": None},
+    "_role remove": {"desc": "Removes a role from the user.", "use": "[command] [role name] [mention]", "alias": None},
+    "_role replaceall": {"desc": "Replace all roles with the specified one for a user.", "use": "[command] [role name] [mention]", "alias": None},
+}
 
 
 class SoftBanScheduler:
@@ -131,7 +170,7 @@ class Admin:
         assert isinstance(client, Client)
 
         # Check if this is a valid command
-        if not is_valid_command(message.content, valid_commands, prefix=prefix):
+        if not is_valid_command(message.content, commands, prefix=prefix):
             return
 
         def startswith(*msg):
@@ -141,8 +180,188 @@ class Admin:
 
             return False
 
+        # !nuke
+        if startswith(prefix + "nuke"):
+            if not handler.is_mod(message.author, message.server):
+                await client.send_message(message.channel, StandardEmoji.WARNING + not_mod)
+                return "return"
+
+            amount = str(message.content)[len(prefix + "nuke "):]
+
+            try:
+                amount = int(amount) + 1  # Includes the sender's message
+            except ValueError:
+                await client.send_message(message.channel, "Must be a number.")
+                return
+
+            await client.delete_message(message)
+
+            await client.send_message(message.channel, "Purging last {} messages... :boom:".format(amount - 1))
+            await client.purge_from(message.channel, limit=amount)
+
+            # Show success
+            m = await client.send_message(message.channel, "Purged {} messages {}".format(StandardEmoji.OK, amount - 1))
+            # Wait 1.5 sec and delete the message
+            await asyncio.sleep(1.5)
+            await client.delete_message(m)
+
+        # !kick
+        elif startswith(prefix + "kick"):
+            if not handler.is_mod(message.author, message.server):
+                await client.send_message(message.channel, StandardEmoji.WARNING + not_mod)
+                return "return"
+
+            if len(message.mentions) >= 1:
+                user = message.mentions[0]
+
+            else:
+                user_name = str(str(message.content)[len(prefix + "kick "):])
+
+                user = utils.find(lambda u: u.name == str(user_name), message.channel.server.members)
+
+            if not user:
+                return
+
+            await client.kick(user)
+            await client.send_message(message.channel,
+                                      handler.get_var(message.channel.server.id, "kickmsg").replace(":user", user.name))
+
+        # !ban
+        elif startswith(prefix + "ban"):
+            if not handler.is_mod(message.author, message.server):
+                await client.send_message(message.channel, StandardEmoji.WARNING + not_mod)
+                return "return"
+
+            if len(message.mentions) >= 1:
+                user = message.mentions[0]
+
+            else:
+                user_name = str(str(message.content)[len(prefix + "ban "):])
+
+                user = utils.find(lambda u: u.name == str(user_name), message.channel.server.members)
+
+            if not user:
+                await client.send_message(message.channel, StandardEmoji.WARNING + " User does not exist.")
+                return
+
+            await client.send_message(message.channel,
+                                      "Are you sure you want to ban " + user.name + "? Confirm by replying 'CONFIRM'.")
+
+            followup = await client.wait_for_message(author=message.author, channel=message.channel,
+                                                     timeout=15, content="CONFIRM")
+
+            if followup is None:
+                await client.send_message(message.channel, "Confirmation not received, NOT banning :upside_down:")
+
+            else:
+                self.bans.append(user.id)
+
+                await client.ban(user, delete_message_days=0)
+
+        # !unban
+        elif startswith(prefix + "unban"):
+            if not handler.is_mod(message.author, message.server):
+                await client.send_message(message.channel, StandardEmoji.WARNING + not_mod)
+                return "return"
+
+            name = message.content[len(prefix + "unban "):]
+
+            user = None
+            for ban in await self.client.get_bans(message.server):
+                if ban.name == name:
+                    user = ban
+
+            if not user:
+                await client.send_message(message.channel, StandardEmoji.WARNING + " Could not unban: user with such name does not exist.")
+                return
+
+            await client.unban(message.server, user)
+            await client.send_message(message.channel, "**{}** has been unbanned.".format(user.name))
+
+        # !softban
+        elif startswith(prefix + "softban"):
+            if not handler.is_mod(message.author, message.server):
+                await client.send_message(message.channel, StandardEmoji.WARNING + not_mod)
+                return "return"
+
+            if len(message.mentions) == 0:
+                await client.send_message(message.channel, "Please mention the member you want to softban.")
+                return
+
+            user = message.mentions[0]
+            tim = message.content[len(prefix + "softban "):].replace("<@{}>".format(user.id), "").strip()
+
+            await client.ban(user, delete_message_days=0)
+
+            self.timer.set_softban(message.channel.server, user, tim)
+
+            await client.send_message(message.channel, "{} has been softbanned.".format(user.name))
+
+        # !mute list
+        elif startswith(prefix + "mute list"):
+            if not handler.is_mod(message.author, message.server):
+                await client.send_message(message.channel, StandardEmoji.WARNING + not_mod)
+                return "return"
+
+            mutes = handler.mute_list(message.server)
+
+            if mutes:
+                muted_ppl = []
+                for a in mutes:
+                    usr = utils.find(lambda b: b.id == a, message.server.members)
+                    if usr:
+                        muted_ppl.append(usr.name)
+
+                final = "Muted members: \n" + "\n".join(["➤ {}".format(u) for u in muted_ppl])
+
+            else:
+                final = "No members are muted on this server."
+
+            await client.send_message(message.channel, final)
+
+        # !mute
+        elif startswith(prefix + "mute"):
+            if not handler.is_mod(message.author, message.server):
+                await client.send_message(message.channel, StandardEmoji.WARNING + not_mod)
+                return "return"
+
+            if len(message.mentions) == 0:
+                await client.send_message(message.channel, "Please mention the member you want to mute.")
+                return
+
+            user = message.mentions[0]
+
+            if message.server.owner.id == user.id:
+                await client.send_message(message.channel, StandardEmoji.WARNING + " You cannot mute the owner of the server.")
+                return
+
+            elif message.author.id == user.id:
+                await client.send_message(message.channel, "Trying to mute yourself? Not gonna work " + StandardEmoji.ROFL)
+
+            handler.mute(user)
+
+            await client.send_message(message.channel,
+                                      "**{}** can now not speak here. {}".format(user.name, StandardEmoji.ZIP_MOUTH))
+
+        # !unmute
+        elif startswith(prefix + "unmute"):
+            if not handler.is_mod(message.author, message.server):
+                await client.send_message(message.channel, StandardEmoji.WARNING + not_mod)
+                return "return"
+
+            if len(message.mentions) == 0:
+                await client.send_message(message.channel, "Please mention the member you want to unmute.")
+                return
+
+            user = message.mentions[0]
+
+            handler.unmute(user)
+
+            await client.send_message(message.channel, "**{}** can now speak here again {}".format(user.name, StandardEmoji.ROFL))
+
+
         if not handler.can_use_restricted_commands(message.author, message.channel.server):
-            await client.send_message(message.channel, StandardEmoji.WARNING + " You do not have the correct permissions to use this command (must be a server admin).")
+            await client.send_message(message.channel, StandardEmoji.WARNING + not_admin)
             return
 
         # !welcomemsg
@@ -173,153 +392,7 @@ class Admin:
 
             await client.send_message(message.channel, "Leave message has been updated :smile:")
 
-        # !nuke
-        elif startswith(prefix + "nuke"):
-            amount = str(message.content)[len(prefix + "nuke "):]
 
-            try:
-                amount = int(amount) + 1  # Includes the sender's message
-            except ValueError:
-                await client.send_message(message.channel, "Must be a number.")
-                return
-
-            await client.delete_message(message)
-
-            await client.send_message(message.channel, "Purging last {} messages... :boom:".format(amount - 1))
-            await client.purge_from(message.channel, limit=amount)
-
-            # Show success
-            m = await client.send_message(message.channel, "Purged {} messages {}".format(StandardEmoji.OK, amount - 1))
-            # Wait 1.5 sec and delete the message
-            await asyncio.sleep(1.5)
-            await client.delete_message(m)
-
-        # !kick
-        elif startswith(prefix + "kick"):
-            if len(message.mentions) >= 1:
-                user = message.mentions[0]
-
-            else:
-                user_name = str(str(message.content)[len(prefix + "kick "):])
-
-                user = utils.find(lambda u: u.name == str(user_name), message.channel.server.members)
-
-            if not user:
-                return
-
-            await client.kick(user)
-            await client.send_message(message.channel,
-                                      handler.get_var(message.channel.server.id, "kickmsg").replace(":user", user.name))
-
-        # !ban
-        elif startswith(prefix + "ban"):
-            if len(message.mentions) >= 1:
-                user = message.mentions[0]
-
-            else:
-                user_name = str(str(message.content)[len(prefix + "ban "):])
-
-                user = utils.find(lambda u: u.name == str(user_name), message.channel.server.members)
-
-            if not user:
-                await client.send_message(message.channel, StandardEmoji.WARNING + " User does not exist.")
-                return
-
-            await client.send_message(message.channel,
-                                      "Are you sure you want to ban " + user.name + "? Confirm by replying 'CONFIRM'.")
-
-            followup = await client.wait_for_message(author=message.author, channel=message.channel,
-                                                     timeout=15, content="CONFIRM")
-
-            if followup is None:
-                await client.send_message(message.channel, "Confirmation not received, NOT banning :upside_down:")
-
-            else:
-                self.bans.append(user.id)
-
-                await client.ban(user, delete_message_days=0)
-
-        # !unban
-        elif startswith(prefix + "unban"):
-            name = message.content[len(prefix + "unban "):]
-
-            user = None
-            for ban in await self.client.get_bans(message.server):
-                if ban.name == name:
-                    user = ban
-
-            if not user:
-                await client.send_message(message.channel, StandardEmoji.WARNING + " Could not unban: user with such name does not exist.")
-                return
-
-            await client.unban(message.server, user)
-            await client.send_message(message.channel, "**{}** has been unbanned.".format(user.name))
-
-        # !softban
-        elif startswith(prefix + "softban"):
-
-            if len(message.mentions) == 0:
-                await client.send_message(message.channel, "Please mention the member you want to softban.")
-                return
-
-            user = message.mentions[0]
-            tim = message.content[len(prefix + "softban "):].replace("<@{}>".format(user.id), "").strip()
-
-            await client.ban(user, delete_message_days=0)
-
-            self.timer.set_softban(message.channel.server, user, tim)
-
-            await client.send_message(message.channel, "{} has been softbanned.".format(user.name))
-
-        # !mute list
-        elif startswith(prefix + "mute list"):
-            mutes = handler.mute_list(message.server)
-
-            if mutes:
-                muted_ppl = []
-                for a in mutes:
-                    usr = utils.find(lambda b: b.id == a, message.server.members)
-                    if usr:
-                        muted_ppl.append(usr.name)
-
-                final = "Muted members: \n" + "\n".join(["➤ {}".format(u) for u in muted_ppl])
-
-            else:
-                final = "No members are muted on this server."
-
-            await client.send_message(message.channel, final)
-
-        # !mute
-        elif startswith(prefix + "mute"):
-            if len(message.mentions) == 0:
-                await client.send_message(message.channel, "Please mention the member you want to mute.")
-                return
-
-            user = message.mentions[0]
-
-            if message.server.owner.id == user.id:
-                await client.send_message(message.channel, StandardEmoji.WARNING + " You cannot mute the owner of the server.")
-                return
-
-            elif message.author.id == user.id:
-                await client.send_message(message.channel, "Trying to mute yourself? Not gonna work " + StandardEmoji.ROFL)
-
-            handler.mute(user)
-
-            await client.send_message(message.channel,
-                                      "**{}** can now not speak here. {}".format(user.name, StandardEmoji.ZIP_MOUTH))
-
-        # !unmute
-        elif startswith(prefix + "unmute"):
-            if len(message.mentions) == 0:
-                await client.send_message(message.channel, "Please mention the member you want to unmute.")
-                return
-
-            user = message.mentions[0]
-
-            handler.unmute(user)
-
-            await client.send_message(message.channel, "**{}** can now speak here again {}".format(user.name, StandardEmoji.ROFL))
 
         # !user
         elif startswith(prefix + "user"):
@@ -530,9 +603,21 @@ class Admin:
         elif startswith("nano.displaysettings"):
             settings = handler.get_server_data(message.server.id)
 
-            blacklisted_c = ",".join(settings.get("blacklisted"))
+            blacklisted_c = settings.get("blacklisted")
             if not blacklisted_c:
-                blacklisted_c = "None"
+                blacklisted_c = "No blacklists"
+
+            else:
+                blacklisted = []
+                for ch_id in blacklisted_c:
+                    channel_r = utils.find(lambda c: c.id == ch_id, message.server.channels)
+
+                    if not channel_r:
+                        self.handler.remove_channel_blacklist(message.server, ch_id)
+                        continue
+
+                    blacklisted.append(channel_r.name)
+                blacklisted_c = ",".join(blacklisted)
 
             spam_filter = "On" if settings.get("filterspam") else "Off"
             word_filter = "On" if settings.get("filterwords") else "Off"
@@ -545,7 +630,7 @@ class Admin:
             msg_ban = settings.get("banmsg")
             msg_kick = settings.get("kickmsg")
 
-            final = """**Settings for current server:**```css
+            final = """**Settings for current server:**```
 Blacklisted channels: {}
 Spam filter: {}
 Word filter: {}
@@ -621,6 +706,55 @@ Messages:
                     await client.send_message(message.channel, "**" + final + "** is the only admin here.")
                 else:
                     await client.send_message(message.channel, "**Admins:** " + final)
+
+        elif startswith("nano.blacklist"):
+            if startswith("nano.blacklist add"):
+                name = str(message.content[len("nano.blacklist add "):])
+
+                if name.startswith("<#"):
+                    ch_id = name.replace("<#", "").replace(">", "")
+                    if not ch_id.isnumeric():
+                        await client.send_message(message.channel, CHANNEL_NOT_FOUND)
+                        self.stats.add(WRONG_ARG)
+                        return
+
+                    channel = utils.find(lambda ch: ch.id == ch_id, message.server.channels)
+
+                else:
+                    channel = utils.find(lambda ch: ch.name == name, message.server.channels)
+
+                if not channel:
+                    await client.send_message(message.channel, CHANNEL_NOT_FOUND)
+                    self.stats.add(WRONG_ARG)
+                    return
+
+                self.handler.add_channel_blacklist(message.server, channel.id)
+
+                await client.send_message(message.channel, "Successfully added <#{}> to the blacklist {}".format(channel.id, StandardEmoji.PERFECT))
+
+            elif startswith("nano.blacklist remove"):
+                name = str(message.content[len("nano.blacklist remove "):])
+
+                if name.startswith("<#"):
+                    ch_id = name.replace("<#", "").replace(">", "")
+                    if not ch_id.isnumeric():
+                        await client.send_message(message.channel, CHANNEL_NOT_FOUND)
+                        self.stats.add(WRONG_ARG)
+                        return
+
+                    channel = utils.find(lambda ch: ch.id == ch_id, message.server.channels)
+
+                else:
+                    channel = utils.find(lambda ch: ch.name == name, message.server.channels)
+
+                if not channel:
+                    await client.send_message(message.channel, CHANNEL_NOT_FOUND)
+                    self.stats.add(WRONG_ARG)
+                    return
+
+                self.handler.remove_channel_blacklist(message.server, channel.id)
+
+                await client.send_message(message.channel, "Channel blacklist for {} removed {}".format(channel.name, StandardEmoji.PERFECT))
 
         # nano.reset
         elif startswith("nano.serverreset"):
