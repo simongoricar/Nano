@@ -438,4 +438,4 @@ class ServerHandler(metaclass=Singleton):
         return self.has_role(user, server, "Nano Admin")
 
     def is_mod(self, user, server):
-        return self.has_role(user, server, "Nano Mod")
+        return self.has_role(user, server, "Nano Mod") or self.is_bot_owner(user.id) or self.is_server_owner(user.id, server)
