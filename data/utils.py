@@ -197,7 +197,11 @@ def log_to_file(content):
     with open("data/log.txt", "a") as file:
         date = datetime.now()
         cn = date.strftime("%d-%m-%Y %H:%M:%S") + " - " + str(content)
-        file.write(cn + "\n")
+
+        try:
+            file.write(cn + "\n")
+        except UnicodeEncodeError as ev:
+            file.write("Error while writing to file, UnicodeEncodeError: {}".format(ev))
 
 
 def is_empty(path):

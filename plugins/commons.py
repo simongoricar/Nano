@@ -14,6 +14,8 @@ log.setLevel(logging.INFO)
 
 # Strings
 
+not_mod = " You do not have the correct permissions to use this command (must be a mod)."
+
 nano_info = """**Hey! My name is Nano!**
 I have a GitHub repo! `!github`
 My current version is **<version>**.
@@ -256,6 +258,10 @@ class Commons:
 
         # !say
         elif startswith(prefix + "say"):
+            if not self.handler.is_mod(message.author, message.server):
+                await client.send_message(message.channel, StandardEmoji.WARNING + not_mod)
+                return "return"
+
             content = str(message.content[len(prefix + "say "):])
 
             if "<#" in content:
@@ -279,7 +285,7 @@ class Commons:
 
 class NanoPlugin:
     _name = "Common Commands"
-    _version = "0.2.3"
+    _version = "0.2.4"
 
     handler = Commons
     events = {

@@ -131,7 +131,7 @@ class SoftBanScheduler:
 
         while True:
             # Iterate through users and their reminders
-            for ban in self.bans.values():
+            for ban in list(self.bans.values()):
 
                 # If enough time has passed, send the reminder
                 if ban.get("time_target") <= last_time:
@@ -227,7 +227,7 @@ class Admin:
                                       handler.get_var(message.channel.server.id, "kickmsg").replace(":user", user.name))
 
         # !ban
-        elif startswith(prefix + "ban"):
+        elif startswith(prefix + "ban") and not startswith(prefix + "banmsg"):
             if not handler.is_mod(message.author, message.server):
                 await client.send_message(message.channel, StandardEmoji.WARNING + not_mod)
                 return "return"
@@ -359,10 +359,10 @@ class Admin:
 
             await client.send_message(message.channel, "**{}** can now speak here again {}".format(user.name, StandardEmoji.ROFL))
 
-
-        if not handler.can_use_restricted_commands(message.author, message.channel.server):
-            await client.send_message(message.channel, StandardEmoji.WARNING + not_admin)
-            return
+        else:
+            if not handler.can_use_restricted_commands(message.author, message.channel.server):
+                await client.send_message(message.channel, StandardEmoji.WARNING + not_admin)
+                return
 
         # !welcomemsg
         if startswith(prefix + "welcomemsg"):
@@ -910,7 +910,7 @@ For a list of all commands, use `_cmds`.""".replace("_", str(ch2.content))
 
 class NanoPlugin:
     _name = "Admin Commands"
-    _version = "0.2.5"
+    _version = "0.2.6"
 
     handler = Admin
     events = {

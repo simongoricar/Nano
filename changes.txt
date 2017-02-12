@@ -1,3 +1,6 @@
+3.3.2
+- Bugfixes
+
 3.3.1
 - Fixed moderator permissions
 

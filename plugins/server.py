@@ -126,6 +126,9 @@ class ServerManagement:
             else:
                 self.lt = time.time()
 
+            # CPU
+            cpu = psutil.cpu_percent(interval=0.5)
+
             # RAM
             def check_ram():
                 nano_process = psutil.Process(os.getpid())
@@ -137,9 +140,6 @@ class ServerManagement:
 
             mem_after = check_ram()
             garbage = round(mem_after - mem_before, 2)
-
-            # CPU
-            cpu = psutil.cpu_percent(interval=0.5)
 
             # OTHER
             d = datetime(1, 1, 1) + timedelta(seconds=time.time() - self.nano.boot_time)
@@ -248,7 +248,7 @@ class ServerManagement:
 
         # Ignore if disabled
         if log_c:
-            await self.client.send_message(log_c, ban_msg)
+            await self.client.send_message(log_c, "{} was banned.".format(member.mention))
 
         if not is_disabled(ban_msg):
             await self.client.send_message(member.server.default_channel, ban_msg)
@@ -308,7 +308,7 @@ class ServerManagement:
 
 class NanoPlugin:
     _name = "Moderator"
-    _version = "0.2.5"
+    _version = "0.2.6"
 
     handler = ServerManagement
     events = {

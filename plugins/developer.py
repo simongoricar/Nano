@@ -5,6 +5,7 @@ import subprocess
 import logging
 import traceback
 from shutil import copy2
+from datetime import datetime
 from asyncio import sleep
 from random import shuffle
 from discord import Message, Game, Member, utils, errors, Embed, Colour
@@ -28,7 +29,8 @@ game_list = [
     "with DefaltSimon",
     "with Discord",
     "with python",
-    "get a 'nano.invite'"
+    "get a 'nano.invite'",
+    "with you all",
 ]
 
 commands = {
@@ -40,6 +42,7 @@ commands = {
 }
 
 valid_commands = commands.keys()
+
 
 class StatusRoller:
     def __init__(self, client, time=21600):  # 6 Hours
@@ -78,29 +81,22 @@ class StatusRoller:
 
 
 class BackupManager:
-    def __init__(self, time=86400):  # 86400 seconds = one day (backup is executed once a day)
+    def __init__(self, time=86400, keep_backup_every=3):  # 86400 seconds = one day (backup is executed once a day)
         log.info("Backup enabled")
 
         if not os.path.isdir("backup"):
             os.mkdir("backup")
 
-        self.servers = os.path.join("backup", "servers.yml.bak")
-        self.stats = os.path.join("backup", "stats.yml.bak")
-
-        self.servers_double = os.path.join("backup", "servers.yml.bak2")
-        self.stats_double = os.path.join("backup", "stats.yml.bak2")
-
-        self.real_servers = os.path.join("data", "servers.yml")
-        self.real_stats = os.path.join("data", "stats.yml")
-
         self.time = int(time)
+        self.keep_every = int(keep_backup_every)
+        self.keep_buffer = int(self.keep_every)
 
         self.running = True
 
     def stop(self):
         self.running = False
 
-    def backup(self):
+    def backup(self, make_dated_backup=False):
         if not self.running:
             return
 
@@ -108,21 +104,41 @@ class BackupManager:
             os.mkdir("backup")
 
         # Create double backups if possible
+        servers = os.path.join("backup", "servers.yml.bak")
+        stats = os.path.join("backup", "stats.yml.bak")
+
+        servers_double = os.path.join("backup", "servers.yml.bak2")
+        stats_double = os.path.join("backup", "stats.yml.bak2")
+
+        real_servers = os.path.join("data", "servers.yml")
+        real_stats = os.path.join("data", "stats.yml")
+
+        # Make a dated backup if needed
+        if make_dated_backup:
+            if not os.path.isdir(os.path.join("backup", "full")):
+                os.mkdir(os.path.join("backup", "full"))
+
+            buffname = "servers{}.yml".format(str(datetime.now().strftime("%d-%B-%Y_%H-%M-%S")))
+            fname = os.path.join("backup", "full", buffname)
+            copy2(servers, fname)
+            log.info("Created a dated backup.")
+
+        # Create double backups if possible
         try:
-            copy2(self.servers, self.servers_double)
-        except FileNotFoundError:
-            pass
-        
-        try:  
-            copy2(self.stats, self.stats_double)
+            copy2(servers, servers_double)
         except FileNotFoundError:
             pass
 
-        copy2(self.real_servers, self.servers)
-        copy2(self.real_stats, self.stats)
+        try:
+            copy2(stats, stats_double)
+        except FileNotFoundError:
+            pass
 
-    def manual_backup(self):
-        self.backup()
+        copy2(real_servers, servers)
+        copy2(real_stats, stats)
+
+    def manual_backup(self, make_dated_backup=True):
+        self.backup(make_dated_backup)
         log.info("Manual backup complete")
 
     async def start(self):
@@ -130,8 +146,17 @@ class BackupManager:
             # Run the backup every day
             await sleep(self.time)
 
+            # Full backup counter
+            self.keep_buffer -= 1
+
+            if self.keep_buffer <= 0:
+                dated_backup = True
+                self.keep_buffer = int(self.keep_every)
+            else:
+                dated_backup = False
+
             log_to_file("Creating a backup...")
-            self.backup()
+            self.backup(dated_backup)
 
 
 class DevFeatures:
@@ -326,7 +351,7 @@ class DevFeatures:
 
 class NanoPlugin:
     _name = "Developer Commands"
-    _version = "0.2.2"
+    _version = "0.2.3"
 
     handler = DevFeatures
     events = {

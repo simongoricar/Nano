@@ -16,7 +16,7 @@ from data.utils import log_to_file
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '3.3.1'
+__version__ = '3.3.2'
 
 
 # CONSTANTS and EVENTS
