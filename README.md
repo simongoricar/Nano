@@ -27,7 +27,7 @@ If you're confused or need help hop on our Discord server - [Nano lounge](https:
 --  
 
 #####Need a local bot?
-If you really want to run Nano by yourself, a wiki page will be dedicated to that subject in the future.  
+Want to run Nano on your computer? Sure, just make sure you follow the **[guide](https://github.com/DefaltSimon/Nano/wiki/Hosting-Nano-yourself)**.  
   
 ---
 ######fyi: Nano was formerly named AyyBot
