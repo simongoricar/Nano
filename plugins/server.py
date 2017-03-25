@@ -5,21 +5,21 @@ import logging
 import psutil
 import time
 import gc
-import asyncio
 from datetime import datetime, timedelta
-from data.stats import NanoStats, MESSAGE
-from data.serverhandler import ServerHandler
+from data.stats import MESSAGE
+from data.serverhandler import ServerHandler, RedisServerHandler, LegacyServerHandler
 from data.utils import is_valid_command, log_to_file, is_disabled
 
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
-nano_welcome = "**Hi!** I'm Nano!\nNow that you have invited me to your server, you might want to set up some things." \
-               "Right now only the server owner can use my restricted commands. But no worries, you can add admin permissions" \
-               "to others using `nano.admins add @mention` or by assigning them a role named **Nano Admin**!" \
-               "\nTo get started, type `!setup` as the server owner. It will help you set up most of the things. " \
-               "After that, you might want to see `!cmds` to get familiar with my commands."
+nano_welcome = "**Hi!** I'm Nano!\n" \
+               "Now that you have invited me to your server, you might want to set up some things. " \
+               "Right now only the server owner can use my restricted commands. But no worries, you can add admin permissions to others by assigning them a role named **Nano Admin**!" \
+               "\nTo begin a basic setup, type `!setup` as the server owner. It will help you set up some simple things. " \
+               "After that, you might want to see `!cmds` to get familiar with my commands.\n\n" \
+               "Also, I recommend that you join the \"official\" Nano server for announcements and help : https://discord.gg/FZJB6UJ"
 
 commands = {
     "_debug": {"desc": "Displays EVEN MORE stats about Nano.", "use": None, "alias": None},
@@ -34,7 +34,7 @@ commands = {
 
 valid_commands = commands.keys()
 
-# noinspection PyTypeChecker
+
 class ServerManagement:
     def __init__(self, **kwargs):
         self.client = kwargs.get("client")
@@ -59,15 +59,15 @@ class ServerManagement:
             us = discord.PermissionOverwrite(read_messages=True, send_messages=True, read_message_history=True,
                                              attach_files=True, embed_links=True, manage_messages=True)
 
-            admins = discord.utils.find(lambda m: m.name == "Nano Admin", server.roles)
+            admin_role = discord.utils.find(lambda m: m.name == "Nano Admin", server.roles)
 
             them_perms = discord.ChannelPermissions(target=server.default_role, overwrite=them)
             nano_perms = discord.ChannelPermissions(target=server.me, overwrite=us)
 
             log_channel_name = self.handler.get_var(server.id, "logchannel")
 
-            if admins:
-                admin_perms = discord.ChannelPermissions(target=admins, overwrite=us)
+            if admin_role:
+                admin_perms = discord.ChannelPermissions(target=admin_role, overwrite=us)
 
                 return await self.client.create_channel(server, log_channel_name, admin_perms, them_perms, nano_perms)
 
@@ -79,7 +79,6 @@ class ServerManagement:
 
     async def on_message(self, message, **kwargs):
         assert isinstance(message, discord.Message)
-        assert isinstance(self.stats, NanoStats)
 
         prefix = kwargs.get("prefix")
         client = self.client
@@ -148,17 +147,28 @@ class ServerManagement:
             nano_version = self.nano.version
             discord_version = discord.__version__
 
-            reminders = len(self.nano.get_plugin("reminder").get("instance").reminder.reminders)
-            polls = len(self.nano.get_plugin("voting").get("instance").vote.progress)
+            reminders = self.nano.get_plugin("reminder").get("instance").reminder.get_reminder_amount()
+            polls = self.nano.get_plugin("voting").get("instance").vote.get_vote_amount()
 
             embed = discord.Embed(colour=discord.Colour.green())
+
             embed.add_field(name="Nano version", value=nano_version)
             embed.add_field(name="discord.py", value=discord_version)
             embed.add_field(name="RAM usage", value="{} MB (garbage collected {} MB)".format(mem_after, garbage))
             embed.add_field(name="CPU usage", value="{} %".format(cpu))
-            embed.add_field(name="Uptime", value=uptime)
-            embed.add_field(name="Ongoing reminders", value=reminders, inline=False)
-            embed.add_field(name="Ongoing votes", value=polls)
+            embed.add_field(name="Ongoing reminders", value=str(reminders))
+            embed.add_field(name="Ongoing votes", value=str(polls))
+
+            # Balances some stats
+            if isinstance(self.handler, RedisServerHandler):
+                redis_mem = self.handler.db_info("memory").get("used_memory_human")
+                embed.add_field(name="Redis memory", value=redis_mem, inline=False)
+
+                redis_size = self.handler.db_size()
+                embed.add_field(name="Redis keys", value=redis_size)
+
+            else:
+                embed.add_field(name="Uptime", value=uptime)
 
             await client.send_message(message.channel, "**Debug data:**", embed=embed)
 
@@ -209,7 +219,7 @@ class ServerManagement:
                 await client.send_message(message.channel, members)
 
     async def on_member_join(self, member, **_):
-        assert isinstance(self.handler, ServerHandler)
+        assert isinstance(self.handler, (RedisServerHandler, LegacyServerHandler))
 
         replacement_logic = {
             ":user": member.mention,
@@ -287,8 +297,7 @@ class ServerManagement:
 
     async def on_server_remove(self, server, **_):
         # Deletes server data
-        server_ids = [s.id for s in self.client.servers]
-        self.handler._delete_old_servers(server_ids)
+        self.handler.delete_server(server.id)
 
         # Log
         log_to_file("Removed from server: {}".format(server.name))
@@ -298,17 +307,22 @@ class ServerManagement:
 
         log.info("Checking server vars...")
         for server in self.client.servers:
-            if not self.handler.server_exists(server):
+            if not self.handler.server_exists(server.id):
                 self.handler.server_setup(server)
 
             self.handler.check_server_vars(server)
 
-        log.info("Finished checking server data.")
+        log.info("Done.")
+
+        log.info("Checking for non-used server data...")
+        server_ids = [s.id for s in self.client.servers]
+        self.handler.delete_server_by_list(server_ids)
+        log.info("Done.")
 
 
 class NanoPlugin:
-    _name = "Moderator"
-    _version = "0.2.6"
+    name = "Moderator"
+    version = "0.2.6"
 
     handler = ServerManagement
     events = {

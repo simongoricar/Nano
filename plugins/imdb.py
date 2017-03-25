@@ -6,6 +6,7 @@ import logging
 
 from bs4 import BeautifulSoup
 from urllib.request import urlopen
+from urllib.error import HTTPError
 from discord import Message
 from pickle import load, dump
 from data.utils import threaded, is_valid_command
@@ -16,7 +17,7 @@ log.setLevel(logging.INFO)
 
 # CONSTANTS
 
-IMDB_PROBLEMS = "Something went wrong. Keep in mind that IMDb search is far from perfect."
+IMDB_PROBLEMS = "Something went wrong while trying to get IMDb info."
 
 base_url = "http://www.imdb.com"
 search_url = "http://www.imdb.com/find?&q="
@@ -172,6 +173,7 @@ class ImdbSearch:
 
     def get_page_by_name(self, name):
         # Searching page
+
         html = urlopen(search_url + str(name).replace(" ", "+"))
         sp = BeautifulSoup(html, "html.parser")
 
@@ -379,7 +381,12 @@ class IMDB:
 
             elif startswith(prefix + "imdb rating"):
                 search = str(message.content[len(prefix + "imdb rating "):])
-                data = self.imdb.get_page_by_name(search)
+
+                try:
+                    data = self.imdb.get_page_by_name(search)
+                except:
+                    await client.send_message(message.channel, IMDB_PROBLEMS)
+                    return
 
                 if not data:
                     await client.send_message(message.channel, "No results.")
@@ -400,8 +407,8 @@ class IMDB:
 
 
 class NanoPlugin:
-    _name = "Imdb Commands"
-    _version = 0.1
+    name = "Imdb Commands"
+    version = "0.1.1"
 
     handler = IMDB
     events = {

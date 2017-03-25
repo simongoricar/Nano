@@ -3,10 +3,10 @@ import logging
 import re
 import asyncio
 from pickle import load
-from discord import Message, Client, Server, utils, Member
-from data.serverhandler import ServerHandler
+from discord import Message, Client, Server, utils
+from data.serverhandler import LegacyServerHandler, RedisServerHandler
 from data.stats import SUPPRESS
-from data.utils import is_disabled, Object
+from data.utils import is_disabled
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -73,7 +73,9 @@ class NanoModerator:
         for a_word in message:
             for b_word in self.word_list:
 
-                if a_word.find(b_word) != -1:
+                # if a_word.find(b_word) != -1:
+                #     return True
+                if a_word == b_word:
                     return True
 
         return False
@@ -238,7 +240,6 @@ class Moderator:
 
     async def on_plugins_loaded(self):
         # Collect all valid commands
-        # /todo adopt the new system
         plugins = [a.get("plugin") for a in self.nano.plugins.values() if a.get("plugin")]
         self.valid_commands = [item for sub in [get_valid_commands(b) for b in plugins if get_valid_commands(b)] for item in sub]
 
@@ -247,20 +248,20 @@ class Moderator:
         client = self.client
         prefix = kwargs.get("prefix")
         assert isinstance(client, Client)
-        assert isinstance(handler, ServerHandler)
+        assert isinstance(handler, (LegacyServerHandler, RedisServerHandler))
 
         if message.channel.is_private:
             return "return"
 
         # Muting
-        if handler.is_muted(message.author, message.server):
+        if handler.is_muted(message.server, message.author.id):
             await client.delete_message(message)
 
             self.stats.add(SUPPRESS)
             return "return"
 
         # Channel blacklisting
-        if handler.is_blacklisted(message.server, message.channel):
+        if handler.is_blacklisted(message.server, message.channel.id):
             return "return"
 
         # Ignore existing commands
@@ -332,8 +333,8 @@ class Moderator:
 
 
 class NanoPlugin:
-    _name = "Moderator"
-    _version = "0.2.4"
+    name = "Moderator"
+    version = "0.2.4"
 
     handler = Moderator
     events = {

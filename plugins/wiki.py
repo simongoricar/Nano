@@ -2,7 +2,7 @@
 import wikipedia
 import logging
 import configparser
-import requests
+import aiohttp
 from discord import Message
 from bs4 import BeautifulSoup
 from data.stats import MESSAGE
@@ -10,6 +10,8 @@ from data.utils import is_valid_command
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
+
+QUERY_TOO_LONG = "Search request is longer than the maximum allowed length."
 
 parser = configparser.ConfigParser()
 parser.read("plugins/config.ini")
@@ -72,10 +74,19 @@ class Definitions:
                 await client.send_message(message.channel,
                                           "Got multiple definitions of {}, please be more specific (somehow).".format(search))
 
+            except wikipedia.exceptions.WikipediaException as e:
+                if str(e).startswith(QUERY_TOO_LONG):
+                    await client.send_message(message.channel,
+                                              "Search query is too long: 300 is the maximum length (you searched with {})".format(len(search)))
+
         elif startswith(prefix + "urban"):
             search = str(message.content)[len(prefix + "urban "):]
-            define = requests.get("http://www.urbandictionary.com/define.php?term={}".format(search))
-            answer = BeautifulSoup(define.content, "html.parser").find("div", attrs={"class": "meaning"}).text
+
+            async with aiohttp.ClientSession() as session:
+                async with session.get("http://www.urbandictionary.com/define.php?term={}".format(search)) as resp:
+                    define = await resp.text()
+
+            answer = BeautifulSoup(define, "html.parser").find("div", attrs={"class": "meaning"}).text
 
             # Check if there are no definitions
             if str(answer).startswith("\nThere aren't any"):
@@ -86,8 +97,8 @@ class Definitions:
 
 
 class NanoPlugin:
-    _name = "Wiki/Urban Commands"
-    _version = 0.1
+    name = "Wiki/Urban Commands"
+    version = "0.1.1"
 
     handler = Definitions
     events = {

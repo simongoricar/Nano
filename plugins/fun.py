@@ -6,7 +6,7 @@ import logging
 import asyncio
 from discord import Message
 from data.utils import is_valid_command
-from data.stats import NanoStats, PRAYER, MESSAGE, IMAGE_SENT
+from data.stats import PRAYER, MESSAGE, IMAGE_SENT
 
 parser = configparser.ConfigParser()
 parser.read("plugins/config.ini")
@@ -99,21 +99,27 @@ class Fun:
         self.stats = kwargs.get("stats")
         self.loop = kwargs.get("loop")
 
-        if not parser.has_section("giphy") or not parser.has_section("imgflip"):
-            log.critical("Missing giphy or imgflip section! fix and RELOAD!")
-            return
+        try:
+            key = parser.get("giphy", "api-key")
+            self.gif = giphypop.Giphy(api_key=key if key else giphypop.GIPHY_PUBLIC_KEY)
+            self.giphy_enabled = True
 
-        key = parser.get("giphy", "api-key")
-        self.gif = giphypop.Giphy(api_key=key if key else giphypop.GIPHY_PUBLIC_KEY)
+        except (configparser.NoSectionError, configparser.NoOptionError):
+            log.critical("Missing api key for giphy, disabling command...")
+            self.giphy_enabled = False
 
-        username = parser.get("imgflip", "username")
-        password = parser.get("imgflip", "password")
+        try:
+            username = parser.get("imgflip", "username")
+            password = parser.get("imgflip", "password")
+            self.generator = MemeGenerator(username, password, loop=self.loop)
+            self.imgflip_enabled = True
 
-        self.generator = MemeGenerator(username, password, loop=self.loop)
+        except (configparser.NoOptionError, configparser.NoSectionError):
+            log.critical("Missing api key for imgflip, disabling command...")
+            self.imgflip_enabled = False
 
     async def on_message(self, message, **kwargs):
         assert isinstance(message, Message)
-        assert isinstance(self.stats, NanoStats)
 
         prefix = kwargs.get("prefix")
         client = self.client
@@ -148,12 +154,20 @@ class Fun:
             self.stats.add(IMAGE_SENT)
 
         elif startswith(prefix + "randomgif"):
+            # Check if giphy is enabled
+            if not self.giphy_enabled:
+                return
+
             random_gif = self.gif.screensaver().media_url
             await client.send_message(message.channel, str(random_gif))
 
             self.stats.add(IMAGE_SENT)
 
         elif startswith(prefix + "meme", prefix + "caption"):
+            # Check if imgflip is enabled
+            if not self.imgflip_enabled:
+                return
+
             if startswith(prefix + "meme"):
                 query = message.content[len(prefix + "meme "):]
             elif startswith(prefix + "caption"):
@@ -197,8 +211,8 @@ class Fun:
 
 
 class NanoPlugin:
-    _name = "Admin Commands"
-    _version = 0.1
+    name = "Admin Commands"
+    version = 0.1
 
     handler = Fun
     events = {

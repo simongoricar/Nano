@@ -4,7 +4,7 @@ import time
 
 from datetime import timedelta, datetime
 from random import randint
-from discord import Message, utils
+from discord import Message, utils, Emoji
 from data.serverhandler import ServerHandler
 from data.stats import MESSAGE, PING, WRONG_ARG
 from data.utils import is_valid_command, StandardEmoji
@@ -13,6 +13,8 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 # Strings
+
+PING_MSG = "**Measuring...** (reaction delay)"
 
 not_mod = " You do not have the correct permissions to use this command (must be a mod)."
 
@@ -23,10 +25,9 @@ I have been coded by *DefaltSimon*.
 
 Gif command powered by **Giphy**"""
 
-nano_github = """Nano's code is available on **GitHub**: https://github.com/DefaltSimon/Nano"""
+nano_github = "Nano's code is available on **GitHub**: https://github.com/DefaltSimon/Nano"
 
-invite = """You wanna invite Nano to your server, eh? Sure.
-**Just follow the link:** <link>"""
+invite = "You wanna invite Nano to your server? Amazing!\n**Just follow the link:** <link>"
 
 eight_ball = [
     "It is certain", "It is surely so", "Without a doubt", "You may rely on it", "Most likely", "Yes",
@@ -57,7 +58,13 @@ quotes = [
     "It does not matter how slowly you go as long as you do not stop. –Confucius",
     "You can’t use up creativity.  The more you use, the more you have. –Maya Angelou",
     "Do what you can, where you are, with what you have. –Teddy Roosevelt",
-    "You may be disappointed if you fail, but you are doomed if you don’t try. –Beverly Sills"]
+    "You may be disappointed if you fail, but you are doomed if you don’t try. –Beverly Sills",
+    "The human race has one really effective weapon, and that is laughter. –Mark Twain",
+    "A great artist can paint a great picture on a small canvas. –Charles Dudley Warner",
+    "The present time has one advantage over every other - it is our own. –Charles Caleb Colton",
+    "Age does not protect you from love. But love, to some extent, protects you from age. –Anais Nin",
+    "A fool can throw a stone in a pond that 100 wise men can not get out. –Saul Bellow",
+    "The secret of happiness is something to do. –John Burroughs"]
 
 commands = {
     "_hello": {"desc": "Welcomes a **mentioned** person, or if no mentions are present, you.", "use": "[command] [mention]", "alias": None},
@@ -90,6 +97,8 @@ class Commons:
         self.nano = kwargs.get("nano")
         self.stats = kwargs.get("stats")
 
+        self.pings = {}
+
         assert isinstance(self.handler, ServerHandler)
 
     @staticmethod
@@ -101,7 +110,7 @@ class Commons:
                 ok = True
                 break
 
-        if server.owner == author:
+        if server.owner.id == author.id:
             ok = True
 
         if not ok:
@@ -138,8 +147,8 @@ class Commons:
 
         # A shortcut
         def startswith(*msg):
-            for a in msg:
-                if message.content.startswith(a):
+            for b in msg:
+                if message.content.startswith(b):
                     return True
 
             return False
@@ -170,7 +179,7 @@ class Commons:
             await client.send_message(message.channel, nano_github)
 
         # !roll
-        elif startswith((prefix + "roll", prefix + "rng")):
+        elif startswith(prefix + "roll"):
             if startswith(prefix + "roll"):
                 num = message.content[len(prefix + "roll "):]
             else:
@@ -192,12 +201,15 @@ class Commons:
 
         # !ping
         elif startswith(prefix + "ping"):
-            tm = datetime.now() - message.timestamp
-            # Converts to ms
-            time_taken = int(divmod(tm.total_seconds(), 60)[1] * 100)
+            # tm = datetime.now() - message.timestamp
+            # # Converts to ms !! fix: not * 100, but * 1000
+            # time_taken = int(divmod(tm.total_seconds(), 60)[1] * 1000)
 
-            await client.send_message(message.channel, "**Pong!** ({} ms)".format(time_taken))
+            a = await client.send_message(message.channel, PING_MSG)
+            self.pings[a.id] = [time.monotonic(), message.channel.id]
 
+            await client.add_reaction(a, "\U0001F44D")
+            # await client.send_message(message.channel, "**Pong!** ({} ms)".format(time_taken))
             self.stats.add(PING)
 
         # !decide
@@ -223,7 +235,7 @@ class Commons:
 
             # Find the part where the author is mentioned
             place = chosen.rfind("–")
-            await client.send_message(message.channel, "{}\n__{}__".format(chosen[:place], chosen[place:]))
+            await client.send_message(message.channel, "{}\n- __{}__".format(chosen[:place], chosen[place+1:]))
 
         # !invite
         elif startswith(prefix + "invite", "nano.invite"):
@@ -274,6 +286,7 @@ class Commons:
                 if not channel:
                     await client.send_message(message.channel, "Invalid channel name.")
                     self.stats.add(WRONG_ARG)
+                    return
 
             else:
                 channel = message.channel
@@ -282,13 +295,23 @@ class Commons:
 
             await client.send_message(channel, content)
 
+    async def on_reaction_add(self, reaction, _, **__):
+        if reaction.message.id in self.pings.keys():
+            data = self.pings.pop(reaction.message.id)
+
+            delta = round((time.monotonic() - int(data[0])) * 100, 2)
+            msg = await self.client.get_message(self.client.get_channel(data[1]), reaction.message.id)
+            await self.client.edit_message(msg, "**Pong!** ({} ms, reaction delay)".format(delta))
+            await self.client.remove_reaction(msg, "\U0001F44D", reaction.message.server.me)
+
 
 class NanoPlugin:
-    _name = "Common Commands"
-    _version = "0.2.4"
+    name = "Common Commands"
+    version = "0.2.6"
 
     handler = Commons
     events = {
-        "on_message": 10
+        "on_message": 10,
+        "on_reaction_add": 10,
         # type : importance
     }

@@ -30,7 +30,12 @@ class Osu:
         self.client = kwargs.get("client")
         self.stats = kwargs.get("stats")
 
-        self.osu = osu_ds.OsuApi(api_key=parser.get("osu", "api-key"))
+        try:
+            key = parser.get("osu", "api-key")
+            self.osu = osu_ds.OsuApi(api_key=key)
+        except (configparser.NoSectionError, configparser.NoOptionError):
+            logger.critical("Missing api key for osu!, disabling plugin...")
+            raise RuntimeError
 
     async def on_message(self, message, **kwargs):
         assert isinstance(message, Message)
@@ -63,6 +68,9 @@ class Osu:
 
             # About inverting: this inverts the number before and after the splitting
             def prepare(this):
+                if not type(this) in (float, int):
+                    return None
+
                 return invert_str(",".join(split_every(str(invert_num(this)), 3)))
 
             global_rank = prepare(user.world_rank)
@@ -72,7 +80,7 @@ class Osu:
             ranked_score = prepare(user.ranked_score)
 
             acc = str(round(float(user.accuracy), 2)) + " %"
-            pp_ammount = str(int(float(user.pp)))
+            pp_amount = str(int(float(user.pp)))
 
             osu_level = int(float(user.level))
             avatar_url = "http://a.ppy.sh/{}".format(user.id)
@@ -97,7 +105,7 @@ class Osu:
             desc = "**Level**: {}\n**Rank**: \n\t" \
                    "**Global**:            #{}\n\t" \
                    "**Country** (**{}**): #{}\n" \
-                   "Total PP: **{}**".format(osu_level, global_rank, user.country, country_rank, pp_ammount)
+                   "Total PP: **{}**".format(osu_level, global_rank, user.country, country_rank, pp_amount)
 
             embed = Embed(url=user.profile_url, description=desc, colour=color)
             embed.set_author(name=user.name)
@@ -114,8 +122,8 @@ class Osu:
 
 
 class NanoPlugin:
-    _name = "osu!"
-    _version = "0.1.1"
+    name = "osu!"
+    version = "0.1.1"
 
     handler = Osu
     events = {

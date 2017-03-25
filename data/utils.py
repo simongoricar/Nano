@@ -1,6 +1,7 @@
 # coding=utf-8
 import threading
 import os
+import uuid
 from datetime import datetime
 
 # Threading helper
@@ -224,11 +225,6 @@ def is_disabled(ct):
     return False
 
 
-class Object:
-    def __init__(self, **keywords):
-        self.__dict__.update(keywords)
-
-
 def invert_num(integer):
     return int(str(integer)[::-1])
 
@@ -240,3 +236,42 @@ def invert_str(str_):
 def split_every(content, num):
     return [content[i:i + num] for i in range(0, len(content), num)]
 
+# Needed for redis
+
+
+def decode(c):
+    if not c:
+        # Return empty type
+        return type(c)()
+
+    return boolify(decode_auto(c))
+
+
+def boolify(s):
+    if s == "True" or s == 1:
+        return True
+    elif s == "False" or s == 0:
+        return False
+    elif s == "None":
+        return None
+    else:
+        return s
+
+
+def decode_auto(some):
+    if isinstance(some, bytes):
+        return some.decode()
+    if isinstance(some, dict):
+        return {boolify(decode_auto(k)): boolify(decode_auto(v)) for k, v in some.items()}
+    if isinstance(some, list):
+        return list(map(decode_auto, some))
+    if isinstance(some, tuple):
+        return tuple(map(decode_auto, some))
+    if isinstance(some, set):
+        return set(map(decode_auto, some))
+
+    return some
+
+
+def gen_id(length=38):
+    return int(str(uuid.uuid4().int)[:length])

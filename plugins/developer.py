@@ -1,5 +1,6 @@
 # coding=utf-8
 import os
+import configparser
 import sys
 import subprocess
 import logging
@@ -9,13 +10,16 @@ from datetime import datetime
 from asyncio import sleep
 from random import shuffle
 from discord import Message, Game, Member, utils, errors, Embed, Colour
-from data.serverhandler import ServerHandler
+from data.serverhandler import RedisServerHandler, LegacyServerHandler
 from data.utils import is_valid_command, log_to_file, StandardEmoji
 from data.stats import MESSAGE
 
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
+
+parser = configparser.ConfigParser()
+parser.read("settings.ini")
 
 
 initial_status = "Hi there!"
@@ -49,7 +53,7 @@ class StatusRoller:
         self.time = time
         self.client = client
 
-        log.info("Status roller enabled")
+        log.info("Status changer enabled")
 
     async def change_status(self, name):
         log.debug("Changing status to {}".format(name))
@@ -77,12 +81,22 @@ class StatusRoller:
 
             shuffle(game_list)
 
-        log_to_file("Exited status roller")
+        log_to_file("Exited status changer")
 
 
 class BackupManager:
     def __init__(self, time=86400, keep_backup_every=3):  # 86400 seconds = one day (backup is executed once a day)
-        log.info("Backup enabled")
+        storage = parser.get("Storage", "type")
+
+        if storage == "redis":
+            log.info("Backup enabled: redis")
+            self.serv_path = os.path.join("data", "data.rdb")
+            self.serv_path2 = os.path.join("backup", "data.rdb.bak")
+
+        else:
+            log.info("Backup enabled: legacy")
+            self.serv_path = os.path.join("data", "servers.yml")
+            self.serv_path2 = os.path.join("backup", "servers.yml.bak")
 
         if not os.path.isdir("backup"):
             os.mkdir("backup")
@@ -103,39 +117,20 @@ class BackupManager:
         if not os.path.isdir("backup"):
             os.mkdir("backup")
 
-        # Create double backups if possible
-        servers = os.path.join("backup", "servers.yml.bak")
-        stats = os.path.join("backup", "stats.yml.bak")
-
-        servers_double = os.path.join("backup", "servers.yml.bak2")
-        stats_double = os.path.join("backup", "stats.yml.bak2")
-
-        real_servers = os.path.join("data", "servers.yml")
-        real_stats = os.path.join("data", "stats.yml")
-
         # Make a dated backup if needed
         if make_dated_backup:
             if not os.path.isdir(os.path.join("backup", "full")):
                 os.mkdir(os.path.join("backup", "full"))
 
-            buffname = "servers{}.yml".format(str(datetime.now().strftime("%d-%B-%Y_%H-%M-%S")))
-            fname = os.path.join("backup", "full", buffname)
-            copy2(servers, fname)
+            buff_name = "data{}.rdb".format(str(datetime.now().strftime("%d-%B-%Y_%H-%M-%S")))
+            f_name = os.path.join("backup", "full", buff_name)
+            copy2(self.serv_path, f_name)
             log.info("Created a dated backup.")
 
-        # Create double backups if possible
         try:
-            copy2(servers, servers_double)
+            copy2(self.serv_path, self.serv_path2)
         except FileNotFoundError:
             pass
-
-        try:
-            copy2(stats, stats_double)
-        except FileNotFoundError:
-            pass
-
-        copy2(real_servers, servers)
-        copy2(real_stats, stats)
 
     def manual_backup(self, make_dated_backup=True):
         self.backup(make_dated_backup)
@@ -189,10 +184,10 @@ class DevFeatures:
             return False
 
         # Global owner filter
-        assert isinstance(self.handler, ServerHandler)
+        assert isinstance(self.handler, (RedisServerHandler, LegacyServerHandler))
 
         if not self.handler.is_bot_owner(message.author.id):
-            await client.send_message(message.channel, "You are not permitted to use this feature. (must be bot owner)")
+            await client.send_message(message.channel, StandardEmoji.WARNING + "You are not permitted to use this feature. (must be bot owner)")
             return
 
 
@@ -216,7 +211,7 @@ class DevFeatures:
                 await client.send_message(message.channel, "Error. " + StandardEmoji.CROSS)
                 return
 
-            nano_data = self.handler.get_server_data(srv.id)
+            nano_data = self.handler.get_server_data(srv)
             to_send = "{}\n```css\nMember count: {}\nChannels: {}\nOwner: {}```\n" \
                       "*Settings*: ```{}```".format(srv.name, srv.member_count, ",".join([ch.name for ch in srv.channels]), srv.owner.name, nano_data)
 
@@ -256,15 +251,19 @@ class DevFeatures:
         elif startswith("nano.dev.plugin.reload"):
             name = str(message.content)[len("nano.dev.plugin.reload "):]
 
-            v_old = self.nano.get_plugin(name).get("plugin").NanoPlugin._version
+            v_old = self.nano.get_plugin(name).get("plugin").NanoPlugin.version
             s = await self.nano.reload_plugin(name)
-            v_new = self.nano.get_plugin(name).get("plugin").NanoPlugin._version
+            v_new = self.nano.get_plugin(name).get("plugin").NanoPlugin.version
 
             if s:
                 await client.send_message(message.channel, "Successfully reloaded **{}**\n"
                                                            "From version *{}* to *{}*.".format(name, v_old, v_new))
             else:
                 await client.send_message(message.channel, "Something went wrong, check the logs.")
+
+        # nano.dev.servers.clean
+        elif startswith("nano.dev.servers.clean"):
+            self.handler.delete_server_by_list([s.id for s in self.client.servers])
 
         # nano.reload
         elif startswith("nano.reload"):
@@ -306,6 +305,8 @@ class DevFeatures:
         self.loop.create_task(self.roller.run())
 
     async def on_shutdown(self):
+        # Make redis BGSAVE data
+        self.handler.bg_save()
 
         if self.mode == "restart":
             # Launches a new instance of Nano...
@@ -350,8 +351,8 @@ class DevFeatures:
 
 
 class NanoPlugin:
-    _name = "Developer Commands"
-    _version = "0.2.3"
+    name = "Developer Commands"
+    version = "0.2.3"
 
     handler = DevFeatures
     events = {

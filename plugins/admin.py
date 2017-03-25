@@ -3,10 +3,11 @@ import asyncio
 import logging
 import time
 import datetime
-from discord import Message, utils, Client, Embed, Colour, DiscordException, HTTPException
-from data.serverhandler import ServerHandler
+from aiohttp import errors as aiohttp_errors
+from discord import Message, utils, Client, Embed, Colour, DiscordException, HTTPException, Object
+from data.serverhandler import LegacyServerHandler, RedisServerHandler, INVITEFILTER_SETTING, SPAMFILTER_SETTING, WORDFILTER_SETTING
 from data.stats import WRONG_ARG
-from data.utils import convert_to_seconds, get_decision, is_valid_command, StandardEmoji
+from data.utils import convert_to_seconds, get_decision, is_valid_command, StandardEmoji, decode
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -20,6 +21,9 @@ not_admin = " You do not have the correct permissions to use this command (must 
 not_mod = " You do not have the correct permissions to use this command (must be a mod)."
 
 CMD_LIMIT = 40
+TICK_DURATION = 15
+
+PREFIX_TOO_LONG = StandardEmoji.WARNING + " Prefix is too long! Maximum length is 100 characters."
 
 commands = {
     "_ban": {"desc": "Bans a member.", "use": "[command] [mention]", "alias": "nano.ban"},
@@ -33,7 +37,7 @@ commands = {
     "_cmd add": {"desc": "Adds a command to the server.", "use": "[command] command|response", "alias": None},
     "_cmd remove": {"desc": "Removes a command from the server.", "use": "[command] command", "alias": None},
     "_cmd status": {"desc": "Displays how many commands you have and how many more you can register.", "use": "[command] command", "alias": None},
-    "_cmd list": {"desc": "Returns a server-specific command list.", "use": None, "alias": None},
+    "_cmd list": {"desc": "Returns a server-specific command list.", "use": "[command] (page number)", "alias": None},
 
     "_mute": {"desc": "Mutes the user - deletes all future messages from the user until he/she is un-muted.", "use": "[command] [mention or name]", "alias": None},
     "_unmute": {"desc": "Un-mutes the user (see mute help for more info).", "use": "[command] [mention or name]", "alias": None},
@@ -55,6 +59,8 @@ commands = {
 
     "nano.blacklist add": {"desc": "Adds a channel to command blacklist.", "use": "[command] [channel name]", "alias": None},
     "nano.blacklist remove": {"desc": "Removes a channel from command blacklist", "use": "[command] [channel name]", "alias": None},
+    # /todo add to documentation
+    "nano.blacklist list": {"desc": "Shows all blacklisted channels on this server", "use": "[command]", "alias": None},
 
     "nano.settings": {"desc": "Sets server settings like word, spam and invite filtering and changes log channel.", "use": "[command] [setting] True/False", "alias": None},
     "nano.displaysettings": {"desc": "Displays all server settings.", "use": None, "alias": None},
@@ -67,7 +73,7 @@ commands = {
 }
 
 
-class SoftBanScheduler:
+class LegacySoftBanScheduler:
     def __init__(self, client, loop=asyncio.get_event_loop()):
         self.client = client
         self.loop = loop
@@ -91,7 +97,7 @@ class SoftBanScheduler:
 
     def remove_ban(self, user):
         self.loop.create_task(self.dispatch(self.bans.get(user.id)))
-        self.bans.pop(user.id)
+        self.bans.pop(user.id, None)
 
     def set_softban(self, server, user, tim):
         t = time.time()
@@ -123,7 +129,7 @@ class SoftBanScheduler:
         try:
             logger.debug("Dispatching")
             await self.client.unban(reminder.get("server"), reminder.get("member"))
-        except DiscordException:
+        except (DiscordException, aiohttp_errors.DisconnectedError):
             pass
 
     async def start_monitoring(self):
@@ -147,6 +153,70 @@ class SoftBanScheduler:
             last_time = await self.tick(last_time)
 
 
+class RedisSoftBanScheduler:
+    def __init__(self, client, handler, loop=asyncio.get_event_loop()):
+        self.client = client
+        self.loop = loop
+        self.redis = handler.get_plugin_data_manager(namespace="softban")
+
+    def get_ban(self, user_id):
+        return self.redis.hgetall(user_id)
+
+    def get_all_bans(self):
+        return [self.get_ban(decode(a).strip("softban:")) for a in self.redis.scan_iter("*")]
+
+    def remove_ban(self, user):
+        if self.redis.exists(user.id):
+            self.loop.create_task(self.dispatch(self.get_ban(user.id)))
+            self.redis.remove(user.id)
+
+    def set_softban(self, server, user, tim):
+        t = time.time()
+
+        tim = convert_to_seconds(tim)
+        if not (5 <= tim < 172800):  # 5 sec to 2 days
+            return False
+
+        # Add the reminder to the list
+        payload = {"member": user.id, "server": server.id, "time_target": int(t + tim)}
+
+        return self.redis.hmset(user.id, payload)
+
+    @staticmethod
+    async def tick(last_time):
+        """
+        Very simple implementation of a self-correcting tick system
+        :return: None
+        """
+        current_time = time.time()
+        delta = TICK_DURATION - (current_time - last_time)
+
+        await asyncio.sleep(delta)
+
+        return time.time()
+
+    async def dispatch(self, reminder):
+        try:
+            logger.debug("Dispatching")
+            await self.client.unban(Object(id=reminder.get("server")), Object(id=reminder.get("member")))
+        except (DiscordException, aiohttp_errors.DisconnectedError) as e:
+            logger.warning(e)
+
+    async def start_monitoring(self):
+        last_time = time.time()
+
+        while True:
+            # Iterate through users and their reminders
+            for ban in self.get_all_bans():
+                # If enough time has passed, send the reminder
+                if int(ban.get("time_target", 0)) <= last_time:
+                    await self.dispatch(ban)
+                    self.redis.delete(ban.get("member"))
+
+            # And tick.
+            last_time = await self.tick(last_time)
+
+
 class Admin:
     def __init__(self, **kwargs):
         self.client = kwargs.get("client")
@@ -154,8 +224,13 @@ class Admin:
         self.handler = kwargs.get("handler")
         self.nano = kwargs.get("nano")
         self.stats = kwargs.get("stats")
+        self.legacy = kwargs.get("legacy")
 
-        self.timer = SoftBanScheduler(self.client, self.loop)
+        if self.legacy:
+            self.timer = LegacySoftBanScheduler(self.client, self.loop)
+        else:
+            self.timer = RedisSoftBanScheduler(self.client, self.handler, self.loop)
+
         self.loop.create_task(self.timer.start_monitoring())
 
         self.bans = []
@@ -166,7 +241,7 @@ class Admin:
         handler = self.handler
 
         assert isinstance(message, Message)
-        assert isinstance(handler, ServerHandler)
+        assert isinstance(handler, (LegacyServerHandler, RedisServerHandler))
         assert isinstance(client, Client)
 
         # Check if this is a valid command
@@ -303,7 +378,7 @@ class Admin:
                 await client.send_message(message.channel, StandardEmoji.WARNING + not_mod)
                 return "return"
 
-            mutes = handler.mute_list(message.server)
+            mutes = handler.get_mute_list(message.server)
 
             if mutes:
                 muted_ppl = []
@@ -338,7 +413,7 @@ class Admin:
             elif message.author.id == user.id:
                 await client.send_message(message.channel, "Trying to mute yourself? Not gonna work " + StandardEmoji.ROFL)
 
-            handler.mute(user)
+            handler.mute(message.server, user.id)
 
             await client.send_message(message.channel,
                                       "**{}** can now not speak here. {}".format(user.name, StandardEmoji.ZIP_MOUTH))
@@ -517,11 +592,21 @@ class Admin:
                     await client.send_message(message.channel, "Incorrect parameters.\n`_cmd add trigger|response`".replace("_", prefix))
                     return
 
-                if len(handler.get_custom_commands(message.server)) + 1 >= CMD_LIMIT:
+                if len(handler.get_custom_commands(message.server)) >= CMD_LIMIT:
                     await client.send_message(message.channel, "{} You have reached the maximum limit of custom commands ({}).".format(StandardEmoji.WARNING, CMD_LIMIT))
                     return
 
-                handler.update_command(message.server, cut[0].strip(" "), cut[1])
+                trigger = cut[0].strip(" ")
+                resp = cut[1]
+
+                if len(trigger) >= 80:
+                    await client.send_message(message.channel, "{} Your command name is too long (max. 80, you got {})".format(StandardEmoji.WARNING, len(trigger)))
+                    return
+                elif len(resp) >= 500:
+                    await client.send_message(message.channel, "{} Your command response is too long (max. 500, you got {})".format(StandardEmoji.WARNING, len(resp)))
+                    return
+
+                handler.set_command(message.server, trigger, resp)
 
                 await client.send_message(message.channel, "Command '{}' added.".format(cut[0].strip(" ")))
 
@@ -540,19 +625,38 @@ class Admin:
 
         # !cmd list
         elif startswith(prefix + "cmd list"):
+            page = str(message.content)[len(prefix + "cmd list"):].strip(" ")
+
+            try:
+                page = int(page) - 1
+                if page < 0: page = 0
+            except ValueError:
+                page = 0
+
             custom_cmds = handler.get_custom_commands(message.server)
 
             if not custom_cmds:
                 await client.send_message(message.channel, "No custom commands on this server. "
-                                                           "Add one with `_cmd add trigger|response`!".replace("_",
-                                                                                                               prefix))
-
+                                                           "Add one with `_cmd add trigger|response`!".replace("_", prefix))
                 return
 
-            final = "\n".join(["{} : {}".format(name, content) for name, content in custom_cmds.items()])
+            buff = ["{} : {}".format(name, content) for name, content in custom_cmds.items()]
+            final = [buff.pop(0)]
+            while buff:
+                for cmd in buff:
+                    last_item = final[len(final)-1]
+                    # Gets last item in list
+                    if (len(last_item) + len(cmd)) > 1500:
+                        final.append(cmd)
+                    else:
+                        final[len(final)-1] += "\n{}".format(cmd)
+
+                    buff.remove(cmd)
+
+            final = "Custom commands: (page **{}**/{})\n```{}```".format(page + 1, len(final), final[page])
 
             try:
-                await client.send_message(message.channel, "*Custom commands:*\n```" + final + "```")
+                await client.send_message(message.channel, final)
             except HTTPException:
                 await client.send_message(message.channel, "Your commands are too long to display. Consider cleaning "
                                                            "some of them or ask the bot owner to do it for you "
@@ -580,30 +684,32 @@ class Admin:
 
                 return
 
+            decision = get_decision(cut[1])
+
             try:
-                value = handler.update_moderation_settings(message.channel.server, cut[0], get_decision(cut[1]))
+                resp = handler.update_moderation_settings(message.channel.server, cut[0], decision)
             except IndexError:
                 self.stats.add(WRONG_ARG)
                 return
 
             if get_decision(cut[0], "word filter", "filter words", "wordfilter"):
-                await client.send_message(message.channel, "Word filter {}".format(StandardEmoji.OK if value else StandardEmoji.GREEN_FAIL))
+                await client.send_message(message.channel, "Word filter {}".format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
 
             elif get_decision(cut[0], "spam filter", "spamfilter", "filter spam"):
-                await client.send_message(message.channel, "Spam filter {}".format(StandardEmoji.OK if value else StandardEmoji.GREEN_FAIL))
+                await client.send_message(message.channel, "Spam filter {}".format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
 
             elif get_decision(cut[0], "filterinvite", "filterinvites", "invite removal", "invite filter", "invitefilter"):
                 await client.send_message(message.channel,
-                                          "Invite filter {}".format(StandardEmoji.OK if value else StandardEmoji.GREEN_FAIL))
+                                          "Invite filter {}".format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
 
             else:
                 await client.send_message(message.channel, "Not a setting. (wordfilter/spamfilter/invitefilter)")
 
         # nano.displaysettings
         elif startswith("nano.displaysettings"):
-            settings = handler.get_server_data(message.server.id)
+            settings = handler.get_server_data(message.server)
 
-            blacklisted_c = settings.get("blacklisted")
+            blacklisted_c = settings.get("blacklist")
             if not blacklisted_c:
                 blacklisted_c = "No blacklists"
 
@@ -619,16 +725,16 @@ class Admin:
                     blacklisted.append(channel_r.name)
                 blacklisted_c = ",".join(blacklisted)
 
-            spam_filter = "On" if settings.get("filterspam") else "Off"
-            word_filter = "On" if settings.get("filterwords") else "Off"
-            invite_filter = "On" if settings.get("filterinvite") else "Off"
+            spam_filter = "On" if settings.get(SPAMFILTER_SETTING) else "Off"
+            word_filter = "On" if settings.get(WORDFILTER_SETTING) else "Off"
+            invite_filter = "On" if settings.get(INVITEFILTER_SETTING) else "Off"
 
             log_channel = settings.get("logchannel") if settings.get("logchannel") else "None"
 
-            msg_join = settings.get("welcomemsg")
-            msg_leave = settings.get("leavemsg")
-            msg_ban = settings.get("banmsg")
-            msg_kick = settings.get("kickmsg")
+            msg_join = settings.get("welcomemsg") or "Disabled"
+            msg_leave = settings.get("leavemsg") or "Disabled"
+            msg_ban = settings.get("banmsg") or "Disabled"
+            msg_kick = settings.get("kickmsg") or "Disabled"
 
             final = """**Settings for current server:**```
 Blacklisted channels: {}
@@ -646,66 +752,8 @@ Messages:
 
             await client.send_message(message.channel, final)
 
-        # nano.admins add
-        elif startswith("nano.admins add"):
-            if len(message.mentions) == 0:
-                await client.send_message(message.channel, "Please mention the person you want to add.")
-                return
-
-            elif len(message.mentions) == 1:
-                member = message.mentions[0]
-
-            else:
-                await client.send_message(message.channel, "One at a time :)")
-                return
-
-            handler.add_admin(message.server, member)
-
-            await client.send_message(message.channel, "Added **{}** to admins.".format(member.name))
-
-        # nano.admins remove
-        elif startswith("nano.admins remove"):
-            if len(message.mentions) == 0:
-                await client.send_message(message.channel, "Please mention the person you want to add.")
-                return
-
-            elif len(message.mentions) == 1:
-                member = message.mentions[0]
-
-            else:
-                await client.send_message(message.channel, "One at a time :)")
-                return
-
-            handler.remove_admin(message.server, member)
-
-            await client.send_message(message.channel, "Removed **{}** from admins".format(member.name))
-
-        # nano.admins list
-        elif startswith("nano.admins list"):
-            admins = handler.get_admins(message.server)
-
-            if len(admins) == 0:
-                await client.send_message(message.channel, "There are no Nano admins on this server.")
-
-            else:
-                final = ""
-
-                for usr in admins:
-                    user = utils.find(lambda u: u.id == usr, message.channel.server.members)
-
-                    # user is None when an admin leaves the server before being removed from admins
-                    if not user:
-                        handler.remove_admin(message.server, usr)
-
-                    final += "{}, ".format(user.name)
-
-                # Remove last comma and space
-                final = final.strip(", ")
-
-                if len(admins) == 1:
-                    await client.send_message(message.channel, "**" + final + "** is the only admin here.")
-                else:
-                    await client.send_message(message.channel, "**Admins:** " + final)
+        # IMPORTANT!
+        # ADMIN ADDING HAS BEEN COMPLETELY REMOVED in 3.4!
 
         elif startswith("nano.blacklist"):
             if startswith("nano.blacklist add"):
@@ -752,9 +800,28 @@ Messages:
                     self.stats.add(WRONG_ARG)
                     return
 
-                self.handler.remove_channel_blacklist(message.server, channel.id)
+                res = self.handler.remove_channel_blacklist(message.server, channel.id)
 
-                await client.send_message(message.channel, "Channel blacklist for {} removed {}".format(channel.name, StandardEmoji.PERFECT))
+                if res:
+                    await client.send_message(message.channel, "Channel blacklist for {} removed {}".format(channel.name, StandardEmoji.PERFECT))
+                else:
+                    await client.send_message(message.channel, "Channel blacklist could not be removed. Does it even exist?")
+
+            elif startswith("nano.blacklist list"):
+                lst = self.handler.get_blacklist(message.server)
+
+                names = []
+                for ch in lst:
+                    channel = utils.find(lambda c: c.id == ch, message.server.channels)
+                    if not channel:
+                        self.handler.remove_channel_blacklist(message.server, ch)
+                    else:
+                        names.append("`{}`".format(channel.name))
+
+                if names:
+                    await client.send_message(message.channel, "Blacklisted channels:\n{}".format(" ".join(names)))
+                else:
+                    await client.send_message(message.channel, "There are no blacklisted channels on this channel. " + StandardEmoji.NORMAL_SMILE)
 
         # nano.reset
         elif startswith("nano.serverreset"):
@@ -774,6 +841,10 @@ Messages:
         elif startswith("nano.changeprefix"):
             pref = message.content[len("nano.changeprefix "):]
 
+            if len(pref) > 50:
+                await client.send_message(message.channel, PREFIX_TOO_LONG)
+                return
+
             self.handler.change_prefix(message.server, pref)
 
             await client.send_message(message.channel, "Prefix has been changed to {} :ok_hand:".format(pref))
@@ -781,20 +852,23 @@ Messages:
         # !setup, nano.setup
         elif startswith(prefix + "setup", "nano.setup"):
             auth = message.author
+            MSG_TIMEOUT = 35
 
             async def timeout(msg):
                 await client.send_message(msg.channel,
                                           "You ran out of time :upside_down: (FYI: the timeout is 35 seconds)")
 
             msg_intro = "**SERVER SETUP**\nYou have started the server setup. It consists of a few steps, " \
-                        "where you will be prompted to answer.\n**Let's get started, shall we?**"
+                        "where you will be prompted to answer. Because you started the setup, only your answers will be taken into account.\n" \
+                        "**Let's get started, shall we?**"
             await client.send_message(message.channel, msg_intro)
             await asyncio.sleep(2)
 
             # FIRST MESSAGE
+            # Q: Do you want to reset all current settings?
             msg_one = "Do you want to reset all bot-related settings for this server?\n" \
                       "(this includes spam and swearing protection, admin list, blacklisted channels, \n" \
-                      "log channel, prefix, welcome, ban and kick message). **yes / no**"
+                      "log channel, prefix, welcome, ban and kick messages). **yes / no**"
             await client.send_message(message.channel, msg_one)
 
             # First check
@@ -806,32 +880,38 @@ Messages:
 
                 return True
 
-            ch1 = await client.wait_for_message(timeout=35, author=auth, check=check_yes1)
+            ch1 = await client.wait_for_message(timeout=MSG_TIMEOUT, author=auth, check=check_yes1)
             if ch1 is None:
                 await timeout(message)
                 return
 
             # SECOND MESSAGE
+            # Q: What prefix do you want?
             msg_two = "What prefix would you like to use for all commands?\n" \
                       "Type that prefix.\n(prefix example: **!** 'translates to' `!help`, `!ping`, ...)"
             await client.send_message(message.channel, msg_two)
 
             # Second check, does not need yes/no filter
-            ch2 = await client.wait_for_message(timeout=35, author=auth)
+            ch2 = await client.wait_for_message(timeout=MSG_TIMEOUT, author=auth)
             if ch2 is None:
                 await timeout(message)
                 return
 
             if ch2.content:
+                if len(ch2.content) > 50:
+                    await client.send_message(message.channel, PREFIX_TOO_LONG)
+                    return
+
                 handler.change_prefix(message.channel.server, str(ch2.content).strip(" "))
 
             # THIRD MESSAGE
+            # Q: What message would you like to see when a person joins your server?
             msg_three = "What would you like me to say when a person joins your server?\n" \
                         "Reply with that message or with None if you want to disable welcome messages. \n" \
                         "(:user translates to a mention of the joined user; for example -> :user, welcome to this server!)"
             await client.send_message(message.channel, msg_three)
 
-            ch3 = await client.wait_for_message(timeout=35, author=auth)
+            ch3 = await client.wait_for_message(timeout=MSG_TIMEOUT, author=auth)
             if ch3 is None:
                 await timeout(message)
                 return
@@ -857,13 +937,13 @@ Messages:
 
                 return True
 
-            ch3 = await client.wait_for_message(timeout=35, author=auth, check=check_yes3)
-            if ch3 is None:
+            ch4 = await client.wait_for_message(timeout=MSG_TIMEOUT, author=auth, check=check_yes3)
+            if ch4 is None:
                 await timeout(message)
                 return
 
             # FIFTH MESSAGE
-            msg_five = """Would you like me to filter swearing? **yes / no**"""
+            msg_five = """Would you like me to filter swearing? (beware of false positives)  **yes / no**"""
             await client.send_message(message.channel, msg_five)
 
             # Fifth check check
@@ -878,28 +958,52 @@ Messages:
 
                 return True
 
-            ch4 = await client.wait_for_message(timeout=35, author=auth, check=check_yes4)
-            if ch4 is None:
+            ch5 = await client.wait_for_message(timeout=MSG_TIMEOUT, author=auth, check=check_yes4)
+            if ch5 is None:
                 await timeout(message)
                 return
+
+            # LAST MESSAGE
+            msg_six = "What channel would you like to use for logging? channel name/None"
+            await client.send_message(message.channel, msg_six)
+
+            ch6 = await client.wait_for_message(timeout=MSG_TIMEOUT, author=auth)
+            if ch6 is None:
+                await timeout(message)
+                return
+
+            else:
+                # Parses channel
+                channel = str(ch6.content)
+
+                if channel.lower() == "None":
+                    handler.update_var(message.server.id, "logchannel", "None")
+                    await client.send_message(message.channel, "Logging has been disabled.")
+
+                else:
+                    if channel.startswith("<#"):
+                        channel = channel.replace("<#", "").replace(">", "")
+
+                    handler.update_var(message.server.id, "logchannel", channel)
+                    await client.send_message(message.channel, "Log channel has been set to '{}'".format(channel))
 
             msg_final = """**This concludes the basic server setup.**
 But there are a few more settings to set up if you need'em:
 ➤ channel blacklisting - `nano.blacklist add/remove channel_name`
-➤ kick message - `_kickmsg message`
-➤ ban message - `_banmsg message`
+➤ join message - `_welcomemsg message`
+➤ leave message - `_leavemsg message`
 
 The prefix can simply be changed again with `nano.changeprefix prefix`.
-Admin commands can only be used by people with a role named "Nano Admin". If you do not want to assign roles, use `nano.admins add @mention`.
+Admin and mod commands can only be used by people with a role named "Nano Admin"/"Nano Mod".
 
 You and all admins can also add/remove/list custom commands with `_cmd add/remove/list command|response`.
-For a list of all commands, use `_cmds`.""".replace("_", str(ch2.content))
+For a list of all commands and their explanations, use `_cmds`.""".replace("_", str(ch2.content))
 
             await client.send_message(message.channel, msg_final)
 
     async def on_member_remove(self, member, **_):
         # check for softban
-        if self.timer.get_ban(member):
+        if self.timer.get_ban(member.id):
             return "return"
 
         # check for normal ban
@@ -909,8 +1013,8 @@ For a list of all commands, use `_cmds`.""".replace("_", str(ch2.content))
 
 
 class NanoPlugin:
-    _name = "Admin Commands"
-    _version = "0.2.6"
+    name = "Admin Commands"
+    version = "0.2.8"
 
     handler = Admin
     events = {

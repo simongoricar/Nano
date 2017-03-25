@@ -16,12 +16,13 @@ from data.utils import log_to_file
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '3.3.2'
+__version__ = '3.4'
 
 
-# CONSTANTS and EVENTS
+# EVENTS
 
 ON_MESSAGE = "on_message"
+ON_REACTION_ADD = "on_reaction_add"
 ON_READY = "on_ready"
 
 ON_MESSAGE_DELETE = "on_message_delete"
@@ -37,7 +38,6 @@ ON_MEMBER_UPDATE = "on_member_update"
 ON_MEMBER_BAN = "on_member_ban"
 ON_MEMBER_UNBAN = "on_member_unban"
 
-
 ON_SERVER_JOIN = "on_server_join"
 ON_SERVER_REMOVE = "on_server_remove"
 
@@ -45,34 +45,36 @@ ON_ERROR = "on_error"
 ON_SHUTDOWN = "on_shutdown"
 ON_PLUGINS_LOADED = "on_plugins_loaded"
 
-# Other
+# Other constants
 
 IS_RESUME = False
+IS_FIRST = True
 
 # LOGGING
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
-# Set logging levels
+# Set logging levels for external modules
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("discord").setLevel(logging.INFO)
 logging.getLogger("websockets.protocol").setLevel(logging.INFO)
 
-# Loop initialization and other things
-
-loop = asyncio.get_event_loop()
-client = discord.Client(loop=loop)
-handler = serverhandler.ServerHandler()
-stats = bot_stats.NanoStats()
-
-# Config parser
-
+# Config parser setup
 parser = configparser.ConfigParser()
 parser.read("settings.ini")
 
-# Constants
-first = True
+
+# Loop, discord.py and Nano core modules initialization
+loop = asyncio.get_event_loop()
+client = discord.Client(loop=loop)
+
+log.info("Initializng ServerHandler and NanoStats...")
+
+# Setup the server data and stats
+use_legacy = not parser.get("Storage", "type") == "redis"
+handler = serverhandler.ServerHandler.get_handler(legacy=use_legacy)
+stats = bot_stats.get_NanoStats(legacy=use_legacy)
 
 # Singleton metaclass
 
@@ -102,17 +104,20 @@ class Nano(metaclass=Singleton):
                                   on_channel_update=[], on_message_delete=[], on_message_edit=[], on_ready=[],
                                   on_member_join=[], on_member_remove=[], on_member_update=[], on_member_ban=[],
                                   on_member_unban=[], on_server_remove=[], on_error=[], on_shutdown=[],
-                                  on_plugins_loaded=[])
+                                  on_plugins_loaded=[], on_reaction_add=[])
         self.plugin_events_ = dict(self.plugin_events)
 
         # Updates the plugin list
         self.update_plugins()
 
     def update_plugins(self):
+        buff = time.monotonic()
         self.plugin_names = [pl for pl in os.listdir("plugins")
                              if os.path.isfile(os.path.join("plugins", pl)) and str(pl).endswith(".py")]
 
         self._update_plugins(self.plugin_names)
+
+        log.info("Plugins loaded in {}s".format(round(time.monotonic() - buff, 3)))
 
     def _update_plugins(self, plugin_names):
         """
@@ -121,34 +126,56 @@ class Nano(metaclass=Singleton):
         log.info("Updating plugins...")
 
         failed = []
+        ignored = []
 
         for plugin in list(plugin_names):
             # Use the importlib to dynamically import all plugins
             try:
                 plug = importlib.import_module("plugins.{}".format(plugin[:-3]))
-            except ImportError:
+            except ImportError as e:
+                log.warning("Failed import: {}".format(e))
                 self.plugin_names.pop(self.plugin_names.index(plugin))
                 failed.append(plugin)
                 continue
 
-            # If this file is not a plugin, ignore it
+            # If this file is not a plugin (does not have a class NanoPlugin), ignore it
             try:
                 plug.NanoPlugin
-            except AttributeError:
+                # If plugin has attribute 'disabled' and it is True, disable the plugin
+                if hasattr(plug.NanoPlugin, "disabled"):
+                    assert plug.NanoPlugin.disabled is False
+
+            except (AttributeError, AssertionError) as e:
                 # remove it from the plugin list and delete it
                 self.plugin_names.pop(self.plugin_names.index(plugin))
-                failed.append(plugin)
+                ignored.append(plugin)
                 del plug
                 continue
 
             cls = plug.NanoPlugin.handler
             events = plug.NanoPlugin.events
             # Instantiate the plugin
-            instance = cls(client=client,
-                           loop=loop,
-                           handler=handler,
-                           nano=self,
-                           stats=stats)
+            try:
+                instance = cls(client=client,
+                               loop=loop,
+                               handler=handler,
+                               nano=self,
+                               stats=stats,
+                               legacy=use_legacy)
+
+            except RuntimeError:
+                self.plugin_names.pop(self.plugin_names.index(plugin))
+                ignored.append(plugin)
+                del instance
+                del plug
+                continue
+            except Exception as e:
+                log.warning("Unexpected error in {}: {}".format(plugin, e))
+                self.plugin_names.pop(self.plugin_names.index(plugin))
+                failed.append(plugin)
+                del instance
+                del plug
+                continue
 
             self.plugins[plugin] = {
                 "plugin": plug,
@@ -162,8 +189,11 @@ class Nano(metaclass=Singleton):
 
         log.debug("Registered plugins: {}".format([str(p).rstrip(".py") for p in self.plugin_names]))
 
+        if ignored:
+            log.warning("Ignored/Disabled plugins: {}".format(", ".join(ignored)))
+
         if failed:
-            log.warning("Failed plugins: {}".format(failed))
+            log.warning("Failed plugins: {}".format(", ".join(failed)))
 
         self._parse_priorities()
 
@@ -191,21 +221,40 @@ class Nano(metaclass=Singleton):
         except ImportError:
             return False
 
-        # If this file is not a plugin, ignore it
         try:
             c_plug.NanoPlugin
-        except AttributeError:
-            return False
+            # If plugin has attribute 'disabled' and it is True, disable the plugin
+            if hasattr(c_plug.NanoPlugin, "disabled"):
+                assert c_plug.NanoPlugin.disabled is False
+
+        except (AttributeError, AssertionError) as e:
+            # remove it from the plugin list and delete it
+            self.plugin_names.pop(self.plugin_names.index(plugin))
+            ignored.append(plugin)
+            del plug
 
         cls = c_plug.NanoPlugin.handler
         events = c_plug.NanoPlugin.events
 
         # Instantiate the plugin
-        instance = cls(client=client,
-                       loop=loop,
-                       handler=handler,
-                       nano=self,
-                       stats=stats)
+        try:
+            instance = cls(client=client,
+                           loop=loop,
+                           handler=handler,
+                           nano=self,
+                           stats=stats)
+
+        except RuntimeError:
+            self.plugin_names.pop(self.plugin_names.index(plugin))
+            ignored.append(plugin)
+            del instance
+            del plug
+        except Exception as e:
+            log.warning("Unexpected error in {}: {}".format(plugin, e))
+            self.plugin_names.pop(self.plugin_names.index(plugin))
+            failed.append(plugin)
+            del instance
+            del plug
 
         self.plugins[plugin] = {
             "plugin": c_plug,
@@ -301,6 +350,11 @@ async def on_message(message):
 
 
 @client.event
+async def on_reaction_add(reaction, user):
+    await nano.dispatch_event(ON_REACTION_ADD, reaction, user)
+
+
+@client.event
 async def on_message_delete(message):
     await nano.dispatch_event(ON_MESSAGE_DELETE, message)
 
@@ -386,7 +440,7 @@ async def on_ready():
 
 async def start():
     if not parser.has_option("Credentials", "token"):
-        log.fatal("Token not found. Check your settings.ini")
+        log.critical("Token not found. Check your settings.ini")
         log_to_file("Could not start: Token not specified")
 
     token = parser.get("Credentials", "token")
@@ -403,12 +457,12 @@ def main():
     except Exception as e:
         loop.run_until_complete(client.logout())
         log.critical("Something went wrong, quitting (see log for exception info).")
-        log_to_file("FATAL, shutting down: {}".format(e))
+        log_to_file("CRITICAL, shutting down: {}".format(e))
 
         # Attempts to save plugin state
-        log.critical("Saving state with ON_SHUTDOWN")
+        log.critical("Dispatching ON_SHUTDOW...")
         loop.run_until_complete(nano.dispatch_event(ON_SHUTDOWN))
-        log.critical("complete, shutting down...")
+        log.critical("done, shutting down...")
 
     finally:
         loop.close()

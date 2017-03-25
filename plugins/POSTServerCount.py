@@ -1,5 +1,5 @@
 # coding=utf-8
-import requests
+import aiohttp
 import json
 import configparser
 import logging
@@ -15,32 +15,43 @@ class POST:
     def __init__(self, **kwargs):
         self.client = kwargs.get("client")
 
+        try:
+            self.token = parser.get("bots.discord.pw", "token")
+        except (configparser.NoOptionError, configparser.NoSectionError):
+            log.critical("Missing api key for bots.discord.pw, disabling plugin...")
+            raise RuntimeError
+
     async def on_server_join(self, server):
         amount = len(self.client.servers)
-        token = parser.get("bots.discord.pw", "token")
 
+        resp = await self.upload(amount, token=self.token)
+
+        if resp is True:
+            log.info("Updated guild count: {} (joined {})".format(amount, server.name))
+        else:
+            log.info("Something went wrong when updating guild count: {} (for {}) - status code {}".format(amount, server.name, resp))
+
+    async def upload(self, num, token=None):
         if not token:
-            return
+            return False
 
-        self.upload(amount, token)
-        log.info("Updated guild count: {} (joined {})".format(amount, server.name))
-
-    @staticmethod
-    def upload(num, token):
-        url = "https://bots.discord.pw/api/bots/:user_id/stats/".replace(":user_id", "171633949532094464")
+        url = "https://bots.discord.pw/api/bots/:user_id/stats/".replace(":user_id", self.client.user.id)
         payload = {"server_count": num}
         head = {
             "Content-Type": "application/json",
             "Authorization": str(token)
         }
 
-        requests.post(url, data=json.dumps(payload), headers=head)
-        return True
+        async with aiohttp.ClientSession() as session:
+            async with session.post(url, data=json.dumps(payload), headers=head) as resp:
+                status_code = resp.status
+
+        return True if status_code == 200 else status_code
 
 
 class NanoPlugin:
-    _name = "POST module for bots.discord.pw"
-    _version = "0.2"
+    name = "POST module for bots.discord.pw"
+    version = "0.2"
 
     handler = POST
     events = {

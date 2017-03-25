@@ -2,8 +2,9 @@
 import asyncio
 import os
 import logging
+import importlib
 from pickle import dumps, load
-from discord import Message
+from discord import Message, Embed, Colour
 from data.serverhandler import ServerHandler
 from data.stats import MESSAGE, VOTE, WRONG_PERMS, WRONG_ARG
 from data.utils import is_valid_command, is_empty, StandardEmoji
@@ -24,12 +25,13 @@ NO_VOTE = StandardEmoji.WARNING + " There is no vote in progress."
 IN_PROGRESS = StandardEmoji.WARNING + " A vote is already in progress."
 
 VOTE_ITEM_LIMIT = 10
+VOTE_ITEM_MAX_LENGTH = 800
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 
-class VoteHandler:
+class LegacyVoteHandler:
     def __init__(self, **_):
 
         # Plugin-related
@@ -94,14 +96,14 @@ class VoteHandler:
 
             return True
 
-    def get_votes(self, server):
-        return self.votes.get(server.id)
+    def get_votes(self, server_id):
+        return self.votes.get(server_id)
 
-    def get_vote_header(self, server):
-        return self.vote_header.get(server.id)
+    def get_vote_title(self, server_id):
+        return self.vote_header.get(server_id)
 
-    def get_content(self, server):
-        return self.vote_content.get(server.id)
+    def get_choices(self, server_id):
+        return self.vote_content.get(server_id)
 
     def end_voting(self, server):
         # Resets all server-related voting settings
@@ -116,29 +118,99 @@ class VoteHandler:
         self.author.pop(server.id)
 
 
+class RedisVoteHandler:
+    def __init__(self, handler):
+        self.redis = handler.get_plugin_data_manager(namespace="voting")
+
+        try:
+            self.json = importlib.import_module("ujson")
+        except ImportError:
+            self.json = importlib.import_module("json")
+
+    def need_save(self):
+        # DEPRECATED
+        return False
+
+    def get_vote_amount(self):
+        return len(self.redis.scan_iter("*"))
+
+    def start_vote(self, author_name, server, title, choices):
+        if self.redis.exists(server):
+            return False
+
+        payload = {
+            "author": str(author_name),
+            "votes": self.json.dumps({a: 0 for a in choices}),
+            "voters": self.json.dumps([]),
+            "title": str(title),
+            "choices": self.json.dumps(choices),
+            "inprogress": True,
+        }
+
+        self.redis.hmset(server, payload)
+        return True
+
+    def in_progress(self, server):
+        return self.redis.exists(server.id)
+
+    def plus_one(self, option, voter, server):
+        if not self.in_progress(server):
+            return False
+
+        voters = self.json.loads(self.redis.hget(server.id, "voters"))
+        vote_counts = self.json.loads(self.redis.hget(server.id, "votes"))
+
+        voters.append(voter)
+
+        try:
+            vote_counts[option] += 1
+        except KeyError:
+            return False
+
+        return True
+
+    def get_votes(self, server_id):
+        return self.json.loads(self.redis.hget(server_id, "votes"))
+
+    def get_vote_title(self, server_id):
+        return self.redis.hget(server_id, "title")
+
+    def get_choices(self, server_id):
+        # get_content -> choices
+        return self.json.loads(self.redis.hget(server_id, "choices"))
+
+    def end_voting(self, server):
+        return bool(self.redis.delete(server.id))
+
+
 class Vote:
     def __init__(self, **kwargs):
         self.handler = kwargs.get("handler")
         self.nano = kwargs.get("nano")
         self.client = kwargs.get("client")
         self.stats = kwargs.get("stats")
+        self.legacy = kwargs.get("legacy")
 
-        # Removes the file if it is empty
-        if is_empty("cache/voting.temp"):
-            os.remove("cache/voting.temp")
+        if kwargs.get("legacy"):
+            # Removes the file if it is empty
+            if is_empty("cache/voting.temp"):
+                os.remove("cache/voting.temp")
 
-        # Uses the cache if it exists
-        if os.path.isfile("cache/voting.temp"):
-            log.info("Using voting.cache")
+            # Uses the cache if it exists
+            if os.path.isfile("cache/voting.temp"):
+                log.info("Using voting.cache")
 
-            with open("cache/voting.temp", "rb") as vote_cache:
-                self.vote = load(vote_cache)
+                with open("cache/voting.temp", "rb") as vote_cache:
+                    self.vote = load(vote_cache)
 
-            # 3.1.5 : disabled
-            # os.remove("cache/voting.temp")
+                # 3.1.5 : disabled
+                # os.remove("cache/voting.temp")
+
+            else:
+                self.vote = LegacyVoteHandler()
 
         else:
-            self.vote = VoteHandler()
+            self.vote = RedisVoteHandler(self.handler)
 
     def save_state(self):
         with open("cache/voting.temp", "wb") as cache:
@@ -187,22 +259,20 @@ class Vote:
             vote_items = [a.strip(" ") for a in list(vote_items)]
 
             if len(vote_items) > VOTE_ITEM_LIMIT:
-                await client.send_message(message.channel, StandardEmoji.WARNING + " The vote options are bigger than allowed "
-                                                           "(max is **{}**, you put *{}*)".format(VOTE_ITEM_LIMIT, len(vote_items)))
+                await client.send_message(message.channel, StandardEmoji.WARNING + " Too many vote options "
+                                                                                   "(max is **{}**, you put *{}*)".format(VOTE_ITEM_LIMIT, len(vote_items)))
                 return
 
-            self.vote.start_vote(message.author.name, message.channel.server, title, vote_items)
+            if (len(title) + sum([len(a) for a in vote_items])) > VOTE_ITEM_MAX_LENGTH:
+                await client.send_message(message.channel, StandardEmoji.WARNING + " The whole thing is too long! (max is {}, you have {}".format(VOTE_ITEM_MAX_LENGTH, sum([len(a) for a in vote_items])))
 
-            ch = []
-            n = 1
-            for this in self.vote.get_content(message.channel.server):
-                ch.append("{}. {}".format(n, this))
-                n += 1
+            self.vote.start_vote(message.author.name, message.server.id, title, vote_items)
 
-            ch = "\n".join(ch).strip("\n")
+            ch = "\n".join(["{}. {}".format(en + 1, ch) for en, ch in
+                            enumerate(self.vote.get_choices(message.server.id))]).strip("\n")
 
-            await client.send_message(message.channel, "**{}**\n"
-                                                       "```{}```".format(self.vote.get_vote_header(message.server), ch))
+            await client.send_message(message.channel, "Vote started:\n**{}**\n"
+                                                       "```js\n{}```".format(self.vote.get_vote_title(message.server.id), ch))
 
         # !vote end
         elif startswith(prefix + "vote end"):
@@ -216,9 +286,9 @@ class Vote:
                 await client.send_message(message.channel, NO_VOTE)
                 return
 
-            votes = self.vote.get_votes(message.server)
-            header = self.vote.get_vote_header(message.server)
-            content = self.vote.get_content(message.server)
+            votes = self.vote.get_votes(message.server.id)
+            title = self.vote.get_vote_title(message.server.id)
+            content = self.vote.get_choices(message.server.id)
 
             # Actually end the voting
             self.vote.end_voting(message.server)
@@ -226,9 +296,14 @@ class Vote:
             # Put results together
             cn = ["{} - `{} votes`".format(a, votes[a]) for a in content]
 
-            combined = "Vote ended:\n__{}__\n\n{}".format(header, "\n".join(cn))
+            embed = Embed(title=title, colour=Colour(0x303F9F), description="(In total, {} people voted)".format(sum(votes.values())))
+            embed.set_footer(text="Voting ended")
 
-            await client.send_message(message.channel, combined)
+            print(votes)
+            for name, val in votes:
+                embed.add_field(name=name, value="{} votes".format(val))
+
+            await client.send_message(message.channel, "Vote ended:", embed=embed)
 
         # !vote status
         elif startswith(prefix + "vote status"):
@@ -236,8 +311,8 @@ class Vote:
                 await client.send_message(message.channel, NO_VOTE)
                 return
 
-            header = self.vote.get_vote_header(message.server)
-            votes = sum(self.vote.get_votes(message.server).values())
+            header = self.vote.get_vote_title(message.server.id)
+            votes = sum(self.vote.get_votes(message.server.id).values())
 
             if votes == 0:
                 vote_disp = "no-one has voted yet"
@@ -283,13 +358,14 @@ class Vote:
             self.stats.add(VOTE)
 
     async def on_shutdown(self):
+        if not self.legacy:
+            return
+
         # Saves the state of votes
         if not os.path.isdir("cache"):
             os.mkdir("cache")
 
         if self.vote.need_save():
-            print("saving")
-            print(self.vote.__dict__)
             self.save_state()
         else:
             try:
@@ -299,8 +375,8 @@ class Vote:
 
 
 class NanoPlugin:
-    _name = "Voting"
-    _version = "0.2.4"
+    name = "Voting"
+    version = "0.2.post3"
 
     handler = Vote
     events = {

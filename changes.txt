@@ -1,3 +1,16 @@
+3.4
+- New: Redis support!
+- Ability to convert old data to the new system
+- Additional settings in settings.ini to allow using legacy server data system
+- Help message fix
+- Added some common bots to ignore (to prevent circular commands)
+- Bugfixes and adaptions to redis
+- Various speed improvements
+
+3.3.3
+- Text changes
+- Bugfixes
+
 3.3.2
 - Bugfixes
 

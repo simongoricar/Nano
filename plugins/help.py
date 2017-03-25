@@ -11,11 +11,11 @@ from data.stats import MESSAGE, HELP, WRONG_ARG
 help_nano = """**Hey, I'm Nano!**
 
 To get familiar with simple commands, type `>help simple`.
-If you want specific info about a command, do `>help command`.
+If you want specific info about a command, do `>help [command]`.
 
-Or you could just simply take a look at my wiki page: https://github.com/DefaltSimon/Nano/wiki/Commands-list
-If you are an admin and want to set up your server for Nano, type `>getstarted`.
-If you need additional help, you can visit "my official server" : https://discord.gg/FZJB6UJ
+Or you could just simply take a look at the wiki page: https://github.com/DefaltSimon/Nano/wiki/Commands
+If you are an admin/server owner and want to set up your server for Nano, type `>setup`.
+It is highly recommended that you join the "official" Nano server for announcements and help : https://discord.gg/FZJB6UJ
 """
 
 help_simple = """`_hello` - Welcomes you or the mentioned person.
@@ -111,9 +111,9 @@ class Help:
 
             return False
 
-        # !help and @Nano
+        # !help and @Nanos
         if message.content.strip(" ") == (prefix + "help"):
-            await client.send_message(message.channel, help_nano)
+            await client.send_message(message.channel, help_nano.replace(">", prefix))
 
             self.stats.add(HELP)
 
@@ -121,20 +121,20 @@ class Help:
         elif self.client.user in message.mentions:
             un_mentioned = str(message.content[21:])
             if un_mentioned == "" or un_mentioned == " ":
-                await client.send_message(message.channel, help_nano)
+                await client.send_message(message.channel, help_nano.replace(">", prefix))
 
             self.stats.add(HELP)
 
         # !cmds or !commands
         elif startswith(prefix + "cmds", prefix + "commands"):
-            await client.send_message(message.channel, "A 'complete' list of commands is available here: "
+            await client.send_message(message.channel, "Commands and their explanations can be found here: "
                                                        "https://github.com/DefaltSimon/Nano/wiki/Commands")
 
             self.stats.add(HELP)
 
         # !help simple
         elif startswith(prefix + "help simple"):
-            await client.send_message(message.channel, help_simple)
+            await client.send_message(message.channel, help_simple.replace(">", prefix))
 
             self.stats.add(HELP)
 
@@ -186,7 +186,7 @@ class Help:
 
                 else:
                     await client.send_message(message.channel, "Command could not be found.\n"
-                                                               "**(Use: `>help command`)**".replace(">", prefix))
+                                                               "**(Use: `>help [command]`)**".replace(">", prefix))
 
             else:
                 name, embed = get_command_info(prefix + search)
@@ -196,7 +196,7 @@ class Help:
 
                 else:
                     await client.send_message(message.channel, "Command could not be found.\n"
-                                                               "**(Use: `>help command`)**".replace(">", prefix))
+                                                               "**(Use: `>help [command]`)**".replace(">", prefix))
 
         # !notifydev
         elif startswith(prefix + "notifydev", prefix + "suggest"):
@@ -248,8 +248,8 @@ class Help:
 
 
 class NanoPlugin:
-    _name = "Help Commands"
-    _version = "0.2.3"
+    name = "Help Commands"
+    version = "0.2.4"
 
     handler = Help
     events = {

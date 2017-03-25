@@ -37,7 +37,7 @@ class Conversation:
 
         # If it is just a raw mention, send the help message
         if str(message.content).replace("<@{}>".format(self.client.user.id), "").strip(" ") == "":
-            await client.send_message(message.channel, help_nano)
+            await client.send_message(message.channel, help_nano.replace(">", prefix))
 
         elif has("prefix"):
             await client.send_message(message.channel, "The prefix for this server is **{}**".format(prefix))
@@ -74,7 +74,7 @@ class Conversation:
             await reply("THIS IS SPARTA!")
 
         elif has("help"):
-            await reply(help_nano)
+            await reply(help_nano.replace(">", prefix))
 
         elif has("i love you", "<3"):
             await reply("<3")
@@ -87,8 +87,8 @@ class Conversation:
 
 
 class NanoPlugin:
-    _name = "Conversation Commands"
-    _version = "0.2"
+    name = "Conversation Commands"
+    version = "0.2.1"
 
     handler = Conversation
     events = {

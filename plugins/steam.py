@@ -179,8 +179,8 @@ class Steam:
 
 
 class NanoPlugin:
-    _name = "Steam Commands"
-    _version = "0.1"
+    name = "Steam Commands"
+    version = "0.1"
 
     handler = Steam
     events = {

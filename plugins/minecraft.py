@@ -1,5 +1,5 @@
 # coding=utf-8
-import requests
+import aiohttp
 import logging
 from discord import Client, Message
 from data.stats import MESSAGE
@@ -22,11 +22,18 @@ valid_commands = commands.keys()
 
 
 class McItems:
-    def __init__(self):
+    url = "http://minecraft-ids.grahamedgecombe.com/items.json"
+
+    def __init__(self, loop):
         # Gets a fresh copy of items at each startup.
+        self.data = None
+        loop.run_until_complete(self.request_data())
+
+    async def request_data(self):
         log.info("Requesting JSON data from minecraft-ids")
-        json_data = requests.get("http://minecraft-ids.grahamedgecombe.com/items.json")
-        self.data = json_data.json()
+        async with aiohttp.ClientSession() as session:
+            async with session.get(McItems.url) as resp:
+                self.data = await resp.text()
 
     def id_to_data(self, num):
         if len(str(num).split(":")) > 1:
@@ -53,14 +60,6 @@ class McItems:
                 items.append(item)
 
         return items
-
-    def _items_to_list(self, **kwargs):
-        # Not used,
-        # Private for now, /todo cant find a use for this
-        items = []
-        for item in self.data:
-            if kwargs.get(str(item.get("type"))) is not None:
-                pass
 
     def id_to_pic(self, num):
         if num > len(self.data):
@@ -141,8 +140,9 @@ class Minecraft:
         self.nano = kwargs.get("nano")
         self.client = kwargs.get("client")
         self.stats = kwargs.get("stats")
+        self.loop = kwargs.get("loop")
 
-        self.mc = McItems()
+        self.mc = McItems(self.loop)
 
     async def on_message(self, message, **kwargs):
         prefix = kwargs.get("prefix")
@@ -224,8 +224,8 @@ class Minecraft:
 
 
 class NanoPlugin:
-    _name = "Minecraft Commands"
-    _version = 0.1
+    name = "Minecraft Commands"
+    version = 0.1
 
     handler = Minecraft
     events = {
