@@ -5,7 +5,7 @@
 
 by DefaltSimon, made in python with [discord.py api](https://github.com/Rapptz/discord.py) .
 
-###Main features  
+### Main features  
 * "Unique" spam and swearing filter  
 * Fun and useful commands like !roll or !vote with the ability to add custom ones  
 * Game-related commands for TF2, Minecraft, Steam, osu!...  
@@ -15,19 +15,19 @@ by DefaltSimon, made in python with [discord.py api](https://github.com/Rapptz/d
 * Reminders and voting
 * per-server setings
 
-###Invite and help  
+### Invite and help  
   
 Wanna add Nano to your server? Use this magic [invite link](https://discordapp.com/oauth2/authorize?client_id=171632249459048448&scope=bot&permissions=0x510917638)!  
 If you're confused or need help hop on our Discord server - [Nano lounge](https://discord.gg/FZJB6UJ).  
 
 --
   
-###A list of all available commands is available [here](https://github.com/DefaltSimon/Nano/wiki/Commands)  
+### A list of all available commands is available [here](https://github.com/DefaltSimon/Nano/wiki/Commands)  
 
 --  
 
-#####Need a local bot?
+##### Need a local bot?
 Want to run Nano on your computer? Sure, just make sure you follow the **[guide](https://github.com/DefaltSimon/Nano/wiki/Hosting-Nano-yourself)**.  
   
 ---
-######fyi: Nano was formerly named AyyBot
+###### fyi: Nano was formerly named AyyBot
