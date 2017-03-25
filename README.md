@@ -1,6 +1,6 @@
 # Nano
 
-[![Version](https://img.shields.io/badge/version-3.2.0-green.svg)](https://defaltsimon.github.io/Nano/)
+[![Version](https://img.shields.io/badge/version-3.3.3-green.svg)](https://defaltsimon.github.io/Nano/)
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/DefaltSimon/Nano/blob/master/LICENSE)
 
 by DefaltSimon, made in python with [discord.py api](https://github.com/Rapptz/discord.py) .
