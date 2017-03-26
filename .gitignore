@@ -1,3 +1,4 @@
 data/images/Thumbs.db
 plugins/mc/Thumbs.db
-__pycache__/
+__pycache__/*
+.idea/*
