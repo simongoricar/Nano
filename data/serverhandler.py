@@ -108,6 +108,9 @@ class ServerHandler:
 
     # Permission checker
     def has_role(self, user, server, role_name):
+        if isinstance(user, User):
+            return False
+
         for role in user.roles:
             if role.name == role_name:
                 return True
@@ -260,27 +263,22 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
         if server_list:
             for rem_serv in server_list:
                 # self.redis.delete(rem_serv)
-                self.delete_server(server, is_id=True)
+                self.delete_server(server)
 
             log.info("Removed {} old servers.".format(len(server_list)))
 
-    def delete_server(self, server, is_id=False):
-        if is_id:
-            server = int(server)
-        else:
-            server = server.id
+    def delete_server(self, server_id):
+        if self.redis.exists("commands:{}".format(server_id)):
+            self.redis.delete("commands:{}".format(server_id))
 
-        if self.redis.exists("commands:{}".format(server)):
-            self.redis.delete("commands:{}".format(server))
+        if self.redis.exists("blacklist:{}".format(server_id)):
+            self.redis.delete("blacklist:{}".format(server_id))
 
-        if self.redis.exists("blacklist:{}".format(server)):
-            self.redis.delete("blacklist:{}".format(server))
+        if self.redis.exists("mutes:{}".format(server_id)):
+            self.redis.delete("mutes:{}".format(server_id))
 
-        if self.redis.exists("mutes:{}".format(server)):
-            self.redis.delete("mutes:{}".format(server))
-
-        if self.redis.exists("server:{}".format(server)):
-            self.redis.delete("server:{}".format(server))
+        if self.redis.exists("server:{}".format(server_id)):
+            self.redis.delete("server:{}".format(server_id))
             return True
         else:
             return False
@@ -327,7 +325,6 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
         serv = "blacklist:{}".format(server.id)
         return list(decode(self.redis.smembers(serv)))
 
-    # /todo: ADMIN ADDING HAS BEEN REMOVED => document it
     def get_prefix(self, server):
         return decode(self.redis.hget("server:{}".format(server.id), "prefix"))
 

@@ -45,6 +45,7 @@ class StandardEmoji:
     SCREAM = ":scream:"
     CRY = ":sob:"
     EXPRESSIONLESS = ":expressionless:"
+    FROWN2 = ":frowning2:"
     SLEEP = ":sleeping:"
 
     ZIP_MOUTH = ":zipper_mouth:"
