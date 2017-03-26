@@ -4,7 +4,7 @@ import time
 import logging
 import configparser
 import os
-from json import load, JSONDecodeError
+from json import load, dump, JSONDecodeError
 from discord import Message
 from data.utils import threaded, is_valid_command
 from data.stats import MESSAGE, WRONG_ARG
@@ -126,7 +126,9 @@ class Item(object):
 
             d = self._prices.get(str(quality))
 
-            pr = d.get(list(d.keys())[0]).get(list(d.get(list(d.keys())[0]).keys())[0]) # Took me long enough :P
+            # Took me long enough :P
+            # Tradable/Non-Tradable -> Craftable/Non-Craftable -> Priceindex
+            pr = d.get(list(d.keys())[0]).get(list(d.get(list(d.keys())[0]).keys())[0])
 
             try:
                 pr = pr[0]
@@ -167,6 +169,8 @@ class CommunityPrices:
         self.max_age = max_age  # Defaults to 4 hours
         self.success = None
 
+        self.loop = loop
+
         self.is_updating = True
         self.allow_cache = allow_cache
 
@@ -174,7 +178,7 @@ class CommunityPrices:
         self.address = "https://backpack.tf/api/IGetPrices/v4"
 
         # One for read, one for write
-        loop.run_until_complete(self.download_data(allow_cache, allow_cache))
+        loop.create_task(self.download_data(allow_cache, allow_cache))
 
     async def download_data(self, cache_read=True, cache_write=True):
         if await self._download_data(cache_read, cache_write) is False:
@@ -245,7 +249,17 @@ class CommunityPrices:
         async with aiohttp.ClientSession() as session:
             async with session.get(address, params=params) as resp:
                 if resp.status != 200:
-                    logger.warning("Got {} in response".format(resp.status))
+                    if resp.status == 504:
+                        logger.warning("Got 504: Gateway Timeout")
+                        self.loop.call_later(60*10, self._download_data())
+
+                    elif resp.status == 429:
+                        logger.warning("Got 429: Too Many Requests - retrying in 60 s")
+                        self.loop.call_later(60*2, self._download_data())
+
+                    else:
+                        logger.warning("Got {} in response".format(resp.status))
+
                     return None
                 else:
                     return (await resp.json()).get("response")
@@ -258,9 +272,6 @@ class CommunityPrices:
 
     @staticmethod
     def _write_temp(data):
-        from json import dump
-        import os
-
         if not os.path.isdir("cache"):
             os.mkdir("cache")
 
@@ -357,7 +368,7 @@ class TeamFortress:
 
 class NanoPlugin:
     name = "Team Fortress 2"
-    version = "0.2"
+    version = "0.2.1"
 
     handler = TeamFortress
     events = {

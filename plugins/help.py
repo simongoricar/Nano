@@ -60,8 +60,8 @@ valid_commands = commands.keys()
 
 
 async def save_submission(sub):
-    with open("data/submissions.txt", "a") as file:
-        file.write(str(sub) + "\n" + ("-" * 20))
+    with open("data/submissions.txt", "a") as subs:
+        subs.write(str(sub) + "\n" + ("-" * 20))
 
 
 def get_valid_commands(plugin):

@@ -337,9 +337,9 @@ class DevFeatures:
 
                 log_to_file("Forbidden 403. Unknown instance: {}:{}".format(type(args[0]), items))
 
-        elif e_type == errors.HTTPException and str(value).startswith("BAD REQUEST"):
-            log.warning("Bad Request 400")
-            log_to_file("Bad Request 400: {}".format(kwargs.get("text")))
+        #elif e_type == errors.HTTPException and str(value).startswith("BAD REQUEST"):
+        #    log.warning("Bad Request 400")
+        #    log_to_file("Bad Request 400: \nTraceback: {}".format(kwargs))
 
         elif e_type == errors.NotFound:
             log.warning("Not Found 404")

@@ -42,8 +42,8 @@ class NanoModerator:
     def __init__(self):
 
         # Other
-        with open("plugins/banned_words.txt", "r") as file:
-            self.word_list = [line.strip("\n") for line in file.readlines()]
+        with open("plugins/banned_words.txt", "r") as banned:
+            self.word_list = [line.strip("\n") for line in banned.readlines()]
 
         # Gibberish detector
         self.spam_model = load(open("plugins/spam_model.pki", "rb"))

@@ -16,7 +16,7 @@ from data.utils import log_to_file
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '3.4'
+__version__ = '3.4.1'
 
 
 # EVENTS
@@ -111,13 +111,13 @@ class Nano(metaclass=Singleton):
         self.update_plugins()
 
     def update_plugins(self):
-        buff = time.monotonic()
+        start = time.monotonic()
         self.plugin_names = [pl for pl in os.listdir("plugins")
                              if os.path.isfile(os.path.join("plugins", pl)) and str(pl).endswith(".py")]
 
         self._update_plugins(self.plugin_names)
 
-        log.info("Plugins loaded in {}s".format(round(time.monotonic() - buff, 3)))
+        log.info("Plugins loaded in {}s".format(round(time.monotonic() - start, 3)))
 
     def _update_plugins(self, plugin_names):
         """

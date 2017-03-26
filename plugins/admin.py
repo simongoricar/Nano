@@ -281,7 +281,7 @@ class Admin:
             await client.delete_message(m)
 
         # !kick
-        elif startswith(prefix + "kick"):
+        elif startswith(prefix + "kick") and not startswith(prefix + "kickmsg"):
             if not handler.is_mod(message.author, message.server):
                 await client.send_message(message.channel, StandardEmoji.WARNING + not_mod)
                 return "return"
@@ -677,17 +677,20 @@ class Admin:
             except IndexError:
                 return
 
+            if len(cut) != 2:
+                await client.send_message(message.channel, "Incorrect usage, see `_help nano.settings`.".format(prefix))
+                return
+
             if get_decision(cut[0], "logchannel", "log channel", "logging channel"):
                 handler.update_var(message.server.id, "logchannel", cut[1])
-                await client.send_message(message.channel,
-                                          "Log channel set to {} {}".format(cut[1], ":ok_hand:"))
+                await client.send_message(message.channel, "Log channel set to {} {}".format(cut[1], StandardEmoji.PERFECT))
 
                 return
 
             decision = get_decision(cut[1])
 
             try:
-                resp = handler.update_moderation_settings(message.channel.server, cut[0], decision)
+                handler.update_moderation_settings(message.channel.server, cut[0], decision)
             except IndexError:
                 self.stats.add(WRONG_ARG)
                 return
@@ -1014,7 +1017,7 @@ For a list of all commands and their explanations, use `_cmds`.""".replace("_", 
 
 class NanoPlugin:
     name = "Admin Commands"
-    version = "0.2.8"
+    version = "0.2.9"
 
     handler = Admin
     events = {

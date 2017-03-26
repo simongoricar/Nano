@@ -30,6 +30,7 @@ commands = {
     "_prefix": {"desc": "No use whatsoever, but jk here you have it.", "use": None, "alias": None},
     "nano.prefix": {"desc": "Helps you figure out the prefix.", "use": None, "alias": None},
     "_members": {"desc": "Lists all members on the server.", "use": None, "alias": None},
+    "_server": {"desc": "Shows info about current server.", "use": None, "alias": None}
 }
 
 valid_commands = commands.keys()
@@ -53,6 +54,9 @@ class ServerManagement:
             if is_disabled(self.handler.get_var(server.id, "logchannel")):
                 return None
 
+            # Find yourself
+            me = discord.utils.find(lambda bot: bot.id == self.client.user.id, server.members)
+
             # Creates permission overwrites: normal users cannot see the channel,
             # only users with the role "Nano Admin" and the bot
             them = discord.PermissionOverwrite(read_messages=False, send_messages=False, read_message_history=False)
@@ -62,7 +66,8 @@ class ServerManagement:
             admin_role = discord.utils.find(lambda m: m.name == "Nano Admin", server.roles)
 
             them_perms = discord.ChannelPermissions(target=server.default_role, overwrite=them)
-            nano_perms = discord.ChannelPermissions(target=server.me, overwrite=us)
+
+            nano_perms = discord.ChannelPermissions(target=me, overwrite=us)
 
             log_channel_name = self.handler.get_var(server.id, "logchannel")
 
@@ -94,7 +99,6 @@ class ServerManagement:
                     return True
 
             return False
-
 
         # !status
         if startswith(prefix + "status"):
@@ -183,6 +187,7 @@ class ServerManagement:
             helps = file.get("peoplehelped")
             votes = file.get("votesgot")
             pings = file.get("timespinged")
+            imgs = file.get("imagessent")
 
             embed = discord.Embed(colour=discord.Colour.gold())
 
@@ -190,6 +195,7 @@ class ServerManagement:
             embed.add_field(name="Wrong arguments got", value=wrong_args)
             embed.add_field(name="Command abuses tried", value=wrong_permissions)
             embed.add_field(name="People Helped", value=helps)
+            embed.add_field(name="Images sent", value=imgs)
             embed.add_field(name="Votes got", value=votes)
             embed.add_field(name="Times slept", value=sleeps)
             embed.add_field(name="Times Pong!-ed", value=pings)
@@ -218,13 +224,53 @@ class ServerManagement:
             else:
                 await client.send_message(message.channel, members)
 
+        # !server
+        elif startswith(prefix + "server"):
+            user_count = message.server.member_count
+            users_online = len([user.id for user in message.server.members if user.status == user.status.online])
+
+            v_level = message.server.verification_level
+            if v_level == v_level.none:
+                v_level = "None"
+            elif v_level == v_level.low:
+                v_level = "Low"
+            elif v_level == v_level.medium:
+                v_level = "Medium"
+            else:
+                v_level = "High (╯°□°）╯︵ ┻━┻"
+
+            channels = len(message.server.channels)
+            text_chan = len([chan.id for chan in message.server.channels if chan.type == chan.type.text])
+            voice_chan = len([chan.id for chan in message.server.channels if chan.type == chan.type.voice])
+
+            # Teal Blue
+            embed = discord.Embed(colour=discord.Colour(0x3F51B5), description="ID: *{}*".format(message.server.id))
+
+            if message.server.icon:
+                embed.set_author(name=message.server.name, icon_url=message.server.icon_url)
+                embed.set_thumbnail(url=message.server.icon_url)
+            else:
+                embed.set_author(name=message.server.name)
+
+            embed.set_footer(text="Server created at {}".format(message.server.created_at))
+
+            embed.add_field(name="Members [{} total]".format(user_count), value="{} online".format(users_online))
+            embed.add_field(name="Channels [{} total]".format(channels), value="{} voice | {} text".format(voice_chan, text_chan))
+            embed.add_field(name="Verification level", value=v_level)
+            embed.add_field(name="Roles", value="{} custom".format(len(message.server.roles) - 1))
+            embed.add_field(name="Server Owner", value="{}#{} ID:{}".format(message.server.owner.name,
+                                                                            message.server.owner.discriminator,
+                                                                            message.server.owner.id))
+
+            await client.send_message(message.channel, "**Server info:**", embed=embed)
+
     async def on_member_join(self, member, **_):
         assert isinstance(self.handler, (RedisServerHandler, LegacyServerHandler))
 
         replacement_logic = {
             ":user": member.mention,
             ":username": member.name,
-            ":server": member.server.name }
+            ":server": member.server.name}
 
         welcome_msg = str(self.handler.get_var(member.server.id, "welcomemsg"))
 
@@ -242,7 +288,7 @@ class ServerManagement:
             await self.client.send_message(member.server.default_channel, welcome_msg)
 
     async def on_member_ban(self, member, **_):
-        assert isinstance(self.handler, ServerHandler)
+        assert isinstance(self.handler, (RedisServerHandler, ServerHandler))
 
         replacement_logic = {
             ":user": member.mention,
@@ -264,7 +310,7 @@ class ServerManagement:
             await self.client.send_message(member.server.default_channel, ban_msg)
 
     async def on_member_remove(self, member, **_):
-        assert isinstance(self.handler, ServerHandler)
+        assert isinstance(self.handler, (RedisServerHandler, ServerHandler))
 
         replacement_logic = {
             ":user": member.mention,
@@ -322,7 +368,7 @@ class ServerManagement:
 
 class NanoPlugin:
     name = "Moderator"
-    version = "0.2.6"
+    version = "0.3"
 
     handler = ServerManagement
     events = {

@@ -2,7 +2,7 @@
 import aiohttp
 import logging
 from discord import Client, Message
-from data.stats import MESSAGE
+from data.stats import MESSAGE, WRONG_ARG, IMAGE_SENT
 from data.utils import is_valid_command
 
 log = logging.getLogger(__name__)
@@ -33,7 +33,7 @@ class McItems:
         log.info("Requesting JSON data from minecraft-ids")
         async with aiohttp.ClientSession() as session:
             async with session.get(McItems.url) as resp:
-                self.data = await resp.text()
+                self.data = await resp.json()
 
     def id_to_data(self, num):
         if len(str(num).split(":")) > 1:
@@ -204,16 +204,21 @@ class Minecraft:
 
             if not data:
                 await client.send_message(message.channel, "**No item with that name/id**")
-                # stat.pluswrongarg()
+                self.stats.add(WRONG_ARG)
                 return
 
             if not isinstance(data, list):
                 details = "**{}**```css\nId: {}:{}```".format(data.get("name"), data.get("type"), data.get("meta"))
 
                 # Details are uploaded simultaneously with the picture
-                with open("plugins/mc/{}-{}.png".format(data.get("type"), data.get("meta") or 0), "rb") as pic:
-                    await client.send_file(message.channel, pic, content=details)
-                    # stat.plusimagesent()
+                try:
+                    with open("plugins/mc/{}-{}.png".format(data.get("type"), data.get("meta") or 0), "rb") as pic:
+                        await client.send_file(message.channel, pic, content=details)
+                        self.stats.add(IMAGE_SENT)
+                except FileNotFoundError:
+                    await client.send_message(message.channel, details)
+                    self.stats.add(IMAGE_SENT)
+
             else:
                 combined = []
                 for item in data:
@@ -225,7 +230,7 @@ class Minecraft:
 
 class NanoPlugin:
     name = "Minecraft Commands"
-    version = 0.1
+    version = "0.1.1"
 
     handler = Minecraft
     events = {

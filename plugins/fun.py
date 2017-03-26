@@ -45,7 +45,7 @@ class MemeGenerator:
         self.meme_list = []
         self.meme_name_id_pairs = {}
 
-        asyncio.ensure_future(self.prepare())
+        loop.create_task(self.prepare())
 
     async def prepare(self):
         raw = await self.get_memes()

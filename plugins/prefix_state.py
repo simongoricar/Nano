@@ -92,7 +92,7 @@ class PrefixState:
 
         # Add prefix to kwargs for future plugins
         pref = self.handler.get_prefix(message.channel.server)
-        if not pref:
+        if pref is None:
             pref = DEFAULT_PREFIX
 
         return "add_var", dict(prefix=pref)

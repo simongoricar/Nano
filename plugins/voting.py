@@ -160,10 +160,17 @@ class RedisVoteHandler:
         voters = self.json.loads(self.redis.hget(server.id, "voters"))
         vote_counts = self.json.loads(self.redis.hget(server.id, "votes"))
 
+        try:
+            choice_name = self.json.loads(self.redis.hget(server.id, "choices"))[option]
+        except IndexError:
+            return False
+
         voters.append(voter)
 
         try:
-            vote_counts[option] += 1
+            vote_counts[choice_name] += 1
+            self.redis.hset(server.id, "votes", self.json.dumps(vote_counts))
+            self.redis.hset(server.id, "voters", self.json.dumps(voters))
         except KeyError:
             return False
 
@@ -288,19 +295,14 @@ class Vote:
 
             votes = self.vote.get_votes(message.server.id)
             title = self.vote.get_vote_title(message.server.id)
-            content = self.vote.get_choices(message.server.id)
 
             # Actually end the voting
             self.vote.end_voting(message.server)
 
-            # Put results together
-            cn = ["{} - `{} votes`".format(a, votes[a]) for a in content]
-
             embed = Embed(title=title, colour=Colour(0x303F9F), description="(In total, {} people voted)".format(sum(votes.values())))
             embed.set_footer(text="Voting ended")
 
-            print(votes)
-            for name, val in votes:
+            for name, val in votes.items():
                 embed.add_field(name=name, value="{} votes".format(val))
 
             await client.send_message(message.channel, "Vote ended:", embed=embed)
@@ -338,7 +340,7 @@ class Vote:
                 await client.delete_message(m)
                 return
 
-            if (not choice) or (not self.vote.in_progress(message.channel.server)):
+            if not choice:
                 return
 
             res = self.vote.plus_one(choice, message.author.id, message.channel.server)
@@ -353,6 +355,12 @@ class Vote:
                 msg = await client.send_message(message.channel, StandardEmoji.PERFECT)
 
                 await asyncio.sleep(1.5)
+                await client.delete_message(msg)
+
+            else:
+                msg = await client.send_message(message.channel, "Something went wrong... " + StandardEmoji.FROWN2)
+
+                await asyncio.sleep(1)
                 await client.delete_message(msg)
 
             self.stats.add(VOTE)
@@ -376,7 +384,7 @@ class Vote:
 
 class NanoPlugin:
     name = "Voting"
-    version = "0.2.post3"
+    version = "0.2.4"
 
     handler = Vote
     events = {

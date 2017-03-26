@@ -160,8 +160,8 @@ class ImdbSearch:
         self.lock()
         if not os.path.isdir("cache"): os.mkdir("cache")
 
-        with open("cache/imdb.cache", "wb") as file:
-            dump(data, file)
+        with open("cache/imdb.cache", "wb") as cache:
+            dump(data, cache)
         self.release()
 
     def _clean_cache(self):

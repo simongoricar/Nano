@@ -1,3 +1,7 @@
+3.4.1
+- New command: !server - displays server info
+- Bugfixes
+
 3.4
 - New: Redis support!
 - Ability to convert old data to the new system
