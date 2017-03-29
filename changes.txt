@@ -1,3 +1,6 @@
+3.4.2
+- Bugfixes
+
 3.4.1
 - New command: !server - displays server info
 - Bugfixes

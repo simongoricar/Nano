@@ -53,10 +53,6 @@ commands = {
     "_leavemsg": {"desc": "Sets the message sent when a member leaves the server.\nFormatting: ':user' = user name", "use": "[command] [content]", "alias": None},
     "_nuke": {"desc": "Nukes (deletes) last x messages.", "use": None, "alias": None},
 
-    "nano.admins add": {"desc": "Adds a user to admins on the server.", "use": "[command] [mention]", "alias": None},
-    "nano.admins remove": {"desc": "Removes a user from admins on the server.", "use": "[command] [mention]", "alias": None},
-    "nano.admins list": {"desc": "Lists all admins on the server.", "use": None, "alias": None},
-
     "nano.blacklist add": {"desc": "Adds a channel to command blacklist.", "use": "[command] [channel name]", "alias": None},
     "nano.blacklist remove": {"desc": "Removes a channel from command blacklist", "use": "[command] [channel name]", "alias": None},
     # /todo add to documentation

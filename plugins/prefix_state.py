@@ -1,7 +1,7 @@
 # coding=utf-8
 import logging
 import configparser
-from discord import Message
+from discord import Message, Member
 from data.serverhandler import RedisServerHandler, LegacyServerHandler
 from data.utils import StandardEmoji
 from data.stats import SLEPT
@@ -94,6 +94,15 @@ class PrefixState:
         pref = self.handler.get_prefix(message.channel.server)
         if pref is None:
             pref = DEFAULT_PREFIX
+
+        if not isinstance(message.author, Member):
+            user = message.server.get_member(message.author.id)
+
+            if user:
+                # Sometimes monkeypatching is needed
+                message.author = user
+                return [("add_var", dict(prefix=pref)),
+                        ("set_arg", {0: message})]
 
         return "add_var", dict(prefix=pref)
 

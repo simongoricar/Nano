@@ -16,7 +16,7 @@ from data.utils import log_to_file
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '3.4.1'
+__version__ = '3.4.2'
 
 
 # EVENTS
@@ -306,36 +306,56 @@ class Nano(metaclass=Singleton):
 
             # COMMUNICATION
             # If data is passed, assign proper variables
-            if isinstance(resp, tuple):
-                var_addons = resp[1:]
-                resp = str(resp[0])
+            if not resp:
+                continue
 
-            else:
-                var_addons = list()
+            if type(resp) is not list:
+                resp = [resp]
 
-            # Makes communication between the core and plugins possible
-            if resp == "return":
-                log.debug("Exiting")
-                return
-
-            elif resp == "add_var":
-                # Add/Set new kwargs
-                if isinstance(var_addons, tuple):
-                    for k, v in var_addons[0].items():
-                        kwargs[k] = v
+            for cmd in resp:
+                if isinstance(cmd, tuple):
+                    var_addons = cmd[1:]
+                    cmd = str(cmd[0])
 
                 else:
-                    for k, v in var_addons.items():
-                        kwargs[k] = v
+                    var_addons = list()
 
-            elif resp == "shutdown":
-                try:
-                    await self.dispatch_event(ON_SHUTDOWN)
+                # Makes communication between the core and plugins possible
+                if cmd == "return":
+                    log.debug("Exiting")
+                    return
 
-                finally:
-                    # Sys.exit is usually handled by developer.py in the ON_SHUTDOWN event,
-                    # but it does not hurt to have it here as well.
-                    sys.exit(0)
+                elif cmd == "add_var":
+                    # Add/Set new kwargs
+                    if isinstance(var_addons, tuple):
+                        for k, v in var_addons[0].items():
+                            kwargs[k] = v
+
+                    else:
+                        for k, v in var_addons.items():
+                            kwargs[k] = v
+
+                elif cmd == "set_arg":
+                    if isinstance(var_addons, tuple):
+                        for k, v in var_addons[0].items():
+                            temp = [a for a in args]
+                            temp[k] = v
+                            args = tuple(b for b in temp)
+
+                    else:
+                        for k, v in var_addons.items():
+                            temp = [a for a in args]
+                            temp[k] = v
+                            args = tuple(b for b in temp)
+
+                elif cmd == "shutdown":
+                    try:
+                        await self.dispatch_event(ON_SHUTDOWN)
+
+                    finally:
+                        # Sys.exit is usually handled by developer.py in the ON_SHUTDOWN event,
+                        # but it does not hurt to have it here as well.
+                        sys.exit(0)
 
 
 nano = Nano()

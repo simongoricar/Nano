@@ -276,3 +276,8 @@ def decode_auto(some):
 
 def gen_id(length=38):
     return int(str(uuid.uuid4().int)[:length])
+
+
+def chunks(item, n):
+    for i in range(0, len(item), n):
+        yield item[i:i + n]

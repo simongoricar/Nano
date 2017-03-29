@@ -108,7 +108,7 @@ class ServerHandler:
 
     # Permission checker
     def has_role(self, user, server, role_name):
-        if isinstance(user, User):
+        if not isinstance(user, Member):
             return False
 
         for role in user.roles:
@@ -136,8 +136,7 @@ class ServerHandler:
         return self.has_role(user, server, "Nano Admin")
 
     def is_mod(self, user, server):
-        return self.has_role(user, server, "Nano Mod") or self.is_bot_owner(user.id) or self.is_server_owner(
-            user.id, server)
+        return self.has_role(user, server, "Nano Mod") or self.is_bot_owner(user.id) or self.is_server_owner(user.id, server)
 
 
 # Everything regarding RedisServerHandler below

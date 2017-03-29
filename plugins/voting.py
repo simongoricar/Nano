@@ -165,7 +165,10 @@ class RedisVoteHandler:
         except IndexError:
             return False
 
-        voters.append(voter)
+        if voter not in voters:
+            voters.append(voter)
+        else:
+            return -1
 
         try:
             vote_counts[choice_name] += 1
