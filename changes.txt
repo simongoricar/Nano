@@ -1,3 +1,6 @@
+3.4.3
+- More bugfixes ¯\_(ツ)_/¯
+
 3.4.2
 - Bugfixes
 

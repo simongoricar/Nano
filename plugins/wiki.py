@@ -93,12 +93,13 @@ class Definitions:
                 await client.send_message(message.channel, "No definition found")
 
             else:
-                await client.send_message(message.channel, "**" + message.content[7:] + "** *:*" + answer)
+                content = "**{}** *:* {}".format(message.content[7:], answer)
+                await client.send_message(message.channel, content)
 
 
 class NanoPlugin:
     name = "Wiki/Urban Commands"
-    version = "0.1.1"
+    version = "0.1.2"
 
     handler = Definitions
     events = {

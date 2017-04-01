@@ -3,8 +3,7 @@ import asyncio
 import logging
 import time
 import datetime
-from aiohttp import errors as aiohttp_errors
-from discord import Message, utils, Client, Embed, Colour, DiscordException, HTTPException, Object
+from discord import Message, utils, Client, Embed, Colour, DiscordException, HTTPException, Object, errors as derrors
 from data.serverhandler import LegacyServerHandler, RedisServerHandler, INVITEFILTER_SETTING, SPAMFILTER_SETTING, WORDFILTER_SETTING
 from data.stats import WRONG_ARG
 from data.utils import convert_to_seconds, get_decision, is_valid_command, StandardEmoji, decode
@@ -51,11 +50,10 @@ commands = {
     "_banmsg": {"desc": "Sets the message sent when a member is banned.\nFormatting: ':user' = user name", "use": "[command] [content]", "alias": None},
     "_kickmsg": {"desc": "Sets the message sent when a member is kicked.\nFormatting: ':user' = user name", "use": "[command] [content]", "alias": None},
     "_leavemsg": {"desc": "Sets the message sent when a member leaves the server.\nFormatting: ':user' = user name", "use": "[command] [content]", "alias": None},
-    "_nuke": {"desc": "Nukes (deletes) last x messages.", "use": None, "alias": None},
+    "_nuke": {"desc": "Nukes (deletes) last x messages. (keep in mind that you can only nuke messages up to 2 weeks old)", "use": None, "alias": None},
 
     "nano.blacklist add": {"desc": "Adds a channel to command blacklist.", "use": "[command] [channel name]", "alias": None},
     "nano.blacklist remove": {"desc": "Removes a channel from command blacklist", "use": "[command] [channel name]", "alias": None},
-    # /todo add to documentation
     "nano.blacklist list": {"desc": "Shows all blacklisted channels on this server", "use": "[command]", "alias": None},
 
     "nano.settings": {"desc": "Sets server settings like word, spam and invite filtering and changes log channel.", "use": "[command] [setting] True/False", "alias": None},
@@ -125,7 +123,7 @@ class LegacySoftBanScheduler:
         try:
             logger.debug("Dispatching")
             await self.client.unban(reminder.get("server"), reminder.get("member"))
-        except (DiscordException, aiohttp_errors.DisconnectedError):
+        except DiscordException:
             pass
 
     async def start_monitoring(self):
@@ -195,7 +193,7 @@ class RedisSoftBanScheduler:
         try:
             logger.debug("Dispatching")
             await self.client.unban(Object(id=reminder.get("server")), Object(id=reminder.get("member")))
-        except (DiscordException, aiohttp_errors.DisconnectedError) as e:
+        except DiscordException as e:
             logger.warning(e)
 
     async def start_monitoring(self):
@@ -268,10 +266,17 @@ class Admin:
             await client.delete_message(message)
 
             await client.send_message(message.channel, "Purging last {} messages... :boom:".format(amount - 1))
-            await client.purge_from(message.channel, limit=amount)
+
+
+            additional = ""
+
+            try:
+                await client.purge_from(message.channel, limit=amount)
+            except derrors.HTTPException:
+                additional = "(some mesages were older than 2 weeks, so they were not deleted)"
 
             # Show success
-            m = await client.send_message(message.channel, "Purged {} messages {}".format(StandardEmoji.OK, amount - 1))
+            m = await client.send_message(message.channel, "Purged {} messages {} {}".format(StandardEmoji.OK, amount - 1, additional))
             # Wait 1.5 sec and delete the message
             await asyncio.sleep(1.5)
             await client.delete_message(m)
@@ -541,7 +546,7 @@ class Admin:
 
             # Branching
 
-            if startswith(prefix + "role " + "add "):
+            if startswith(prefix + "role add "):
                 a_role = str(message.content[len(prefix + "role add "):]).split("<")[0].strip()
                 role = utils.find(lambda r: r.name == a_role, message.channel.server.roles)
 
@@ -568,7 +573,7 @@ class Admin:
                 await client.remove_roles(user, role)
                 await client.send_message(message.channel, "Done " + StandardEmoji.OK)
 
-            elif startswith(prefix + "role " + "replaceall "):
+            elif startswith(prefix + "role replaceall "):
                 a_role = str(message.content[len(prefix + "role replaceall "):]).split("<")[0].strip()
                 role = utils.find(lambda r: r.name == a_role, message.channel.server.roles)
 
@@ -677,9 +682,22 @@ class Admin:
                 await client.send_message(message.channel, "Incorrect usage, see `_help nano.settings`.".format(prefix))
                 return
 
-            if get_decision(cut[0], "logchannel", "log channel", "logging channel"):
-                handler.update_var(message.server.id, "logchannel", cut[1])
-                await client.send_message(message.channel, "Log channel set to {} {}".format(cut[1], StandardEmoji.PERFECT))
+            if get_decision(cut[0], "logchannel", "log channel"):
+                chan_id = cut[1].replace("<#", "").replace(">", "")
+
+                chan = utils.find(lambda a: a.id == chan_id, message.server.channels)
+
+                if not chan:
+                    await client.send_message(message.channel, "Not a channel.")
+                    return
+
+                if chan.type == chan.type.voice:
+                    await client.send_message(message.channel, "Log channel cannot be a voice channel! Nice try :smile:")
+                    return
+
+
+                handler.update_var(message.server.id, "logchannel", chan_id)
+                await client.send_message(message.channel, "Log channel set to **{}** {}".format(chan.name, StandardEmoji.PERFECT))
 
                 return
 
@@ -789,10 +807,10 @@ Messages:
                         self.stats.add(WRONG_ARG)
                         return
 
-                    channel = utils.find(lambda ch: ch.id == ch_id, message.server.channels)
+                    channel = utils.find(lambda chan: chan.id == ch_id, message.server.channels)
 
                 else:
-                    channel = utils.find(lambda ch: ch.name == name, message.server.channels)
+                    channel = utils.find(lambda chan: chan.name == name, message.server.channels)
 
                 if not channel:
                     await client.send_message(message.channel, CHANNEL_NOT_FOUND)
@@ -1013,7 +1031,7 @@ For a list of all commands and their explanations, use `_cmds`.""".replace("_", 
 
 class NanoPlugin:
     name = "Admin Commands"
-    version = "0.2.9"
+    version = "0.2.10"
 
     handler = Admin
     events = {

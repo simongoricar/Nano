@@ -16,7 +16,7 @@ from data.utils import log_to_file
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '3.4.2'
+__version__ = '3.4.3'
 
 
 # EVENTS
@@ -111,13 +111,13 @@ class Nano(metaclass=Singleton):
         self.update_plugins()
 
     def update_plugins(self):
-        start = time.monotonic()
+        started = time.monotonic()
         self.plugin_names = [pl for pl in os.listdir("plugins")
                              if os.path.isfile(os.path.join("plugins", pl)) and str(pl).endswith(".py")]
 
         self._update_plugins(self.plugin_names)
 
-        log.info("Plugins loaded in {}s".format(round(time.monotonic() - start, 3)))
+        log.info("Plugins loaded in {}s".format(round(time.monotonic() - started, 3)))
 
     def _update_plugins(self, plugin_names):
         """
@@ -145,7 +145,7 @@ class Nano(metaclass=Singleton):
                 if hasattr(plug.NanoPlugin, "disabled"):
                     assert plug.NanoPlugin.disabled is False
 
-            except (AttributeError, AssertionError) as e:
+            except (AttributeError, AssertionError):
                 # remove it from the plugin list and delete it
                 self.plugin_names.pop(self.plugin_names.index(plugin))
                 ignored.append(plugin)
@@ -227,11 +227,10 @@ class Nano(metaclass=Singleton):
             if hasattr(c_plug.NanoPlugin, "disabled"):
                 assert c_plug.NanoPlugin.disabled is False
 
-        except (AttributeError, AssertionError) as e:
+        except (AttributeError, AssertionError):
             # remove it from the plugin list and delete it
             self.plugin_names.pop(self.plugin_names.index(plugin))
-            ignored.append(plugin)
-            del plug
+            del c_plug
 
         cls = c_plug.NanoPlugin.handler
         events = c_plug.NanoPlugin.events
@@ -246,15 +245,13 @@ class Nano(metaclass=Singleton):
 
         except RuntimeError:
             self.plugin_names.pop(self.plugin_names.index(plugin))
-            ignored.append(plugin)
-            del instance
-            del plug
+            del c_plug
+            return False
         except Exception as e:
             log.warning("Unexpected error in {}: {}".format(plugin, e))
             self.plugin_names.pop(self.plugin_names.index(plugin))
-            failed.append(plugin)
-            del instance
-            del plug
+            del c_plug
+            return False
 
         self.plugins[plugin] = {
             "plugin": c_plug,

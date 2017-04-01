@@ -1,6 +1,7 @@
 # coding=utf-8
 import aiohttp
 import logging
+from json import loads, JSONDecodeError
 from discord import Client, Message
 from data.stats import MESSAGE, WRONG_ARG, IMAGE_SENT
 from data.utils import is_valid_command
@@ -30,10 +31,16 @@ class McItems:
         loop.run_until_complete(self.request_data())
 
     async def request_data(self):
-        log.info("Requesting JSON data from minecraft-ids")
+        log.info("Requesting JSON data from minecraft-ids.grahamedgecombe.com")
         async with aiohttp.ClientSession() as session:
             async with session.get(McItems.url) as resp:
-                self.data = await resp.json()
+                raw_data = await resp.text()
+
+                try:
+                    self.data = loads(raw_data)
+                except JSONDecodeError as e:
+                    log.critical("Could not load JSON: {}".format(e))
+
 
     def id_to_data(self, num):
         if len(str(num).split(":")) > 1:

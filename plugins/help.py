@@ -113,7 +113,7 @@ class Help:
 
         # !help and @Nanos
         if message.content.strip(" ") == (prefix + "help"):
-            await client.send_message(message.channel, help_nano.replace(">", prefix))
+            await client.send_message(message.channel, help_nano.replace("_", prefix))
 
             self.stats.add(HELP)
 
@@ -121,7 +121,7 @@ class Help:
         elif self.client.user in message.mentions:
             un_mentioned = str(message.content[21:])
             if un_mentioned == "" or un_mentioned == " ":
-                await client.send_message(message.channel, help_nano.replace(">", prefix))
+                await client.send_message(message.channel, help_nano.replace("_", prefix))
 
             self.stats.add(HELP)
 
@@ -134,7 +134,7 @@ class Help:
 
         # !help simple
         elif startswith(prefix + "help simple"):
-            await client.send_message(message.channel, help_simple.replace(">", prefix))
+            await client.send_message(message.channel, help_simple.replace("_", prefix))
 
             self.stats.add(HELP)
 
@@ -249,7 +249,7 @@ class Help:
 
 class NanoPlugin:
     name = "Help Commands"
-    version = "0.2.4"
+    version = "0.2.5"
 
     handler = Help
     events = {

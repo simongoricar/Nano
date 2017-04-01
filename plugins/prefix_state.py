@@ -93,7 +93,7 @@ class PrefixState:
         # Add prefix to kwargs for future plugins
         pref = self.handler.get_prefix(message.channel.server)
         if pref is None:
-            pref = DEFAULT_PREFIX
+            pref = str(DEFAULT_PREFIX)
 
         if not isinstance(message.author, Member):
             user = message.server.get_member(message.author.id)

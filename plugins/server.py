@@ -55,7 +55,7 @@ class ServerManagement:
                 return None
 
             # Find yourself
-            me = discord.utils.find(lambda bot: bot.id == self.client.user.id, server.members)
+            me = server.get_member(self.client.user.id)
 
             # Creates permission overwrites: normal users cannot see the channel,
             # only users with the role "Nano Admin" and the bot
@@ -368,7 +368,7 @@ class ServerManagement:
 
 class NanoPlugin:
     name = "Moderator"
-    version = "0.3"
+    version = "0.3.1"
 
     handler = ServerManagement
     events = {
