@@ -6,7 +6,7 @@ import datetime
 from discord import Message, utils, Client, Embed, Colour, DiscordException, HTTPException, Object, errors as derrors
 from data.serverhandler import LegacyServerHandler, RedisServerHandler, INVITEFILTER_SETTING, SPAMFILTER_SETTING, WORDFILTER_SETTING
 from data.stats import WRONG_ARG
-from data.utils import convert_to_seconds, get_decision, is_valid_command, StandardEmoji, decode
+from data.utils import convert_to_seconds, get_decision, is_valid_command, StandardEmoji, decode, resolve_time
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -30,9 +30,8 @@ commands = {
     "_kick": {"desc": "Kicks a member.", "use": "[command] [mention]", "alias": "nano.kick"},
     "nano.kick": {"desc": "Kicks a member", "use": "[command] [mention]", "alias": "_kick"},
     "_unban": {"desc": "Unbans a member.", "use": "[command] [mention]", "alias": "nano.unban"},
-    "nano.unban": {"desc": "Unbans a member.", "use": "[command] [mention]", "alias": "_unban"}, "_softban": {"desc": "Temporarily bans a member (for time formatting see reminders)", "use": "[command] [time] @mention", "alias": "nano.softban"},
-    "nano.softban": {"desc": "Temporarily bans a member (for time formatting see reminders)", "use": "[command] [time] @mention", "alias": "_softban"},
-
+    "nano.unban": {"desc": "Unbans a member.", "use": "[command] [mention]", "alias": "_unban"},
+    "_softban": {"desc": "Temporarily bans a member (for time formatting see reminders)", "use": "[command] [time]|@mention", "alias": None},
     "_cmd add": {"desc": "Adds a command to the server.", "use": "[command] command|response", "alias": None},
     "_cmd remove": {"desc": "Removes a command from the server.", "use": "[command] command", "alias": None},
     "_cmd status": {"desc": "Displays how many commands you have and how many more you can register.", "use": "[command] command", "alias": None},
@@ -167,7 +166,11 @@ class RedisSoftBanScheduler:
     def set_softban(self, server, user, tim):
         t = time.time()
 
-        tim = convert_to_seconds(tim)
+        if not str(tim).isdigit():
+            tim = convert_to_seconds(tim)
+        else:
+            tim = int(tim)
+
         if not (5 <= tim < 172800):  # 5 sec to 2 days
             return False
 
@@ -264,9 +267,7 @@ class Admin:
                 return
 
             await client.delete_message(message)
-
             await client.send_message(message.channel, "Purging last {} messages... :boom:".format(amount - 1))
-
 
             additional = ""
 
@@ -354,24 +355,31 @@ class Admin:
             await client.unban(message.server, user)
             await client.send_message(message.channel, "**{}** has been unbanned.".format(user.name))
 
-        # !softban
+        # !softban [time]|@mention
         elif startswith(prefix + "softban"):
             if not handler.is_mod(message.author, message.server):
                 await client.send_message(message.channel, StandardEmoji.WARNING + not_mod)
                 return "return"
 
-            if len(message.mentions) == 0:
-                await client.send_message(message.channel, "Please mention the member you want to softban.")
+            if 0 >= len(message.mentions) >= 2:
+                await client.send_message(message.channel, "Please mention the member you want to softban. (only one)")
                 return
 
             user = message.mentions[0]
-            tim = message.content[len(prefix + "softban "):].replace("<@{}>".format(user.id), "").strip()
+            tim = str(message.content[len(prefix + "softban "):])
 
+            if tim.find("|") != -1:
+                tim = tim[:tim.find("|")].strip(" ")
+            else:
+                await client.send_message(message.channel, "Please delimit time and @mention with |")
+                return
+
+            parsed_time = convert_to_seconds(tim)
+
+            self.timer.set_softban(message.channel.server, user, parsed_time)
             await client.ban(user, delete_message_days=0)
 
-            self.timer.set_softban(message.channel.server, user, tim)
-
-            await client.send_message(message.channel, "{} has been softbanned.".format(user.name))
+            await client.send_message(message.channel, "{} has been softbanned for: {}".format(user.name, resolve_time(parsed_time)))
 
         # !mute list
         elif startswith(prefix + "mute list"):
@@ -694,7 +702,6 @@ class Admin:
                 if chan.type == chan.type.voice:
                     await client.send_message(message.channel, "Log channel cannot be a voice channel! Nice try :smile:")
                     return
-
 
                 handler.update_var(message.server.id, "logchannel", chan_id)
                 await client.send_message(message.channel, "Log channel set to **{}** {}".format(chan.name, StandardEmoji.PERFECT))

@@ -49,7 +49,7 @@ class ServerManagement:
 
     async def handle_log_channel(self, server):
         # Check if the channel already exists
-        if not [ch for ch in server.channels if ch.name == self.handler.get_var(server.id, "logchannel")]:
+        if not [ch for ch in server.channels if ch.id == self.handler.get_var(server.id, "logchannel")]:
 
             if is_disabled(self.handler.get_var(server.id, "logchannel")):
                 return None
@@ -80,7 +80,7 @@ class ServerManagement:
                 return await self.client.create_channel(server, log_channel_name, them_perms, nano_perms)
 
         else:
-            return discord.utils.find(lambda m: m.name == self.handler.get_var(server.id, "logchannel"), server.channels)
+            return discord.utils.find(lambda m: m.id == self.handler.get_var(server.id, "logchannel"), server.channels)
 
     async def on_message(self, message, **kwargs):
         assert isinstance(message, discord.Message)
