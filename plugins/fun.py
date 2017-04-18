@@ -20,7 +20,6 @@ simple_commands = {
 }
 
 commands = {
-    "_cat": {"desc": "I love cats. And this is a gif of a cat.", "use": None, "alias": None},
     "_kappa": {"desc": "I couldn't resist it.", "use": None, "alias": None},
     "_rip": {"desc": "Rest in peperoni, man.", "use": "[command] [mention]", "alias": None},
     "ayy lmao": {"desc": "Yes, it's the ayy lmao meme.", "use": None, "alias": None},
@@ -148,11 +147,6 @@ class Fun:
 
             self.stats.add(IMAGE_SENT)
 
-        elif startswith(prefix + "cat"):
-            await client.send_file(message.channel, "data/images/cattypo.gif")
-
-            self.stats.add(IMAGE_SENT)
-
         elif startswith(prefix + "randomgif"):
             # Check if giphy is enabled
             if not self.giphy_enabled:
@@ -212,7 +206,7 @@ class Fun:
 
 class NanoPlugin:
     name = "Admin Commands"
-    version = 0.1
+    version = "0.1.1"
 
     handler = Fun
     events = {

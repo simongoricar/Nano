@@ -6,7 +6,7 @@ import aiohttp
 from discord import Message
 from bs4 import BeautifulSoup
 from data.stats import MESSAGE
-from data.utils import is_valid_command
+from data.utils import is_valid_command, StandardEmoji
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -93,13 +93,18 @@ class Definitions:
                 await client.send_message(message.channel, "No definition found")
 
             else:
-                content = "**{}** *:* {}".format(message.content[7:], answer)
+
+                if (len(answer) + len(search)) > 1900:
+                    await client.send_message(message.channel, StandardEmoji.WARNING + "Definition is too long!")
+                    return
+
+                content = "**{}** *:* {}".format(search, answer)
                 await client.send_message(message.channel, content)
 
 
 class NanoPlugin:
     name = "Wiki/Urban Commands"
-    version = "0.1.2"
+    version = "0.1.3"
 
     handler = Definitions
     events = {

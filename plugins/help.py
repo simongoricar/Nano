@@ -13,7 +13,7 @@ help_nano = """**Hey, I'm Nano!**
 To get familiar with simple commands, type `>help simple`.
 If you want specific info about a command, do `>help [command]`.
 
-Or you could just simply take a look at the wiki page: https://github.com/DefaltSimon/Nano/wiki/Commands
+Or you could just simply take a look at the wiki page: http://nanobot.pw/commands
 If you are an admin/server owner and want to set up your server for Nano, type `>setup`.
 It is highly recommended that you join the "official" Nano server for announcements and help : https://discord.gg/FZJB6UJ
 """
@@ -113,7 +113,7 @@ class Help:
 
         # !help and @Nanos
         if message.content.strip(" ") == (prefix + "help"):
-            await client.send_message(message.channel, help_nano.replace("_", prefix))
+            await client.send_message(message.channel, help_nano.replace(">", prefix))
 
             self.stats.add(HELP)
 
@@ -121,14 +121,14 @@ class Help:
         elif self.client.user in message.mentions:
             un_mentioned = str(message.content[21:])
             if un_mentioned == "" or un_mentioned == " ":
-                await client.send_message(message.channel, help_nano.replace("_", prefix))
+                await client.send_message(message.channel, help_nano.replace(">", prefix))
 
             self.stats.add(HELP)
 
         # !cmds or !commands
         elif startswith(prefix + "cmds", prefix + "commands"):
             await client.send_message(message.channel, "Commands and their explanations can be found here: "
-                                                       "https://github.com/DefaltSimon/Nano/wiki/Commands")
+                                                       "http://nanobot.pw/commands")
 
             self.stats.add(HELP)
 

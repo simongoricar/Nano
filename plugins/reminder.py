@@ -272,7 +272,7 @@ class RedisReminderHandler:
                 "time_target": int(tim + t), "author": author.id, "raw": raw, "type": reminder_type}
         field = self.json.dumps(tree)
 
-        print("New reminder: {} to {}".format(raw, channel.id))
+        log.info("New reminder: {} to {}".format(raw, channel.id))
 
         return self.redis.hset(author.id, rm_id, field)
 

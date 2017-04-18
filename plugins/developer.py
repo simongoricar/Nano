@@ -265,6 +265,16 @@ class DevFeatures:
         elif startswith("nano.dev.servers.clean"):
             self.handler.delete_server_by_list([s.id for s in self.client.servers])
 
+        elif startswith("nano.dev.server.leave"):
+            name = str(message.content)[len("nano.dev.server.leave "):]
+            serv = utils.find(lambda a: a.name == name, client.servers)
+
+            if not serv:
+                await client.send_messsage(message.channel, "Could not leave server: does not exist")
+            else:
+                await client.leave_server(serv)
+                await client.send_message(message.channel, StandardEmoji.PERFECT + " Left {} ({})".format(serv.name, serv.id))
+
         # nano.reload
         elif startswith("nano.reload"):
             self.handler.reload()

@@ -27,6 +27,8 @@ IN_PROGRESS = StandardEmoji.WARNING + " A vote is already in progress."
 VOTE_ITEM_LIMIT = 10
 VOTE_ITEM_MAX_LENGTH = 800
 
+OK_EMOJI = "\U0001F44D"
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
@@ -336,7 +338,7 @@ class Vote:
 
             # Get the choice, but tell the author if he/she didn't supply a number
             try:
-                choice = int(message.content[len(prefix + "vote "):])
+                choice = int(message.content[len(prefix + "vote "):]) - 1
             except ValueError:
                 m = await client.send_message(message.channel, "Vote argument must be a number.")
                 await asyncio.sleep(1.5)
@@ -355,10 +357,7 @@ class Vote:
                 await client.delete_message(msg)
 
             elif res:
-                msg = await client.send_message(message.channel, StandardEmoji.PERFECT)
-
-                await asyncio.sleep(1.5)
-                await client.delete_message(msg)
+                await client.add_reaction(message, OK_EMOJI)
 
             else:
                 msg = await client.send_message(message.channel, "Something went wrong... " + StandardEmoji.FROWN2)

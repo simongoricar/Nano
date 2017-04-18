@@ -2,7 +2,7 @@
 import logging
 # External library available here: https://github.com/DefaltSimon/OMDbie
 import omdbie
-from discord import Message
+from discord import Message, errors
 from data.utils import is_valid_command
 from data.stats import MESSAGE
 
@@ -60,7 +60,6 @@ class IMDB:
             if startswith((prefix + "imdb plot"), (prefix + "omdb plot")):
                 search = str(message.content[len(prefix + "imdb plot "):])
 
-                # /todo get
                 data = await self.omdb.by_title_or_id(search, plot=omdbie.PlotLength.full)
 
                 if not data:
@@ -72,7 +71,6 @@ class IMDB:
             elif startswith(prefix + "imdb search"):
                 search = str(message.content[len(prefix + "imdb search "):])
 
-                # /todo get
                 data = await self.omdb.by_title_or_id(search, plot=omdbie.PlotLength.full)
 
                 if not data:
@@ -90,7 +88,10 @@ class IMDB:
                                        data.imdb_rating, data.director, data.plot)
 
                 # Send the details
-                await client.send_message(message.channel, st)
+                try:
+                    await client.send_message(message.channel, st)
+                except errors.HTTPException:
+                    await client.send_message(message.channel, "Something went wrong, please report it to the dev, preferably with a screenshot. Thanks!")
 
             elif startswith(prefix + "imdb trailer"):
                 search = str(message.content[len(prefix + "imdb trailer "):])

@@ -3,10 +3,10 @@ import logging
 import re
 import asyncio
 from pickle import load
-from discord import Message, Client, Server, utils
+from discord import Message, Client, Server, utils, Embed
 from data.serverhandler import LegacyServerHandler, RedisServerHandler
 from data.stats import SUPPRESS
-from data.utils import is_disabled
+from data.utils import is_disabled, make_dots
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -40,7 +40,6 @@ def get_valid_commands(plugin):
 
 class NanoModerator:
     def __init__(self):
-
         # Other
         with open("plugins/banned_words.txt", "r") as banned:
             self.word_list = [line.strip("\n") for line in banned.readlines()]
@@ -141,7 +140,6 @@ class NanoModerator:
         for this in counts:
             for another in this:
                 if another > thr:
-                    print("Threshold {}, got {}".format(thr, another))
                     return True
 
         return False
@@ -167,60 +165,31 @@ class LogManager:
         self.loop = loop
         self.handler = handler
 
+        self.getter = None
         self.running = True
 
-        self.logs = {}
-        self.servers = {}
+    async def get_plugin(self):
+        self.getter = self.nano.get_plugin("server").get("instance")
 
-    def add_entry(self, server, message):
-        if not isinstance(server, Server):
-            return False
+    async def send_message(self, channel, embed):
+        await self.client.send_message(channel, embed=embed)
 
-        self.servers[server.id] = server
+    async def send_log(self, server, author, content, reason=None):
+        if not self.getter:
+            self.loop.call_later(5, self.send_log(server, author, content, reason))
+            logger.warning("Getter is not set, calling in 5 seconds...")
+            return
 
-        # Create a new list if one does not exist
-        if not self.logs.get(server.id):
-            self.logs[server.id] = [message]
+        log_channel = await self.getter.handle_log_channel(server)
 
-        else:
-            self.logs[server.id].append(message)
+        if not log_channel:
+            return
 
-    async def send_combined(self, channel, message):
-        await self.client.send_message(channel, message)
+        embed = Embed(title="Message Deleted - {}".format(reason), description=make_dots(content))
+        embed.set_author(name="{} ({})".format(author.name, author.id), icon_url=author.avatar_url)
 
-    async def send_logs(self):
-        for server_id, logs in self.logs.items():
-
-            log_channel_name = self.handler.get_log_channel(self.servers.get(server_id))
-
-            # Skip the server if no log channel is present
-            if is_disabled(log_channel_name):
-                continue
-
-            server = utils.find(lambda m: m.id == server_id, self.client.servers)
-
-            log_channel = await self.nano.get_plugin("server").get("instance").handle_log_channel(server)
-
-            # Keep in this iteration until all messages have been taken care of
-            while logs:
-
-                batch = []
-                for log in list(logs):
-                    # Keep adding to the batch until messages total 1000 characters
-                    if sum([len(l) for l in batch]) < 1000:
-                        batch.append(log)
-                        logs.remove(log)
-
-                    else:
-                        break
-                print("Sending logs for {}".format(self.servers.get(server_id)))
-                await self.send_combined(log_channel, "\n".join(batch))
-
-    async def start(self):
-        while self.running:
-            await asyncio.sleep(60)
-
-            await self.send_logs()
+        logger.debug("Sending logs for {}".format(server.name))
+        await self.send_message(log_channel, embed)
 
 
 class Moderator:
@@ -234,14 +203,14 @@ class Moderator:
         self.checker = NanoModerator()
         self.log = LogManager(self.client, self.nano, self.loop, self.handler)
 
-        self.loop.create_task(self.log.start())
-
         self.valid_commands = []
 
     async def on_plugins_loaded(self):
         # Collect all valid commands
         plugins = [a.get("plugin") for a in self.nano.plugins.values() if a.get("plugin")]
         self.valid_commands = [item for sub in [get_valid_commands(b) for b in plugins if get_valid_commands(b)] for item in sub]
+
+        await self.log.get_plugin()
 
     async def on_message(self, message, **kwargs):
         handler = self.handler
@@ -302,6 +271,7 @@ class Moderator:
         else:
             invite = False
 
+
         # Delete if necessary
         if any([spam, swearing, invite]):
             await client.delete_message(message)
@@ -314,20 +284,17 @@ class Moderator:
 
             # Make correct messages
             if spam:
-                msg = "{}'s message was deleted: spam\n`{}`\n".format(message.author.name, message.content)
+                await self.log.send_log(message.server, message.author, message.content, "spam")
 
             elif swearing:
-                msg = "{}'s message was deleted: banned words\n`{}`\n".format(message.author.name, message.content)
+                await self.log.send_log(message.server, message.author, message.content, "swearing")
 
             elif invite:
-                msg = "{}'s message was deleted: invite link\n`{}`\n".format(message.author.name, message.content)
+                await self.log.send_log(message.server, message.author, message.content, "invite link")
 
             else:
                 # Lol wat
                 return
-
-            # Add them to the queue
-            self.log.add_entry(message.server, msg)
 
             return "return"
 

@@ -1,5 +1,6 @@
 # coding=utf-8
 import aiohttp
+import asyncio
 import time
 import logging
 import configparser
@@ -250,12 +251,14 @@ class CommunityPrices:
             async with session.get(address, params=params) as resp:
                 if resp.status != 200:
                     if resp.status == 504:
-                        logger.warning("Got 504: Gateway Timeout")
-                        self.loop.call_later(60*10, self._download_data())
+                        logger.warning("Got 504: Gateway Timeout, retrying in 10 min")
+                        await asyncio.sleep(60*10)
+                        await self._download_data()
 
                     elif resp.status == 429:
-                        logger.warning("Got 429: Too Many Requests - retrying in 60 s")
-                        self.loop.call_later(60*2, self._download_data())
+                        logger.warning("Got 429: Too Many Requests - retrying in 120 s")
+                        await asyncio.sleep(60*2)
+                        await self._download_data()
 
                     else:
                         logger.warning("Got {} in response".format(resp.status))

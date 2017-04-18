@@ -43,7 +43,7 @@ server_defaults = {
     "muted": [],
     "customcmds": {},
     "admins": [],
-    "logchannel": "logs",
+    "logchannel": None,
     "prefix": str(parser.get("Servers", "defaultprefix"))
 }
 

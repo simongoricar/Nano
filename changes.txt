@@ -1,3 +1,8 @@
+3.4.5
+- Bugfixes
+- New plugin! jokes - features random jokes, cat pictures and xkcd
+- Fixed help message (not fixed before)
+
 3.4.4
 - !imdb/!omdb rewritten
 - Changed syntax for !softban

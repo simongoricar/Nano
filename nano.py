@@ -16,7 +16,7 @@ from data.utils import log_to_file
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '3.4.4'
+__version__ = '3.4.5'
 
 
 # EVENTS
@@ -69,7 +69,7 @@ parser.read("settings.ini")
 loop = asyncio.get_event_loop()
 client = discord.Client(loop=loop)
 
-log.info("Initializng ServerHandler and NanoStats...")
+log.info("Initializing ServerHandler and NanoStats...")
 
 # Setup the server data and stats
 use_legacy = not parser.get("Storage", "type") == "redis"
@@ -140,7 +140,7 @@ class Nano(metaclass=Singleton):
 
             # If this file is not a plugin (does not have a class NanoPlugin), ignore it
             try:
-                plug.NanoPlugin
+                assert plug.NanoPlugin
                 # If plugin has attribute 'disabled' and it is True, disable the plugin
                 if hasattr(plug.NanoPlugin, "disabled"):
                     assert plug.NanoPlugin.disabled is False
@@ -222,7 +222,7 @@ class Nano(metaclass=Singleton):
             return False
 
         try:
-            c_plug.NanoPlugin
+            assert c_plug.NanoPlugin
             # If plugin has attribute 'disabled' and it is True, disable the plugin
             if hasattr(c_plug.NanoPlugin, "disabled"):
                 assert c_plug.NanoPlugin.disabled is False

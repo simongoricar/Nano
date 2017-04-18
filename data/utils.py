@@ -281,3 +281,18 @@ def gen_id(length=38):
 def chunks(item, n):
     for i in range(0, len(item), n):
         yield item[i:i + n]
+
+
+def make_dots(content, max_len=50):
+    if not len(content) > max_len:
+        return content
+    else:
+        return "{}[...]".format(content[:max_len])
+
+
+def is_number(string):
+    try:
+        int(string)
+        return True
+    except ValueError:
+        return False

@@ -4,8 +4,8 @@ import logging
 import configparser
 import osu_ds
 import time
-from discord import Message, Embed, Colour
-from data.utils import is_valid_command, invert_num, invert_str, split_every
+from discord import Message, Embed, Colour, errors
+from data.utils import is_valid_command, invert_num, invert_str, split_every, StandardEmoji
 from data.stats import MESSAGE
 
 __author__ = "DefaltSimon"
@@ -79,7 +79,12 @@ class Osu:
             total_score = prepare(user.total_score)
             ranked_score = prepare(user.ranked_score)
 
-            acc = str(round(float(user.accuracy), 2)) + " %"
+            try:
+                acc = str(round(float(user.accuracy), 2)) + " %"
+            except TypeError:
+                await client.send_message(message.channel, ":warning: Something went wrong...")
+                return
+
             pp_amount = str(int(float(user.pp)))
 
             osu_level = int(float(user.level))
@@ -118,12 +123,15 @@ class Osu:
             delta = int((time.time() - t_start) * 1000)
             embed.set_footer(text="Search took {} ms".format(delta))
 
-            await client.send_message(message.channel, embed=embed)
+            try:
+                await client.send_message(message.channel, embed=embed)
+            except errors.HTTPException:
+                await client.send_message(message.channel, "Something went wrong " + StandardEmoji.THINKING)
 
 
 class NanoPlugin:
     name = "osu!"
-    version = "0.1.1"
+    version = "0.1.2"
 
     handler = Osu
     events = {

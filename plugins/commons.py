@@ -242,7 +242,7 @@ class Commons:
             application = await client.application_info()
 
             # Most of the permissions that Nano uses
-            perms = "8"
+            perms = "1543765079"
             url = "https://discordapp.com/oauth2/" \
                   "authorize?client_id={}&scope=bot&permissions={}".format(application.id, perms)
 

@@ -48,39 +48,46 @@ class ServerManagement:
         self.lt = time.time()
 
     async def handle_log_channel(self, server):
+        chan = self.handler.get_var(server.id, "logchannel")
+        return discord.utils.find(lambda m: m.id == chan, server.channels)
+
         # Check if the channel already exists
-        if not [ch for ch in server.channels if ch.id == self.handler.get_var(server.id, "logchannel")]:
-
-            if is_disabled(self.handler.get_var(server.id, "logchannel")):
-                return None
-
-            # Find yourself
-            me = server.get_member(self.client.user.id)
-
-            # Creates permission overwrites: normal users cannot see the channel,
-            # only users with the role "Nano Admin" and the bot
-            them = discord.PermissionOverwrite(read_messages=False, send_messages=False, read_message_history=False)
-            us = discord.PermissionOverwrite(read_messages=True, send_messages=True, read_message_history=True,
-                                             attach_files=True, embed_links=True, manage_messages=True)
-
-            admin_role = discord.utils.find(lambda m: m.name == "Nano Admin", server.roles)
-
-            them_perms = discord.ChannelPermissions(target=server.default_role, overwrite=them)
-
-            nano_perms = discord.ChannelPermissions(target=me, overwrite=us)
-
-            log_channel_name = self.handler.get_var(server.id, "logchannel")
-
-            if admin_role:
-                admin_perms = discord.ChannelPermissions(target=admin_role, overwrite=us)
-
-                return await self.client.create_channel(server, log_channel_name, admin_perms, them_perms, nano_perms)
-
-            else:
-                return await self.client.create_channel(server, log_channel_name, them_perms, nano_perms)
-
-        else:
-            return discord.utils.find(lambda m: m.id == self.handler.get_var(server.id, "logchannel"), server.channels)
+        # if not [ch for ch in server.channels if ch.id == self.handler.get_var(server.id, "logchannel")]:
+        #
+        #     return None
+        #
+        #     # Channel creation is DISABLED
+        #
+        #     # if is_disabled(self.handler.get_var(server.id, "logchannel")):
+        #     #     return None
+        #     #
+        #     # # Find yourself
+        #     # me = server.get_member(self.client.user.id)
+        #     #
+        #     # # Creates permission overwrites: normal users cannot see the channel,
+        #     # # only users with the role "Nano Admin" and the bot
+        #     # them = discord.PermissionOverwrite(read_messages=False, send_messages=False, read_message_history=False)
+        #     # us = discord.PermissionOverwrite(read_messages=True, send_messages=True, read_message_history=True,
+        #     #                                  attach_files=True, embed_links=True, manage_messages=True)
+        #     #
+        #     # admin_role = discord.utils.find(lambda m: m.name == "Nano Admin", server.roles)
+        #     #
+        #     # them_perms = discord.ChannelPermissions(target=server.default_role, overwrite=them)
+        #     #
+        #     # nano_perms = discord.ChannelPermissions(target=me, overwrite=us)
+        #     #
+        #     # log_channel_name = self.handler.get_var(server.id, "logchannel")
+        #     #
+        #     # if admin_role:
+        #     #     admin_perms = discord.ChannelPermissions(target=admin_role, overwrite=us)
+        #     #
+        #     #     return await self.client.create_channel(server, log_channel_name, admin_perms, them_perms, nano_perms)
+        #     #
+        #     # else:
+        #     #     return await self.client.create_channel(server, log_channel_name, them_perms, nano_perms)
+        #
+        # else:
+        #     return discord.utils.find(lambda m: m.id == self.handler.get_var(server.id, "logchannel"), server.channels)
 
     async def on_message(self, message, **kwargs):
         assert isinstance(message, discord.Message)
@@ -368,7 +375,7 @@ class ServerManagement:
 
 class NanoPlugin:
     name = "Moderator"
-    version = "0.3.1"
+    version = "0.3.2"
 
     handler = ServerManagement
     events = {

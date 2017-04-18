@@ -45,7 +45,8 @@ commands = {
     "_setup": {"desc": "Helps admins set up basic settings for the bot (guided setup).", "use": None, "alias": "nano.setup"},
     "nano.setup": {"desc": "Helps admins set up basic settings for the bot (guided setup).", "use": None, "alias": "_setup"},
     "_user": {"desc": "Displays info about the user", "use": "[command] [@mention or name]", "alias": None},
-    "_welcomemsg": {"desc": "Sets the message sent when a member joins the server.\nFormatting: ':user' = @user, ':server' = server name", "use": "[command] [content]", "alias": None},
+    "_welcomemsg": {"desc": "Sets the message sent when a member joins the server.\nFormatting: ':user' = @user, ':server' = server name", "use": "[command] [content]", "alias": "_joinmsg"},
+    "_joinmsg": {"desc": "Sets the message sent when a member joins the server.\nFormatting: ':user' = @user, ':server' = server name", "use": "[command] [content]", "alias": "_welcomemsg"},
     "_banmsg": {"desc": "Sets the message sent when a member is banned.\nFormatting: ':user' = user name", "use": "[command] [content]", "alias": None},
     "_kickmsg": {"desc": "Sets the message sent when a member is kicked.\nFormatting: ':user' = user name", "use": "[command] [content]", "alias": None},
     "_leavemsg": {"desc": "Sets the message sent when a member leaves the server.\nFormatting: ':user' = user name", "use": "[command] [content]", "alias": None},
@@ -297,6 +298,7 @@ class Admin:
                 user = utils.find(lambda u: u.name == str(user_name), message.channel.server.members)
 
             if not user:
+                await client.send_message(message.channel, StandardEmoji.WARNING + " User does not exist.")
                 return
 
             await client.kick(user)
@@ -349,7 +351,7 @@ class Admin:
                     user = ban
 
             if not user:
-                await client.send_message(message.channel, StandardEmoji.WARNING + " Could not unban: user with such name does not exist.")
+                await client.send_message(message.channel, StandardEmoji.WARNING + " User does not exist.")
                 return
 
             await client.unban(message.server, user)
@@ -448,12 +450,19 @@ class Admin:
                 await client.send_message(message.channel, StandardEmoji.WARNING + not_admin)
                 return
 
+        # !joinmsg
+        if startswith(prefix + "joinmsg"):
+            change = message.content[len(prefix + "joinmsg "):]
+            handler.update_var(message.channel.server.id, "welcomemsg", change)
+
+            await client.send_message(message.channel, "Join message has been updated :smile:")
+
         # !welcomemsg
         if startswith(prefix + "welcomemsg"):
             change = message.content[len(prefix + "welcomemsg "):]
             handler.update_var(message.channel.server.id, "welcomemsg", change)
 
-            await client.send_message(message.channel, "Welcome message has been updated :smile:")
+            await client.send_message(message.channel, "Join message has been updated :smile:")
 
         # !banmsg
         elif startswith(prefix + "banmsg"):
@@ -755,6 +764,9 @@ class Admin:
 
             log_channel = settings.get("logchannel") if settings.get("logchannel") else "None"
 
+            channel_name = utils.find(lambda a: a.id == log_channel, message.server.channels)
+            channel_name = "({})".format(channel_name) if channel_name else ""
+
             msg_join = settings.get("welcomemsg") or "Disabled"
             msg_leave = settings.get("leavemsg") or "Disabled"
             msg_ban = settings.get("banmsg") or "Disabled"
@@ -765,13 +777,13 @@ Blacklisted channels: {}
 Spam filter: {}
 Word filter: {}
 Invite removal: {}
-Log channel: {}
+Log channel: {} {}
 Prefix: {}```
 Messages:
 ➤ Join: `{}`
 ➤ Leave: `{}`
 ➤ Ban: `{}`
-➤ Kick: `{}`""".format(blacklisted_c, spam_filter, word_filter, invite_filter, log_channel, settings.get("prefix"),
+➤ Kick: `{}`""".format(blacklisted_c, spam_filter, word_filter, invite_filter, log_channel, channel_name, settings.get("prefix"),
                        msg_join, msg_leave, msg_ban, msg_kick)
 
             await client.send_message(message.channel, final)
@@ -865,7 +877,7 @@ Messages:
         elif startswith("nano.changeprefix"):
             pref = message.content[len("nano.changeprefix "):]
 
-            if len(pref) > 50:
+            if len(pref) > 25:
                 await client.send_message(message.channel, PREFIX_TOO_LONG)
                 return
 
