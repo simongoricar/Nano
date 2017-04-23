@@ -3,7 +3,7 @@ import steamapi
 import configparser
 import logging
 from discord import Message, HTTPException
-from data.utils import is_valid_command
+from data.utils import is_valid_command, StandardEmoji, reraise
 from data.stats import MESSAGE, WRONG_ARG
 
 logger = logging.getLogger(__name__)
@@ -108,6 +108,9 @@ class Steam:
                 except ValueError:
                     await client.send_message(message.channel, NOT_WHOLE_URL)
                     return
+                except steamapi.errors.APIFailure:
+                    await client.send_message(message.channel, "Something went wrong. " + StandardEmoji.CRY)
+                    reraise()
 
                 friends = ["`" + friend + "`" for friend in friends]
 
@@ -130,6 +133,9 @@ class Steam:
                 except ValueError:
                     await client.send_message(message.channel, NOT_WHOLE_URL)
                     return
+                except steamapi.errors.APIFailure:
+                    await client.send_message(message.channel, "Something went wrong. " + StandardEmoji.CRY)
+                    reraise()
 
                 if not username:
                     await client.send_message(message.channel, "User **does not exist**.")
@@ -161,10 +167,13 @@ class Steam:
                     await client.send_message(message.channel, "User **does not exist**.")
                     self.stats.add(WRONG_ARG)
                     return
-
-                info = "User: **{}**\n```css\nStatus: {}\nLevel: {}\nGames: {} owned (including free games)\nFriends: {}```\n" \
-                       "Direct link: http://steamcommunity.com/id/{}/".format(steam_user.name, "Online" if steam_user.state else "Offline",
-                                                                              steam_user.level, len(steam_user.games), len(steam_user.friends), uid)
+                try:
+                    info = "User: **{}**\n```css\nStatus: {}\nLevel: {}\nGames: {} owned (including free games)\nFriends: {}```\n" \
+                           "Direct link: http://steamcommunity.com/id/{}/".format(steam_user.name, "Online" if steam_user.state else "Offline",
+                                                                                  steam_user.level, len(steam_user.games), len(steam_user.friends), uid)
+                except AttributeError:
+                    await client.send_message(message.channel, "Could not display user info. This can happen when the user has a private profile. " + StandardEmoji.FROWN)
+                    return
 
                 if len(info) > 2000:
                     await client.send_message(message.channel,

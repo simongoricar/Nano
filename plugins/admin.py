@@ -301,6 +301,9 @@ class Admin:
                 await client.send_message(message.channel, StandardEmoji.WARNING + " User does not exist.")
                 return
 
+            if user.id == client.user.id:
+                await client.send_message(message.channel, "Nice try " + StandardEmoji.SMILEY)
+
             await client.kick(user)
             await client.send_message(message.channel,
                                       handler.get_var(message.channel.server.id, "kickmsg").replace(":user", user.name))
@@ -1050,7 +1053,7 @@ For a list of all commands and their explanations, use `_cmds`.""".replace("_", 
 
 class NanoPlugin:
     name = "Admin Commands"
-    version = "0.2.10"
+    version = "0.2.11"
 
     handler = Admin
     events = {

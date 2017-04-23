@@ -174,21 +174,24 @@ class LogManager:
     async def send_message(self, channel, embed):
         await self.client.send_message(channel, embed=embed)
 
-    async def send_log(self, server, author, content, reason=None):
+    async def send_log(self, message: Message, reason=None):
         if not self.getter:
-            self.loop.call_later(5, self.send_log(server, author, content, reason))
+            self.loop.call_later(5, self.send_log(message, reason))
             logger.warning("Getter is not set, calling in 5 seconds...")
             return
 
-        log_channel = await self.getter.handle_log_channel(server)
+        log_channel = await self.getter.handle_log_channel(message.server)
 
         if not log_channel:
             return
 
-        embed = Embed(title="Message Deleted - {}".format(reason), description=make_dots(content))
-        embed.set_author(name="{} ({})".format(author.name, author.id), icon_url=author.avatar_url)
+        author = message.author
 
-        logger.debug("Sending logs for {}".format(server.name))
+        embed = Embed(title="Message Deleted - {}".format(reason), description=make_dots(message.content))
+        embed.set_author(name="{} ({})".format(author.name, author.id), icon_url=author.avatar_url)
+        embed.add_field(name="Channel", value=message.channel.mention)
+
+        logger.debug("Sending logs for {}".format(message.server.name))
         await self.send_message(log_channel, embed)
 
 
@@ -284,13 +287,13 @@ class Moderator:
 
             # Make correct messages
             if spam:
-                await self.log.send_log(message.server, message.author, message.content, "spam")
+                await self.log.send_log(message, "spam")
 
             elif swearing:
-                await self.log.send_log(message.server, message.author, message.content, "swearing")
+                await self.log.send_log(message, "swearing")
 
             elif invite:
-                await self.log.send_log(message.server, message.author, message.content, "invite link")
+                await self.log.send_log(message, "invite link")
 
             else:
                 # Lol wat
@@ -301,7 +304,7 @@ class Moderator:
 
 class NanoPlugin:
     name = "Moderator"
-    version = "0.2.4"
+    version = "0.2.5"
 
     handler = Moderator
     events = {

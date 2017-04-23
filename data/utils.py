@@ -1,6 +1,6 @@
 # coding=utf-8
 import threading
-import os
+import os, sys
 import uuid
 from datetime import datetime
 
@@ -45,6 +45,7 @@ class StandardEmoji:
     SCREAM = ":scream:"
     CRY = ":sob:"
     EXPRESSIONLESS = ":expressionless:"
+    FROWN = ":frowning:"
     FROWN2 = ":frowning2:"
     SLEEP = ":sleeping:"
 
@@ -195,8 +196,10 @@ def is_valid_command(msg, commands, **kwargs):
     return has(msg)
 
 
-def log_to_file(content):
-    with open("data/log.txt", "a") as file:
+def log_to_file(content, type_="log"):
+    fn = "data/bugs.txt" if type_ == "bug" else "data/log.txt"
+
+    with open(fn, "a") as file:
         date = datetime.now()
         cn = date.strftime("%d-%m-%Y %H:%M:%S") + " - " + str(content)
 
@@ -213,13 +216,13 @@ def is_empty(path):
     else:
         return False
 
-dis = [
+none_ux = [
     "none", "false", "off", "disabled"
 ]
 
 
 def is_disabled(ct):
-    for a in dis:
+    for a in none_ux:
         if str(ct).lower().startswith(a):
             return True
 
@@ -296,3 +299,8 @@ def is_number(string):
         return True
     except ValueError:
         return False
+
+
+def reraise():
+    t, v, tb = sys.exc_info()
+    raise v.with_traceback(tb)

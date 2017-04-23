@@ -4,10 +4,10 @@ import os
 import logging
 import importlib
 from pickle import dumps, load
-from discord import Message, Embed, Colour
+from discord import Message, Embed, Colour, errors
 from data.serverhandler import ServerHandler
 from data.stats import MESSAGE, VOTE, WRONG_PERMS, WRONG_ARG
-from data.utils import is_valid_command, is_empty, StandardEmoji
+from data.utils import is_valid_command, is_empty, StandardEmoji, log_to_file
 
 __author__ = "DefaltSimon"
 # Voting plugin
@@ -301,16 +301,22 @@ class Vote:
             votes = self.vote.get_votes(message.server.id)
             title = self.vote.get_vote_title(message.server.id)
 
-            # Actually end the voting
-            self.vote.end_voting(message.server)
-
-            embed = Embed(title=title, colour=Colour(0x303F9F), description="(In total, {} people voted)".format(sum(votes.values())))
+            embed = Embed(title=title, colour=Colour(0x303F9F),
+                          description="(In total, {} people voted)".format(sum(votes.values())))
             embed.set_footer(text="Voting ended")
 
             for name, val in votes.items():
                 embed.add_field(name=name, value="{} votes".format(val))
 
-            await client.send_message(message.channel, "Vote ended:", embed=embed)
+            try:
+                await client.send_message(message.channel, "Vote ended:", embed=embed)
+            except errors.HTTPException as e:
+                await client.send_message(message.channel, "Something went wrong when trying to end voting. It has been logged and will be inspected.")
+                log_to_file("VOTING ({}): {}".format(e, embed.to_dict()))
+                return
+
+            # Actually end the voting
+            self.vote.end_voting(message.server)
 
         # !vote status
         elif startswith(prefix + "vote status"):

@@ -3,7 +3,7 @@ import logging
 # External library available here: https://github.com/DefaltSimon/OMDbie
 import omdbie
 from discord import Message, errors
-from data.utils import is_valid_command
+from data.utils import is_valid_command, StandardEmoji
 from data.stats import MESSAGE
 
 log = logging.getLogger(__name__)
@@ -60,7 +60,12 @@ class IMDB:
             if startswith((prefix + "imdb plot"), (prefix + "omdb plot")):
                 search = str(message.content[len(prefix + "imdb plot "):])
 
-                data = await self.omdb.by_title_or_id(search, plot=omdbie.PlotLength.full)
+                try:
+                    data = await self.omdb.by_title_or_id(search, plot=omdbie.PlotLength.full)
+                except omdbie.HTTPException:
+                    await client.send_message(message.channel, "Timed out while searching... " +
+                                              StandardEmoji.FROWN2 + " Try again.")
+                    return
 
                 if not data:
                     await client.send_message(message.channel, "No results.")
@@ -71,7 +76,12 @@ class IMDB:
             elif startswith(prefix + "imdb search"):
                 search = str(message.content[len(prefix + "imdb search "):])
 
-                data = await self.omdb.by_title_or_id(search, plot=omdbie.PlotLength.full)
+                try:
+                    data = await self.omdb.by_title_or_id(search, plot=omdbie.PlotLength.full)
+                except omdbie.HTTPException:
+                    await client.send_message(message.channel, "Timed out while searching... " +
+                                              StandardEmoji.FROWN2 + " Try again.")
+                    return
 
                 if not data:
                     await client.send_message(message.channel, "No results.")
@@ -96,7 +106,12 @@ class IMDB:
             elif startswith(prefix + "imdb trailer"):
                 search = str(message.content[len(prefix + "imdb trailer "):])
 
-                data = await self.omdb.by_title_or_id(search, plot=omdbie.PlotLength.full)
+                try:
+                    data = await self.omdb.by_title_or_id(search, plot=omdbie.PlotLength.full)
+                except omdbie.HTTPException:
+                    await client.send_message(message.channel, "Timed out while searching... " +
+                                              StandardEmoji.FROWN2 + " Try again.")
+                    return
 
                 if not data:
                     await client.send_message(message.channel, "No results.")
@@ -107,7 +122,12 @@ class IMDB:
             elif startswith(prefix + "imdb rating"):
                 search = str(message.content[len(prefix + "imdb rating "):])
 
-                data = await self.omdb.by_title_or_id(search, plot=omdbie.PlotLength.full)
+                try:
+                    data = await self.omdb.by_title_or_id(search, plot=omdbie.PlotLength.full)
+                except omdbie.HTTPException:
+                    await client.send_message(message.channel, "Timed out while searching... " +
+                                              StandardEmoji.FROWN2 + " Try again.")
+                    return
 
                 if not data:
                     await client.send_message(message.channel, "No results.")
@@ -128,7 +148,7 @@ class IMDB:
 
 class NanoPlugin:
     name = "Imdb Commands"
-    version = "0.1.2"
+    version = "0.1.3"
 
     handler = IMDB
     events = {
