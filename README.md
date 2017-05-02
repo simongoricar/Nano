@@ -17,12 +17,12 @@ by DefaltSimon, made in python with [discord.py api](https://github.com/Rapptz/d
 
 ### Invite and help  
   
-Wanna add Nano to your server? Use this magic [invite link](https://discordapp.com/oauth2/authorize?client_id=171632249459048448&scope=bot&permissions=8)!  
-If you're confused or need help hop on our Discord server - [Nano lounge](https://discord.gg/FZJB6UJ).  
+Wanna add Nano to your server? Use this magic [invite link](https://discordapp.com/oauth2/authorize?client_id=171632249459048448&scope=bot&permissions=1543765079)!  
+If you're confused or need help, hop on our Discord server - [Nano lounge](https://discord.gg/FZJB6UJ).  
 
 ----
   
-### A list of all available commands is available [here](https://github.com/DefaltSimon/Nano/wiki/Commands)  
+### A list of all available commands is available [here](http://nanobot.pw/commands.html)  
 
 ----
 
