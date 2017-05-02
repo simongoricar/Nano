@@ -178,6 +178,8 @@ class CommunityPrices:
         self.parameters = {"key": api_key}
         self.address = "https://backpack.tf/api/IGetPrices/v4"
 
+        self.cached_items = None
+
         # One for read, one for write
         loop.create_task(self.download_data(allow_cache, allow_cache))
 

@@ -6,7 +6,7 @@ import datetime
 from discord import Message, utils, Client, Embed, Colour, DiscordException, HTTPException, Object, errors as derrors
 from data.serverhandler import LegacyServerHandler, RedisServerHandler, INVITEFILTER_SETTING, SPAMFILTER_SETTING, WORDFILTER_SETTING
 from data.stats import WRONG_ARG
-from data.utils import convert_to_seconds, get_decision, is_valid_command, StandardEmoji, decode, resolve_time
+from data.utils import convert_to_seconds, get_decision, is_valid_command, StandardEmoji, decode, resolve_time, log_to_file, is_disabled
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -233,6 +233,19 @@ class Admin:
 
         self.bans = []
 
+    async def resolve_role(self, name, message):
+        role = utils.find(lambda r: r.name == name, message.channel.server.roles)
+
+        if not role:
+            # Try role mentions
+            if len(message.role_mentions) != 0:
+                role = message.role_mentions[0]
+            else:
+                await self.client.send_message(message.channel, StandardEmoji.WARNING + " Role does not exist!")
+                return None
+
+        return role
+
     async def on_message(self, message, **kwargs):
         prefix = kwargs.get("prefix")
         client = self.client
@@ -366,7 +379,7 @@ class Admin:
                 await client.send_message(message.channel, StandardEmoji.WARNING + not_mod)
                 return "return"
 
-            if 0 >= len(message.mentions) >= 2:
+            if len(message.mentions) != 1:
                 await client.send_message(message.channel, "Please mention the member you want to softban. (only one)")
                 return
 
@@ -568,11 +581,9 @@ class Admin:
 
             if startswith(prefix + "role add "):
                 a_role = str(message.content[len(prefix + "role add "):]).split("<")[0].strip()
-                role = utils.find(lambda r: r.name == a_role, message.channel.server.roles)
 
+                role = await self.resolve_role(a_role, message)
                 if not role:
-                    await client.send_message(message.channel, "No such role: '{}'".format(a_role))
-                    self.stats.add(WRONG_ARG)
                     return
 
                 if not can_change_role(message.author, role):
@@ -584,7 +595,10 @@ class Admin:
 
             elif startswith(prefix + "role " + "remove "):
                 a_role = str(message.content[len(prefix + "role remove "):]).split("<")[0].strip()
-                role = utils.find(lambda r: r.name == a_role, message.channel.server.roles)
+
+                role = await self.resolve_role(a_role, message)
+                if not role:
+                    return
 
                 if not can_change_role(message.author, role):
                     await client.send_message(message.channel, error_hierarchy)
@@ -595,7 +609,10 @@ class Admin:
 
             elif startswith(prefix + "role replaceall "):
                 a_role = str(message.content[len(prefix + "role replaceall "):]).split("<")[0].strip()
-                role = utils.find(lambda r: r.name == a_role, message.channel.server.roles)
+
+                role = await self.resolve_role(a_role, message)
+                if not role:
+                    return
 
                 if not can_change_role(message.author, role):
                     await client.send_message(message.channel, error_hierarchy)
@@ -702,10 +719,13 @@ class Admin:
                 await client.send_message(message.channel, "Incorrect usage, see `_help nano.settings`.".format(prefix))
                 return
 
-            if get_decision(cut[0], "logchannel", "log channel"):
+            user_set = cut[0]
+
+            # Set logchannel
+            if get_decision(user_set, "logchannel", "log channel"):
                 chan_id = cut[1].replace("<#", "").replace(">", "")
 
-                chan = utils.find(lambda a: a.id == chan_id, message.server.channels)
+                chan = utils.find(lambda chann: chann.id == chan_id, message.server.channels)
 
                 if not chan:
                     await client.send_message(message.channel, "Not a channel.")
@@ -720,26 +740,62 @@ class Admin:
 
                 return
 
-            decision = get_decision(cut[1])
+            # Set allowed selfrole role
+            elif get_decision(user_set, "selfrole", "self role"):
+                if len(message.role_mentions) != 0:
+                    selfrole_name = message.role_mentions[0].name
+                    raw_role = message.role_mentions[0]
+                else:
+                    selfrole_name = str(cut[1])
+                    raw_role = utils.find(lambda r: r.name == selfrole_name, message.server.roles)
 
-            try:
-                handler.update_moderation_settings(message.channel.server, cut[0], decision)
-            except IndexError:
-                self.stats.add(WRONG_ARG)
+                # If user wants to disable the role with None, Disabled, etc.., ignore existence checks
+                if is_disabled(selfrole_name):
+                    self.handler.set_selfrole(message.server.id, None)
+                    await client.send_message(message.channel, StandardEmoji.OK + " Selfrole disabled.")
+                    return
+
+                if not raw_role:
+                    await client.send_message(message.channel, StandardEmoji.WARNING + " Invalid role name!")
+
+                # Checks role position
+                nano_user = utils.find(lambda me: me.id == client.user.id, message.server.members)
+                if not nano_user:
+                    log_to_file("SELFROLE: Nano Member is NONE", "bug")
+                    return
+
+                try:
+                    await client.add_roles(nano_user, raw_role)
+                    await client.remove_roles(nano_user, raw_role)
+                except derrors.Forbidden:
+                    await client.send_message(message.channel, StandardEmoji.WARNING + " **{}** is inaccessible (could be higher than Nano's top role"
+                                                                                       " or Nano does not have the permission 'Manage Roles')".format(raw_role.name))
+                    return
+
+                self.handler.set_selfrole(message.server.id, selfrole_name)
+                await client.send_message(message.channel, StandardEmoji.OK + " Selfrole set to **{}**".format(selfrole_name))
+
                 return
 
-            if get_decision(cut[0], "word filter", "filter words", "wordfilter"):
+            # Otherwise, set word/spam/invite filter
+            decision = get_decision(cut[1])
+
+            # Does not do anything if there is no relevant setting
+            handler.update_moderation_settings(message.channel.server, cut[0], decision)
+
+            if get_decision(user_set, "word filter", "filter words", "wordfilter"):
                 await client.send_message(message.channel, "Word filter {}".format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
 
-            elif get_decision(cut[0], "spam filter", "spamfilter", "filter spam"):
+            elif get_decision(user_set, "spam filter", "spamfilter", "filter spam"):
                 await client.send_message(message.channel, "Spam filter {}".format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
 
-            elif get_decision(cut[0], "filterinvite", "filterinvites", "invite removal", "invite filter", "invitefilter"):
+            elif get_decision(user_set, "filterinvite", "filterinvites", "invite removal", "invite filter", "invitefilter"):
                 await client.send_message(message.channel,
                                           "Invite filter {}".format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
 
             else:
-                await client.send_message(message.channel, "Not a setting. (wordfilter/spamfilter/invitefilter)")
+                await client.send_message(message.channel, "**{}** is not a setting. Should be one of: "
+                                                           "logchannel, selfrole, invitefilter, wordfilter, spamfilter.".format(user_set))
 
         # nano.displaysettings
         elif startswith("nano.displaysettings"):
@@ -765,7 +821,8 @@ class Admin:
             word_filter = "On" if settings.get(WORDFILTER_SETTING) else "Off"
             invite_filter = "On" if settings.get(INVITEFILTER_SETTING) else "Off"
 
-            log_channel = settings.get("logchannel") if settings.get("logchannel") else "None"
+            log_channel = settings.get("logchannel") or "Disabled"
+            selfrole = settings.get("selfrole") or "Disabled"
 
             channel_name = utils.find(lambda a: a.id == log_channel, message.server.channels)
             channel_name = "({})".format(channel_name) if channel_name else ""
@@ -781,13 +838,14 @@ Spam filter: {}
 Word filter: {}
 Invite removal: {}
 Log channel: {} {}
-Prefix: {}```
+Prefix: {}
+Selfrole: {}```
 Messages:
 ➤ Join: `{}`
 ➤ Leave: `{}`
 ➤ Ban: `{}`
 ➤ Kick: `{}`""".format(blacklisted_c, spam_filter, word_filter, invite_filter, log_channel, channel_name, settings.get("prefix"),
-                       msg_join, msg_leave, msg_ban, msg_kick)
+                       selfrole, msg_join, msg_leave, msg_ban, msg_kick)
 
             await client.send_message(message.channel, final)
 
@@ -1053,7 +1111,7 @@ For a list of all commands and their explanations, use `_cmds`.""".replace("_", 
 
 class NanoPlugin:
     name = "Admin Commands"
-    version = "0.2.11"
+    version = "0.3.1"
 
     handler = Admin
     events = {

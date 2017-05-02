@@ -4,12 +4,11 @@ import configparser
 import sys
 import subprocess
 import logging
-import traceback
 from shutil import copy2
 from datetime import datetime
 from asyncio import sleep
 from random import shuffle
-from discord import Message, Game, Member, utils, errors, Embed, Colour
+from discord import Message, Game, utils, Embed, Colour, Object
 from data.serverhandler import RedisServerHandler, LegacyServerHandler
 from data.utils import is_valid_command, log_to_file, StandardEmoji
 from data.stats import MESSAGE
@@ -203,9 +202,9 @@ class DevFeatures:
 
         # nano.dev.server_info [id]
         elif startswith("nano.dev.server_info"):
-            id = message.content[len("nano.dev.server_info "):]
+            s_id = message.content[len("nano.dev.server_info "):]
 
-            srv = utils.find(lambda s: s.id == id, client.servers)
+            srv = utils.find(lambda s: s.id == s_id, client.servers)
 
             if not srv:
                 await client.send_message(message.channel, "Error. " + StandardEmoji.CROSS)
@@ -266,14 +265,14 @@ class DevFeatures:
             self.handler.delete_server_by_list([s.id for s in self.client.servers])
 
         elif startswith("nano.dev.server.leave"):
-            name = str(message.content)[len("nano.dev.server.leave "):]
-            serv = utils.find(lambda a: a.name == name, client.servers)
+            s_id = int(str(message.content)[len("nano.dev.server.leave "):])
+            serv = Object(id=s_id)
 
             if not serv:
                 await client.send_messsage(message.channel, "Could not leave server: does not exist")
             else:
                 await client.leave_server(serv)
-                await client.send_message(message.channel, StandardEmoji.PERFECT + " Left {} ({})".format(serv.name, serv.id))
+                await client.send_message(message.channel, StandardEmoji.PERFECT + " Left {}".format(serv.id))
 
         # nano.reload
         elif startswith("nano.reload"):
@@ -328,7 +327,7 @@ class DevFeatures:
 
 class NanoPlugin:
     name = "Developer Commands"
-    version = "0.2.3"
+    version = "0.2.4"
 
     handler = DevFeatures
     events = {

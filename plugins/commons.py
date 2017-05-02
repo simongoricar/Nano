@@ -4,10 +4,10 @@ import time
 
 from datetime import timedelta, datetime
 from random import randint
-from discord import Message, utils, Emoji
+from discord import Message, utils
 from data.serverhandler import ServerHandler
-from data.stats import MESSAGE, PING, WRONG_ARG
-from data.utils import is_valid_command, StandardEmoji
+from data.stats import MESSAGE, PING
+from data.utils import is_valid_command, StandardEmoji, is_disabled
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -82,6 +82,7 @@ commands = {
     "_say": {"desc": "Says something (#channel is optional)", "use": "[command] (#channel) [message]", "alias": None},
     "nano.info": {"desc": "A little info about me.", "use": None, "alias": "_ayybot"},
     "_nano": {"desc": "A little info about me.", "use": None, "alias": "nano.info"},
+    "_selfrole": {"desc": "Allows everyone to give themselves an admin-set role (but you have to know the name of the role)", "use": "[command] [role name]", "alias": None},
 }
 
 valid_commands = commands.keys()
@@ -243,8 +244,8 @@ class Commons:
 
             # Most of the permissions that Nano uses
             perms = "1543765079"
-            url = "https://discordapp.com/oauth2/" \
-                  "authorize?client_id={}&scope=bot&permissions={}".format(application.id, perms)
+            url = "<https://discordapp.com/oauth2/" \
+                  "authorize?client_id={}&scope=bot&permissions={}>".format(application.id, perms)
 
             await client.send_message(message.channel, invite.replace("<link>", url))
 
@@ -274,26 +275,44 @@ class Commons:
                 await client.send_message(message.channel, StandardEmoji.WARNING + not_mod)
                 return "return"
 
-            content = str(message.content[len(prefix + "say "):])
+            content = str(message.content[len(prefix + "say "):]).strip(" ")
 
-            if "<#" in content:
-                raw = content.split(">")
-                channel_id = raw[0].replace("<#", "")
-                content = raw[1].strip(" ")
-
-                channel = utils.find(lambda a: a.id == channel_id, message.server.channels)
-
-                if not channel:
-                    await client.send_message(message.channel, "Invalid channel name.")
-                    self.stats.add(WRONG_ARG)
-                    return
-
+            if len(message.channel_mentions) != 0:
+                channel = message.channel_mentions[0]
+                content = content.replace(channel.mention, "").strip(" ")
             else:
                 channel = message.channel
 
             content = self.at_everyone_filter(content, message.author, message.server)
 
             await client.send_message(channel, content)
+
+
+        # !selfrole [role name]
+        elif startswith(prefix + "selfrole"):
+            role = str(message.content[len(prefix + "selfrole"):]).strip(" ")
+            s_role = self.handler.get_selfrole(message.server.id)
+
+            if is_disabled(s_role):
+                await client.send_message(message.channel, StandardEmoji.WARNING + " This feature is not enabled on this server.")
+            elif (role != s_role) and len(message.role_mentions) == 0:
+                await client.send_message(message.channel, StandardEmoji.CROSS + " Wrong role name.")
+            else:
+                if len(message.role_mentions) != 0:
+                    role = message.role_mentions[0]
+                else:
+                    role = utils.find(lambda r: r.name == s_role, message.server.roles)
+
+                if not role:
+                    return
+
+                # If user already has the role, remove it
+                if role in message.author.roles:
+                    await client.remove_roles(message.author, role)
+                    await client.send_message(message.channel, StandardEmoji.PERFECT + " Removed **{}** from your list of roles.".format(s_role))
+                else:
+                    await client.add_roles(message.author, role)
+                    await client.send_message(message.channel, StandardEmoji.PERFECT)
 
     async def on_reaction_add(self, reaction, _, **__):
         if reaction.message.id in self.pings.keys():
@@ -307,7 +326,7 @@ class Commons:
 
 class NanoPlugin:
     name = "Common Commands"
-    version = "0.2.6"
+    version = "0.3.1"
 
     handler = Commons
     events = {

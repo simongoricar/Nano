@@ -44,7 +44,8 @@ server_defaults = {
     "customcmds": {},
     "admins": [],
     "logchannel": None,
-    "prefix": str(parser.get("Servers", "defaultprefix"))
+    "prefix": str(parser.get("Servers", "defaultprefix")),
+    "selfrole": None,
 }
 
 # Utility for input validation
@@ -261,26 +262,16 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
 
         if server_list:
             for rem_serv in server_list:
-                # self.redis.delete(rem_serv)
-                self.delete_server(server)
+                self.delete_server(rem_serv)
 
             log.info("Removed {} old servers.".format(len(server_list)))
 
     def delete_server(self, server_id):
-        if self.redis.exists("commands:{}".format(server_id)):
-            self.redis.delete("commands:{}".format(server_id))
+        self.redis.delete("commands:{}".format(server_id))
+        self.redis.delete("blacklist:{}".format(server_id))
+        self.redis.delete("mutes:{}".format(server_id))
 
-        if self.redis.exists("blacklist:{}".format(server_id)):
-            self.redis.delete("blacklist:{}".format(server_id))
-
-        if self.redis.exists("mutes:{}".format(server_id)):
-            self.redis.delete("mutes:{}".format(server_id))
-
-        if self.redis.exists("server:{}".format(server_id)):
-            self.redis.delete("server:{}".format(server_id))
-            return True
-        else:
-            return False
+        return self.redis.delete("server:{}".format(server_id))
 
     @validate_input
     def set_command(self, server, trigger, response):
@@ -383,6 +374,13 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
         b = bool(self.redis.delete("blacklist:{}".format(server_id)))
 
         return s and c and m and b
+
+    def get_selfrole(self, server_id):
+        return decode(self.redis.hget("server:{}".format(server_id), "selfrole"))
+
+    def set_selfrole(self, server_id, role_name):
+        role = str(role_name)
+        return self.redis.hset("server:{}".format(server_id), "selfrole", role)
 
     # Special debug methods
     def db_info(self, section=None):

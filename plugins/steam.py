@@ -111,13 +111,19 @@ class Steam:
                 except steamapi.errors.APIFailure:
                     await client.send_message(message.channel, "Something went wrong. " + StandardEmoji.CRY)
                     reraise()
-
-                friends = ["`" + friend + "`" for friend in friends]
+                    return
 
                 if not username:
                     await client.send_message(message.channel, "User **does not exist**.")
                     self.stats.add(WRONG_ARG)
                     return
+
+                if not friends:
+                    await client.send_message(message.channel, "Could not fetch friends (probably because the user has a private profile.")
+                    self.stats.add(WRONG_ARG)
+                    return
+
+                friends = ["`" + friend + "`" for friend in friends]
 
                 await client.send_message(message.channel,
                                           "*User:* **{}**\n\n*Friends:* {}".format(username, ", ".join(friends)))
@@ -139,6 +145,11 @@ class Steam:
 
                 if not username:
                     await client.send_message(message.channel, "User **does not exist**.")
+                    self.stats.add(WRONG_ARG)
+                    return
+
+                if not games:
+                    await client.send_message(message.channel, "Could not fetch games (probably because the user has a private profile.")
                     self.stats.add(WRONG_ARG)
                     return
 
@@ -167,6 +178,7 @@ class Steam:
                     await client.send_message(message.channel, "User **does not exist**.")
                     self.stats.add(WRONG_ARG)
                     return
+
                 try:
                     info = "User: **{}**\n```css\nStatus: {}\nLevel: {}\nGames: {} owned (including free games)\nFriends: {}```\n" \
                            "Direct link: http://steamcommunity.com/id/{}/".format(steam_user.name, "Online" if steam_user.state else "Offline",
@@ -189,7 +201,7 @@ class Steam:
 
 class NanoPlugin:
     name = "Steam Commands"
-    version = "0.1"
+    version = "0.1.1"
 
     handler = Steam
     events = {
