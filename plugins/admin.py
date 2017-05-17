@@ -56,7 +56,7 @@ commands = {
     "nano.blacklist remove": {"desc": "Removes a channel from command blacklist", "use": "[command] [channel name]", "alias": None},
     "nano.blacklist list": {"desc": "Shows all blacklisted channels on this server", "use": "[command]", "alias": None},
 
-    "nano.settings": {"desc": "Sets server settings like word, spam and invite filtering and changes log channel.", "use": "[command] [setting] True/False", "alias": None},
+    "nano.settings": {"desc": "Sets server settings like word, spam, invite filtering, log channel and selfrole.\nPossible setting keyords: wordfilter, spamfilter, invitefilter, logchannel, selfrole", "use": "[command] [setting] True/False", "alias": None},
     "nano.displaysettings": {"desc": "Displays all server settings.", "use": None, "alias": None},
     "nano.changeprefix": {"desc": "Changes the prefix on the server.", "use": "[command] prefix", "alias": None},
     "nano.serverreset": {"desc": "Resets all server settings to the default.", "use": None, "alias": None},
@@ -711,7 +711,7 @@ class Admin:
         elif startswith("nano.settings"):
             # todo optimize this
             try:
-                cut = str(message.content)[len("nano.settings "):].rsplit(" ", 1)
+                cut = str(message.content)[len("nano.settings "):].split(" ", 1)
             except IndexError:
                 return
 
@@ -722,7 +722,7 @@ class Admin:
             user_set = cut[0]
 
             # Set logchannel
-            if get_decision(user_set, "logchannel", "log channel"):
+            if get_decision(user_set, "logchannel"):
                 chan_id = cut[1].replace("<#", "").replace(">", "")
 
                 chan = utils.find(lambda chann: chann.id == chan_id, message.server.channels)
@@ -757,6 +757,7 @@ class Admin:
 
                 if not raw_role:
                     await client.send_message(message.channel, StandardEmoji.WARNING + " Invalid role name!")
+                    return
 
                 # Checks role position
                 nano_user = utils.find(lambda me: me.id == client.user.id, message.server.members)
@@ -783,13 +784,13 @@ class Admin:
             # Does not do anything if there is no relevant setting
             handler.update_moderation_settings(message.channel.server, cut[0], decision)
 
-            if get_decision(user_set, "word filter", "filter words", "wordfilter"):
+            if get_decision(user_set, "word filter", "wordfilter"):
                 await client.send_message(message.channel, "Word filter {}".format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
 
-            elif get_decision(user_set, "spam filter", "spamfilter", "filter spam"):
+            elif get_decision(user_set, "spam filter", "spamfilter"):
                 await client.send_message(message.channel, "Spam filter {}".format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
 
-            elif get_decision(user_set, "filterinvite", "filterinvites", "invite removal", "invite filter", "invitefilter"):
+            elif get_decision(user_set, "filterinvite", "filterinvites", "invitefilter"):
                 await client.send_message(message.channel,
                                           "Invite filter {}".format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
 
@@ -1111,7 +1112,7 @@ For a list of all commands and their explanations, use `_cmds`.""".replace("_", 
 
 class NanoPlugin:
     name = "Admin Commands"
-    version = "0.3.1"
+    version = "0.3.3"
 
     handler = Admin
     events = {

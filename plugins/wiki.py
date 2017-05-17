@@ -86,7 +86,11 @@ class Definitions:
                 async with session.get("http://www.urbandictionary.com/define.php?term={}".format(search)) as resp:
                     define = await resp.text()
 
-            answer = BeautifulSoup(define, "html.parser").find("div", attrs={"class": "meaning"}).text
+            try:
+                answer = BeautifulSoup(define, "html.parser").find("div", attrs={"class": "meaning"}).text
+            except AttributeError:
+                await client.send_message(message.channel, "No definition found")
+                return
 
             # Check if there are no definitions
             if str(answer).startswith("\nThere aren't any"):
@@ -104,7 +108,7 @@ class Definitions:
 
 class NanoPlugin:
     name = "Wiki/Urban Commands"
-    version = "0.1.3"
+    version = "0.1.4"
 
     handler = Definitions
     events = {

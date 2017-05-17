@@ -551,15 +551,15 @@ class LegacyServerHandler(ServerHandler, metaclass=Singleton):
             self.server_setup(server)
 
         # Detects the type of the setting
-        if get_decision(key, "word filter", "filter words", "wordfilter"):
+        if get_decision(key, "wordfilter"):
             data[server.id]["filterwords"] = value
             self.queue_write(data)
 
-        elif get_decision(key, "spam filter", "spamfilter", "filter spam"):
+        elif get_decision(key, "spamfilter",):
             data[server.id]["filterspam"] = value
             self.queue_write(data)
 
-        elif get_decision(key, "filterinvite", "filterinvites", "invite removal", "invite filter", "invitefilter"):
+        elif get_decision(key, "filterinvite", "filterinvites", "invitefilter"):
             data[server.id]["filterinvite"] = value
             self.queue_write(data)
 

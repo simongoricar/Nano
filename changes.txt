@@ -1,3 +1,8 @@
+3.4.8
+- Bugfixes
+- More sophisticated word filter
+- New logging stuff
+
 3.4.7
 - New feature: selfrole! (commands: !selfrole [role name], nano.settings selfrole [role name])
 - Bugfixes

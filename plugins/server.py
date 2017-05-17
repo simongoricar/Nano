@@ -49,6 +49,10 @@ class ServerManagement:
 
     async def handle_log_channel(self, server):
         chan = self.handler.get_var(server.id, "logchannel")
+
+        if is_disabled(chan):
+            return None
+
         return discord.utils.find(lambda m: m.id == chan, server.channels)
 
         # Check if the channel already exists

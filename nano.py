@@ -16,7 +16,7 @@ from data.utils import log_to_file
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '3.4.7'
+__version__ = '3.4.dev8'
 
 
 # EVENTS
@@ -264,6 +264,9 @@ class Nano(metaclass=Singleton):
             self.plugin_events_[event].append({"plugin": plugin, "importance": importance})
 
         self._parse_priorities()
+        # Call ON_PLUGINS_LOADED if the plugin requires it
+        if ON_PLUGINS_LOADED in events.keys():
+            await getattr(instance, ON_PLUGINS_LOADED)()
 
         return True
 

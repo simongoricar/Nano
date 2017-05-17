@@ -4,17 +4,17 @@ import time
 
 from datetime import timedelta, datetime
 from random import randint
-from discord import Message, utils
+from discord import Message, utils, Embed
 from data.serverhandler import ServerHandler
 from data.stats import MESSAGE, PING
-from data.utils import is_valid_command, StandardEmoji, is_disabled
+from data.utils import is_valid_command, StandardEmoji, is_disabled, make_dots
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 # Strings
 
-PING_MSG = "**Measuring...** (reaction delay)"
+PING_MSG = "**Measuring...**"
 
 not_mod = " You do not have the correct permissions to use this command (must be a mod)."
 
@@ -82,7 +82,7 @@ commands = {
     "_say": {"desc": "Says something (#channel is optional)", "use": "[command] (#channel) [message]", "alias": None},
     "nano.info": {"desc": "A little info about me.", "use": None, "alias": "_ayybot"},
     "_nano": {"desc": "A little info about me.", "use": None, "alias": "nano.info"},
-    "_selfrole": {"desc": "Allows everyone to give themselves an admin-set role (but you have to know the name of the role)", "use": "[command] [role name]", "alias": None},
+    "_selfrole": {"desc": "Allows everyone to give themselves an admin-set role (but you have to know the name of the role)\nIf you already have the role, this command removes it.", "use": "[command] [role name]", "alias": None},
 }
 
 valid_commands = commands.keys()
@@ -99,8 +99,24 @@ class Commons:
         self.stats = kwargs.get("stats")
 
         self.pings = {}
+        self.getter = None
 
         assert isinstance(self.handler, ServerHandler)
+
+    async def on_plugins_loaded(self):
+        self.getter = self.nano.get_plugin("server").get("instance")
+
+    async def log_say_command(self, message, content, prefix):
+        log_channel = await self.getter.handle_log_channel(message.server)
+
+        if not log_channel:
+            return
+
+        embed = Embed(title="Executed {}say".format(prefix), description=make_dots(content, 350))
+        embed.set_author(name="{} ({})".format(message.author.name, message.author.id), icon_url=message.author.avatar_url)
+        embed.add_field(name="Channel", value=message.channel.mention)
+
+        await self.client.send_message(log_channel, embed=embed)
 
     @staticmethod
     def at_everyone_filter(content, author, server):
@@ -202,15 +218,13 @@ class Commons:
 
         # !ping
         elif startswith(prefix + "ping"):
-            # tm = datetime.now() - message.timestamp
-            # # Converts to ms !! fix: not * 100, but * 1000
-            # time_taken = int(divmod(tm.total_seconds(), 60)[1] * 1000)
+            base_time = datetime.now() - message.timestamp
+            base_taken = int(divmod(base_time.total_seconds(), 60)[1] * 100)
 
             a = await client.send_message(message.channel, PING_MSG)
-            self.pings[a.id] = [time.monotonic(), message.channel.id]
+            self.pings[a.id] = [time.monotonic(), message.channel.id, base_taken]
 
             await client.add_reaction(a, "\U0001F44D")
-            # await client.send_message(message.channel, "**Pong!** ({} ms)".format(time_taken))
             self.stats.add(PING)
 
         # !decide
@@ -287,6 +301,8 @@ class Commons:
 
             await client.send_message(channel, content)
 
+            await self.log_say_command(message, content, prefix)
+
 
         # !selfrole [role name]
         elif startswith(prefix + "selfrole"):
@@ -320,7 +336,7 @@ class Commons:
 
             delta = round((time.monotonic() - int(data[0])) * 100, 2)
             msg = await self.client.get_message(self.client.get_channel(data[1]), reaction.message.id)
-            await self.client.edit_message(msg, "**Pong!** ({} ms, reaction delay)".format(delta))
+            await self.client.edit_message(msg, "**Pong!** (lag: {} ms, reaction: {} ms)".format(data[2], delta))
             await self.client.remove_reaction(msg, "\U0001F44D", reaction.message.server.me)
 
 
@@ -332,5 +348,6 @@ class NanoPlugin:
     events = {
         "on_message": 10,
         "on_reaction_add": 10,
+        "on_plugins_loaded": 5,
         # type : importance
     }

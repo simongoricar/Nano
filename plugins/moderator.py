@@ -40,12 +40,33 @@ def get_valid_commands(plugin):
 
 class NanoModerator:
     def __init__(self):
-        # Other
+        self.permutations = [
+            dict(a="4"),
+            dict(s="$"),
+            dict(o="0"),
+            dict(a="@"),
+        ]
+
         with open("plugins/banned_words.txt", "r") as banned:
             self.word_list = [line.strip("\n") for line in banned.readlines()]
 
+        # Builds a more sophisticated list
+        before = len(self.word_list)
+        for word in self.word_list:
+            initial = str(word)
+
+            for perm in self.permutations:
+                (k, v), = perm.items()
+                changed = initial.replace(k, v)
+                if initial != changed:
+                    self.word_list.append(changed)
+
+        logger.info("Processed word list: added {} entries".format(len(self.word_list) - before))
+
+
         # Gibberish detector
-        self.spam_model = load(open("plugins/spam_model.pki", "rb"))
+        with open("plugins/spam_model.pki", "rb") as spam_model:
+            self.spam_model = load(spam_model)
 
         self.data = self.spam_model["data"]
         self.threshold = self.spam_model["threshold"]
@@ -64,20 +85,11 @@ class NanoModerator:
         if isinstance(message, Message):
             message = str(message.content)
 
-        # Builds a list
-        message = str(message).lower().split(" ")
+        message = str(message).lower()
 
-        # Checks for matches
-        # Each word is compared to each banned word
-        for a_word in message:
-            for b_word in self.word_list:
-
-                # if a_word.find(b_word) != -1:
-                #     return True
-                if a_word == b_word:
-                    return True
-
-        return False
+        # Massive speed improvement in 0.3
+        res = [a for a in self.word_list if a in message]
+        return bool(res)
 
     def check_spam(self, message):
         """
@@ -192,7 +204,7 @@ class LogManager:
         embed.add_field(name="Channel", value=message.channel.mention)
 
         logger.debug("Sending logs for {}".format(message.server.name))
-        await self.send_message(log_channel, embed)
+        await self.send_message(log_channel, embed=embed)
 
 
 class Moderator:
@@ -304,7 +316,7 @@ class Moderator:
 
 class NanoPlugin:
     name = "Moderator"
-    version = "0.2.5"
+    version = "0.3"
 
     handler = Moderator
     events = {

@@ -188,6 +188,7 @@ class CommunityPrices:
             logger.warning("Error white getting TF2 data. Plugin disabled.")
             self.success = False
         else:
+            logger.info("Successfully got TF2 item data")
             self.success = True
 
         self.is_updating = False

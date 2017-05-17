@@ -384,6 +384,11 @@ class Reminder:
             content = str(args[1]).strip(" ")
 
             if not args[0].isnumeric():
+                if "[" in args[0]:
+                    # When people actually do !remind here in [1h 32min]: omg why
+                    await client.send_message(message.channel, "Do not use **[** and **]** ! Try again without them.")
+                    return
+
                 ttr = convert_to_seconds(args[0])
             else:
                 ttr = int(args[0])

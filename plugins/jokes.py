@@ -327,7 +327,7 @@ class Joke:
                 await client.send_message(message.channel, "Could not fetch xkcd " + StandardEmoji.CRY + ". Error has been logged for inspection.")
                 log_to_file("XKCD: string {}, fetch: {}, got None".format(args, fetch))
             else:
-                await client.send_message(message.channel, str(xkcd.img))
+                await client.send_message(message.channel, "**XKCD number {}:**\n{}".format(xkcd.num, xkcd.img))
 
         # !joke (yo mama/chuck norris)
         elif startswith(prefix + "joke"):
@@ -350,7 +350,7 @@ class Joke:
 
 class NanoPlugin:
     name = "Joke-telling module"
-    version = "0.1.2"
+    version = "0.1.3"
 
     handler = Joke
     events = {
