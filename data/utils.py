@@ -62,6 +62,40 @@ class StandardEmoji:
     NO_ENTRY = ":no_entry_sign:"
 
 
+class BotEmoji:
+    BOT_TAG = "<:botTag:230105988211015680>"
+
+    ONLINE = "<:online:313956277808005120>"
+    OFFLINE = "<:offline:313956277237710868>"
+    AWAY = "<:away:313956277220802560>"
+    DND = "<:dnd:313956276893646850>"
+    STREAMING = "<:streaming:313956277132853248>"
+    INVISIBLE = "<:invisible:313956277107556352>"
+
+    DISCORD = "<:discord:314003252830011395>"
+    UPDATE = "<:update:264184209617321984>"
+    PARTNER = "<:partner:314068430556758017>"
+    HYPE_SQUAD = "<:hypesquad:314068430854684672>"
+    NITRO = "<:nitro:314068430611415041>"
+    STAFF = "<:staff:314068430787706880>"
+    GIF = "<:gif:314068430624129039>"
+    STAFF_TOOLS = "<:stafftools:314348604095594498>"
+
+    YOUTUBE = "<:youtube:314349922885566475>"
+    YT_GAMING = "<:ytgaming:314349923132899338>"
+    TWITTER = "<:twitter:314349922877046786>"
+    REDDIT = "<:reddit:314349923103670272>"
+    SKYPE = "<:skype:314349923107602432>"
+    STEAM = "<:steam:314349923044687872>"
+    TWITCH = "<:twitch:314349922755411970>"
+    LEAGUE_OF_LEGENDS = "<:league:314349922902343681>"
+    BATTLE_NET = "<:battlenet:314349923006939136>"
+    SOUNDCLOUD = "<:soundcloud:314349923090825216>"
+    CHECK = "<:check:314349398811475968>"
+    MARK_X = "<:xmark:314349398824058880>"
+    EMPTY = "<:empty:314349398723264512>"
+
+
 def resolve_time(tm):
     try:
         tm = int(round(tm, 0))
