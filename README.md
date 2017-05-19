@@ -1,16 +1,17 @@
 # Nano
 
-[![Version](https://img.shields.io/badge/version-3.4.3-green.svg)](https://defaltsimon.github.io/Nano/)
+[![Version](https://img.shields.io/badge/version-3.4.9-green.svg)](https://defaltsimon.github.io/Nano/)
 [![license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/DefaltSimon/Nano/blob/master/LICENSE)
 
 by DefaltSimon, made in python with [discord.py api](https://github.com/Rapptz/discord.py) .
 
 ### Main features  
-* "Unique" spam and swearing filter  
+* Moderation features (word, spam, invite filtering)  
 * Fun and useful commands like !roll or !vote with the ability to add custom ones  
 * Game-related commands for TF2, Minecraft, Steam, osu!...  
 * IMDB search  
-* Permissions  
+* xkcd comics, random cat pics  
+* Multi-level permissions  
 * Logging  
 * Reminders and voting
 * per-server setings
