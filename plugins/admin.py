@@ -6,7 +6,7 @@ import datetime
 from discord import Message, utils, Client, Embed, Colour, DiscordException, HTTPException, Object, errors as derrors
 from data.serverhandler import LegacyServerHandler, RedisServerHandler, INVITEFILTER_SETTING, SPAMFILTER_SETTING, WORDFILTER_SETTING
 from data.stats import WRONG_ARG
-from data.utils import convert_to_seconds, get_decision, is_valid_command, StandardEmoji, decode, resolve_time, log_to_file, is_disabled
+from data.utils import convert_to_seconds, matches_list, is_valid_command, StandardEmoji, decode, resolve_time, log_to_file, is_disabled
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -56,7 +56,7 @@ commands = {
     "nano.blacklist remove": {"desc": "Removes a channel from command blacklist", "use": "[command] [channel name]", "alias": None},
     "nano.blacklist list": {"desc": "Shows all blacklisted channels on this server", "use": "[command]", "alias": None},
 
-    "nano.settings": {"desc": "Sets server settings like word, spam, invite filtering, log channel and selfrole.\nPossible setting keyords: wordfilter, spamfilter, invitefilter, logchannel, selfrole", "use": "[command] [setting] True/False", "alias": None},
+    "nano.settings": {"desc": "Sets server settings like word, spam, invite filtering, log channel and selfrole.\nPossible setting keyords: wordfilter, spamfilter, invitefilter, logchannel, selfrole, defaultchannel", "use": "[command] [setting] True/False", "alias": None},
     "nano.displaysettings": {"desc": "Displays all server settings.", "use": None, "alias": None},
     "nano.changeprefix": {"desc": "Changes the prefix on the server.", "use": "[command] prefix", "alias": None},
     "nano.serverreset": {"desc": "Resets all server settings to the default.", "use": None, "alias": None},
@@ -245,6 +245,13 @@ class Admin:
                 return None
 
         return role
+
+    @staticmethod
+    async def handle_def_channel(server, channel_id):
+        if is_disabled(channel_id):
+            return server.default_channel
+        else:
+            return utils.find(lambda c: c.id == channel_id, server.channels)
 
     async def on_message(self, message, **kwargs):
         prefix = kwargs.get("prefix")
@@ -722,7 +729,7 @@ class Admin:
             user_set = cut[0]
 
             # Set logchannel
-            if get_decision(user_set, "logchannel"):
+            if matches_list(user_set, "logchannel"):
                 chan_id = cut[1].replace("<#", "").replace(">", "")
 
                 chan = utils.find(lambda chann: chann.id == chan_id, message.server.channels)
@@ -738,10 +745,8 @@ class Admin:
                 handler.update_var(message.server.id, "logchannel", chan_id)
                 await client.send_message(message.channel, "Log channel set to **{}** {}".format(chan.name, StandardEmoji.PERFECT))
 
-                return
-
             # Set allowed selfrole role
-            elif get_decision(user_set, "selfrole", "self role"):
+            elif matches_list(user_set, "selfrole"):
                 if len(message.role_mentions) != 0:
                     selfrole_name = message.role_mentions[0].name
                     raw_role = message.role_mentions[0]
@@ -776,27 +781,51 @@ class Admin:
                 self.handler.set_selfrole(message.server.id, selfrole_name)
                 await client.send_message(message.channel, StandardEmoji.OK + " Selfrole set to **{}**".format(selfrole_name))
 
-                return
+            elif matches_list(user_set, "defaultchannel"):
+                if len(message.channel_mentions) != 1:
+                    chan = str(message.content[len("nano.settings defaultchannel "):])
+
+                    if not chan or not is_disabled(chan):
+                        await client.send_message(message.channel, "Please mention the channel you want to set as default.")
+                        return
+                    else:
+                        # This case runs only, if is_disabled returns True
+                        chan_id = None
+
+                else:
+                    chan = message.channel_mentions[0]
+                    chan_id = chan.id
+
+                self.handler.set_defaultchannel(message.server, chan_id)
+
+                if chan_id:
+                    await client.send_message(message.channel, StandardEmoji.OK + " Default channel set to **{}**".format(chan.name))
+                else:
+                    await client.send_message(message.channel, StandardEmoji.OK + " Default channel set back to default - **{}**".format(message.server.default_channel.name))
 
             # Otherwise, set word/spam/invite filter
-            decision = get_decision(cut[1])
+            elif matches_list(user_set, "word filter", "wordfilter"):
+                decision = matches_list(cut[1])
+                handler.update_moderation_settings(message.channel.server, cut[0], decision)
 
-            # Does not do anything if there is no relevant setting
-            handler.update_moderation_settings(message.channel.server, cut[0], decision)
-
-            if get_decision(user_set, "word filter", "wordfilter"):
                 await client.send_message(message.channel, "Word filter {}".format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
 
-            elif get_decision(user_set, "spam filter", "spamfilter"):
+            elif matches_list(user_set, "spam filter", "spamfilter"):
+                decision = matches_list(cut[1])
+                handler.update_moderation_settings(message.channel.server, cut[0], decision)
+
                 await client.send_message(message.channel, "Spam filter {}".format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
 
-            elif get_decision(user_set, "filterinvite", "filterinvites", "invitefilter"):
+            elif matches_list(user_set, "filterinvite", "filterinvites", "invitefilter"):
+                decision = matches_list(cut[1])
+                handler.update_moderation_settings(message.channel.server, cut[0], decision)
+
                 await client.send_message(message.channel,
                                           "Invite filter {}".format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
 
             else:
                 await client.send_message(message.channel, "**{}** is not a setting. Should be one of: "
-                                                           "logchannel, selfrole, invitefilter, wordfilter, spamfilter.".format(user_set))
+                                                           "logchannel, selfrole, invitefilter, wordfilter, spamfilter, defaultchannel.".format(user_set))
 
         # nano.displaysettings
         elif startswith("nano.displaysettings"):
@@ -825,8 +854,14 @@ class Admin:
             log_channel = settings.get("logchannel") or "Disabled"
             selfrole = settings.get("selfrole") or "Disabled"
 
-            channel_name = utils.find(lambda a: a.id == log_channel, message.server.channels)
-            channel_name = "({})".format(channel_name) if channel_name else ""
+            log_channel_name = utils.find(lambda a: a.id == log_channel, message.server.channels)
+            log_channel_name = "({})".format(log_channel_name) if log_channel_name else ""
+
+            d_channel = await self.handle_def_channel(message.server, settings.get("dchan"))
+            if is_disabled(d_channel):
+                d_channel = "Disabled"
+            else:
+                d_channel = "{} ({})".format(d_channel.id, d_channel.name)
 
             msg_join = settings.get("welcomemsg") or "Disabled"
             msg_leave = settings.get("leavemsg") or "Disabled"
@@ -839,14 +874,15 @@ Spam filter: {}
 Word filter: {}
 Invite removal: {}
 Log channel: {} {}
+Default channel: {}
 Prefix: {}
 Selfrole: {}```
 Messages:
 ➤ Join: `{}`
 ➤ Leave: `{}`
 ➤ Ban: `{}`
-➤ Kick: `{}`""".format(blacklisted_c, spam_filter, word_filter, invite_filter, log_channel, channel_name, settings.get("prefix"),
-                       selfrole, msg_join, msg_leave, msg_ban, msg_kick)
+➤ Kick: `{}`""".format(blacklisted_c, spam_filter, word_filter, invite_filter, log_channel, log_channel_name, d_channel,
+                       settings.get("prefix"), selfrole, msg_join, msg_leave, msg_ban, msg_kick)
 
             await client.send_message(message.channel, final)
 
@@ -1112,7 +1148,7 @@ For a list of all commands and their explanations, use `_cmds`.""".replace("_", 
 
 class NanoPlugin:
     name = "Admin Commands"
-    version = "0.3.3"
+    version = "0.3.4"
 
     handler = Admin
     events = {

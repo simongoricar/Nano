@@ -46,6 +46,7 @@ class ServerManagement:
 
         # Debug
         self.lt = time.time()
+        self.bans = {}
 
     async def handle_log_channel(self, server):
         chan = self.handler.get_var(server.id, "logchannel")
@@ -92,6 +93,19 @@ class ServerManagement:
         #
         # else:
         #     return discord.utils.find(lambda m: m.id == self.handler.get_var(server.id, "logchannel"), server.channels)
+
+    @staticmethod
+    async def handle_def_channel(server, channel_id):
+        if is_disabled(channel_id):
+            return server.default_channel
+        else:
+            return discord.utils.find(lambda c: c.id == channel_id, server.channels)
+
+    @staticmethod
+    def make_logchannel_embed(user, action, color=discord.Color(0x2e75cc)):
+        # Color: Nano's dark blue color
+        return discord.Embed(title="User {}".format(action), description="ID: {}".format(user.id), color=color)\
+                                                            .set_author(name=user.name, icon_url=user.avatar_url)
 
     async def on_message(self, message, **kwargs):
         assert isinstance(message, discord.Message)
@@ -290,15 +304,19 @@ class ServerManagement:
             welcome_msg = welcome_msg.replace(trigg, repl)
 
         log_c = await self.handle_log_channel(member.server)
+        def_c = await self.handle_def_channel(member.server, self.handler.get_defaultchannel(member.server))
 
         # Ignore if disabled
         if log_c:
-            await self.client.send_message(log_c, "{} has joined the server".format(member.mention))
+            embed = self.make_logchannel_embed(member, "joined")
+            await self.client.send_message(log_c, embed=embed)
         
         if not is_disabled(welcome_msg):
-            await self.client.send_message(member.server.default_channel, welcome_msg)
+            await self.client.send_message(def_c, welcome_msg)
 
     async def on_member_ban(self, member, **_):
+        self.bans[member.id] = time.time()
+
         assert isinstance(self.handler, (RedisServerHandler, ServerHandler))
 
         replacement_logic = {
@@ -312,15 +330,21 @@ class ServerManagement:
             ban_msg = ban_msg.replace(trigg, repl)
 
         log_c = await self.handle_log_channel(member.server)
+        def_c = await self.handle_def_channel(member.server, self.handler.get_defaultchannel(member.server))
 
         # Ignore if disabled
         if log_c:
-            await self.client.send_message(log_c, "{} was banned.".format(member.mention))
+            embed = self.make_logchannel_embed(member, "was banned")
+            await self.client.send_message(log_c, embed=embed)
 
         if not is_disabled(ban_msg):
-            await self.client.send_message(member.server.default_channel, ban_msg)
+            await self.client.send_message(def_c, ban_msg)
 
     async def on_member_remove(self, member, **_):
+        if member.id in self.bans.keys():
+            self.bans.pop(member.id)
+            return
+
         assert isinstance(self.handler, (RedisServerHandler, ServerHandler))
 
         replacement_logic = {
@@ -334,13 +358,15 @@ class ServerManagement:
             leave_msg = leave_msg.replace(trigg, repl)
 
         log_c = await self.handle_log_channel(member.server)
+        def_c = await self.handle_def_channel(member.server, self.handler.get_defaultchannel(member.server))
 
         # Ignore if disabled
         if log_c:
-            await self.client.send_message(log_c, "{} left the server.".format(member.mention))
+            embed = self.make_logchannel_embed(member, "left")
+            await self.client.send_message(log_c, embed=embed)
         
         if not is_disabled(leave_msg):
-            await self.client.send_message(member.server.default_channel, leave_msg)
+            await self.client.send_message(def_c, leave_msg)
 
     async def on_server_join(self, server, **_):
         # Say hi to the server

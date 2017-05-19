@@ -9,7 +9,7 @@ import importlib
 # yaml is now a conditional import
 # json is a conditional import too
 from discord import Member, User
-from .utils import threaded, Singleton, get_decision, decode, decode_auto
+from .utils import threaded, Singleton, matches_list, decode, decode_auto
 
 __author__ = "DefaltSimon"
 
@@ -46,6 +46,7 @@ server_defaults = {
     "logchannel": None,
     "prefix": str(parser.get("Servers", "defaultprefix")),
     "selfrole": None,
+    "dchan": None,
 }
 
 # Utility for input validation
@@ -174,7 +175,11 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
         super().__init__()
 
         self._redis = importlib.import_module("redis")
-        self.redis = self._redis.StrictRedis(host=redis_ip, port=redis_port, password=redis_password)
+
+        self.pool = self._redis.ConnectionPool(host=redis_ip, port=redis_port, password=redis_password, db=0)
+        log.info("Redis ConnectionPool created")
+
+        self.redis = self._redis.StrictRedis(connection_pool=self.pool)
 
         try:
             self.redis.ping()
@@ -365,6 +370,12 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
         serv = "mutes:{}".format(server.id)
         return list(decode(self.redis.smembers(serv)))
 
+    def get_defaultchannel(self, server):
+        return decode(self.redis.hget("server:{}".format(server.id), "dchan"))
+
+    def set_defaultchannel(self, server, channel_id):
+        self.redis.hset("server:{}".format(server.id), "dchan", channel_id)
+
     @validate_input
     def remove_server(self, server_id):
         # Not used
@@ -391,15 +402,13 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
 
     # Plugin storage system
     def get_plugin_data_manager(self, namespace, *args, **kwargs):
-        return RedisPluginDataManager(self._redis, namespace, *args, **kwargs)
+        return RedisPluginDataManager(self._redis, self.pool, namespace, *args, **kwargs)
 
 
 class RedisPluginDataManager:
-    def __init__(self, _redis, namespace, *_, **__):
+    def __init__(self, _redis, pool, namespace, *_, **__):
         self.namespace = str(namespace)
-
-        redis_ip, redis_port, redis_password = RedisServerHandler.get_redis_credentials()
-        self.redis = _redis.StrictRedis(host=redis_ip, port=redis_port, password=redis_password)
+        self.redis = _redis.StrictRedis(connection_pool=pool)
 
         log.info("Plugin registered for redis data:{}".format(self.namespace))
 
@@ -551,15 +560,15 @@ class LegacyServerHandler(ServerHandler, metaclass=Singleton):
             self.server_setup(server)
 
         # Detects the type of the setting
-        if get_decision(key, "wordfilter"):
+        if matches_list(key, "wordfilter"):
             data[server.id]["filterwords"] = value
             self.queue_write(data)
 
-        elif get_decision(key, "spamfilter",):
+        elif matches_list(key, "spamfilter", ):
             data[server.id]["filterspam"] = value
             self.queue_write(data)
 
-        elif get_decision(key, "filterinvite", "filterinvites", "invitefilter"):
+        elif matches_list(key, "filterinvite", "filterinvites", "invitefilter"):
             data[server.id]["filterinvite"] = value
             self.queue_write(data)
 

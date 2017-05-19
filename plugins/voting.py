@@ -340,6 +340,7 @@ class Vote:
         elif startswith(prefix + "vote"):
             # Ignore if there is no vote going on instead of getting an exception
             if not self.vote.in_progress(message.server):
+                print("not in progress")
                 return
 
             # Get the choice, but tell the author if he/she didn't supply a number
@@ -351,7 +352,7 @@ class Vote:
                 await client.delete_message(m)
                 return
 
-            if not choice:
+            if choice < 0:
                 return
 
             res = self.vote.plus_one(choice, message.author.id, message.channel.server)
@@ -392,7 +393,7 @@ class Vote:
 
 class NanoPlugin:
     name = "Voting"
-    version = "0.2.4"
+    version = "0.2.5"
 
     handler = Vote
     events = {

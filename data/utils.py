@@ -205,7 +205,7 @@ words = (
 )
 
 
-def get_decision(content, *lst):
+def matches_list(content, *lst):
     if not lst:
         lst = words
 
@@ -251,7 +251,7 @@ def is_empty(path):
         return False
 
 none_ux = [
-    "none", "false", "off", "disabled"
+    "none", "false", "off", "disabled", "default"
 ]
 
 

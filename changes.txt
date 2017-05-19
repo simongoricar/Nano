@@ -1,3 +1,8 @@
+3.4.9
+- More bugfixes (they never end)
+- New setting: default channel (for join/ban/leave messages)
+- Nano now logs !say to the logchannel
+
 3.4.8
 - Bugfixes
 - More sophisticated word filter
