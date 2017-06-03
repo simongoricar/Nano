@@ -60,6 +60,7 @@ class StandardEmoji:
     SPY = ":spy:"
     ALARM = ":alarm_clock:"
     NO_ENTRY = ":no_entry_sign:"
+    WINK = ":wink:"
 
 
 class BotEmoji:
@@ -256,6 +257,9 @@ none_ux = [
 
 
 def is_disabled(ct):
+    if ct is None:
+        return True
+
     for a in none_ux:
         if str(ct).lower().startswith(a):
             return True

@@ -206,22 +206,41 @@ class RedisReminderHandler:
     def is_active(self):
         return bool(self.get_all_reminders())
 
+    @staticmethod
+    def prepare_remind_content(content):
+        # Used for find_id_from_content
+        return "{} You asked me to remind you:\n```{}```".format(StandardEmoji.ALARM, content), \
+               "{} Timer is up!\n```{}```".format(StandardEmoji.ALARM, content)
+
     def get_reminders(self, user_id):
         if self.redis.exists(user_id):
             return {int(idd): self.json.loads(a) for idd, a in self.redis.hgetall(user_id).items()}
         else:
-            return []
+            return {}
 
     def get_all_reminders(self):
         return [self.get_reminders(decode(a).strip("reminder:")) for a in self.redis.scan_iter("*")]
+
+    def find_id_from_content(self, user, content):
+        reminders = self.get_reminders(user)
+        private_ann, channel_ann = self.prepare_remind_content(content)
+
+        for rem_id, rem_content in reminders.items():
+            if rem_content.get("content") == private_ann or rem_content.get("content") == channel_ann:
+                return rem_id
+
+        return None
 
     def remove_all_reminders(self, user):
         if self.redis.exists(user.id):
             self.redis.delete(user.id)
 
-    def remove_reminder(self, user_id, reminder_id):
-        if self.redis.exists(user_id):
-            return self.redis.hdel(user_id, reminder_id)
+    def remove_reminder(self, user_id, reminder_content):
+        rem_id = self.find_id_from_content(user_id, reminder_content)
+
+        if self.redis.exists(user_id) and rem_id is not None:
+            self.redis.hdel(user_id, rem_id)
+            return True
 
         return False
 
@@ -416,7 +435,11 @@ class Reminder:
             content = str(args[1]).strip(" ")
 
             if not args[0].isnumeric():
-                ttr = convert_to_seconds(args[0])
+                try:
+                    ttr = convert_to_seconds(args[0])
+                except ValueError:
+                    await client.send_message(message.channel, "Please do not use partial minutes/hours/days etc.. (such as 1.7 days - use `1d 16h 48min` instead {}".format(StandardEmoji.WINK))
+                    return
             else:
                 ttr = int(args[0])
 
@@ -461,6 +484,7 @@ class Reminder:
 
             if r_name == "all":
                 self.reminder.remove_all_reminders(message.author)
+                await client.send_message(message.channel, "All reminders have been deleted. " + StandardEmoji.PERFECT)
 
             else:
                 r_resp = self.reminder.remove_reminder(message.author.id, r_name)
@@ -484,7 +508,6 @@ class Reminder:
 
         if self.reminder.is_active():
             with open("cache/reminders.temp", "wb") as cache:
-                print(self.reminder.reminders)
                 cache.write(dumps(self.reminder.reminders))  # Save instance of ReminderHandler to be used on the next boot
         else:
             try:

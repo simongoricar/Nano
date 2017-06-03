@@ -251,7 +251,7 @@ class Moderator:
         # Ignore existing commands
         def is_command(content, valids):
             for a in valids:
-                if str(content).startswith(str(a).replace("_", prefix)):
+                if str(content).startswith(str(a).replace("_", str(prefix))):
                     return True
 
             return False

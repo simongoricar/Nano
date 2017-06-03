@@ -5,6 +5,7 @@ import logging
 import psutil
 import time
 import gc
+import asyncio
 from datetime import datetime, timedelta
 from data.stats import MESSAGE
 from data.serverhandler import ServerHandler, RedisServerHandler, LegacyServerHandler
@@ -101,11 +102,17 @@ class ServerManagement:
         else:
             return discord.utils.find(lambda c: c.id == channel_id, server.channels)
 
+    async def send_message_failproof(self, channel, message=None, embed=None):
+        try:
+            await self.client.send_message(channel, content=message, embed=embed)
+        except discord.HTTPException:
+            await asyncio.sleep(3)
+            await self.client.send_message(channel, content=message, embed=embed)
+
     @staticmethod
     def make_logchannel_embed(user, action, color=discord.Color(0x2e75cc)):
         # Color: Nano's dark blue color
-        return discord.Embed(title="User {}".format(action), description="ID: {}".format(user.id), color=color)\
-                                                            .set_author(name=user.name, icon_url=user.avatar_url)
+        return discord.Embed(description="ID: {}".format(user.id), color=color).set_author(name="{} {}".format(user.name, action), icon_url=user.avatar_url)
 
     async def on_message(self, message, **kwargs):
         assert isinstance(message, discord.Message)
@@ -309,10 +316,10 @@ class ServerManagement:
         # Ignore if disabled
         if log_c:
             embed = self.make_logchannel_embed(member, "joined")
-            await self.client.send_message(log_c, embed=embed)
+            await self.send_message_failproof(log_c, embed=embed)
         
         if not is_disabled(welcome_msg):
-            await self.client.send_message(def_c, welcome_msg)
+            await self.send_message_failproof(def_c, welcome_msg)
 
     async def on_member_ban(self, member, **_):
         self.bans[member.id] = time.time()
@@ -335,10 +342,10 @@ class ServerManagement:
         # Ignore if disabled
         if log_c:
             embed = self.make_logchannel_embed(member, "was banned")
-            await self.client.send_message(log_c, embed=embed)
+            await self.send_message_failproof(log_c, embed=embed)
 
         if not is_disabled(ban_msg):
-            await self.client.send_message(def_c, ban_msg)
+            await self.send_message_failproof(def_c, ban_msg)
 
     async def on_member_remove(self, member, **_):
         if member.id in self.bans.keys():
@@ -363,14 +370,14 @@ class ServerManagement:
         # Ignore if disabled
         if log_c:
             embed = self.make_logchannel_embed(member, "left")
-            await self.client.send_message(log_c, embed=embed)
+            await self.send_message_failproof(log_c, embed=embed)
         
         if not is_disabled(leave_msg):
-            await self.client.send_message(def_c, leave_msg)
+            await self.send_message_failproof(def_c, leave_msg)
 
     async def on_server_join(self, server, **_):
         # Say hi to the server
-        await self.client.send_message(server.default_channel, nano_welcome)
+        await self.send_message_failproof(server.default_channel, nano_welcome)
 
         # Create server settings
         self.handler.server_setup(server)
@@ -405,7 +412,7 @@ class ServerManagement:
 
 class NanoPlugin:
     name = "Moderator"
-    version = "0.3.2"
+    version = "0.3.3"
 
     handler = ServerManagement
     events = {

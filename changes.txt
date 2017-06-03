@@ -1,3 +1,8 @@
+3.5
+- Brought back the movie/tv search, provided by The Movie Database
+- Even more bugfixes
+- More foolproof
+
 3.4.9
 - More bugfixes (they never end)
 - New setting: default channel (for join/ban/leave messages)

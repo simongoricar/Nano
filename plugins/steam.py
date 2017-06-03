@@ -108,8 +108,8 @@ class Steam:
                 except ValueError:
                     await client.send_message(message.channel, NOT_WHOLE_URL)
                     return
-                except steamapi.errors.APIFailure:
-                    await client.send_message(message.channel, "Something went wrong. " + StandardEmoji.CRY)
+                except (steamapi.errors.APIFailure, steamapi.errors.AccessException):
+                    await client.send_message(message.channel, "Something went wrong. User could have a private profile. " + StandardEmoji.CRY)
                     reraise()
                     return
 
@@ -139,9 +139,10 @@ class Steam:
                 except ValueError:
                     await client.send_message(message.channel, NOT_WHOLE_URL)
                     return
-                except steamapi.errors.APIFailure:
-                    await client.send_message(message.channel, "Something went wrong. " + StandardEmoji.CRY)
+                except (steamapi.errors.APIFailure, steamapi.errors.AccessException):
+                    await client.send_message(message.channel, "Something went wrong. User could have a private profile. " + StandardEmoji.CRY)
                     reraise()
+                    return
 
                 if not username:
                     await client.send_message(message.channel, "User **does not exist**.")
@@ -173,6 +174,10 @@ class Steam:
                 except ValueError:
                     await client.send_message(message.channel, NOT_WHOLE_URL)
                     return
+                except (steamapi.errors.APIFailure, steamapi.errors.AccessException):
+                    await client.send_message(message.channel, "Something went wrong. User could have a private profile. " + StandardEmoji.CRY)
+                    reraise()
+                    return
 
                 if not steam_user:
                     await client.send_message(message.channel, "User **does not exist**.")
@@ -201,7 +206,7 @@ class Steam:
 
 class NanoPlugin:
     name = "Steam Commands"
-    version = "0.1.1"
+    version = "0.2"
 
     handler = Steam
     events = {
