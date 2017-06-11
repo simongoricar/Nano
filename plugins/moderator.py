@@ -61,7 +61,7 @@ class NanoModerator:
                 if initial != changed:
                     self.word_list.append(changed)
 
-        logger.info("Processed word list: added {} entries".format(len(self.word_list) - before))
+        logger.info("Processed word list: added {} entries ({} total)".format(len(self.word_list) - before, len(self.word_list)))
 
 
         # Gibberish detector

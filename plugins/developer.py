@@ -192,7 +192,7 @@ class DevFeatures:
 
         # nano.dev.get_servers
         if startswith("nano.dev.get_servers"):
-            # /fixme message is still too long
+            # fixme message is still too long
             servers = ["{} ({} u) - `{}`".format(srv.name, srv.member_count, srv.id) for srv in client.servers]
 
             final = ["\n".join(a) for a in [servers[i:i+1000] for i in range(0, len(servers), 1000)]]
@@ -278,7 +278,7 @@ class DevFeatures:
         elif startswith("nano.reload"):
             self.handler.reload()
 
-            await client.send_message(message.channel, "Refreshed server data {} {}".format(StandardEmoji.MUSCLE, StandardEmoji.NORMAL_SMILE))
+            await client.send_message(message.channel, "Refreshed server data {} {}".format(StandardEmoji.MUSCLE, StandardEmoji.SMILE))
 
         # nano.restart
         elif startswith("nano.restart"):

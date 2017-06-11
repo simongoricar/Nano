@@ -38,8 +38,8 @@ class StandardEmoji:
     PERFECT = ":ok_hand:"
 
     # Face emojis
-    SMILEY = ":smiley"
-    NORMAL_SMILE = ":smile:"
+    SMILEY = ":smiley:"
+    SMILE = ":smile:"
     TONGUE = ":stuck_out_tongue:"
     THINKING = ":thinking:"
     SCREAM = ":scream:"

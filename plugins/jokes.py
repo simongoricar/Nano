@@ -87,10 +87,6 @@ class CatGenerator:
 
 
 class ComicImage:
-    # __slots__ = (
-    #     "month", "num", "link", "year", "news", "safe_title",
-    #     "transcript", "alt", "img", "title", "day"
-    # )
     __slots__ = ("img", "num", "link")
 
     def __init__(self, **kwargs):
@@ -112,7 +108,9 @@ class XKCD:
         self.req = Requester()
         self.loop = loop
 
-        self.loop.run_until_complete(self._set_last_num())
+        self.running = True
+
+        self.loop.create_task(self.updater())
 
     def exists_in_cache(self, number):
         return bool(self.cache.get(number))
@@ -129,6 +127,11 @@ class XKCD:
             return True
         else:
             return False
+
+    async def updater(self):
+        while self.running:
+            await self._set_last_num()
+            await asyncio.sleep(3600*6)
 
     async def _set_last_num(self, multiply=1):
         c = await self.get_latest_xkcd()

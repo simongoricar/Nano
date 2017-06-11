@@ -50,8 +50,8 @@ commands = {
     "_cmds": {"desc": "Displays a link to the wiki page where all commands are listed.", "use": None, "alias": "_commands"},
     "_commands": {"desc": "Displays a link to the wiki page where all commands are listed.", "use": None, "alias": "_cmds"},
     "_help": {"desc": "This is here.", "use": None, "alias": None},
-    "_notifydev": {"desc": "Sends a message to the developer", "use": "[command] [message]", "alias": "_suggest"},
-    "_suggest": {"desc": "Sends a message to the developer", "use": "[command] [message]", "alias": "_notifydev"},
+    "_report": {"desc": "Sends a message to the developer", "use": "[command] [message]", "alias": "_suggest"},
+    "_suggest": {"desc": "Sends a message to the developer", "use": "[command] [message]", "alias": "_report"},
     "_bug": {"desc": "Place where you can report bugs.", "use": None, "alias": "nano.bug"},
     "nano.bug": {"desc": "Place where you can report bugs.", "use": None, "alias": "_bug"},
 }
@@ -199,21 +199,9 @@ class Help:
                                                                "**(Use: `>help [command]`)**".replace(">", prefix))
 
         # !notifydev
-        elif startswith(prefix + "notifydev", prefix + "suggest"):
-            # Cooldown implementation
-            if not self.last_times.get(message.author.id):
-                self.last_times[message.author.id] = time.time()
-            else:
-                # 300 seconds --> 5 minute cooldown
-                if (time.time() - self.last_times[message.author.id]) < 300:
-                    await client.send_message(message.channel, "You are being rate limited. Try again in 5 minutes.")
-                    return
-
-                else:
-                    self.last_times[message.author.id] = time.time()
-
-            if startswith(prefix + "notifydev"):
-                report = message.content[len(prefix + "notifydev "):]
+        elif startswith(prefix + "report", prefix + "suggest"):
+            if startswith(prefix + "report"):
+                report = message.content[len(prefix + "report "):]
                 typ = "Report"
 
             elif startswith(prefix + "suggest"):
@@ -223,8 +211,26 @@ class Help:
             else:
                 return
 
-            dev_server = utils.get(client.servers, id=self.nano.dev_server)
+            # Disallow empty reports
+            if not report.strip(" "):
+                await client.send_message(message.channel, "You cannot submit an empty report.")
+                return
 
+            # Cooldown implementation
+            if not self.last_times.get(message.author.id):
+                self.last_times[message.author.id] = time.time()
+            else:
+                # 300 seconds --> 5 minute cooldown
+                if (time.time() - self.last_times[message.author.id]) < 300:
+                    await client.send_message(message.channel,
+                                              "You are being rate limited. Try again in 5 minutes.")
+                    return
+
+                else:
+                    self.last_times[message.author.id] = time.time()
+
+            # Find Nano Lounge (or whatever is in settings.ini under Dev)
+            dev_server = utils.get(client.servers, id=self.nano.dev_server)
             # Timestamp
             ts = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
 

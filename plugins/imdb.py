@@ -81,7 +81,7 @@ class TMDb:
                     return
 
                 if data.media_type not in ["tv", "movie"]:
-                    await client.send_message(message.channel, "You can't get the plot of a person " + StandardEmoji.NORMAL_SMILE)
+                    await client.send_message(message.channel, "You can't get the plot of a person " + StandardEmoji.SMILE)
                     return
 
                 try:
@@ -139,7 +139,8 @@ class TMDb:
                         pass
 
                     try:
-                        info.append("Poster: {}".format(data.poster))
+                        if data.poster:
+                            info.append("Poster: {}".format(data.poster))
                     except AttributeError:
                         pass
 
@@ -201,7 +202,7 @@ class TMDb:
 
 class NanoPlugin:
     name = "TMDb Commands"
-    version = "0.2"
+    version = "0.2.1"
 
     handler = TMDb
     events = {

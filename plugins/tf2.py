@@ -347,7 +347,7 @@ class TeamFortress:
 
         if startswith(prefix + "tf"):
             if not self.tf.success:
-                await client.send_message("This command is currently unavailable. Apologies.")
+                await client.send_message(message.channel, "This command is currently unavailable. Apologies.")
                 return
 
             item_name = message.content[len(prefix + "tf "):]
@@ -374,7 +374,7 @@ class TeamFortress:
 
 class NanoPlugin:
     name = "Team Fortress 2"
-    version = "0.2.1"
+    version = "0.2.2"
 
     handler = TeamFortress
     events = {

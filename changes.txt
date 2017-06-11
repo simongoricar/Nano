@@ -1,3 +1,8 @@
+3.5.1
+- !notifydev has been renamed to !report
+- Latest number of xkcd comics is now checked every 6 hours
+- Bugfixes and typos
+
 3.5
 - Brought back the movie/tv search, provided by The Movie Database
 - Even more bugfixes

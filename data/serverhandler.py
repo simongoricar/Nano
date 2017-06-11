@@ -410,7 +410,7 @@ class RedisPluginDataManager:
         self.namespace = str(namespace)
         self.redis = _redis.StrictRedis(connection_pool=pool)
 
-        log.info("Plugin registered for redis data:{}".format(self.namespace))
+        log.info("New plugin namespace registered: {}".format(self.namespace))
 
     def _build_hash(self, name):
         # Returns a hash name formatted with the namespace

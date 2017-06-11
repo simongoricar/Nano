@@ -75,7 +75,7 @@ class PrefixState:
 
             self.handler.set_sleeping(message.server, 1)
             await self.client.send_message(message.channel, "G'night! " + StandardEmoji.SLEEP)
-            return
+            return "return"
 
         # nano.wake
         elif startswith("nano.wake"):
@@ -86,7 +86,7 @@ class PrefixState:
             await self.client.send_message(message.channel, ":wave:")
 
             self.stats.add(SLEPT)
-            return
+            return "return"
 
         # Quit if the bot is sleeping
         if self.handler.is_sleeping(message.server):
@@ -126,7 +126,7 @@ class PrefixState:
 
 class NanoPlugin:
     name = "Prefix and state handler"
-    version = "0.1.1"
+    version = "0.1.2"
 
     handler = PrefixState
     events = {

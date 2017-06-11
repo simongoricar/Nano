@@ -739,7 +739,7 @@ class Admin:
                     return
 
                 if chan.type == chan.type.voice:
-                    await client.send_message(message.channel, "Log channel cannot be a voice channel! Nice try :smile:")
+                    await client.send_message(message.channel, "Log channel cannot be a voice channel! Nice try " + StandardEmoji.SMILE)
                     return
 
                 handler.update_var(message.server.id, "logchannel", chan_id)
@@ -955,7 +955,7 @@ Messages:
                 if names:
                     await client.send_message(message.channel, "Blacklisted channels:\n{}".format(" ".join(names)))
                 else:
-                    await client.send_message(message.channel, "There are no blacklisted channels on this channel. " + StandardEmoji.NORMAL_SMILE)
+                    await client.send_message(message.channel, "There are no blacklisted channels on this channel. " + StandardEmoji.SMILE)
 
         # nano.reset
         elif startswith("nano.serverreset"):

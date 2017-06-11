@@ -108,7 +108,7 @@ class Steam:
                 except ValueError:
                     await client.send_message(message.channel, NOT_WHOLE_URL)
                     return
-                except (steamapi.errors.APIFailure, steamapi.errors.AccessException):
+                except (steamapi.errors.APIFailure, steamapi.errors.APIException):
                     await client.send_message(message.channel, "Something went wrong. User could have a private profile. " + StandardEmoji.CRY)
                     reraise()
                     return
@@ -139,7 +139,7 @@ class Steam:
                 except ValueError:
                     await client.send_message(message.channel, NOT_WHOLE_URL)
                     return
-                except (steamapi.errors.APIFailure, steamapi.errors.AccessException):
+                except (steamapi.errors.APIFailure, steamapi.errors.APIException):
                     await client.send_message(message.channel, "Something went wrong. User could have a private profile. " + StandardEmoji.CRY)
                     reraise()
                     return
@@ -174,7 +174,7 @@ class Steam:
                 except ValueError:
                     await client.send_message(message.channel, NOT_WHOLE_URL)
                     return
-                except (steamapi.errors.APIFailure, steamapi.errors.AccessException):
+                except (steamapi.errors.APIFailure, steamapi.errors.APIException):
                     await client.send_message(message.channel, "Something went wrong. User could have a private profile. " + StandardEmoji.CRY)
                     reraise()
                     return
@@ -206,7 +206,7 @@ class Steam:
 
 class NanoPlugin:
     name = "Steam Commands"
-    version = "0.2"
+    version = "0.2.1"
 
     handler = Steam
     events = {

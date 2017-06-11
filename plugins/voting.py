@@ -358,7 +358,7 @@ class Vote:
             res = self.vote.plus_one(choice, message.author.id, message.channel.server)
 
             if res == -1:
-                msg = await client.send_message(message.channel, "Cheater " + StandardEmoji.NORMAL_SMILE)
+                msg = await client.send_message(message.channel, "Cheater " + StandardEmoji.SMILE)
 
                 await asyncio.sleep(1)
                 await client.delete_message(msg)
