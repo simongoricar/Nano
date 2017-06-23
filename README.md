@@ -1,7 +1,8 @@
 # Nano
 
 [![Version](https://img.shields.io/badge/version-3.4.9-green.svg)](https://defaltsimon.github.io/Nano/)
-[![license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/DefaltSimon/Nano/blob/master/LICENSE)
+[![license](https://img.shields.io/github/license/mashape/apistatus.svg)](https://github.com/DefaltSimon/Nano/blob/master/LICENSE)  
+[![Crowdin](https://d322cqt584bo4o.cloudfront.net/nano-discord-bot/localized.svg)](https://crowdin.com/project/nano-discord-bot)
 
 by DefaltSimon, made in python with [discord.py api](https://github.com/Rapptz/discord.py) .
 
