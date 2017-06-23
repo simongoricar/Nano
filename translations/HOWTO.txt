@@ -1,0 +1,11 @@
+How translations are organised:
+
+Groups:
+
+    CONV_* - conversation
+    PERM_* - wrong permissions
+    ERROR_* - errors of all kinds
+    HELP_* - help text
+    INFO_* - general nano info text
+    MSG_<command_name>_* - other common messages from plugins
+    EVENT_* - events
