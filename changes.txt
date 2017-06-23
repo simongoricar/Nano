@@ -1,3 +1,9 @@
+3.6
+- Dropped support for the old storage system
+- Added multi language support!
+- Bugfixes
+- More possibilities covered with convert_to_seconds
+
 3.5.1
 - !notifydev has been renamed to !report
 - Latest number of xkcd comics is now checked every 6 hours

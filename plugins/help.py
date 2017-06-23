@@ -1,35 +1,11 @@
 # coding=utf-8
 import time
-import asyncio
 from datetime import datetime
+
 from discord import Message, utils, Embed, Colour
-from data.utils import is_valid_command
+
 from data.stats import MESSAGE, HELP, WRONG_ARG
-
-
-# Strings
-help_nano = """**Hey, I'm Nano!**
-
-To get familiar with simple commands, type `>help simple`.
-If you want specific info about a command, do `>help [command]`.
-
-Or you could just simply take a look at the wiki page: http://nanobot.pw/commands.html
-If you are an admin/server owner and want to set up your server for Nano, type `>setup`.
-It is highly recommended that you join the "official" Nano server for announcements and help : https://discord.gg/FZJB6UJ
-"""
-
-help_simple = """`_hello` - Welcomes you or the mentioned person.
-`_randomgif` - Posts a random gif from Giphy
-`_roll number` - rolls a random number
-`_wiki term` - gives you a description of a term from Wikipedia
-`_urban term` - gives you a description of a term from Urban Dictionary
-`_decide option|option...` - decides between your options so you don't have to
-`_tf item_name` - item prices from backpack.tf
-`_steam user_id` - search users on Steam
-
-These are just a few of some of the simpler commands. For more info about each command, use `_help command` or type `_cmds` to look at the wiki page with all the commands."""
-
-nano_bug = "Found a bug? Please report it to me, (**DefaltSimon**) on Discord.\nYou can find me here: https://discord.gg/FZJB6UJ"
+from data.utils import is_valid_command
 
 # Template: {"desc": "", "use": None, "alias": None},
 
@@ -77,6 +53,7 @@ class Help:
         self.client = kwargs.get("client")
         self.nano = kwargs.get("nano")
         self.stats = kwargs.get("stats")
+        self.trans = kwargs.get("trans")
 
         self.last_times = {}
         self.commands = {}
@@ -98,6 +75,9 @@ class Help:
 
         prefix = kwargs.get("prefix")
 
+        trans = self.trans
+        lang = kwargs.get("lang")
+
         if not is_valid_command(message.content, valid_commands, prefix=prefix):
             return
         else:
@@ -113,7 +93,7 @@ class Help:
 
         # !help and @Nanos
         if message.content.strip(" ") == (prefix + "help"):
-            await client.send_message(message.channel, help_nano.replace(">", prefix))
+            await client.send_message(message.channel, trans.get("MSG_HELP", lang).replace("_", prefix))
 
             self.stats.add(HELP)
 
@@ -121,20 +101,19 @@ class Help:
         elif self.client.user in message.mentions:
             un_mentioned = str(message.content[21:])
             if un_mentioned == "" or un_mentioned == " ":
-                await client.send_message(message.channel, help_nano.replace(">", prefix))
+                await client.send_message(message.channel, trans.get("MSG_HELP", lang).replace("_", prefix))
 
             self.stats.add(HELP)
 
         # !cmds or !commands
         elif startswith(prefix + "cmds", prefix + "commands"):
-            await client.send_message(message.channel, "Commands and their explanations can be found here: "
-                                                       "http://nanobot.pw/commands.html")
+            await client.send_message(message.channel, trans.get("MSG_HELP_CMDWEB", lang))
 
             self.stats.add(HELP)
 
         # !help simple
         elif startswith(prefix + "help simple"):
-            await client.send_message(message.channel, help_simple.replace("_", prefix))
+            await client.send_message(message.channel, trans.get("MSG_HELP_SIMPLE", lang).replace("_", prefix))
 
             self.stats.add(HELP)
 
@@ -163,12 +142,12 @@ class Help:
 
                     emb = Embed(colour=Colour.blue())
 
-                    emb.add_field(name="Description", value=description)
+                    emb.add_field(name=trans.get("MSG_HELP_DESC", lang), value=description)
 
                     if use:
-                        emb.add_field(name="Use", value=use, inline=False)
+                        emb.add_field(name=trans.get("MSG_HELP_USE", lang), value=use, inline=False)
                     if alias:
-                        emb.add_field(name="Aliases", value=alias, inline=False)
+                        emb.add_field(name=trans.get("MSG_HELP_ALIASES", lang), value=alias, inline=False)
 
                     self.stats.add(HELP)
                     return "**{}**".format(cmd_name), emb
@@ -185,8 +164,7 @@ class Help:
                     await client.send_message(message.channel, name, embed=embed)
 
                 else:
-                    await client.send_message(message.channel, "Command could not be found.\n"
-                                                               "**(Use: `>help [command]`)**".replace(">", prefix))
+                    await client.send_message(message.channel, trans.get("MSG_HELP_CMDNOTFOUND", lang).replace("_", prefix))
 
             else:
                 name, embed = get_command_info(prefix + search)
@@ -195,8 +173,7 @@ class Help:
                     await client.send_message(message.channel, name, embed=embed)
 
                 else:
-                    await client.send_message(message.channel, "Command could not be found.\n"
-                                                               "**(Use: `>help [command]`)**".replace(">", prefix))
+                    await client.send_message(message.channel, trans.get("MSG_HELP_CMDNOTFOUND", lang).replace("_", prefix))
 
         # !notifydev
         elif startswith(prefix + "report", prefix + "suggest"):
@@ -213,7 +190,7 @@ class Help:
 
             # Disallow empty reports
             if not report.strip(" "):
-                await client.send_message(message.channel, "You cannot submit an empty report.")
+                await client.send_message(message.channel, trans.get("MSG_REPORT_EMPTY", lang))
                 return
 
             # Cooldown implementation
@@ -222,8 +199,7 @@ class Help:
             else:
                 # 300 seconds --> 5 minute cooldown
                 if (time.time() - self.last_times[message.author.id]) < 300:
-                    await client.send_message(message.channel,
-                                              "You are being rate limited. Try again in 5 minutes.")
+                    await client.send_message(message.channel, trans.get("MSG_REPORT_RATELIMIT", lang))
                     return
 
                 else:
@@ -235,22 +211,21 @@ class Help:
             ts = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
 
             # 'Compiled' report
+            # NOT TRANSLATED!!
             comp = "{} from {} ({}):\n```{}```\n**__Timestamp__**: `{}`\n**__Server__**: `{}` ({} members)\n" \
-                   "**__Server Owner__**: {}".format(typ, message.author.name, message.author.id, report, ts,
-                                                     message.channel.server.name, message.channel.server.member_count,
-                                                     "Yes" if message.author.id == message.channel.server.owner.id
-                                                     else message.channel.server.owner.id)
+                   "**__Server Owner__**: {}\n**Language used:** `{}`".format(typ, message.author.name, message.author.id, report, ts,
+                                                     message.server.name, message.server.member_count,
+                                                     "Yes" if message.author.id == message.server.owner.id else message.server.owner.id, lang)
 
             # Saves the submission
             await save_submission(comp.replace(message.author.mention, "{} ({})\n".format(message.author.name, message.author.id)))
 
             await client.send_message(dev_server.owner, comp)
-            await client.send_message(message.channel, "**Thank you** for your *{}*.".format(
-                "submission" if typ == "Report" else "suggestion"))
+            await client.send_message(message.channel, trans.get("MSG_REPORT_THANKS", lang).format(trans.get("MSG_REPORT_R", lang) if typ == "Report" else trans.get("MSG_REPORT_S", lang)))
 
         # !bug
         elif startswith(prefix + "bug"):
-            await client.send_message(message.channel, nano_bug.replace("_", prefix))
+            await client.send_message(message.channel, trans.get("MSG_BUG", lang))
 
 
 class NanoPlugin:

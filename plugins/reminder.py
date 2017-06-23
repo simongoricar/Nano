@@ -1,13 +1,13 @@
 # coding=utf-8
-import time
-import os
 import asyncio
-import logging
 import importlib
-from pickle import load, dumps
+import logging
+import time
+
 from discord import Message, Client, DiscordException, Object, User
-from data.utils import resolve_time, convert_to_seconds, is_valid_command, is_empty, StandardEmoji, decode, gen_id
+
 from data.stats import MESSAGE, WRONG_ARG
+from data.utils import resolve_time, convert_to_seconds, is_valid_command, decode, gen_id
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -16,13 +16,9 @@ log.setLevel(logging.INFO)
 
 DEFAULT_REMINDER_LIMIT = 2
 TICK_DURATION = 15
-EXCEEDED_REMINDER_LIMIT = "{} You have exceeded the maximum amount of reminders (**{}** at once).".format(StandardEmoji.WARNING, DEFAULT_REMINDER_LIMIT)
 
 REMINDER_PERSONAL = "personal"
 REMINDER_CHANNEL = "channel"
-
-remind_help = "**Remind help**\n`_remind me in [sometime]: [message]` - reminds you in your DM\n" \
-              "`_remind here in [sometime]: [message]` - reminds everyone in current channel"
 
 commands = {
     "_remind": {"desc": "General module for timers\nSubcommands: remind me in, remind here in, remind list, remind remove", "use": None, "alias": None},
@@ -36,146 +32,13 @@ commands = {
 
 valid_commands = commands.keys()
 
-# Functions
-
-
-class LegacyReminderHandler:
-    def __init__(self, client, _, loop=asyncio.get_event_loop()):
-        self.client = client
-        self.loop = loop
-
-        self.reminders = {}
-
-        self.wait = False
-
-    def get_reminder_amount(self):
-        return len(self.reminders)
-
-    def lock(self):
-        self.wait = True
-
-    def release(self):
-        self.wait = False
-
-    async def wait(self):
-        while self.wait:
-            await asyncio.sleep(0.01)
-
-    def is_active(self):
-        return bool(self.reminders)
-
-    def get_reminders(self, user):
-        return self.reminders.get(user.id)
-
-    def remove_all_reminders(self, user):
-        if self.reminders.get(user.id):
-            self.reminders[user.id] = []
-
-    def remove_reminder(self, user_id, reminder):
-        if self.reminders.get(user_id):
-
-            for c, rm in enumerate(self.reminders[user_id]):
-                if reminder == rm.get("raw"):
-                    self.reminders[user_id].pop(c)
-                    return True
-
-        return False
-
-    def check_reminders(self, user, limit=DEFAULT_REMINDER_LIMIT):
-        """
-        True == ok
-        False = not ok
-        :param user: User or Member
-        :param limit: reminder limit
-        :return: bool
-        """
-        if self.reminders.get(user.id):
-            return len(self.reminders[user.id]) > limit+1
-
-        else:
-            return True
-
-    def set_reminder(self, channel, author, content, tim):
-        """
-        Sets a reminder
-        :param channel: Where to send this
-        :param author: Who is the author
-        :param content: String : message
-        :param tim: time (int)
-        :return: bool indicating success
-        """
-        t = time.time()
-
-        if not self.check_reminders(author):
-            return -1
-
-        tim = convert_to_seconds(tim)
-
-        if not (5 < tim < 172800):  # 5 sec to 2 days
-            return False
-
-        raw = str(content)
-        content = "{} You asked me to remind you: \n```{}```".format(StandardEmoji.ALARM, content)
-
-        # Add the reminder to the list
-        if not self.reminders.get(author.id):
-            self.reminders[author.id] = [{"full_time": tim, "content": content, "raw": raw, "receiver": channel,
-                                          "time_created": int(t), "time_target": int(tim + t), "author": author.id}]
-        else:
-            self.reminders[author.id].append({"full_time": tim, "content": content, "raw": raw, "receiver": channel,
-                                              "time_created": int(t), "time_target": int(tim + t), "author": author.id})
-
-        return True
-
-    @staticmethod
-    async def tick(last_time):
-        """
-        Very simple implementation of a self-correcting tick system
-        :return: None
-        """
-        current_time = time.time()
-        delta = 1 - (current_time - last_time)
-
-        await asyncio.sleep(delta)
-
-        return time.time()
-
-    async def dispatch(self, reminder):
-        try:
-            log.debug("Dispatching")
-            await self.client.send_message(reminder.get("receiver"), reminder.get("content"))
-        except DiscordException:
-            pass
-
-    async def start_monitoring(self):
-        last_time = time.time()
-
-        while True:
-            # Iterate through users and their reminders
-            for user in self.reminders.values():
-                for reminder in user:
-
-                    # If enough time has passed, send the reminder
-                    if reminder.get("time_target") <= last_time:
-
-                        await self.dispatch(reminder)
-
-                        try:
-                            self.reminders[reminder.get("author")].remove(reminder)
-                        except KeyError:
-                            pass
-
-            # And tick.
-            last_time = await self.tick(last_time)
-
-
 class RedisReminderHandler:
     """
-    Datatype: Hash
+    Data type: Hash
 
-    reminder:<SERVER_ID> =>
+    reminder:<USER_ID> =>
 
-                    Key: Randomly generated if
+                    Key: Randomly generated
                     Value: Json-encoded
                     --------------------------
                     Values:
@@ -188,11 +51,12 @@ class RedisReminderHandler:
                             raw: raw content
 
     """
-    def __init__(self, client, handler, loop=asyncio.get_event_loop()):
+    def __init__(self, client, handler, trans, loop=asyncio.get_event_loop()):
         self.redis = handler.get_plugin_data_manager(namespace="reminder")
 
         self.loop = loop
         self.client = client
+        self.trans = trans
         self.wait = False
 
         try:
@@ -206,11 +70,16 @@ class RedisReminderHandler:
     def is_active(self):
         return bool(self.get_all_reminders())
 
-    @staticmethod
-    def prepare_remind_content(content):
+    def prepare_remind_content(self, content, lang):
         # Used for find_id_from_content
-        return "{} You asked me to remind you:\n```{}```".format(StandardEmoji.ALARM, content), \
-               "{} Timer is up!\n```{}```".format(StandardEmoji.ALARM, content)
+        return self.trans.get("MSG_REMINDER_PRIVATE", lang).format(content), \
+               self.trans.get("MSG_REMINDER_CHANNEL", lang).format(content)
+
+    def prepare_private(self, content, lang):
+        return self.trans.get("MSG_REMINDER_PRIVATE", lang).format(content)
+
+    def prepare_channel(self, content, lang):
+        return self.trans.get("MSG_REMINDER_CHANNEL", lang).format(content)
 
     def get_reminders(self, user_id):
         if self.redis.exists(user_id):
@@ -221,9 +90,9 @@ class RedisReminderHandler:
     def get_all_reminders(self):
         return [self.get_reminders(decode(a).strip("reminder:")) for a in self.redis.scan_iter("*")]
 
-    def find_id_from_content(self, user, content):
+    def find_id_from_content(self, user, content, lang):
         reminders = self.get_reminders(user)
-        private_ann, channel_ann = self.prepare_remind_content(content)
+        private_ann, channel_ann = self.prepare_remind_content(content, lang)
 
         for rem_id, rem_content in reminders.items():
             if rem_content.get("content") == private_ann or rem_content.get("content") == channel_ann:
@@ -235,14 +104,8 @@ class RedisReminderHandler:
         if self.redis.exists(user.id):
             self.redis.delete(user.id)
 
-    def remove_reminder(self, user_id, reminder_content):
-        rem_id = self.find_id_from_content(user_id, reminder_content)
-
-        if self.redis.exists(user_id) and rem_id is not None:
-            self.redis.hdel(user_id, rem_id)
-            return True
-
-        return False
+    def remove_reminder(self, user_id, rem_id):
+        return self.redis.hdel(user_id, rem_id)
 
     def check_reminders(self, user):
         """
@@ -257,7 +120,7 @@ class RedisReminderHandler:
         else:
             return True
 
-    def set_reminder(self, channel, author, content, tim, reminder_type=REMINDER_PERSONAL):
+    def set_reminder(self, channel, author, content, tim, lang, reminder_type=REMINDER_PERSONAL):
         """
         Sets a reminder
         :param channel: Where to send this
@@ -265,7 +128,8 @@ class RedisReminderHandler:
         :param content: String : message
         :param tim: time (int)
         :param reminder_type: type of reminder (personal or channel)
-        :return: success
+        :param lang: language used in that server
+        :return: bool
         """
         t = time.time()
 
@@ -279,11 +143,9 @@ class RedisReminderHandler:
         raw = str(content)
 
         if reminder_type == REMINDER_PERSONAL:
-            template = "{} You asked me to remind you:\n```{}```"
+            content = self.prepare_private(content, lang)
         else:
-            template = "{} Timer is up!\n```{}```"
-
-        content = template.format(StandardEmoji.ALARM, content)
+            content = self.prepare_channel(content, lang)
 
         # Add the reminder to the list
         rm_id = gen_id(length=12)
@@ -345,36 +207,18 @@ class Reminder:
         self.handler = kwargs.get("handler")
         self.nano = kwargs.get("nano")
         self.stats = kwargs.get("stats")
-        self.legacy = kwargs.get("legacy")
+        self.trans = kwargs.get("trans")
 
-        if self.legacy:
-            self.reminder = LegacyReminderHandler(self.client, self.loop)
-
-            # Uses the cache if it exists
-
-            if os.path.isfile("cache/reminders.temp"):
-                # Removes the file if it is empty
-                if is_empty("cache/reminders.temp"):
-                    os.remove("cache/reminders.temp")
-                else:
-                    log.info("Using reminders.cache")
-
-                    with open("cache/reminders.temp", "rb") as vote_cache:
-                        rem = load(vote_cache)
-
-                    # 3.1.5 : disabled
-                    # os.remove("cache/reminders.temp")
-                    # Sets the reminders to the state before restart
-                    self.reminder.reminders = rem
-
-        else:
-            self.reminder = RedisReminderHandler(self.client, self.handler, self.loop)
+        self.reminder = RedisReminderHandler(self.client, self.handler, self.trans, self.loop)
 
         self.loop.create_task(self.reminder.start_monitoring())
 
     async def on_message(self, message, **kwargs):
         client = self.client
         prefix = kwargs.get("prefix")
+
+        trans = self.trans
+        lang = kwargs.get("lang")
 
         assert isinstance(message, Message)
         assert isinstance(client, Client)
@@ -396,7 +240,7 @@ class Reminder:
             args = str(message.content)[len(prefix + "remind me in "):].strip().split(":")
 
             if len(args) != 2:
-                await client.send_message(message.channel, "Incorrect command use. See `_help remind me in` for usage".replace("_", prefix))
+                await client.send_message(message.channel, trans.get("MSG_REMINDER_WU_ME", lang).format(prefix))
                 self.stats.add(WRONG_ARG)
                 return
 
@@ -405,30 +249,30 @@ class Reminder:
             if not args[0].isnumeric():
                 if "[" in args[0]:
                     # When people actually do !remind here in [1h 32min]: omg why
-                    await client.send_message(message.channel, "Do not use **[** and **]** ! Try again without them.")
+                    await client.send_message(message.channel, trans.get("MSG_REMINDER_NO_BRACKETS", lang))
                     return
 
                 ttr = convert_to_seconds(args[0])
             else:
                 ttr = int(args[0])
 
-            resp = self.reminder.set_reminder(message.author, message.author, content, ttr, reminder_type=REMINDER_PERSONAL)
+            resp = self.reminder.set_reminder(message.author, message.author, content, ttr, lang, reminder_type=REMINDER_PERSONAL)
 
             if resp == -1:
-                await client.send_message(message.channel, EXCEEDED_REMINDER_LIMIT)
+                await client.send_message(message.channel, trans.get("MSG_REMIDNER_LIMIT_EXCEEDED", lang).format(DEFAULT_REMINDER_LIMIT))
 
             elif resp is False:
-                await client.send_message(message.channel, "Not a valid time range (5 seconds to 2 days")
+                await client.send_message(message.channel, trans.get("MSG_REMINDER_INVALID_RANGE", lang))
 
             else:
-                await client.send_message(message.channel, "Reminder set :)")
+                await client.send_message(message.channel, trans.get("MSG_REMINDER_SET", lang))
 
         # !remind here in [time]:[reminder]
         elif startswith(prefix + "remind here in"):
             args = str(message.content)[len(prefix + "remind here in "):].strip().split(":")
 
             if len(args) != 2:
-                await client.send_message(message.channel, "Incorrect command use. See `_help remind here in` for usage".replace("_", prefix))
+                await client.send_message(message.channel, trans.get("MSG_REMINDER_WU_HERE", lang).format(prefix))
                 self.stats.add(WRONG_ARG)
                 return
 
@@ -438,28 +282,28 @@ class Reminder:
                 try:
                     ttr = convert_to_seconds(args[0])
                 except ValueError:
-                    await client.send_message(message.channel, "Please do not use partial minutes/hours/days etc.. (such as 1.7 days - use `1d 16h 48min` instead {}".format(StandardEmoji.WINK))
+                    await client.send_message(message.channel, trans.get("MSG_REMINDER_NO_PARTIALS", lang))
                     return
             else:
                 ttr = int(args[0])
 
-            resp = self.reminder.set_reminder(message.channel, message.author, content, ttr, reminder_type=REMINDER_CHANNEL)
+            resp = self.reminder.set_reminder(message.channel, message.author, content, ttr, lang, reminder_type=REMINDER_CHANNEL)
 
             if resp == -1:
-                await client.send_message(message.channel, EXCEEDED_REMINDER_LIMIT)
+                await client.send_message(message.channel, trans.get("MSG_REMIDNER_LIMIT_EXCEEDED", lang).format(DEFAULT_REMINDER_LIMIT))
 
             elif resp is False:
-                await client.send_message(message.channel, "Not a valid time range (5 seconds to 2 days")
+                await client.send_message(message.channel, trans.get("MSG_REMINDER_INVALID_RANGE", lang))
 
             else:
-                await client.send_message(message.channel, "Reminder set :)")
+                await client.send_message(message.channel, trans.get("MSG_REMINDER_SET", lang))
 
         # !remind list
         elif startswith(prefix + "remind list", prefix + "reminder list"):
             reminders = self.reminder.get_reminders(message.author.id)
 
             if not reminders:
-                await client.send_message(message.channel, "You don't have any reminders.")
+                await client.send_message(message.channel, trans.get("MSG_REMINDER_LIST_NONE", lang))
                 return
 
             rem = []
@@ -470,13 +314,13 @@ class Reminder:
                 cont = self.nano.get_plugin("commons").get("instance").at_everyone_filter(reminder.get("raw"), message.author, message.server)
 
                 if (ttl != abs(ttl)) or ttl == 0:
-                    when = "**soon™**"
+                    when = trans.get("MSG_REMINDER_SOON", lang)
                 else:
                     when = "in **{}**".format(resolve_time(ttl))
 
                 rem.append("➤ {} ({})".format(cont, when))
 
-            await client.send_message(message.channel, "Your reminders:\n" + "\n".join(rem))
+            await client.send_message(message.channel, trans.get("MSG_REMINDER_LIST", lang).format("\n".join(rem)))
 
         # !remind remove
         elif startswith(prefix + "remind remove"):
@@ -484,36 +328,19 @@ class Reminder:
 
             if r_name == "all":
                 self.reminder.remove_all_reminders(message.author)
-                await client.send_message(message.channel, "All reminders have been deleted. " + StandardEmoji.PERFECT)
+                await client.send_message(message.channel, trans.get("MSG_REMINDER_DELETE_ALL", lang))
 
             else:
                 r_resp = self.reminder.remove_reminder(message.author.id, r_name)
 
                 if not r_resp:
-                    await client.send_message(message.channel, "No reminder with such content.")
+                    await client.send_message(message.channel, trans.get("MSG_REMINDER_DELETE_NONE", lang))
                 else:
-                    await client.send_message(message.channel, "Reminder removed.")
+                    await client.send_message(message.channel, trans.get("MSG_REMINDER_DELETE_SUCCESS", lang))
 
         # !remind help
         elif startswith(prefix + "remind", prefix + "remind help"):
-            await client.send_message(message.channel, remind_help.replace("_", prefix))
-
-    async def on_shutdown(self, **_):
-        if not self.legacy:
-            return
-
-        # Saves the state
-        if not os.path.isdir("cache"):
-            os.mkdir("cache")
-
-        if self.reminder.is_active():
-            with open("cache/reminders.temp", "wb") as cache:
-                cache.write(dumps(self.reminder.reminders))  # Save instance of ReminderHandler to be used on the next boot
-        else:
-            try:
-                os.remove("cache/reminders.temp")
-            except OSError:
-                pass
+            await client.send_message(message.channel, trans.get("MSG_REMINDER_HELP", lang).replace("_", prefix))
 
 
 class NanoPlugin:
@@ -523,6 +350,5 @@ class NanoPlugin:
     handler = Reminder
     events = {
         "on_message": 10,
-        "on_shutdown": 5,
         # type : importance
     }

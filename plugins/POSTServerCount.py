@@ -1,8 +1,9 @@
 # coding=utf-8
-import aiohttp
-import json
 import configparser
+import json
 import logging
+
+import aiohttp
 
 parser = configparser.ConfigParser()
 parser.read("plugins/config.ini")
@@ -21,7 +22,7 @@ class POST:
             log.critical("Missing api key for bots.discord.pw, disabling plugin...")
             raise RuntimeError
 
-    async def on_server_join(self, server):
+    async def on_server_join(self, server, **kwargs):
         amount = len(self.client.servers)
 
         resp = await self.upload(amount, token=self.token)

@@ -1,14 +1,14 @@
 # coding=utf-8
-# coding=utf-8
-import logging
 import configparser
-import osu_ds
+import logging
 import time
-from discord import Message, Embed, Colour, errors
-from data.utils import is_valid_command, invert_num, invert_str, split_every, StandardEmoji
-from data.stats import MESSAGE
 
-__author__ = "DefaltSimon"
+import osu_ds
+from discord import Message, Embed, Colour, errors
+
+from data.stats import MESSAGE
+from data.utils import is_valid_command, invert_num, invert_str, split_every
+
 # osu! plugin for Nano
 
 logger = logging.getLogger(__name__)
@@ -29,6 +29,7 @@ class Osu:
         self.nano = kwargs.get("nano")
         self.client = kwargs.get("client")
         self.stats = kwargs.get("stats")
+        self.trans = kwargs.get("trans")
 
         try:
             key = parser.get("osu", "api-key")
@@ -40,8 +41,10 @@ class Osu:
     async def on_message(self, message, **kwargs):
         assert isinstance(message, Message)
         client = self.client
+        trans = self.trans
 
         prefix = kwargs.get("prefix")
+        lang = kwargs.get("lang")
 
         if not is_valid_command(message.content, valid_commands, prefix=prefix):
             return
@@ -63,7 +66,7 @@ class Osu:
             user = self.osu.get_user(username)
 
             if not user:
-                await client.send_message(message.channel, "User does not exist.")
+                await client.send_message(message.channel, trans.get("ERROR_NO_USER2", lang))
                 return
 
             # About inverting: this inverts the number before and after the splitting
@@ -82,8 +85,7 @@ class Osu:
             try:
                 acc = str(round(float(user.accuracy), 2)) + " %"
             except TypeError:
-                await client.send_message(message.channel, ":warning: Something went wrong...")
-                return
+                acc = trans.get("INFO_ERROR", lang)
 
             pp_amount = str(int(float(user.pp)))
 
@@ -107,26 +109,23 @@ class Osu:
             else:
                 color = Colour.gold()
 
-            desc = "**Level**: {}\n**Rank**: \n\t" \
-                   "**Global**:            #{}\n\t" \
-                   "**Country** (**{}**): #{}\n" \
-                   "Total PP: **{}**".format(osu_level, global_rank, user.country, country_rank, pp_amount)
+            desc = trans.get("MSG_OSU_DESC", lang).format(osu_level, global_rank, user.country, country_rank, pp_amount)
 
             embed = Embed(url=user.profile_url, description=desc, colour=color)
             embed.set_author(name=user.name)
             embed.set_thumbnail(url=avatar_url)
 
-            embed.add_field(name="Total score", value=total_score)
-            embed.add_field(name="Ranked score", value=ranked_score)
-            embed.add_field(name="Average accuracy", value=acc)
+            embed.add_field(name=trans.get("MSG_OSU_TOTAL_SC", lang), value=total_score)
+            embed.add_field(name=trans.get("MSG_OSU_RANKED_SC", lang), value=ranked_score)
+            embed.add_field(name=trans.get("MSG_OSU_AVG_ACC", lang), value=acc)
 
             delta = int((time.time() - t_start) * 1000)
-            embed.set_footer(text="Search took {} ms".format(delta))
+            embed.set_footer(text=trans.get("MSG_OSU_TIME", lang).format(delta))
 
             try:
                 await client.send_message(message.channel, embed=embed)
             except errors.HTTPException:
-                await client.send_message(message.channel, "Something went wrong " + StandardEmoji.THINKING)
+                await client.send_message(message.channel, trans.get("MSG_OSU_ERROR", lang))
 
 
 class NanoPlugin:

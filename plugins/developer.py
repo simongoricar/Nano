@@ -1,18 +1,22 @@
 # coding=utf-8
-import os
 import configparser
-import sys
-import subprocess
 import logging
-from shutil import copy2
-from datetime import datetime
+import os
+import subprocess
+import sys
 from asyncio import sleep
+from datetime import datetime
 from random import shuffle
-from discord import Message, Game, utils, Embed, Colour, Object
-from data.serverhandler import RedisServerHandler, LegacyServerHandler
-from data.utils import is_valid_command, log_to_file, StandardEmoji
-from data.stats import MESSAGE
+from shutil import copy2
 
+from discord import Message, Game, utils, Embed, Colour, Object
+
+from data.stats import MESSAGE
+from data.utils import is_valid_command, log_to_file, StandardEmoji
+
+#######################
+# NOT TRANSLATED
+#######################
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -34,6 +38,8 @@ game_list = [
     "with python",
     "get a 'nano.invite'",
     "with you all",
+    "jazz",
+    "party hard (▀̿Ĺ̯▀̿ ̿)"
 ]
 
 commands = {
@@ -87,15 +93,9 @@ class BackupManager:
     def __init__(self, time=86400, keep_backup_every=3):  # 86400 seconds = one day (backup is executed once a day)
         storage = parser.get("Storage", "type")
 
-        if storage == "redis":
-            log.info("Backup enabled: redis")
-            self.serv_path = os.path.join("data", "data.rdb")
-            self.serv_path2 = os.path.join("backup", "data.rdb.bak")
-
-        else:
-            log.info("Backup enabled: legacy")
-            self.serv_path = os.path.join("data", "servers.yml")
-            self.serv_path2 = os.path.join("backup", "servers.yml.bak")
+        log.info("Backup enabled: redis")
+        self.serv_path = os.path.join("data", "data.rdb")
+        self.serv_path2 = os.path.join("backup", "data.rdb.bak")
 
         if not os.path.isdir("backup"):
             os.mkdir("backup")
@@ -160,6 +160,7 @@ class DevFeatures:
         self.client = kwargs.get("client")
         self.stats = kwargs.get("stats")
         self.loop = kwargs.get("loop")
+        self.trans = kwargs.get("trans")
 
         self.backup = BackupManager()
         self.roller = StatusRoller(self.client)
@@ -175,6 +176,8 @@ class DevFeatures:
         assert isinstance(message, Message)
         client = self.client
 
+        lang = kwargs.get("lang")
+
         def startswith(*msg):
             for a in msg:
                 if message.content.startswith(a):
@@ -183,10 +186,9 @@ class DevFeatures:
             return False
 
         # Global owner filter
-        assert isinstance(self.handler, (RedisServerHandler, LegacyServerHandler))
 
         if not self.handler.is_bot_owner(message.author.id):
-            await client.send_message(message.channel, StandardEmoji.WARNING + "You are not permitted to use this feature. (must be bot owner)")
+            await client.send_message(message.channel, self.trans.get("PERM_OWNER", lang))
             return
 
 
@@ -236,9 +238,9 @@ class DevFeatures:
         elif startswith("nano.dev.leave_server"):
             sid = int(message.content[len("nano.dev.leave_server "):])
 
-            srv = utils.find(lambda a: a.id == sid, client.servers)
+            srv = Object(id=sid)
             await client.leave_server(srv)
-            await client.send_message(message.channel, "Left {}".format(srv.name))
+            await client.send_message(message.channel, "Left {}".format(srv.id))
 
         # nano.dev.tf.reload
         elif startswith("nano.dev.tf.clean"):

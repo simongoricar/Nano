@@ -174,8 +174,9 @@ def convert_to_seconds(string):
             total_seconds += int(el[:-4]) * 60 * 60 * 24
             continue
 
-        if el.endswith("s"):
-            total_seconds += int(el[:-1])
+        elif el.endswith("secs"):
+            total_seconds += int(el[:-4])
+
         elif el.endswith("sec"):
             total_seconds += int(el[:-3])
 
@@ -183,16 +184,23 @@ def convert_to_seconds(string):
             total_seconds += int(el[:-1]) * 60
         elif el.endswith("min"):
             total_seconds += int(el[:-3]) * 60
+        elif el.endswith("mins"):
+            total_seconds += int(el[:-4]) * 60
 
         elif el.endswith("hr"):
             total_seconds += int(el[:-2]) * 60 * 60
         elif el.endswith("h"):
             total_seconds += int(el[:-1]) * 60 * 60
+        elif el.endswith("hrs"):
+            total_seconds += int(el[:-3]) * 60 * 60
 
         elif el.endswith("d"):
             total_seconds += int(el[:-1]) * 60 * 60 * 24
         elif el.endswith("day"):
             total_seconds += int(el[:-3]) * 60 * 60 * 24
+
+        elif el.endswith("s"):
+            total_seconds += int(el[:-1])
 
     # Seconds
     return int(total_seconds)

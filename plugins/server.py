@@ -1,26 +1,20 @@
 # coding=utf-8
-import discord
-import os
-import logging
-import psutil
-import time
-import gc
 import asyncio
+import gc
+import logging
+import os
+import time
 from datetime import datetime, timedelta
-from data.stats import MESSAGE
-from data.serverhandler import ServerHandler, RedisServerHandler, LegacyServerHandler
-from data.utils import is_valid_command, log_to_file, is_disabled
 
+import discord
+import psutil
+
+from data.serverhandler import RedisServerHandler
+from data.stats import MESSAGE
+from data.utils import is_valid_command, log_to_file, is_disabled
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
-
-nano_welcome = "**Hi!** I'm Nano!\n" \
-               "Now that you have invited me to your server, you might want to set up some things. " \
-               "Right now only the server owner can use my restricted commands. But no worries, you can add admin permissions to others by assigning them a role named **Nano Admin**!" \
-               "\nTo begin a basic setup, type `!setup` as the server owner. It will help you set up some simple things. " \
-               "After that, you might want to see `!cmds` to get familiar with my commands.\n\n" \
-               "Also, I recommend that you join the \"official\" Nano server for announcements and help : https://discord.gg/FZJB6UJ"
 
 commands = {
     "_debug": {"desc": "Displays EVEN MORE stats about Nano.", "use": None, "alias": None},
@@ -44,6 +38,7 @@ class ServerManagement:
         self.handler = kwargs.get("handler")
         self.nano = kwargs.get("nano")
         self.stats = kwargs.get("stats")
+        self.trans = kwargs.get("trans")
 
         # Debug
         self.lt = time.time()
@@ -57,50 +52,17 @@ class ServerManagement:
 
         return discord.utils.find(lambda m: m.id == chan, server.channels)
 
-        # Check if the channel already exists
-        # if not [ch for ch in server.channels if ch.id == self.handler.get_var(server.id, "logchannel")]:
-        #
-        #     return None
-        #
-        #     # Channel creation is DISABLED
-        #
-        #     # if is_disabled(self.handler.get_var(server.id, "logchannel")):
-        #     #     return None
-        #     #
-        #     # # Find yourself
-        #     # me = server.get_member(self.client.user.id)
-        #     #
-        #     # # Creates permission overwrites: normal users cannot see the channel,
-        #     # # only users with the role "Nano Admin" and the bot
-        #     # them = discord.PermissionOverwrite(read_messages=False, send_messages=False, read_message_history=False)
-        #     # us = discord.PermissionOverwrite(read_messages=True, send_messages=True, read_message_history=True,
-        #     #                                  attach_files=True, embed_links=True, manage_messages=True)
-        #     #
-        #     # admin_role = discord.utils.find(lambda m: m.name == "Nano Admin", server.roles)
-        #     #
-        #     # them_perms = discord.ChannelPermissions(target=server.default_role, overwrite=them)
-        #     #
-        #     # nano_perms = discord.ChannelPermissions(target=me, overwrite=us)
-        #     #
-        #     # log_channel_name = self.handler.get_var(server.id, "logchannel")
-        #     #
-        #     # if admin_role:
-        #     #     admin_perms = discord.ChannelPermissions(target=admin_role, overwrite=us)
-        #     #
-        #     #     return await self.client.create_channel(server, log_channel_name, admin_perms, them_perms, nano_perms)
-        #     #
-        #     # else:
-        #     #     return await self.client.create_channel(server, log_channel_name, them_perms, nano_perms)
-        #
-        # else:
-        #     return discord.utils.find(lambda m: m.id == self.handler.get_var(server.id, "logchannel"), server.channels)
-
     @staticmethod
     async def handle_def_channel(server, channel_id):
         if is_disabled(channel_id):
             return server.default_channel
         else:
-            return discord.utils.find(lambda c: c.id == channel_id, server.channels)
+            chan = discord.utils.find(lambda c: c.id == channel_id, server.channels)
+            if not chan:
+                log_to_file("Custom channel does not exist anymore: {} ({})".format(server.name, server.id))
+                return server.default_channel
+            else:
+                return chan
 
     async def send_message_failproof(self, channel, message=None, embed=None):
         try:
@@ -108,6 +70,7 @@ class ServerManagement:
         except discord.HTTPException:
             await asyncio.sleep(3)
             await self.client.send_message(channel, content=message, embed=embed)
+            raise
 
     @staticmethod
     def make_logchannel_embed(user, action, color=discord.Color(0x2e75cc)):
@@ -119,6 +82,9 @@ class ServerManagement:
 
         prefix = kwargs.get("prefix")
         client = self.client
+
+        trans = self.trans
+        lang = kwargs.get("lang")
 
         if not is_valid_command(message.content, valid_commands, prefix=prefix):
             return
@@ -145,10 +111,11 @@ class ServerManagement:
                 members += int(server.member_count)
                 channels += len(server.channels)
 
-            embed = discord.Embed(name="Stats", colour=discord.Colour.dark_blue())
-            embed.add_field(name="Servers", value="{} servers".format(server_count), inline=True)
-            embed.add_field(name="Users", value="{} members".format(members), inline=True)
-            embed.add_field(name="Channels", value="{} channels".format(channels), inline=True)
+            embed = discord.Embed(name=trans.get("MSG_STATUS_STATS", lang), colour=discord.Colour.dark_blue())
+
+            embed.add_field(name=trans.get("MSG_STATUS_SERVERS", lang), value=trans.get("MSG_STATUS_SERVERS_L", lang).format(server_count), inline=True)
+            embed.add_field(name=trans.get("MSG_STATUS_USERS", lang), value=trans.get("MSG_STATUS_USERS_L", lang).format(members), inline=True)
+            embed.add_field(name=trans.get("MSG_STATUS_CHANNELS", lang), value=trans.get("MSG_STATUS_CHANNELS_L", lang).format(channels), inline=True)
 
             await client.send_message(message.channel, "**Stats**", embed=embed)
 
@@ -178,7 +145,7 @@ class ServerManagement:
 
             # OTHER
             d = datetime(1, 1, 1) + timedelta(seconds=time.time() - self.nano.boot_time)
-            uptime = "{} days, {}:{}:{}".format(d.day - 1, d.hour, d.minute, d.second)
+            uptime = trans.get("MSG_DEBUG_UPTIME_L", lang).format(d.day - 1, d.hour, d.minute, d.second)
 
             nano_version = self.nano.version
             discord_version = discord.__version__
@@ -188,25 +155,25 @@ class ServerManagement:
 
             embed = discord.Embed(colour=discord.Colour.green())
 
-            embed.add_field(name="Nano version", value=nano_version)
-            embed.add_field(name="discord.py", value=discord_version)
-            embed.add_field(name="RAM usage", value="{} MB (garbage collected {} MB)".format(mem_after, garbage))
-            embed.add_field(name="CPU usage", value="{} %".format(cpu))
-            embed.add_field(name="Ongoing reminders", value=str(reminders))
-            embed.add_field(name="Ongoing votes", value=str(polls))
+            embed.add_field(name=trans.get("MSG_DEBUG_VERSION", lang), value=nano_version)
+            embed.add_field(name=trans.get("MSG_DEBUG_DPY", lang), value=discord_version)
+            embed.add_field(name=trans.get("MSG_DEBUG_RAM", lang), value=trans.get("MSG_DEBUG_GC", lang).format(mem_after, abs(garbage)))
+            embed.add_field(name=trans.get("MSG_DEBUG_CPU", lang), value=trans.get("MSG_DEBUG_CPU_L", lang).format(cpu))
+            embed.add_field(name=trans.get("MSG_DEBUG_REMINDERS", lang), value=str(reminders))
+            embed.add_field(name=trans.get("MSG_DEBUG_VOTES", lang), value=str(polls))
 
             # Balances some stats
             if isinstance(self.handler, RedisServerHandler):
                 redis_mem = self.handler.db_info("memory").get("used_memory_human")
-                embed.add_field(name="Redis memory", value=redis_mem, inline=False)
+                embed.add_field(name=trans.get("MSG_DEBUG_R_MEM", lang), value=redis_mem, inline=False)
 
                 redis_size = self.handler.db_size()
-                embed.add_field(name="Redis keys", value=redis_size)
+                embed.add_field(name=trans.get("MSG_DEBUG_R_KEYS", lang), value=redis_size)
 
             else:
-                embed.add_field(name="Uptime", value=uptime)
+                embed.add_field(name=trans.get("MSG_DEBUG_UPTIME", lang), value=uptime)
 
-            await client.send_message(message.channel, "**Debug data:**", embed=embed)
+            await client.send_message(message.channel, trans.get("MSG_DEBUG_INFO", lang), embed=embed)
 
         # !stats
         elif startswith(prefix + "stats"):
@@ -223,35 +190,36 @@ class ServerManagement:
 
             embed = discord.Embed(colour=discord.Colour.gold())
 
-            embed.add_field(name="Messages sent", value=messages)
-            embed.add_field(name="Wrong arguments got", value=wrong_args)
-            embed.add_field(name="Command abuses tried", value=wrong_permissions)
-            embed.add_field(name="People Helped", value=helps)
-            embed.add_field(name="Images sent", value=imgs)
-            embed.add_field(name="Votes got", value=votes)
-            embed.add_field(name="Times slept", value=sleeps)
-            embed.add_field(name="Times Pong!-ed", value=pings)
+            embed.add_field(name=trans.get("MSG_STATS_MSGS", lang), value=messages)
+            embed.add_field(name=trans.get("MSG_STATS_ARGS", lang), value=wrong_args)
+            embed.add_field(name=trans.get("MSG_STATS_PERM", lang), value=wrong_permissions)
+            embed.add_field(name=trans.get("MSG_STATS_HELP", lang), value=helps)
+            embed.add_field(name=trans.get("MSG_STATS_IMG", lang), value=imgs)
+            embed.add_field(name=trans.get("MSG_STATS_VOTES", lang), value=votes)
+            embed.add_field(name=trans.get("MSG_STATS_SLEPT", lang), value=sleeps)
+            embed.add_field(name=trans.get("MSG_STATS_PONG", lang), value=pings)
             # Left out "images uploaded" because there was no use
 
-            await client.send_message(message.channel, "**Stats**", embed=embed)
+            await client.send_message(message.channel, trans.get("MSG_STATS_INFO", lang), embed=embed)
 
         # !prefix
         elif startswith(prefix + "prefix"):
-            await client.send_message(message.channel, "You guessed it!")
+            await client.send_message(message.channel, trans.get("MSG_PREFIX_OHYEAH", lang))
 
         # nano.prefix
         elif startswith("nano.prefix"):
-            await client.send_message(message.channel, "The prefix on this server is **{}**".format(prefix))
+            await client.send_message(message.channel, trans.get("MSG_PREFIX", lang).format(prefix))
 
         # !members
         elif startswith(prefix + "members"):
-            ls = [member.name for member in message.channel.server.members]
+            ls = [member.name for member in message.server.members]
 
-            members = "*__Members__*:\n\n{}".format(", ".join(["`{}`".format(mem) for mem in ls])) + "\nTotal: **{}** members".format(len(ls))
+            members = trans.get("MSG_MEMBERS_LIST", lang).format(", ".join(["`{}`".format(mem) for mem in ls])) + \
+                      trans.get("MSG_MEMBERS_TOTAL", lang).format(len(ls))
 
             if len(members) > 2000:
                 # Only send the number if the message is too long.
-                await client.send_message(message.channel, "This guild has a total number of **{}** members".format(len(ls)))
+                await client.send_message(message.channel, trans.get("MSG_MEMBERS_AMOUNT", lang).format(len(ls)))
 
             else:
                 await client.send_message(message.channel, members)
@@ -263,20 +231,20 @@ class ServerManagement:
 
             v_level = message.server.verification_level
             if v_level == v_level.none:
-                v_level = "None"
+                v_level = trans.get("MSG_SERVER_VL_NONE", lang)
             elif v_level == v_level.low:
-                v_level = "Low"
+                v_level = trans.get("MSG_SERVER_VL_LOW", lang)
             elif v_level == v_level.medium:
-                v_level = "Medium"
+                v_level = trans.get("MSG_SERVER_VL_MEDIUM", lang)
             else:
-                v_level = "High (╯°□°）╯︵ ┻━┻"
+                v_level = trans.get("MSG_SERVER_VL_HIGH", lang)
 
             channels = len(message.server.channels)
             text_chan = len([chan.id for chan in message.server.channels if chan.type == chan.type.text])
             voice_chan = len([chan.id for chan in message.server.channels if chan.type == chan.type.voice])
 
             # Teal Blue
-            embed = discord.Embed(colour=discord.Colour(0x3F51B5), description="ID: *{}*".format(message.server.id))
+            embed = discord.Embed(colour=discord.Colour(0x3F51B5), description=trans.get("MSG_SERVER_ID", lang).format(message.server.id))
 
             if message.server.icon:
                 embed.set_author(name=message.server.name, icon_url=message.server.icon_url)
@@ -284,20 +252,20 @@ class ServerManagement:
             else:
                 embed.set_author(name=message.server.name)
 
-            embed.set_footer(text="Server created at {}".format(message.server.created_at))
+            embed.set_footer(text=trans.get("MSG_SERVER_DATE_CREATED", lang).format(message.server.created_at))
 
-            embed.add_field(name="Members [{} total]".format(user_count), value="{} online".format(users_online))
-            embed.add_field(name="Channels [{} total]".format(channels), value="{} voice | {} text".format(voice_chan, text_chan))
-            embed.add_field(name="Verification level", value=v_level)
-            embed.add_field(name="Roles", value="{} custom".format(len(message.server.roles) - 1))
-            embed.add_field(name="Server Owner", value="{}#{} ID:{}".format(message.server.owner.name,
-                                                                            message.server.owner.discriminator,
-                                                                            message.server.owner.id))
+            embed.add_field(name=trans.get("MSG_SERVER_MEMBERS", lang).format(user_count), value=trans.get("MSG_SERVER_MEMBERS_L", lang).format(users_online))
+            embed.add_field(name=trans.get("MSG_SERVER_CHANNELS", lang).format(channels), value=trans.get("MSG_SERVER_CHANNELS_L", lang).format(voice_chan, text_chan))
+            embed.add_field(name=trans.get("MSG_SERVER_VL", lang), value=v_level)
+            embed.add_field(name=trans.get("MSG_SERVER_ROLES", lang), value=trans.get("MSG_SERVER_ROLES_L", lang).format(len(message.server.roles) - 1))
+            embed.add_field(name=trans.get("MSG_SERVER_OWNER", lang), value=trans.get("MSG_SERVER_OWNER_L", lang).format(message.server.owner.name,
+                                                                                                                         message.server.owner.discriminator,
+                                                                                                                         message.server.owner.id))
 
-            await client.send_message(message.channel, "**Server info:**", embed=embed)
+            await client.send_message(message.channel, trans.get("MSG_SERVER_INFO", lang), embed=embed)
 
-    async def on_member_join(self, member, **_):
-        assert isinstance(self.handler, (RedisServerHandler, LegacyServerHandler))
+    async def on_member_join(self, member, **kwargs):
+        lang = kwargs.get("lang")
 
         replacement_logic = {
             ":user": member.mention,
@@ -315,16 +283,16 @@ class ServerManagement:
 
         # Ignore if disabled
         if log_c:
-            embed = self.make_logchannel_embed(member, "joined")
+            embed = self.make_logchannel_embed(member, self.trans.get("EVENT_JOIN", lang))
             await self.send_message_failproof(log_c, embed=embed)
         
         if not is_disabled(welcome_msg):
             await self.send_message_failproof(def_c, welcome_msg)
 
-    async def on_member_ban(self, member, **_):
+    async def on_member_ban(self, member, **kwargs):
         self.bans[member.id] = time.time()
 
-        assert isinstance(self.handler, (RedisServerHandler, ServerHandler))
+        lang = kwargs.get("lang")
 
         replacement_logic = {
             ":user": member.mention,
@@ -341,18 +309,18 @@ class ServerManagement:
 
         # Ignore if disabled
         if log_c:
-            embed = self.make_logchannel_embed(member, "was banned")
+            embed = self.make_logchannel_embed(member, self.trans.get("EVENT_BAN", lang))
             await self.send_message_failproof(log_c, embed=embed)
 
         if not is_disabled(ban_msg):
             await self.send_message_failproof(def_c, ban_msg)
 
-    async def on_member_remove(self, member, **_):
+    async def on_member_remove(self, member, **kwargs):
         if member.id in self.bans.keys():
             self.bans.pop(member.id)
             return
 
-        assert isinstance(self.handler, (RedisServerHandler, ServerHandler))
+        lang = kwargs.get("lang")
 
         replacement_logic = {
             ":user": member.mention,
@@ -369,15 +337,16 @@ class ServerManagement:
 
         # Ignore if disabled
         if log_c:
-            embed = self.make_logchannel_embed(member, "left")
+            embed = self.make_logchannel_embed(member, self.trans.get("EVENT_LEAVE", lang))
             await self.send_message_failproof(log_c, embed=embed)
         
         if not is_disabled(leave_msg):
             await self.send_message_failproof(def_c, leave_msg)
 
-    async def on_server_join(self, server, **_):
+    async def on_server_join(self, server, **kwargs):
+        lang = kwargs.get("lang")
         # Say hi to the server
-        await self.send_message_failproof(server.default_channel, nano_welcome)
+        await self.send_message_failproof(server.default_channel, self.trans.get("EVENT_SERVER_JOIN", lang))
 
         # Create server settings
         self.handler.server_setup(server)
@@ -412,7 +381,7 @@ class ServerManagement:
 
 class NanoPlugin:
     name = "Moderator"
-    version = "0.3.3"
+    version = "0.3.4"
 
     handler = ServerManagement
     events = {

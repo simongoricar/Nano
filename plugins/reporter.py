@@ -1,9 +1,10 @@
-import sys
 import logging
+import sys
 import traceback
-from discord import errors, Message, Member, User, Server
-from data.utils import log_to_file
 
+from discord import errors, Message, Member, User, Server
+
+from data.utils import log_to_file
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)

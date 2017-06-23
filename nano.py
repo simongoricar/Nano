@@ -12,11 +12,12 @@ import discord
 # ServerHandler and NanoStats import
 from data import serverhandler
 from data import stats as bot_stats
+from data.translations import TranslationManager
 from data.utils import log_to_file
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '3.5.1'
+__version__ = '3.6'
 
 
 # EVENTS
@@ -75,6 +76,7 @@ log.info("Initializing ServerHandler and NanoStats...")
 use_legacy = not parser.get("Storage", "type") == "redis"
 handler = serverhandler.ServerHandler.get_handler(legacy=use_legacy)
 stats = bot_stats.get_NanoStats(legacy=use_legacy)
+trans = TranslationManager()
 
 # Singleton metaclass
 
@@ -161,7 +163,8 @@ class Nano(metaclass=Singleton):
                                handler=handler,
                                nano=self,
                                stats=stats,
-                               legacy=use_legacy)
+                               legacy=use_legacy,
+                               trans=trans)
 
             except RuntimeError:
                 self.plugin_names.pop(self.plugin_names.index(plugin))
@@ -173,7 +176,6 @@ class Nano(metaclass=Singleton):
                 log.warning("Unexpected error in {}: {}".format(plugin, e))
                 self.plugin_names.pop(self.plugin_names.index(plugin))
                 failed.append(plugin)
-                del instance
                 del plug
                 continue
 
@@ -241,7 +243,8 @@ class Nano(metaclass=Singleton):
                            loop=loop,
                            handler=handler,
                            nano=self,
-                           stats=stats)
+                           stats=stats,
+                           trans=trans)
 
         except RuntimeError:
             self.plugin_names.pop(self.plugin_names.index(plugin))

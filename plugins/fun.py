@@ -1,23 +1,20 @@
 # coding=utf-8
-import giphypop
-import configparser
-import aiohttp
-import logging
 import asyncio
+import configparser
+import logging
+
+import aiohttp
+import giphypop
 from discord import Message
-from data.utils import is_valid_command
+
 from data.stats import PRAYER, MESSAGE, IMAGE_SENT
+from data.utils import is_valid_command
 
 parser = configparser.ConfigParser()
 parser.read("plugins/config.ini")
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
-
-simple_commands = {
-    "ayy lmao": "My inspiration in the world of memes.",
-    "( ͡° ͜ʖ ͡°)": "¯\_(ツ)_/¯ indeed"
-}
 
 commands = {
     "_kappa": {"desc": "I couldn't resist it.", "use": None, "alias": None},
@@ -97,6 +94,7 @@ class Fun:
         self.client = kwargs.get("client")
         self.stats = kwargs.get("stats")
         self.loop = kwargs.get("loop")
+        self.trans = kwargs.get("trans")
 
         try:
             key = parser.get("giphy", "api-key")
@@ -123,12 +121,20 @@ class Fun:
         prefix = kwargs.get("prefix")
         client = self.client
 
+        trans = self.trans
+        lang = kwargs.get("lang")
+
         def startswith(*msg):
             for a in msg:
                 if message.content.startswith(a):
                     return True
 
             return False
+
+        simple_commands = {
+            "ayy lmao": trans.get("MSG_AYYLMAO", lang),
+            "( ͡° ͜ʖ ͡°)": trans.get("MSG_WHOKNOWS", lang)
+        }
 
         # Loop over simple commands
         for trigger, response in simple_commands.items():
@@ -173,7 +179,7 @@ class Fun:
             middle = [str(a).strip(" ") for a in str(query).split("|")]
 
             if len(middle) != 3:
-                await client.send_message(message.channel, "Incorrect usage. See _help caption/_help meme for info".replace("_", prefix))
+                await client.send_message(message.channel, trans.get("MSG_MEME_USAGE", lang).replace("_", prefix))
                 return
 
             name = middle[0]
@@ -182,7 +188,7 @@ class Fun:
             meme = await self.generator.caption_meme(name, top, bottom)
 
             if not meme:
-                await client.send_message(message.channel, "Meme is non-existent. rip")
+                await client.send_message(message.channel, trans.get("MSG_MEME_NONEXISTENT", lang))
             else:
                 await client.send_message(message.channel, meme)
 
@@ -199,7 +205,7 @@ class Fun:
             ripperoni = self.nano.get_plugin("commons").get("instance").at_everyone_filter(ripperoni, message.author, message.server)
 
             prays = self.stats.get_amount(PRAYER)
-            await client.send_message(message.channel, "Rest in pepperoni{}{}.\n`{}` *prayers said so far*...".format(", " if ripperoni else "", ripperoni, prays))
+            await client.send_message(message.channel, trans.get("MSG_RIP", lang).format(ripperoni, prays))
 
             self.stats.add(PRAYER)
 

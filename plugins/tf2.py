@@ -1,14 +1,16 @@
 # coding=utf-8
-import aiohttp
 import asyncio
-import time
-import logging
 import configparser
+import logging
 import os
+import time
 from json import load, dump, JSONDecodeError
+
+import aiohttp
 from discord import Message
-from data.utils import threaded, is_valid_command
+
 from data.stats import MESSAGE, WRONG_ARG
+from data.utils import threaded, is_valid_command
 
 __author__ = "DefaltSimon"
 # Backpack.tf price plugin for Nano
@@ -48,8 +50,7 @@ quality_names = {0: "Stock",
                  15: "Decorated"}
 
 commands = {
-    "_tf": {"desc": "Gets item prices from backpack.tf (not perfect for items with unusual effects/sheens)",
-            "use": "[command] [item name]", "alias": None},
+    "_tf": {"desc": "Gets item prices from backpack.tf (not perfect for items with unusual effects/sheens)", "use": "[command] [item name]", "alias": None},
 }
 
 valid_commands = commands.keys()
@@ -254,8 +255,8 @@ class CommunityPrices:
             async with session.get(address, params=params) as resp:
                 if resp.status != 200:
                     if resp.status == 504:
-                        logger.warning("Got 504: Gateway Timeout, retrying in 10 min")
-                        await asyncio.sleep(60*10)
+                        logger.warning("Got 504: Gateway Timeout, retrying in 5 min")
+                        await asyncio.sleep(60*5)
                         await self._download_data()
 
                     elif resp.status == 429:
@@ -316,6 +317,7 @@ class TeamFortress:
         self.client = kwargs.get("client")
         self.stats = kwargs.get("stats")
         self.loop = kwargs.get("loop")
+        self.trans = kwargs.get("trans")
 
         try:
             key = parser.get("backpack.tf", "apikey")
@@ -330,8 +332,10 @@ class TeamFortress:
     async def on_message(self, message, **kwargs):
         assert isinstance(message, Message)
         client = self.client
+        trans = self.trans
 
         prefix = kwargs.get("prefix")
+        lang = kwargs.get("lang")
 
         if not is_valid_command(message.content, valid_commands, prefix=prefix):
             return
@@ -347,7 +351,7 @@ class TeamFortress:
 
         if startswith(prefix + "tf"):
             if not self.tf.success:
-                await client.send_message(message.channel, "This command is currently unavailable. Apologies.")
+                await client.send_message(message.channel, trans.get("MSG_TF_UNAVAILABLE", lang))
                 return
 
             item_name = message.content[len(prefix + "tf "):]
@@ -355,20 +359,18 @@ class TeamFortress:
             item = self.tf.get_item_by_name(str(item_name))
 
             if not item:
-                await client.send_message(message.channel, "An item with that name *does not exist*.".format(item_name))
+                await client.send_message(message.channel, trans.get("MSG_TF_NO_SUCH_ITEM", lang).format(item_name))
                 self.stats.add(WRONG_ARG)
                 return
 
             ls = []
             for qu in item.get_all_qualities():
                 down = qu.get(list(qu.keys())[0])
-                dt = "__**{}**__: `{} {}`".format(get_quality_name(list(qu.keys())[0]),
-                                                  down.get("price").get("value"),
-                                                  "ref" if down.get("price").get("currency") == "metal" else down.get(
-                                                      "price").get("currency"))
+                dt = "__**{}**__: `{} {}`".format(get_quality_name(list(qu.keys())[0]), down.get("price").get("value"),
+                                                  "ref" if down.get("price").get("currency") == "metal" else down.get( "price").get("currency"))
                 ls.append(dt)
 
-            det = """**{}** *(on bp.tf)*\n\n{}""".format(item.name, "\n".join(ls))
+            det = trans.get("MSG_TF_LIST", lang).format(item.name, "\n".join(ls))
             await client.send_message(message.channel, det)
 
 

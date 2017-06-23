@@ -1,20 +1,23 @@
 # coding=utf-8
-import wikipedia
-import logging
 import configparser
+import logging
+
 import aiohttp
-from discord import Message
+import wikipedia
 from bs4 import BeautifulSoup
+from discord import Message
+
 from data.stats import MESSAGE
-from data.utils import is_valid_command, StandardEmoji
+from data.utils import is_valid_command
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-QUERY_TOO_LONG = "Search request is longer than the maximum allowed length."
-
 parser = configparser.ConfigParser()
 parser.read("plugins/config.ini")
+
+# SHOULD NOT BE TRANSLATED
+QUERY_TOO_LONG = "Search request is longer than the maximum allowed length."
 
 commands = {
     "_wiki": {"desc": "Gives you the definition of a word from Wikipedia.", "use": "[command] [word]", "alias": "_define"},
@@ -30,12 +33,16 @@ class Definitions:
         self.client = kwargs.get("client")
         self.nano = kwargs.get("nano")
         self.stats = kwargs.get("stats")
+        self.trans = kwargs.get("trans")
 
     async def on_message(self, message, **kwargs):
         assert isinstance(message, Message)
 
         prefix = kwargs.get("prefix")
         client = self.client
+
+        trans = self.trans
+        lang = kwargs.get("lang")
 
         if not is_valid_command(message.content, valid_commands, prefix=prefix):
             return
@@ -60,7 +67,7 @@ class Definitions:
                 return
 
             if not search or search == " ":  # If empty args
-                await client.send_message(message.channel, "Please include a word you want to define.")
+                await client.send_message(message.channel, trans.get("MSG_WIKI_NO_QUERY", lang))
                 return
 
             try:
@@ -68,16 +75,14 @@ class Definitions:
                 await client.send_message(message.channel, "**{} :** \n".format(search) + answer)
 
             except wikipedia.exceptions.PageError:
-                await client.send_message(message.channel, "No definitions found.")
+                await client.send_message(message.channel, trans.get("MSG_WIKI_NO_DEF", lang))
 
             except wikipedia.exceptions.DisambiguationError:
-                await client.send_message(message.channel,
-                                          "Got multiple definitions of {}, please be more specific (somehow).".format(search))
+                await client.send_message(message.channel, trans.get("MSG_WIKI_MULTIPLE_DEF", lang).format(search))
 
             except wikipedia.exceptions.WikipediaException as e:
                 if str(e).startswith(QUERY_TOO_LONG):
-                    await client.send_message(message.channel,
-                                              "Search query is too long: 300 is the maximum length (you searched with {})".format(len(search)))
+                    await client.send_message(message.channel, trans.get("MSG_WIKI_QUERY_TOO_LONG", lang).format(len(search)))
 
         elif startswith(prefix + "urban"):
             search = str(message.content)[len(prefix + "urban "):]
@@ -89,17 +94,17 @@ class Definitions:
             try:
                 answer = BeautifulSoup(define, "html.parser").find("div", attrs={"class": "meaning"}).text
             except AttributeError:
-                await client.send_message(message.channel, "No definition found")
+                await client.send_message(message.channel, trans.get("MSG_WIKI_NO_DEF", lang))
                 return
 
             # Check if there are no definitions
             if str(answer).startswith("\nThere aren't any"):
-                await client.send_message(message.channel, "No definition found")
+                await client.send_message(message.channel, trans.get("MSG_WIKI_NO_DEF", lang))
 
             else:
 
                 if (len(answer) + len(search)) > 1900:
-                    await client.send_message(message.channel, StandardEmoji.WARNING + "Definition is too long!")
+                    await client.send_message(message.channel, trans.get("MSG_URBAN_DEF_TOO_LONG", lang))
                     return
 
                 content = "**{}** *:* {}".format(search, answer)

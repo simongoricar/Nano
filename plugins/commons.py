@@ -1,38 +1,19 @@
 # coding=utf-8
 import logging
 import time
-
 from datetime import timedelta, datetime
 from random import randint
+
 from discord import Message, utils, Embed
+
 from data.serverhandler import ServerHandler
 from data.stats import MESSAGE, PING
-from data.utils import is_valid_command, StandardEmoji, is_disabled, make_dots
+from data.utils import is_valid_command, is_disabled, make_dots
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 # Strings
-
-PING_MSG = "**Measuring...**"
-
-not_mod = " You do not have the correct permissions to use this command (must be a mod)."
-
-nano_info = """**Hey! My name is Nano!**
-I have a GitHub repo! `!github`
-My current version is **<version>**.
-I have been coded by *DefaltSimon*.
-
-Gif command powered by **Giphy**"""
-
-nano_github = "Nano's code is available on **GitHub**: https://github.com/DefaltSimon/Nano"
-
-invite = "You wanna invite Nano to your server? Amazing!\n**Just follow the link:** <link>"
-
-eight_ball = [
-    "It is certain", "It is surely so", "Without a doubt", "You may rely on it", "Most likely", "Yes",
-    "Ask again later", "Cannot predict now", "Concentrate and ask again", "I would say yes", "JUST DO IT",
-    "My reply is no", "My sources say no", "Signs point to yes"]
 
 quotes = [
     "You miss 100% of the shots you don’t take. –Wayne Gretzky",
@@ -97,6 +78,7 @@ class Commons:
         self.handler = kwargs.get("handler")
         self.nano = kwargs.get("nano")
         self.stats = kwargs.get("stats")
+        self.trans = kwargs.get("trans")
 
         self.pings = {}
         self.getter = None
@@ -106,15 +88,15 @@ class Commons:
     async def on_plugins_loaded(self):
         self.getter = self.nano.get_plugin("server").get("instance")
 
-    async def log_say_command(self, message, content, prefix):
+    async def log_say_command(self, message, content, prefix, lang):
         log_channel = await self.getter.handle_log_channel(message.server)
 
         if not log_channel:
             return
 
-        embed = Embed(title="Executed {}say".format(prefix), description=make_dots(content, 350))
+        embed = Embed(title=self.trans.get("MSG_LOGPOST_SAY", lang).format(prefix), description=make_dots(content, 350))
         embed.set_author(name="{} ({})".format(message.author.name, message.author.id), icon_url=message.author.avatar_url)
-        embed.add_field(name="Channel", value=message.channel.mention)
+        embed.add_field(name=self.trans.get("INFO_CHANNEL", lang), value=message.channel.mention)
 
         await self.client.send_message(log_channel, embed=embed)
 
@@ -142,9 +124,11 @@ class Commons:
 
         # Prefixes
         prefix = kwargs.get("prefix")
+        lang = kwargs.get("lang")
+        trans = self.trans
 
         # Custom commands registered for the server
-        server_commands = self.handler.get_custom_commands(message.channel.server)
+        server_commands = self.handler.get_custom_commands(message.server)
 
         # Checks for server specific commands
         for command in server_commands:
@@ -175,25 +159,24 @@ class Commons:
         # !hello
         if startswith(prefix + "hello"):
             if len(message.mentions) >= 1:
-                await client.send_message(message.channel, "Hi " + message.mentions[0].mention)
+                await client.send_message(message.channel, trans.get("INFO_HI", lang).format(message.mentions[0].mention))
             elif len(message.mentions) == 0:
-                await client.send_message(message.channel, "Hi " + message.author.mention)
+                await client.send_message(message.channel, trans.get("INFO_HI", lang).format(message.author.mention))
 
         # !uptime
         elif startswith(prefix + "uptime"):
             d = datetime(1, 1, 1) + timedelta(seconds=time.time() - self.nano.boot_time)
-            uptime = "I have been tirelessly answering people for\n" \
-                     "**{} days, {} hours, {} minutes and {} seconds!**".format(d.day - 1, d.hour, d.minute, d.second)
+            uptime = trans.get("MSG_UPTIME", lang).format(d.day - 1, d.hour, d.minute, d.second)
 
             await client.send_message(message.channel, uptime)
 
         # !nano, nano.info
         elif startswith((prefix + "nano", "nano.info")):
-            await client.send_message(message.channel, nano_info.replace("<version>", self.nano.version))
+            await client.send_message(message.channel, trans.get("INFO_GENERAL", lang).replace("<version>", self.nano.version))
 
         # !github
         elif startswith(prefix + "github"):
-            await client.send_message(message.channel, nano_github)
+            await client.send_message(message.channel, trans.get("INFO_GITHUB", lang))
 
         # !roll
         elif startswith(prefix + "roll"):
@@ -203,25 +186,25 @@ class Commons:
                 num = message.content[len(prefix + "rng "):]
 
             if not str(num).isnumeric():
-                await client.send_message(message.channel, "Not a number.")
+                await client.send_message(message.channel, trans.get("ERROR_NOT_NUMBER", lang))
                 return
 
             rn = randint(0, int(num))
             result = "**{}**. {}".format(rn, "**GG**" if rn == int(num) else "")
 
-            await client.send_message(message.channel, "{}, you rolled {}".format(message.author.mention, result))
+            await client.send_message(message.channel, trans.get("MSG_ROLL", lang).format(message.author.mention, result))
 
         # !dice
         elif startswith(prefix + "dice"):
             rn = randint(1, 6)
-            await client.send_message(message.channel, "{}, the dice shows... **{}**".format(message.author.mention, rn))
+            await client.send_message(message.channel, trans.get("MSG_DICE", lang).format(message.author.mention, rn))
 
         # !ping
         elif startswith(prefix + "ping"):
             base_time = datetime.now() - message.timestamp
             base_taken = int(divmod(base_time.total_seconds(), 60)[1] * 100)
 
-            a = await client.send_message(message.channel, PING_MSG)
+            a = await client.send_message(message.channel, trans.get("MSG_PING_MEASURING", lang))
             self.pings[a.id] = [time.monotonic(), message.channel.id, base_taken]
 
             await client.add_reaction(a, "\U0001F44D")
@@ -232,17 +215,19 @@ class Commons:
             cut = str(message.content)[len(prefix + "decide "):]
 
             if len(cut.split("|")) == 1:
-                await client.send_message(message.channel, "Guess what? It's " + str(cut) + ". **ba dum tss.**")
+                await client.send_message(message.channel, trans.get("MSG_DECIDE_SPECIAL", lang).format(cut))
 
             else:
                 split = cut.split("|")
                 rn = randint(0, len(split) - 1)
-                await client.send_message(message.channel, "**drum roll**... I have decided: {}".format(split[rn]))
+                await client.send_message(message.channel, trans.get("MSG_DECIDE_NORMAL", lang).format(split[rn]))
 
         # !8ball
         elif startswith(prefix + "8ball"):
+            eight_ball = [a.strip(" ") for a in trans.get("MSG_8BALL_STRINGS", lang).split("|")]
             answer = eight_ball[randint(0, len(eight_ball) - 1)]
-            await client.send_message(message.channel, "The magic 8ball says: *{}*.".format(answer))
+
+            await client.send_message(message.channel, trans.get("MSG_8BALL", lang).format(answer))
 
         # !quote
         elif startswith(prefix + "quote"):
@@ -261,14 +246,14 @@ class Commons:
             url = "<https://discordapp.com/oauth2/" \
                   "authorize?client_id={}&scope=bot&permissions={}>".format(application.id, perms)
 
-            await client.send_message(message.channel, invite.replace("<link>", url))
+            await client.send_message(message.channel, trans.get("INFO_INVITE", lang).replace("<link>", url))
 
         # !avatar
         elif startswith(prefix + "avatar"):
             # Selects the proper user
             if len(message.mentions) == 0:
                 name = str(str(message.content)[len(prefix + "avatar "):])
-                member = utils.find(lambda m: m.name == name, message.channel.server.members)
+                member = utils.find(lambda m: m.name == name, message.server.members)
             else:
                 member = message.mentions[0]
 
@@ -278,15 +263,14 @@ class Commons:
             url = member.avatar_url
 
             if url:
-                await client.send_message(message.channel, "**{}**'s avatar: {}".format(member.name, url))
+                await client.send_message(message.channel, trans.get("MSG_AVATAR_OWNERSHIP", lang).format(member.name, url))
             else:
-                await client.send_message(message.channel,
-                                          "**{}** does not have an avatar. {}".format(member.name, StandardEmoji.EXPRESSIONLESS))
+                await client.send_message(message.channel, trans.get("MSG_AVATAR_NONE", lang).format(member.name))
 
         # !say
         elif startswith(prefix + "say"):
             if not self.handler.is_mod(message.author, message.server):
-                await client.send_message(message.channel, StandardEmoji.WARNING + not_mod)
+                await client.send_message(message.channel, trans.get("PERM_MOD", lang))
                 return "return"
 
             content = str(message.content[len(prefix + "say "):]).strip(" ")
@@ -300,8 +284,7 @@ class Commons:
             content = self.at_everyone_filter(content, message.author, message.server)
 
             await client.send_message(channel, content)
-
-            await self.log_say_command(message, content, prefix)
+            await self.log_say_command(message, content, prefix, lang)
 
 
         # !selfrole [role name]
@@ -310,9 +293,9 @@ class Commons:
             s_role = self.handler.get_selfrole(message.server.id)
 
             if is_disabled(s_role):
-                await client.send_message(message.channel, StandardEmoji.WARNING + " This feature is not enabled on this server.")
+                await client.send_message(message.channel, trans.get("MSG_SELFROLE_NOT_ENABLED", lang))
             elif (role != s_role) and len(message.role_mentions) == 0:
-                await client.send_message(message.channel, StandardEmoji.CROSS + " Wrong role name.")
+                await client.send_message(message.channel, trans.get("ERROR_INVALID_ROLE_NAME", lang))
             else:
                 if len(message.role_mentions) != 0:
                     role = message.role_mentions[0]
@@ -325,18 +308,19 @@ class Commons:
                 # If user already has the role, remove it
                 if role in message.author.roles:
                     await client.remove_roles(message.author, role)
-                    await client.send_message(message.channel, StandardEmoji.PERFECT + " Removed **{}** from your list of roles.".format(s_role))
+                    await client.send_message(message.channel, trans.get("MSG_SELFROLE_REMOVED", lang).format(s_role))
                 else:
                     await client.add_roles(message.author, role)
-                    await client.send_message(message.channel, StandardEmoji.PERFECT)
+                    await client.send_message(message.channel, trans.get("MSG_SELFROLE_ADDED", lang))
 
-    async def on_reaction_add(self, reaction, _, **__):
+    async def on_reaction_add(self, reaction, _, **kwargs):
         if reaction.message.id in self.pings.keys():
             data = self.pings.pop(reaction.message.id)
+            lang = kwargs.get("lang")
 
             delta = round((time.monotonic() - int(data[0])) * 100, 2)
             msg = await self.client.get_message(self.client.get_channel(data[1]), reaction.message.id)
-            await self.client.edit_message(msg, "**Pong!** (lag: {} ms, reaction: {} ms)".format(data[2], delta))
+            await self.client.edit_message(msg, self.trans.get("MSG_PING_RESULT", lang).format(data[2], delta))
             await self.client.remove_reaction(msg, "\U0001F44D", reaction.message.server.me)
 
 

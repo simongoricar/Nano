@@ -1,28 +1,29 @@
 # coding=utf-8
 import asyncio
+import datetime
 import logging
 import time
-import datetime
+
+from typing import Union
 from discord import Message, utils, Client, Embed, Colour, DiscordException, HTTPException, Object, errors as derrors
-from data.serverhandler import LegacyServerHandler, RedisServerHandler, INVITEFILTER_SETTING, SPAMFILTER_SETTING, WORDFILTER_SETTING
+
+from data.serverhandler import LegacyServerHandler, RedisServerHandler, INVITEFILTER_SETTING, SPAMFILTER_SETTING, \
+    WORDFILTER_SETTING
 from data.stats import WRONG_ARG
-from data.utils import convert_to_seconds, matches_list, is_valid_command, StandardEmoji, decode, resolve_time, log_to_file, is_disabled
+from data.translations import TranslationManager
+from data.utils import convert_to_seconds, matches_list, is_valid_command, StandardEmoji, decode, resolve_time, \
+    log_to_file, is_disabled
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 # CONSTANTS
 
-error_hierarchy = StandardEmoji.WARNING + " You are not allowed to mess with this role (you are lower in the \"hierarchy\"). ¯\_(ツ)_/¯"
-CHANNEL_NOT_FOUND = "Channel could not be found."
-
-not_admin = " You do not have the correct permissions to use this command (must be an admin)."
-not_mod = " You do not have the correct permissions to use this command (must be a mod)."
-
 CMD_LIMIT = 40
-TICK_DURATION = 15
 
-PREFIX_TOO_LONG = StandardEmoji.WARNING + " Prefix is too long! Maximum length is 100 characters."
+CMD_LIMIT_T = 40
+CMD_LIMIT_A = 500
+TICK_DURATION = 15
 
 commands = {
     "_ban": {"desc": "Bans a member.", "use": "[command] [mention]", "alias": "nano.ban"},
@@ -64,88 +65,11 @@ commands = {
     "_role add": {"desc": "Adds a role to the user.", "use": "[command] [role name] [mention]", "alias": None},
     "_role remove": {"desc": "Removes a role from the user.", "use": "[command] [role name] [mention]", "alias": None},
     "_role replaceall": {"desc": "Replace all roles with the specified one for a user.", "use": "[command] [role name] [mention]", "alias": None},
+
+    "_language": {"desc": "Displays the current language you're using. \nSee `_language list` for available languages or use `_language set [language_code] to set your language.", "use": "[command] [argument]", "alias": None},
+    "_language list": {"desc": "Lists all available languages", "use": "[command]", "alias": None},
+    "_language set": {"desc": "Sets the language for the current server.", "use": "[command] [language_code]", "alias": None}
 }
-
-
-class LegacySoftBanScheduler:
-    def __init__(self, client, loop=asyncio.get_event_loop()):
-        self.client = client
-        self.loop = loop
-
-        self.bans = {}
-
-        self.wait = False
-
-    def lock(self):
-        self.wait = True
-
-    def release(self):
-        self.wait = False
-
-    async def wait(self):
-        while self.wait:
-            await asyncio.sleep(0.01)
-
-    def get_ban(self, user):
-        return self.bans.get(user.id)
-
-    def remove_ban(self, user):
-        self.loop.create_task(self.dispatch(self.bans.get(user.id)))
-        self.bans.pop(user.id, None)
-
-    def set_softban(self, server, user, tim):
-        t = time.time()
-
-        tim = convert_to_seconds(tim)
-
-        if not (5 < tim < 172800):  # 5 sec to 2 days
-            return False
-
-        # Add the reminder to the list
-        self.bans[user.id] = {"member": user, "server": server, "time_target": int(t + tim)}
-
-        return True
-
-    @staticmethod
-    async def tick(last_time):
-        """
-        Very simple implementation of a self-correcting tick system
-        :return: None
-        """
-        current_time = time.time()
-        delta = 1 - (current_time - last_time)
-
-        await asyncio.sleep(delta)
-
-        return time.time()
-
-    async def dispatch(self, reminder):
-        try:
-            logger.debug("Dispatching")
-            await self.client.unban(reminder.get("server"), reminder.get("member"))
-        except DiscordException:
-            pass
-
-    async def start_monitoring(self):
-        last_time = time.time()
-
-        while True:
-            # Iterate through users and their reminders
-            for ban in list(self.bans.values()):
-
-                # If enough time has passed, send the reminder
-                if ban.get("time_target") <= last_time:
-
-                    await self.dispatch(ban)
-
-                    try:
-                        self.bans[ban.get("author")].remove(ban)
-                    except KeyError:
-                        pass
-
-            # And tick.
-            last_time = await self.tick(last_time)
-
 
 class RedisSoftBanScheduler:
     def __init__(self, client, handler, loop=asyncio.get_event_loop()):
@@ -215,33 +139,192 @@ class RedisSoftBanScheduler:
             last_time = await self.tick(last_time)
 
 
+class MessageTracker:
+    def __init__(self, max_active_age=30):
+        self.msgs = {}
+        self.timestamps = {}
+
+        self.max_age = max_active_age
+
+    def is_active(self, message_id):
+        if self.timestamps.get(message_id):
+            return self.timestamps.get(message_id)
+        else:
+            return False
+
+    def set_message_data(self, msg_id, data, renew_timestamp=False):
+        # Update timestamp
+        if msg_id not in self.msgs.keys():
+            self.timestamps[msg_id] = time.time()
+        elif renew_timestamp:
+            self.timestamps[msg_id] = time.time()
+
+        # Set data
+        self.msgs[msg_id] = data
+
+    def get_message_data(self, msg_id, check_active=True) -> Union[None, dict]:
+        if not self.is_active(msg_id):
+            return None
+
+        return self.msgs.get(msg_id)
+
+    @staticmethod
+    async def tick(last_time):
+        """
+        Very simple implementation of a self-correcting tick system
+        :return: None
+        """
+        current_time = time.time()
+        delta = TICK_DURATION - (current_time - last_time)
+
+        await asyncio.sleep(delta)
+
+        return time.time()
+
+    async def start_monitoring(self):
+        last_time = time.time()
+
+        while True:
+            # Iterate through users and their reminders
+            for msg_id, ts in self.timestamps.items():
+                if (last_time - ts) > self.max_age:
+                    print("deleted {}".format(msg_id))
+                    del self.msgs[msg_id]
+                    del self.timestamps[msg_id]
+
+            # And tick.
+            last_time = await self.tick(last_time)
+
+
+def make_pages(commands: dict):
+    cmd_list = {0: []}
+    c_page = 0
+    for trigger, value in commands.items():
+        fm = "{} : {}".format(trigger, value)
+
+        if not cmd_list.get(c_page):
+            cmd_list[c_page] = []
+
+        if sum([len(a) for a in cmd_list[c_page]]) > 1250:
+            c_page += 1
+            cmd_list[c_page] = []
+
+        cmd_list[c_page].append(fm)
+
+    return cmd_list, c_page
+
+class CommandListReactions:
+    UP = "\U00002B06"
+    DOWN = "\U00002B07"
+
+    def __init__(self, client, handler, trans):
+        self.client = client
+        self.handler = handler
+        self.trans = trans
+
+        self.track = MessageTracker()
+
+    async def new_message(self, message, page, cmds):
+        # Ignore if there is only one page
+        if len(cmds.keys()) == 1:
+            return
+
+        # Adds reactions
+        await self.client.add_reaction(message, CommandListReactions.UP)
+        await self.client.add_reaction(message, CommandListReactions.DOWN)
+
+        data = {
+            "page": int(page),
+            "serv_id": message.server.id,
+            "cmds": cmds
+        }
+
+        self.track.set_message_data(message.id, data)
+
+    async def handle_reaction(self, reaction, user, **kwargs):
+        if user.id == self.client.user.id:
+            return
+
+        msg = reaction.message
+        lang = kwargs.get("lang")
+
+        data = self.track.get_message_data(msg.id)
+        if not data:
+            return
+
+        c_page = data.get("page")
+        page_amount = len(data.get("cmds").keys())
+
+        # Default to down, even though it should always change
+        # True - up
+        # False - down
+        up_down = None
+        for react in msg.reactions:
+
+            if react.count > 1:
+                if react.emoji == CommandListReactions.UP:
+                    up_down = True
+                elif react.emoji == CommandListReactions.DOWN:
+                    up_down = False
+
+        # This will not get set if a custom/some other emoji was added
+        if up_down is None:
+            return
+
+        if up_down:
+            # Can't go higher
+            if c_page <= 0:
+                return
+
+            page = data.get("cmds").get(c_page - 1)
+            c_page -= 1
+
+        else:
+            # Can't go lower
+            if c_page + 1 >= page_amount:
+                return
+
+            page = data.get("cmds").get(c_page + 1)
+            c_page += 1
+
+        # Reset reactions and edit message
+        await self.client.clear_reactions(msg)
+
+        new_msg = self.trans.get("MSG_CMD_LIST", lang).format(c_page + 1, page_amount, "\n".join(page))
+        await self.client.edit_message(msg, new_msg)
+
+        await self.client.add_reaction(msg, CommandListReactions.UP)
+        await self.client.add_reaction(msg, CommandListReactions.DOWN)
+
+        data["page"] = c_page
+        self.track.set_message_data(msg.id, data)
+
+
+
 class Admin:
     def __init__(self, **kwargs):
         self.client = kwargs.get("client")
         self.loop = kwargs.get("loop")
         self.handler = kwargs.get("handler")
-        self.nano = kwargs.get("nano")
         self.stats = kwargs.get("stats")
-        self.legacy = kwargs.get("legacy")
+        self.trans = kwargs.get("trans")
 
-        if self.legacy:
-            self.timer = LegacySoftBanScheduler(self.client, self.loop)
-        else:
-            self.timer = RedisSoftBanScheduler(self.client, self.handler, self.loop)
-
+        self.timer = RedisSoftBanScheduler(self.client, self.handler, self.loop)
         self.loop.create_task(self.timer.start_monitoring())
+
+        self.cmd = CommandListReactions(self.client, self.handler, self.trans)
 
         self.bans = []
 
-    async def resolve_role(self, name, message):
-        role = utils.find(lambda r: r.name == name, message.channel.server.roles)
+    async def resolve_role(self, name, message, lang):
+        role = utils.find(lambda r: r.name == name, message.server.roles)
 
         if not role:
             # Try role mentions
             if len(message.role_mentions) != 0:
                 role = message.role_mentions[0]
             else:
-                await self.client.send_message(message.channel, StandardEmoji.WARNING + " Role does not exist!")
+                await self.client.send_message(message.channel, self.trans.get("ERROR_NO_SUCH_ROLE", lang))
                 return None
 
         return role
@@ -257,10 +340,15 @@ class Admin:
         prefix = kwargs.get("prefix")
         client = self.client
         handler = self.handler
+        trans = self.trans
+
+        lang = kwargs.get("lang")
 
         assert isinstance(message, Message)
         assert isinstance(handler, (LegacyServerHandler, RedisServerHandler))
         assert isinstance(client, Client)
+        assert isinstance(trans, TranslationManager)
+
 
         # Check if this is a valid command
         if not is_valid_command(message.content, commands, prefix=prefix):
@@ -276,7 +364,7 @@ class Admin:
         # !nuke
         if startswith(prefix + "nuke"):
             if not handler.is_mod(message.author, message.server):
-                await client.send_message(message.channel, StandardEmoji.WARNING + not_mod)
+                await client.send_message(message.channel, trans.get("PERM_MOD", lang))
                 return "return"
 
             amount = str(message.content)[len(prefix + "nuke "):]
@@ -284,21 +372,21 @@ class Admin:
             try:
                 amount = int(amount) + 1  # Includes the sender's message
             except ValueError:
-                await client.send_message(message.channel, "Must be a number.")
+                await client.send_message(message.channel, trans.get("ERROR_NOT_NUMBER", lang))
                 return
 
             await client.delete_message(message)
-            await client.send_message(message.channel, "Purging last {} messages... :boom:".format(amount - 1))
+            await client.send_message(message.channel, trans.get("MSG_NUKE_PURGING", lang))
 
             additional = ""
 
             try:
                 await client.purge_from(message.channel, limit=amount)
             except derrors.HTTPException:
-                additional = "(some mesages were older than 2 weeks, so they were not deleted)"
+                additional = trans.get("MSG_NUKE_OLD", lang)
 
             # Show success
-            m = await client.send_message(message.channel, "Purged {} messages {} {}".format(StandardEmoji.OK, amount - 1, additional))
+            m = await client.send_message(message.channel, trans.get("MSG_NUKE_PURGED", lang).format(amount - 1) + additional)
             # Wait 1.5 sec and delete the message
             await asyncio.sleep(1.5)
             await client.delete_message(m)
@@ -306,7 +394,7 @@ class Admin:
         # !kick
         elif startswith(prefix + "kick") and not startswith(prefix + "kickmsg"):
             if not handler.is_mod(message.author, message.server):
-                await client.send_message(message.channel, StandardEmoji.WARNING + not_mod)
+                await client.send_message(message.channel, trans.get("PERM_MOD", lang))
                 return "return"
 
             if len(message.mentions) >= 1:
@@ -315,23 +403,22 @@ class Admin:
             else:
                 user_name = str(str(message.content)[len(prefix + "kick "):])
 
-                user = utils.find(lambda u: u.name == str(user_name), message.channel.server.members)
+                user = utils.find(lambda u: u.name == str(user_name), message.server.members)
 
             if not user:
-                await client.send_message(message.channel, StandardEmoji.WARNING + " User does not exist.")
+                await client.send_message(message.channel, trans.get("ERROR_NO_USER", lang))
                 return
 
             if user.id == client.user.id:
-                await client.send_message(message.channel, "Nice try " + StandardEmoji.SMILEY)
+                await client.send_message(message.channel, trans.get("MSG_KICK_NANO", lang))
 
             await client.kick(user)
-            await client.send_message(message.channel,
-                                      handler.get_var(message.channel.server.id, "kickmsg").replace(":user", user.name))
+            await client.send_message(message.channel, handler.get_var(message.server.id, "kickmsg").replace(":user", user.name))
 
         # !ban
         elif startswith(prefix + "ban") and not startswith(prefix + "banmsg"):
             if not handler.is_mod(message.author, message.server):
-                await client.send_message(message.channel, StandardEmoji.WARNING + not_mod)
+                await client.send_message(message.channel, trans.get("PERM_MOD", lang))
                 return "return"
 
             if len(message.mentions) >= 1:
@@ -340,20 +427,21 @@ class Admin:
             else:
                 user_name = str(str(message.content)[len(prefix + "ban "):])
 
-                user = utils.find(lambda u: u.name == str(user_name), message.channel.server.members)
+                user = utils.find(lambda u: u.name == str(user_name), message.server.members)
 
             if not user:
-                await client.send_message(message.channel, StandardEmoji.WARNING + " User does not exist.")
+                await client.send_message(message.channel, trans.get("ERROR_NO_USER", lang))
                 return
 
-            await client.send_message(message.channel,
-                                      "Are you sure you want to ban " + user.name + "? Confirm by replying 'CONFIRM'.")
+            confirm = trans.get("INFO_CONFIRM", lang)
+
+            await client.send_message(message.channel, trans.get("MSG_BAN_USER", lang).format(user.name, confirm))
 
             followup = await client.wait_for_message(author=message.author, channel=message.channel,
                                                      timeout=15, content="CONFIRM")
 
             if followup is None:
-                await client.send_message(message.channel, "Confirmation not received, NOT banning :upside_down:")
+                await client.send_message(message.channel, trans.get("MSG_BAN_TIMEOUT", lang))
 
             else:
                 self.bans.append(user.id)
@@ -363,7 +451,7 @@ class Admin:
         # !unban
         elif startswith(prefix + "unban"):
             if not handler.is_mod(message.author, message.server):
-                await client.send_message(message.channel, StandardEmoji.WARNING + not_mod)
+                await client.send_message(message.channel, trans.get("PERM_MOD", lang))
                 return "return"
 
             name = message.content[len(prefix + "unban "):]
@@ -374,20 +462,20 @@ class Admin:
                     user = ban
 
             if not user:
-                await client.send_message(message.channel, StandardEmoji.WARNING + " User does not exist.")
+                await client.send_message(message.channel, trans.get("ERROR_NO_USER", lang))
                 return
 
             await client.unban(message.server, user)
-            await client.send_message(message.channel, "**{}** has been unbanned.".format(user.name))
+            await client.send_message(message.channel, trans.get("MSG_UNBAN_SUCCESS", lang))
 
         # !softban [time]|@mention
         elif startswith(prefix + "softban"):
             if not handler.is_mod(message.author, message.server):
-                await client.send_message(message.channel, StandardEmoji.WARNING + not_mod)
+                await client.send_message(message.channel, trans.get("PERM_MOD", lang))
                 return "return"
 
             if len(message.mentions) != 1:
-                await client.send_message(message.channel, "Please mention the member you want to softban. (only one)")
+                await client.send_message(message.channel, trans.get("MSG_SOFTBAN_PLSMENTION", lang))
                 return
 
             user = message.mentions[0]
@@ -396,20 +484,20 @@ class Admin:
             if tim.find("|") != -1:
                 tim = tim[:tim.find("|")].strip(" ")
             else:
-                await client.send_message(message.channel, "Please delimit time and @mention with |")
+                await client.send_message(message.channel, trans.get("MSG_SOFTBAN_DELIMIT", lang))
                 return
 
             parsed_time = convert_to_seconds(tim)
 
-            self.timer.set_softban(message.channel.server, user, parsed_time)
+            self.timer.set_softban(message.server, user, parsed_time)
             await client.ban(user, delete_message_days=0)
 
-            await client.send_message(message.channel, "{} has been softbanned for: {}".format(user.name, resolve_time(parsed_time)))
+            await client.send_message(message.channel, trans.get("MSG_SOFTBAN_SUCCESS", lang).format(user.name, resolve_time(parsed_time)))
 
         # !mute list
         elif startswith(prefix + "mute list"):
             if not handler.is_mod(message.author, message.server):
-                await client.send_message(message.channel, StandardEmoji.WARNING + not_mod)
+                await client.send_message(message.channel, trans.get("PERM_MOD", lang))
                 return "return"
 
             mutes = handler.get_mute_list(message.server)
@@ -421,92 +509,93 @@ class Admin:
                     if usr:
                         muted_ppl.append(usr.name)
 
-                final = "Muted members: \n" + "\n".join(["➤ {}".format(u) for u in muted_ppl])
+                final = trans.get("MSG_MUTE_LIST", lang) + "\n\n".join(["➤ {}".format(u) for u in muted_ppl])
 
             else:
-                final = "No members are muted on this server."
+                final = trans.get("MSG_MUTE_NONE", lang)
 
             await client.send_message(message.channel, final)
 
         # !mute
         elif startswith(prefix + "mute"):
             if not handler.is_mod(message.author, message.server):
-                await client.send_message(message.channel, StandardEmoji.WARNING + not_mod)
+                await client.send_message(message.channel, trans.get("PERM_MOD", lang))
                 return "return"
 
             if len(message.mentions) == 0:
-                await client.send_message(message.channel, "Please mention the member you want to mute.")
+                await client.send_message(message.channel, trans.get("ERROR_NO_MENTION", lang))
                 return
 
             user = message.mentions[0]
 
             if message.server.owner.id == user.id:
-                await client.send_message(message.channel, StandardEmoji.WARNING + " You cannot mute the owner of the server.")
+                await client.send_message(message.channel, trans.get("MSG_MUTE_OWNER", lang))
                 return
 
             elif message.author.id == user.id:
-                await client.send_message(message.channel, "Trying to mute yourself? Not gonna work " + StandardEmoji.ROFL)
+                await client.send_message(message.channel, trans.get("MSG_MUTE_SELF", lang))
 
             handler.mute(message.server, user.id)
 
-            await client.send_message(message.channel,
-                                      "**{}** can now not speak here. {}".format(user.name, StandardEmoji.ZIP_MOUTH))
+            await client.send_message(message.channel, trans.get("MSG_MUTE_SUCCESS", lang).format(user.name))
 
         # !unmute
         elif startswith(prefix + "unmute"):
             if not handler.is_mod(message.author, message.server):
-                await client.send_message(message.channel, StandardEmoji.WARNING + not_mod)
+                await client.send_message(message.channel, trans.get("PERM_MOD", lang))
                 return "return"
 
             if len(message.mentions) == 0:
-                await client.send_message(message.channel, "Please mention the member you want to unmute.")
+                await client.send_message(message.channel, trans.get("ERROR_NO_MENTION", lang))
                 return
 
             user = message.mentions[0]
 
             handler.unmute(user)
 
-            await client.send_message(message.channel, "**{}** can now speak here again {}".format(user.name, StandardEmoji.ROFL))
+            await client.send_message(message.channel,trans.get("MSG_UNMUTE_SUCCESS", lang).format(user.name))
 
         else:
-            if not handler.can_use_restricted_commands(message.author, message.channel.server):
-                await client.send_message(message.channel, StandardEmoji.WARNING + not_admin)
+            if not handler.can_use_restricted_commands(message.author, message.server):
+                await client.send_message(message.channel, trans.get("PERM_ADMIN", lang))
                 return
+
+        # Users from here forth must be admins
 
         # !joinmsg
         if startswith(prefix + "joinmsg"):
             change = message.content[len(prefix + "joinmsg "):]
-            handler.update_var(message.channel.server.id, "welcomemsg", change)
+            handler.update_var(message.server.id, "welcomemsg", change)
 
-            await client.send_message(message.channel, "Join message has been updated :smile:")
+            await client.send_message(message.channel, trans.get("MSG_JOIN", lang))
 
         # !welcomemsg
         if startswith(prefix + "welcomemsg"):
             change = message.content[len(prefix + "welcomemsg "):]
-            handler.update_var(message.channel.server.id, "welcomemsg", change)
+            handler.update_var(message.server.id, "welcomemsg", change)
 
-            await client.send_message(message.channel, "Join message has been updated :smile:")
+            await client.send_message(message.channel, trans.get("MSG_JOIN", lang))
 
         # !banmsg
         elif startswith(prefix + "banmsg"):
             change = message.content[len(prefix + "banmsg "):]
-            handler.update_var(message.channel.server.id, "banmsg", change)
+            handler.update_var(message.server.id, "banmsg", change)
 
-            await client.send_message(message.channel, "Ban message has been updated :smile:")
+            await client.send_message(message.channel, trans.get("MSG_BAN", lang))
 
         # !kickmsg
         elif startswith(prefix + "kickmsg"):
             change = message.content[len(prefix + "kickmsg "):]
-            handler.update_var(message.channel.server.id, "kickmsg", change)
+            handler.update_var(message.server.id, "kickmsg", change)
 
-            await client.send_message(message.channel, "Kick message has been updated :smile:")
+            await client.send_message(message.channel, trans.get("MSG_KICK", lang))
 
         # !leavemsg
         elif startswith(prefix + "leavemsg"):
             change = message.content[len(prefix + "leavemsg "):]
-            handler.update_var(message.channel.server.id, "leavemsg", change)
+            handler.update_var(message.server.id, "leavemsg", change)
 
-            await client.send_message(message.channel, "Leave message has been updated :smile:")
+            await client.send_message(message.channel, trans.get("MSG_LEAVE", lang))
 
 
 
@@ -515,14 +604,14 @@ class Admin:
             # Selects the proper user
             if len(message.mentions) == 0:
                 name = message.content[len(prefix + "user "):]
-                member = utils.find(lambda u: u.name == name, message.channel.server.members)
+                member = utils.find(lambda u: u.name == name, message.server.members)
 
             else:
                 member = message.mentions[0]
 
             # If the member does not exist
             if not member:
-                await client.send_message(message.channel, "Member does not exist.")
+                await client.send_message(message.channel, trans.get("ERROR_NO_USER", lang))
                 return
 
             # Gets info
@@ -534,13 +623,13 @@ class Admin:
             role = str(member.top_role).rstrip("@")
 
             account_created = str(member.created_at).rsplit(".")[0]
-            status = str(member.status).capitalize()
+            status = str(member.status)
 
-            if status == "Online":
+            if status == "online":
                 color = Colour.green()
-            elif status == "Idle":
+            elif status == "idle":
                 color = Colour.gold()
-            elif status == "Offline":
+            elif status == "offline":
                 color = Colour.darker_grey()
             else:
                 color = Colour.red()
@@ -548,29 +637,29 @@ class Admin:
             embed = Embed(colour=color)
             embed.set_author(name="{} #{}".format(name, member.discriminator), icon_url=member.avatar_url)
 
-            embed.add_field(name="Status", value=status)
-            embed.add_field(name="Mention", value=member.mention)
-            embed.add_field(name="Id", value=mid)
-            embed.add_field(name="Account Type", value=bot)
-            embed.add_field(name="Top Role", value=role)
-            embed.add_field(name="Account Creation Date", value=account_created)
+            embed.add_field(name=trans.get("MSG_USERINFO_STATUS", lang), value=status)
+            embed.add_field(name=trans.get("MSG_USERINFO_MENTION", lang), value=member.mention)
+            embed.add_field(name=trans.get("MSG_USERINFO_ID", lang), value=mid)
+            embed.add_field(name=trans.get("MSG_USERINFO_TYPE", lang), value=bot)
+            embed.add_field(name=trans.get("MSG_USERINFO_TOPROLE", lang), value=role)
+            embed.add_field(name=trans.get("MSG_USERINFO_CREATION", lang), value=account_created)
 
             embed.set_image(url=member.avatar_url)
 
-            embed.set_footer(text="Data got at {} UTC".format(
+            embed.set_footer(text=trans.get("MSG_USERINFO_DATEGOT", lang).format(
                 datetime.datetime.now(datetime.timezone.utc).strftime("%a, %d %B %Y")))
 
-            await client.send_message(message.channel, "**User info:**", embed=embed)
+            await client.send_message(message.channel, trans.get("MSG_USERINFO_USER", lang), embed=embed)
 
         # !role
         elif startswith(prefix + "role"):
             # This selects the proper user
             if len(message.mentions) == 0:
-                await client.send_message(message.channel, "Please mention someone.")
+                await client.send_message(message.channel, trans.get("ERROR_NO_MENTION", lang))
                 return
 
             elif len(message.mentions) >= 2:
-                await client.send_message(message.channel, "Please mention only one person at a time.")
+                await client.send_message(message.channel, trans.get("ERROR_MENTION_ONE", lang))
                 return
 
             else:
@@ -589,44 +678,44 @@ class Admin:
             if startswith(prefix + "role add "):
                 a_role = str(message.content[len(prefix + "role add "):]).split("<")[0].strip()
 
-                role = await self.resolve_role(a_role, message)
+                role = await self.resolve_role(a_role, message, lang)
                 if not role:
                     return
 
                 if not can_change_role(message.author, role):
-                    await client.send_message(message.channel, error_hierarchy)
+                    await client.send_message(message.channel, trans.get("PERM_HIERARCHY", lang))
                     return
 
                 await client.add_roles(user, role)
-                await client.send_message(message.channel, "Done " + StandardEmoji.OK)
+                await client.send_message(message.channel, trans.get("INFO_DONE", lang) + StandardEmoji.OK)
 
             elif startswith(prefix + "role " + "remove "):
                 a_role = str(message.content[len(prefix + "role remove "):]).split("<")[0].strip()
 
-                role = await self.resolve_role(a_role, message)
+                role = await self.resolve_role(a_role, message, lang)
                 if not role:
                     return
 
                 if not can_change_role(message.author, role):
-                    await client.send_message(message.channel, error_hierarchy)
+                    await client.send_message(message.channel, trans.get("PERM_HIERARCHY", lang))
                     return
 
                 await client.remove_roles(user, role)
-                await client.send_message(message.channel, "Done " + StandardEmoji.OK)
+                await client.send_message(message.channel, trans.get("INFO_DONE", lang) + StandardEmoji.OK)
 
             elif startswith(prefix + "role replaceall "):
                 a_role = str(message.content[len(prefix + "role replaceall "):]).split("<")[0].strip()
 
-                role = await self.resolve_role(a_role, message)
+                role = await self.resolve_role(a_role, message, lang)
                 if not role:
                     return
 
                 if not can_change_role(message.author, role):
-                    await client.send_message(message.channel, error_hierarchy)
+                    await client.send_message(message.channel, trans.get("PERM_HIERARCHY", lang))
                     return
 
                 await client.replace_roles(user, role)
-                await client.send_message(message.channel, "Done " + StandardEmoji.OK)
+                await client.send_message(message.channel, trans.get("INFO_DONE", lang) + StandardEmoji.OK)
 
         # !cmd add
         elif startswith(prefix + "cmd add"):
@@ -634,37 +723,36 @@ class Admin:
                 cut = str(message.content)[len(prefix + "cmd add "):].split("|")
 
                 if len(cut) != 2:
-                    await client.send_message(message.channel, "Incorrect parameters.\n`_cmd add trigger|response`".replace("_", prefix))
+                    await client.send_message(message.channel, trans.get("MSG_CMD_WRONG_PARAMS", lang).format(prefix))
                     return
 
                 if len(handler.get_custom_commands(message.server)) >= CMD_LIMIT:
-                    await client.send_message(message.channel, "{} You have reached the maximum limit of custom commands ({}).".format(StandardEmoji.WARNING, CMD_LIMIT))
+                    await client.send_message(message.channel, trans.get("MSG_CMD_LIMIT_EXCEEDED", lang).format(CMD_LIMIT))
                     return
 
                 trigger = cut[0].strip(" ")
                 resp = cut[1]
 
-                if len(trigger) >= 80:
-                    await client.send_message(message.channel, "{} Your command name is too long (max. 80, you got {})".format(StandardEmoji.WARNING, len(trigger)))
+                if len(trigger) >= CMD_LIMIT_T:
+                    await client.send_message(message.channel, trans.get("MSG_CMD_NAME_TOO_LONG", lang).format(CMD_LIMIT_T, len(trigger)))
                     return
-                elif len(resp) >= 500:
-                    await client.send_message(message.channel, "{} Your command response is too long (max. 500, you got {})".format(StandardEmoji.WARNING, len(resp)))
+                elif len(resp) >= CMD_LIMIT_A:
+                    await client.send_message(message.channel, trans.get("MSG_CMD_RESPONSE_TOO_LONG", lang).format(CMD_LIMIT_A, len(resp)))
                     return
 
                 handler.set_command(message.server, trigger, resp)
 
-                await client.send_message(message.channel, "Command '{}' added.".format(cut[0].strip(" ")))
+                await client.send_message(message.channel, trans.get("MSG_CMD_ADDED", lang).format(cut[0].strip(" ")))
 
             except (KeyError or IndexError):
-                await client.send_message(message.channel,
-                                          ":no_entry_sign: Wrong args, separate command and response with |")
+                await client.send_message(message.channel, trans.get("MSG_CMD_SEPARATE", lang))
 
         # !cmd remove
         elif startswith(prefix + "cmd remove"):
             cut = str(message.content)[len(prefix + "cmd remove "):]
             success = handler.remove_command(message.server, cut)
 
-            final = "Ok " + StandardEmoji.OK if success else "Failed to remove command (does not exist) " + StandardEmoji.WARNING
+            final = trans.get("INFO_OK", lang) + StandardEmoji.OK if success else trans.get("MSG_CMD_REMOVE_FAIL", lang)
 
             await client.send_message(message.channel, final)
 
@@ -681,49 +769,72 @@ class Admin:
             custom_cmds = handler.get_custom_commands(message.server)
 
             if not custom_cmds:
-                await client.send_message(message.channel, "No custom commands on this server. "
-                                                           "Add one with `_cmd add trigger|response`!".replace("_", prefix))
+                await client.send_message(message.channel, trans.get("MSG_CMD_NO_CUSTOM", lang).format(prefix))
                 return
 
-            buff = ["{} : {}".format(name, content) for name, content in custom_cmds.items()]
-            final = [buff.pop(0)]
-            while buff:
-                for cmd in buff:
-                    last_item = final[len(final)-1]
-                    # Gets last item in list
-                    if (len(last_item) + len(cmd)) > 1500:
-                        final.append(cmd)
-                    else:
-                        final[len(final)-1] += "\n{}".format(cmd)
-
-                    buff.remove(cmd)
-
-            final = "Custom commands: (page **{}**/{})\n```{}```".format(page + 1, len(final), final[page])
+            cmd_list, c_page = make_pages(custom_cmds)
+            final = trans.get("MSG_CMD_LIST", lang).format(page + 1, c_page + 1, "\n".join(cmd_list[page]))
 
             try:
-                await client.send_message(message.channel, final)
+                msg_list = await client.send_message(message.channel, final)
+                await self.cmd.new_message(msg_list, page, cmd_list)
             except HTTPException:
-                await client.send_message(message.channel, "Your commands are too long to display. Consider cleaning "
-                                                           "some of them or ask the bot owner to do it for you "
-                                                           "if you don't remember the commands.")
+                raise
+                await client.send_message(message.channel, trans.get("MSG_CMD_LIST_TOO_LONG", lang))
 
         # !cmd status
         elif startswith(prefix + "cmd status"):
             cc = handler.get_custom_commands(message.server)
             percent = int((len(cc) / CMD_LIMIT) * 100)
 
-            await client.send_message(message.channel, "You have **{}** out of *{}* custom commands (*{}%*)".format(len(cc), CMD_LIMIT, percent))
+            await client.send_message(message.channel, trans.get("MSG_CMD_STATUS", lang).format(len(cc), CMD_LIMIT, percent))
+
+        elif startswith(prefix + "language"):
+            cut = str(message.content)[len(prefix + "language "):].strip(" ")
+
+            if cut.startswith("list"):
+                lang_list = []
+                for l_code, l_details in self.trans.meta.items():
+
+                    if l_code == "en":
+                        entry = "`{}` - **{}**".format(l_code, l_details.get("name"))
+                        lang_list.append(entry)
+
+                    else:
+                        contribs = ", ".join(l_details.get("authors"))
+                        entry = "`{}` - **{}** {}".format(l_code, l_details.get("name"), trans.get("MSG_LANG_TRANS", lang).format(contribs))
+                        lang_list.append(entry)
+
+                await client.send_message(message.channel, trans.get("MSG_LANG_LIST", lang).format("\n".join(lang_list)))
+
+            elif cut.startswith("set"):
+                to_set = cut[len("set "):].strip(" ").lower()
+
+                if not self.trans.is_language_code(to_set):
+                    # Try to find the language by name
+                    to_set = self.trans.find_language_code(to_set)
+                    if not to_set:
+                        await client.send_message(message.channel, trans.get("MSG_LANG_NOT_AVAILABLE", lang))
+                        return
+
+                self.handler.set_lang(message.server.id, to_set)
+
+                msg = trans.get("MSG_LANG_SET", lang).format(to_set, trans.get("INFO_HELLO", to_set))
+                await client.send_message(message.channel, msg)
+
+            else:
+                resp = trans.get("MSG_LANG_CURRENT", lang).format(lang, self.trans.meta.get(lang).get("name"), prefix)
+                await client.send_message(message.channel, resp)
 
         # nano.settings
         elif startswith("nano.settings"):
-            # todo optimize this
             try:
                 cut = str(message.content)[len("nano.settings "):].split(" ", 1)
             except IndexError:
                 return
 
             if len(cut) != 2:
-                await client.send_message(message.channel, "Incorrect usage, see `_help nano.settings`.".format(prefix))
+                await client.send_message(message.channel, trans.get("MSG_SETTINGS_WRONG_USAGE", lang).format(prefix))
                 return
 
             user_set = cut[0]
@@ -735,15 +846,15 @@ class Admin:
                 chan = utils.find(lambda chann: chann.id == chan_id, message.server.channels)
 
                 if not chan:
-                    await client.send_message(message.channel, "Not a channel.")
+                    await client.send_message(message.channel, trans.get("ERROR_NOT_CHANNEL", lang))
                     return
 
                 if chan.type == chan.type.voice:
-                    await client.send_message(message.channel, "Log channel cannot be a voice channel! Nice try " + StandardEmoji.SMILE)
+                    await client.send_message(message.channel, trans.get("MSG_SETTINGS_NOT_TEXT", lang))
                     return
 
                 handler.update_var(message.server.id, "logchannel", chan_id)
-                await client.send_message(message.channel, "Log channel set to **{}** {}".format(chan.name, StandardEmoji.PERFECT))
+                await client.send_message(message.channel, trans.get("MSG_SETTINGS_LOGCHANNEL_SET", lang).format(chan.name))
 
             # Set allowed selfrole role
             elif matches_list(user_set, "selfrole"):
@@ -757,11 +868,11 @@ class Admin:
                 # If user wants to disable the role with None, Disabled, etc.., ignore existence checks
                 if is_disabled(selfrole_name):
                     self.handler.set_selfrole(message.server.id, None)
-                    await client.send_message(message.channel, StandardEmoji.OK + " Selfrole disabled.")
+                    await client.send_message(message.channel, trans.get("MSG_SETTINGS_SELFROLE_DISABLED", lang))
                     return
 
                 if not raw_role:
-                    await client.send_message(message.channel, StandardEmoji.WARNING + " Invalid role name!")
+                    await client.send_message(message.channel, trans.get("ERROR_INVALID_ROLE_NAME", lang))
                     return
 
                 # Checks role position
@@ -774,19 +885,18 @@ class Admin:
                     await client.add_roles(nano_user, raw_role)
                     await client.remove_roles(nano_user, raw_role)
                 except derrors.Forbidden:
-                    await client.send_message(message.channel, StandardEmoji.WARNING + " **{}** is inaccessible (could be higher than Nano's top role"
-                                                                                       " or Nano does not have the permission 'Manage Roles')".format(raw_role.name))
+                    await client.send_message(message.channel, StandardEmoji.WARNING + trans.get("MSG_SETTINGS_SELFROLE_INACCESSIBLE", lang).format(raw_role.name))
                     return
 
                 self.handler.set_selfrole(message.server.id, selfrole_name)
-                await client.send_message(message.channel, StandardEmoji.OK + " Selfrole set to **{}**".format(selfrole_name))
+                await client.send_message(message.channel, trans.get("MSG_SETTINGS_SELFROLE_SET", lang).format(selfrole_name))
 
             elif matches_list(user_set, "defaultchannel"):
                 if len(message.channel_mentions) != 1:
                     chan = str(message.content[len("nano.settings defaultchannel "):])
 
                     if not chan or not is_disabled(chan):
-                        await client.send_message(message.channel, "Please mention the channel you want to set as default.")
+                        await client.send_message(message.channel, trans.get("ERROR_NO_CHMENTION", lang))
                         return
                     else:
                         # This case runs only, if is_disabled returns True
@@ -799,33 +909,31 @@ class Admin:
                 self.handler.set_defaultchannel(message.server, chan_id)
 
                 if chan_id:
-                    await client.send_message(message.channel, StandardEmoji.OK + " Default channel set to **{}**".format(chan.name))
+                    await client.send_message(message.channel, trans.get("MSG_SETTINGS_DEFCHAN_SET", lang).format(chan.name))
                 else:
-                    await client.send_message(message.channel, StandardEmoji.OK + " Default channel set back to default - **{}**".format(message.server.default_channel.name))
+                    await client.send_message(message.channel, trans.get("MSG_SETTINGS_DEFCHAN_RESET", lang).format(message.server.default_channel.name))
 
             # Otherwise, set word/spam/invite filter
             elif matches_list(user_set, "word filter", "wordfilter"):
                 decision = matches_list(cut[1])
-                handler.update_moderation_settings(message.channel.server, cut[0], decision)
+                handler.update_moderation_settings(message.server, cut[0], decision)
 
-                await client.send_message(message.channel, "Word filter {}".format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
+                await client.send_message(message.channel, trans.get("MSG_SETTINGS_WORD", lang).format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
 
             elif matches_list(user_set, "spam filter", "spamfilter"):
                 decision = matches_list(cut[1])
-                handler.update_moderation_settings(message.channel.server, cut[0], decision)
+                handler.update_moderation_settings(message.server, cut[0], decision)
 
-                await client.send_message(message.channel, "Spam filter {}".format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
+                await client.send_message(message.channel, trans.get("MSG_SETTINGS_SPAM", lang).format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
 
             elif matches_list(user_set, "filterinvite", "filterinvites", "invitefilter"):
                 decision = matches_list(cut[1])
-                handler.update_moderation_settings(message.channel.server, cut[0], decision)
+                handler.update_moderation_settings(message.server, cut[0], decision)
 
-                await client.send_message(message.channel,
-                                          "Invite filter {}".format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
+                await client.send_message(message.channel, trans.get("MSG_SETTINGS_INVITE", lang).format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
 
             else:
-                await client.send_message(message.channel, "**{}** is not a setting. Should be one of: "
-                                                           "logchannel, selfrole, invitefilter, wordfilter, spamfilter, defaultchannel.".format(user_set))
+                await client.send_message(message.channel, trans.get("MSG_SETTINGS_NOT_A_SETTING", lang).format(user_set))
 
         # nano.displaysettings
         elif startswith("nano.displaysettings"):
@@ -833,7 +941,7 @@ class Admin:
 
             blacklisted_c = settings.get("blacklist")
             if not blacklisted_c:
-                blacklisted_c = "No blacklists"
+                blacklisted_c = trans.get("MSG_SETTINGS_NO_BLACKLIST", lang)
 
             else:
                 blacklisted = []
@@ -845,44 +953,38 @@ class Admin:
                         continue
 
                     blacklisted.append(channel_r.name)
+
                 blacklisted_c = ",".join(blacklisted)
 
-            spam_filter = "On" if settings.get(SPAMFILTER_SETTING) else "Off"
-            word_filter = "On" if settings.get(WORDFILTER_SETTING) else "Off"
-            invite_filter = "On" if settings.get(INVITEFILTER_SETTING) else "Off"
 
-            log_channel = settings.get("logchannel") or "Disabled"
-            selfrole = settings.get("selfrole") or "Disabled"
+            ON = trans.get("INFO_ON", lang)
+            OFF = trans.get("INFO_OFF", lang)
+            DISABLED = trans.get("INFO_DISABLED", lang)
+
+            spam_filter = ON if settings.get(SPAMFILTER_SETTING) else OFF
+            word_filter = ON if settings.get(WORDFILTER_SETTING) else OFF
+            invite_filter = ON if settings.get(INVITEFILTER_SETTING) else OFF
+
+            log_channel = settings.get("logchannel") or DISABLED
+            selfrole = settings.get("selfrole") or DISABLED
 
             log_channel_name = utils.find(lambda a: a.id == log_channel, message.server.channels)
             log_channel_name = "({})".format(log_channel_name) if log_channel_name else ""
 
             d_channel = await self.handle_def_channel(message.server, settings.get("dchan"))
             if is_disabled(d_channel):
-                d_channel = "Disabled"
+                d_channel = DISABLED
             else:
                 d_channel = "{} ({})".format(d_channel.id, d_channel.name)
 
-            msg_join = settings.get("welcomemsg") or "Disabled"
-            msg_leave = settings.get("leavemsg") or "Disabled"
-            msg_ban = settings.get("banmsg") or "Disabled"
-            msg_kick = settings.get("kickmsg") or "Disabled"
+            msg_join = settings.get("welcomemsg") or DISABLED
+            msg_leave = settings.get("leavemsg") or DISABLED
+            msg_ban = settings.get("banmsg") or DISABLED
+            msg_kick = settings.get("kickmsg") or DISABLED
 
-            final = """**Settings for current server:**```
-Blacklisted channels: {}
-Spam filter: {}
-Word filter: {}
-Invite removal: {}
-Log channel: {} {}
-Default channel: {}
-Prefix: {}
-Selfrole: {}```
-Messages:
-➤ Join: `{}`
-➤ Leave: `{}`
-➤ Ban: `{}`
-➤ Kick: `{}`""".format(blacklisted_c, spam_filter, word_filter, invite_filter, log_channel, log_channel_name, d_channel,
-                       settings.get("prefix"), selfrole, msg_join, msg_leave, msg_ban, msg_kick)
+            final = trans.get("MSG_SETTINGS_DISPLAY", lang).format(blacklisted_c, spam_filter, word_filter, invite_filter,
+                                                                   log_channel, log_channel_name, d_channel, settings.get("prefix"), selfrole,
+                                                                   msg_join, msg_leave, msg_ban, msg_kick)
 
             await client.send_message(message.channel, final)
 
@@ -896,7 +998,7 @@ Messages:
                 if name.startswith("<#"):
                     ch_id = name.replace("<#", "").replace(">", "")
                     if not ch_id.isnumeric():
-                        await client.send_message(message.channel, CHANNEL_NOT_FOUND)
+                        await client.send_message(message.channel, trans.get("ERROR_MISSING_CHANNEL", lang))
                         self.stats.add(WRONG_ARG)
                         return
 
@@ -906,13 +1008,13 @@ Messages:
                     channel = utils.find(lambda ch: ch.name == name, message.server.channels)
 
                 if not channel:
-                    await client.send_message(message.channel, CHANNEL_NOT_FOUND)
+                    await client.send_message(message.channel, trans.get("ERROR_MISSING_CHANNEL", lang))
                     self.stats.add(WRONG_ARG)
                     return
 
                 self.handler.add_channel_blacklist(message.server, channel.id)
 
-                await client.send_message(message.channel, "Successfully added <#{}> to the blacklist {}".format(channel.id, StandardEmoji.PERFECT))
+                await client.send_message(message.channel, trans.get("MSG_BLACKLIST_ADDED", lang).format(channel.id))
 
             elif startswith("nano.blacklist remove"):
                 name = str(message.content[len("nano.blacklist remove "):])
@@ -920,7 +1022,7 @@ Messages:
                 if name.startswith("<#"):
                     ch_id = name.replace("<#", "").replace(">", "")
                     if not ch_id.isnumeric():
-                        await client.send_message(message.channel, CHANNEL_NOT_FOUND)
+                        await client.send_message(message.channel, trans.get("ERROR_MISSING_CHANNEL", lang))
                         self.stats.add(WRONG_ARG)
                         return
 
@@ -930,16 +1032,16 @@ Messages:
                     channel = utils.find(lambda chan: chan.name == name, message.server.channels)
 
                 if not channel:
-                    await client.send_message(message.channel, CHANNEL_NOT_FOUND)
+                    await client.send_message(message.channel, trans.get("ERROR_MISSING_CHANNEL", lang))
                     self.stats.add(WRONG_ARG)
                     return
 
                 res = self.handler.remove_channel_blacklist(message.server, channel.id)
 
                 if res:
-                    await client.send_message(message.channel, "Channel blacklist for {} removed {}".format(channel.name, StandardEmoji.PERFECT))
+                    await client.send_message(message.channel, trans.get("MSG_BLACKLIST_REMOVED", lang).format(channel.name))
                 else:
-                    await client.send_message(message.channel, "Channel blacklist could not be removed. Does it even exist?")
+                    await client.send_message(message.channel, trans.get("MSG_BLACKLIST_REMOVE_FAIL", lang))
 
             elif startswith("nano.blacklist list"):
                 lst = self.handler.get_blacklist(message.server)
@@ -953,64 +1055,64 @@ Messages:
                         names.append("`{}`".format(channel.name))
 
                 if names:
-                    await client.send_message(message.channel, "Blacklisted channels:\n{}".format(" ".join(names)))
+                    await client.send_message(message.channel, trans.get("MSG_BLACKLIST_LIST", lang).format(" ".join(names)))
                 else:
-                    await client.send_message(message.channel, "There are no blacklisted channels on this channel. " + StandardEmoji.SMILE)
+                    await client.send_message(message.channel, trans.get("MSG_BLACKLIST_NONE", lang))
 
         # nano.reset
         elif startswith("nano.serverreset"):
-            await client.send_message(message.channel, StandardEmoji.WARNING + " Are you sure you want to reset all Nano-related sever settings to default? Confirm by replying 'CONFIRM'.")
+            CONF = trans.get("INFO_CONFIRM", lang)
+            await client.send_message(message.channel, trans.get("MSG_RESET_CONFIRM", lang).format(CONF))
 
             followup = await client.wait_for_message(author=message.author, channel=message.channel,
-                                                     timeout=15, content="CONFIRM")
+                                                     timeout=15, content=CONF)
 
             if followup is None:
-                await client.send_message(message.channel, "Confirmation not received, NOT resetting :upside_down:")
+                await client.send_message(message.channel, trans.get("MSG_RESET_CONFIRM_TIMEOUT", lang))
 
             handler.server_setup(message.server)
 
-            await client.send_message(message.channel, "Reset. :white_StandardEmoji.OK: ")
+            await client.send_message(message.channel, trans.get("MSG_RESET_DONE", lang))
 
         # nano.changeprefix
         elif startswith("nano.changeprefix"):
             pref = message.content[len("nano.changeprefix "):]
 
             if len(pref) > 25:
-                await client.send_message(message.channel, PREFIX_TOO_LONG)
+                await client.send_message(message.channel, trans.get("ERROR_PREFIX_TOO_LONG", lang))
                 return
 
             self.handler.change_prefix(message.server, pref)
 
-            await client.send_message(message.channel, "Prefix has been changed to {} :ok_hand:".format(pref))
+            await client.send_message(message.channel, trans.get("MSG_PREFIX_CHANGED", lang).format(pref))
 
         # !setup, nano.setup
         elif startswith(prefix + "setup", "nano.setup"):
             auth = message.author
             MSG_TIMEOUT = 35
 
-            async def timeout(msg):
-                await client.send_message(msg.channel,
-                                          "You ran out of time :upside_down: (FYI: the timeout is 35 seconds)")
+            YES = trans.get("INFO_YES", lang)
+            NO = trans.get("INFO_NO", lang)
+            NONE = trans.get("INFO_NONE", lang)
 
-            msg_intro = "**SERVER SETUP**\nYou have started the server setup. It consists of a few steps, " \
-                        "where you will be prompted to answer. Because you started the setup, only your answers will be taken into account.\n" \
-                        "**Let's get started, shall we?**"
+            async def timeout(msg):
+                await client.send_message(msg.channel, trans.get("MSG_SETUP_TIMEOUT", lang))
+
+            msg_intro = trans.get("MSG_SETUP_WELCOME", lang)
             await client.send_message(message.channel, msg_intro)
             await asyncio.sleep(2)
 
             # FIRST MESSAGE
             # Q: Do you want to reset all current settings?
-            msg_one = "Do you want to reset all bot-related settings for this server?\n" \
-                      "(this includes spam and swearing protection, admin list, blacklisted channels, \n" \
-                      "log channel, prefix, welcome, ban and kick messages). **yes / no**"
+            msg_one = trans.get("MSG_SETUP_RESET", lang).format(YES, NO)
             await client.send_message(message.channel, msg_one)
 
             # First check
 
             def check_yes1(msg):
                 # yes or no
-                if str(msg.content).lower().strip(" ") == "yes":
-                    handler.server_setup(message.channel.server)
+                if str(msg.content).lower().strip(" ") == YES:
+                    handler.server_setup(message.server)
 
                 return True
 
@@ -1021,8 +1123,7 @@ Messages:
 
             # SECOND MESSAGE
             # Q: What prefix do you want?
-            msg_two = "What prefix would you like to use for all commands?\n" \
-                      "Type that prefix.\n(prefix example: **!** 'translates to' `!help`, `!ping`, ...)"
+            msg_two = trans.get("MSG_SETUP_PREFIX", lang)
             await client.send_message(message.channel, msg_two)
 
             # Second check, does not need yes/no filter
@@ -1033,16 +1134,14 @@ Messages:
 
             if ch2.content:
                 if len(ch2.content) > 50:
-                    await client.send_message(message.channel, PREFIX_TOO_LONG)
+                    await client.send_message(message.channel, trans.get("ERROR_PREFIX_TOO_LONG", lang))
                     return
 
-                handler.change_prefix(message.channel.server, str(ch2.content).strip(" "))
+                handler.change_prefix(message.server, str(ch2.content).strip(" "))
 
             # THIRD MESSAGE
             # Q: What message would you like to see when a person joins your server?
-            msg_three = "What would you like me to say when a person joins your server?\n" \
-                        "Reply with that message or with None if you want to disable welcome messages. \n" \
-                        "(:user translates to a mention of the joined user; for example -> :user, welcome to this server!)"
+            msg_three = trans.get("MSG_SETUP_JOINMSG", lang)
             await client.send_message(message.channel, msg_three)
 
             ch3 = await client.wait_for_message(timeout=MSG_TIMEOUT, author=auth)
@@ -1050,13 +1149,13 @@ Messages:
                 await timeout(message)
                 return
 
-            if ch3.content.strip(" ").lower() == "none":
+            if is_disabled(ch3.content.strip(" ").lower()):
                 handler.update_var(message.server.id, "welcomemsg", None)
             else:
                 handler.update_var(message.server.id, "welcomemsg", str(ch3.content))
 
             # FOURTH MESSAGE
-            msg_four = """Would you like me to filter spam? **yes / no**"""
+            msg_four = trans.get("MSG_SETUP_SPAM", lang).format(YES, NO)
             await client.send_message(message.channel, msg_four)
 
             # Fourth check
@@ -1064,10 +1163,10 @@ Messages:
             def check_yes3(msg):
                 # yes or no
 
-                if str(msg.content).lower().strip(" ") == "yes":
-                    handler.update_moderation_settings(message.channel.server, "filterspam", True)
+                if str(msg.content).lower().strip(" ") == YES:
+                    handler.update_moderation_settings(message.server, "filterspam", True)
                 else:
-                    handler.update_moderation_settings(message.channel.server, "filterspam", False)
+                    handler.update_moderation_settings(message.server, "filterspam", False)
 
                 return True
 
@@ -1077,7 +1176,7 @@ Messages:
                 return
 
             # FIFTH MESSAGE
-            msg_five = """Would you like me to filter swearing? (beware of false positives)  **yes / no**"""
+            msg_five = trans.get("MSG_SETUP_SWEARING", lang).format(YES, NO)
             await client.send_message(message.channel, msg_five)
 
             # Fifth check check
@@ -1085,10 +1184,10 @@ Messages:
             def check_yes4(msg):
                 # yes or no
 
-                if str(msg.content).lower().strip(" ") == "yes":
-                    handler.update_moderation_settings(message.channel.server, "filterwords", True)
+                if str(msg.content).lower().strip(" ") == YES:
+                    handler.update_moderation_settings(message.server, "filterwords", True)
                 else:
-                    handler.update_moderation_settings(message.channel.server, "filterwords", False)
+                    handler.update_moderation_settings(message.server, "filterwords", False)
 
                 return True
 
@@ -1098,7 +1197,7 @@ Messages:
                 return
 
             # LAST MESSAGE
-            msg_six = "What channel would you like to use for logging? channel name/None"
+            msg_six = trans.get("MSG_SETUP_LOGCHANNEL", lang).format(NONE)
             await client.send_message(message.channel, msg_six)
 
             ch6 = await client.wait_for_message(timeout=MSG_TIMEOUT, author=auth)
@@ -1110,28 +1209,18 @@ Messages:
                 # Parses channel
                 channel = str(ch6.content)
 
-                if channel.lower() == "None":
-                    handler.update_var(message.server.id, "logchannel", "None")
-                    await client.send_message(message.channel, "Logging has been disabled.")
+                if channel.lower() == NONE or is_disabled(channel.lower()):
+                    handler.update_var(message.server.id, "logchannel", None)
+                    await client.send_message(message.channel, trans.get("MSG_SETUP_LOGCHANNEL_DISABLED", lang))
 
                 else:
                     if channel.startswith("<#"):
                         channel = channel.replace("<#", "").replace(">", "")
 
                     handler.update_var(message.server.id, "logchannel", channel)
-                    await client.send_message(message.channel, "Log channel has been set to '{}'".format(channel))
+                    await client.send_message(message.channel, trans.get("MSG_SETUP_LOGCHANNEL_SET", lang).format(channel))
 
-            msg_final = """**This concludes the basic server setup.**
-But there are a few more settings to set up if you need'em:
-➤ channel blacklisting - `nano.blacklist add/remove channel_name`
-➤ join message - `_welcomemsg message`
-➤ leave message - `_leavemsg message`
-
-The prefix can simply be changed again with `nano.changeprefix prefix`.
-Admin and mod commands can only be used by people with a role named "Nano Admin"/"Nano Mod".
-
-You and all admins can also add/remove/list custom commands with `_cmd add/remove/list command|response`.
-For a list of all commands and their explanations, use `_cmds`.""".replace("_", str(ch2.content))
+            msg_final = trans.get("MSG_SETUP_COMPLETE", lang).replace("_", str(ch2.content))
 
             await client.send_message(message.channel, msg_final)
 
@@ -1145,6 +1234,8 @@ For a list of all commands and their explanations, use `_cmds`.""".replace("_", 
             self.bans.remove(member.id)
             return "return"
 
+    async def on_reaction_add(self, reaction, user, **kwargs):
+        await self.cmd.handle_reaction(reaction, user, **kwargs)
 
 class NanoPlugin:
     name = "Admin Commands"
@@ -1153,6 +1244,7 @@ class NanoPlugin:
     handler = Admin
     events = {
         "on_message": 10,
-        "on_member_remove": 4
+        "on_member_remove": 4,
+        "on_reaction_add": 10,
         # type : importance
     }

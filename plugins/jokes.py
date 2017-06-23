@@ -1,13 +1,16 @@
-import aiohttp
+# coding=utf-8
+import asyncio
 import configparser
 import logging
 from random import randint
-import asyncio
-from bs4 import BeautifulSoup
 from ujson import loads
-from discord import Message, Client
-from data.utils import is_valid_command, StandardEmoji, is_number, log_to_file
+
+import aiohttp
+from bs4 import BeautifulSoup
+from discord import Message, Client, Embed, Colour
+
 from data.stats import MESSAGE, IMAGE_SENT
+from data.utils import is_valid_command, is_number, log_to_file
 
 commands = {
     "_xkcd": {"desc": "Fetches XKCD comics for you (defaults to random).", "use": "[command] (random/number/latest)", "alias": None},
@@ -101,6 +104,7 @@ class XKCD:
     def __init__(self, loop=asyncio.get_event_loop()):
         self.url_latest = "http://xkcd.com/info.0.json"
         self.url_number = "http://xkcd.com/{}/info.0.json"
+        self.link_base = "https://xkcd.com/{}"
 
         self.last_num = None
         self.cache = {}
@@ -117,6 +121,9 @@ class XKCD:
 
     def get_from_cache(self, number):
         return self.cache.get(number)
+
+    def make_link(self, number):
+        return self.link_base.format(number)
 
     async def add_to_cache(self, number, data):
         if not is_number(number):
@@ -190,6 +197,7 @@ class JokeGenerator:
         self.req = Requester()
 
         # More are added as time goes on
+        # Hardcoded because why not
         self.cache = [
             "Yo mama's so fat the only alphabet she knows is her KFC's",
             "Yo mama so fat the last time she saw 90210 was on a scale",
@@ -249,6 +257,7 @@ class Joke:
         self.handler = kwargs.get("handler")
         self.nano = kwargs.get("nano")
         self.stats = kwargs.get("stats")
+        self.trans = kwargs.get("trans")
 
         try:
             self.cat = CatGenerator()
@@ -265,6 +274,9 @@ class Joke:
         client = self.client
 
         prefix = kwargs.get("prefix")
+
+        trans = self.trans
+        lang = kwargs.get("lang")
 
         if not is_valid_command(message.content, valid_commands, prefix=prefix):
             return
@@ -293,7 +305,7 @@ class Joke:
             pic = await self.cat.random_cat(type_)
 
             if not pic:
-                await client.send_message(message.channel, "Could not get a random cat picture... " + StandardEmoji.CRY)
+                await client.send_message(message.channel, trans.get("MSG_CAT_FAILED", lang))
             else:
                 await client.send_message(message.channel, pic)
 
@@ -309,7 +321,7 @@ class Joke:
                 if is_number(args):
                     # Check if number is valid
                     if int(args) > self.xkcd.last_num:
-                        await client.send_message(message.channel, "Such XKCD number does not exist.")
+                        await client.send_message(message.channel, trans.get("MSG_XKCD_NO_SUCH", lang))
                         return
                     else:
                         fetch = "number"
@@ -319,7 +331,7 @@ class Joke:
                 else:
                     fetch = "latest"
 
-            if fetch == "random":
+            if fetch == trans.get("INFO_RANDOM", lang):
                 xkcd = await self.xkcd.get_random_xkcd()
             elif fetch == "number":
                 xkcd = await self.xkcd.get_xkcd_by_number(args)
@@ -327,10 +339,17 @@ class Joke:
                 xkcd = await self.xkcd.get_latest_xkcd()
 
             if not xkcd:
-                await client.send_message(message.channel, "Could not fetch xkcd " + StandardEmoji.CRY + ". Error has been logged for inspection.")
+                await client.send_message(message.channel, trans.get("MSG_XKCD_FAILED", lang))
                 log_to_file("XKCD: string {}, fetch: {}, got None".format(args, fetch))
             else:
-                await client.send_message(message.channel, "**XKCD number {}:**\n{}".format(xkcd.num, xkcd.img))
+                xkcd_link = trans.get("MSG_XKCD_FULL_LINK", lang).format(self.xkcd.make_link(xkcd.num))
+
+                embed = Embed(title=trans.get("MSG_XKCD", lang).format(xkcd.num), description=xkcd_link)
+                embed.set_image(url=xkcd.img)
+
+                await client.send_message(message.channel, embed=embed)
+
+                # await client.send_message(message.channel, trans.get("MSG_XKCD", lang).format(xkcd.num, xkcd.img))
 
         # !joke (yo mama/chuck norris)
         elif startswith(prefix + "joke"):
@@ -345,7 +364,7 @@ class Joke:
                 joke = await self.joke.get_joke()
 
             if not joke:
-                await client.send_message(message.channel, "Could not get a proper joke... " + StandardEmoji.CRY)
+                await client.send_message(message.channel, trans.get("MSG_JOKE_FAILED", lang))
                 return
 
             await client.send_message(message.channel, str(joke))

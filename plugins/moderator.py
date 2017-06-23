@@ -1,12 +1,13 @@
 # coding=utf-8
 import logging
 import re
-import asyncio
 from pickle import load
-from discord import Message, Client, Server, utils, Embed
+
+from discord import Message, Client, Embed
+
 from data.serverhandler import LegacyServerHandler, RedisServerHandler
 from data.stats import SUPPRESS
-from data.utils import is_disabled, make_dots
+from data.utils import make_dots
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -171,11 +172,12 @@ class NanoModerator:
 
 
 class LogManager:
-    def __init__(self, client, nano, loop, handler):
+    def __init__(self, client, nano, loop, handler, trans):
         self.client = client
         self.nano = nano
         self.loop = loop
         self.handler = handler
+        self.trans = trans
 
         self.getter = None
         self.running = True
@@ -186,9 +188,9 @@ class LogManager:
     async def send_message(self, channel, embed):
         await self.client.send_message(channel, embed=embed)
 
-    async def send_log(self, message: Message, reason=None):
+    async def send_log(self, message: Message, lang, reason=None):
         if not self.getter:
-            self.loop.call_later(5, self.send_log(message, reason))
+            self.loop.call_later(5, self.send_log(message, lang, reason))
             logger.warning("Getter is not set, calling in 5 seconds...")
             return
 
@@ -199,9 +201,11 @@ class LogManager:
 
         author = message.author
 
-        embed = Embed(title="Message Deleted - {}".format(reason), description=make_dots(message.content))
+        embed_title = self.trans.get("MSG_MOD_MSG_DELETED", lang).format()
+
+        embed = Embed(title=embed_title, description=make_dots(message.content))
         embed.set_author(name="{} ({})".format(author.name, author.id), icon_url=author.avatar_url)
-        embed.add_field(name="Channel", value=message.channel.mention)
+        embed.add_field(name=self.trans.get("INFO_CHANNEL", lang), value=message.channel.mention)
 
         logger.debug("Sending logs for {}".format(message.server.name))
         await self.send_message(log_channel, embed=embed)
@@ -214,9 +218,10 @@ class Moderator:
         self.handler = kwargs.get("handler")
         self.nano = kwargs.get("nano")
         self.stats = kwargs.get("stats")
+        self.trans = kwargs.get("trans")
 
         self.checker = NanoModerator()
-        self.log = LogManager(self.client, self.nano, self.loop, self.handler)
+        self.log = LogManager(self.client, self.nano, self.loop, self.handler, self.trans)
 
         self.valid_commands = []
 
@@ -231,6 +236,9 @@ class Moderator:
         handler = self.handler
         client = self.client
         prefix = kwargs.get("prefix")
+
+        lang = kwargs.get("lang")
+
         assert isinstance(client, Client)
         assert isinstance(handler, (LegacyServerHandler, RedisServerHandler))
 
@@ -261,9 +269,9 @@ class Moderator:
             return
 
         # Spam, swearing and invite filter
-        needs_spam_filter = handler.has_spam_filter(message.channel.server)
-        needs_swearing_filter = handler.has_word_filter(message.channel.server)
-        needs_invite_filter = handler.has_invite_filter(message.channel.server)
+        needs_spam_filter = handler.has_spam_filter(message.server)
+        needs_swearing_filter = handler.has_word_filter(message.server)
+        needs_invite_filter = handler.has_invite_filter(message.server)
 
         if needs_spam_filter:
             spam = self.checker.check_spam(message)
@@ -277,7 +285,7 @@ class Moderator:
 
         if needs_invite_filter:
 
-            if not handler.can_use_restricted_commands(message.author, message.channel.server):
+            if not handler.can_use_restricted_commands(message.author, message.server):
                 invite = self.checker.check_invite(message)
 
             else:
@@ -299,13 +307,13 @@ class Moderator:
 
             # Make correct messages
             if spam:
-                await self.log.send_log(message, "spam")
+                await self.log.send_log(message, self.trans.get("MSG_MOD_SPAM", lang))
 
             elif swearing:
-                await self.log.send_log(message, "swearing")
+                await self.log.send_log(message, self.trans.get("MSG_MOD_SWEARING", lang))
 
             elif invite:
-                await self.log.send_log(message, "invite link")
+                await self.log.send_log(message, self.trans.get("MSG_MOD_INVITE", lang))
 
             else:
                 # Lol wat

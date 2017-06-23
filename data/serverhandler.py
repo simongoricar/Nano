@@ -47,6 +47,7 @@ server_defaults = {
     "prefix": str(parser.get("Servers", "defaultprefix")),
     "selfrole": None,
     "dchan": None,
+    "lang": "en",
 }
 
 # Utility for input validation
@@ -246,13 +247,16 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
         return decode(self.redis.hset("server:{}".format(server.id), mod_settings_map.get(key), value))
 
     def check_server_vars(self, server):
-        serv = "server:{}".format(server.id)
+        try:
+            serv = "server:{}".format(server.id)
 
-        if decode(self.redis.hget(serv, "owner")) != str(server.owner.id):
-            self.redis.hset(serv, "owner", server.owner.id)
+            if decode(self.redis.hget(serv, "owner")) != str(server.owner.id):
+                self.redis.hset(serv, "owner", server.owner.id)
 
-        if decode(self.redis.hget(serv, "name")) != str(server.name):
-            self.redis.hset(serv, "name", server.name)
+            if decode(self.redis.hget(serv, "name")) != str(server.name):
+                self.redis.hset(serv, "name", server.name)
+        except AttributeError:
+            pass
 
     def delete_server_by_list(self, current_servers):
         servers = ["server:{}".format(name) for name in current_servers]
@@ -376,6 +380,12 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
     def set_defaultchannel(self, server, channel_id):
         self.redis.hset("server:{}".format(server.id), "dchan", channel_id)
 
+    def set_lang(self, server_id, language):
+        self.redis.hset("server:{}".format(server_id), "lang", language)
+
+    def get_lang(self, server_id):
+        return decode(self.redis.hget("server:{}".format(server_id), "lang"))
+
     @validate_input
     def remove_server(self, server_id):
         # Not used
@@ -412,46 +422,46 @@ class RedisPluginDataManager:
 
         log.info("New plugin namespace registered: {}".format(self.namespace))
 
-    def _build_hash(self, name):
+    def _make_key(self, name):
         # Returns a hash name formatted with the namespace
         return "{}:{}".format(self.namespace, name)
 
     def set(self, key, val):
-        return decode(self.redis.set(self._build_hash(key), val))
+        return decode(self.redis.set(self._make_key(key), val))
 
     def get(self, key):
-        return decode(self.redis.get(self._build_hash(key)))
+        return decode(self.redis.get(self._make_key(key)))
 
     def hget(self, name, field):
-        return decode(self.redis.hget(self._build_hash(name), field))
+        return decode(self.redis.hget(self._make_key(name), field))
 
     def hgetall(self, name):
-        return decode(self.redis.hgetall(self._build_hash(name)))
+        return decode(self.redis.hgetall(self._make_key(name)))
 
     def hdel(self, name, field):
-        return decode(self.redis.hdel(self._build_hash(name), field))
+        return decode(self.redis.hdel(self._make_key(name), field))
 
     def hmset(self, name, payload):
-        return decode(self.redis.hmset(self._build_hash(name), payload))
+        return decode(self.redis.hmset(self._make_key(name), payload))
 
     def hset(self, name, field, value):
-        return decode(self.redis.hset(self._build_hash(name), field, value))
+        return decode(self.redis.hset(self._make_key(name), field, value))
 
     def exists(self, name):
-        return bool(decode(self.redis.exists(self._build_hash(name))))
+        return bool(decode(self.redis.exists(self._make_key(name))))
 
     def delete(self, name):
-        return bool(decode(self.redis.delete(self._build_hash(name))))
+        return bool(decode(self.redis.delete(self._make_key(name))))
 
     def scan_iter(self, match, use_namespace=True):
-        match = self._build_hash(match) if use_namespace else match
+        match = self._make_key(match) if use_namespace else match
         return [a for a in self.redis.scan_iter(match)]
 
     def lpush(self, key, value):
-        return decode(self.redis.lpush(self._build_hash(key), value))
+        return decode(self.redis.lpush(self._make_key(key), value))
 
     def lrange(self, key, from_key=0, to_key=-1):
-        return decode(self.redis.lrange(self._build_hash(key), from_key, to_key))
+        return decode(self.redis.lrange(self._make_key(key), from_key, to_key))
 
     def lrem(self, key, value, count=1):
         return decode(self.redis.lrem(key, count, value))

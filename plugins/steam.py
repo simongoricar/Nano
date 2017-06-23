@@ -1,10 +1,12 @@
 # coding=utf-8
-import steamapi
 import configparser
 import logging
+
+import steamapi
 from discord import Message, HTTPException
-from data.utils import is_valid_command, StandardEmoji, reraise
+
 from data.stats import MESSAGE, WRONG_ARG
+from data.utils import is_valid_command, reraise
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -12,7 +14,6 @@ logger.setLevel(logging.INFO)
 parser = configparser.ConfigParser()
 parser.read("plugins/config.ini")
 
-NOT_WHOLE_URL = "Please put in the **ending** of a (\"vanity\") URL, not the *entire* URL!"
 
 commands = {
     "_steam": {"desc": "Searches for the specified steam id.\nSubcommands: 'steam user', 'steam games', 'steam friends'", "use": "[command] [end of user url/id]", "alias": None},
@@ -30,7 +31,7 @@ class SteamSearch:
         steamapi.core.APIConnection(api_key=api_key)
 
     @staticmethod
-    def get_user(uid):
+    async def get_user(uid):
         try:
             user = steamapi.user.SteamUser(userurl=str(uid))
             return user
@@ -40,7 +41,7 @@ class SteamSearch:
             raise ValueError
 
     @staticmethod
-    def get_friends(uid):
+    async def get_friends(uid):
         try:
             user = steamapi.user.SteamUser(userurl=str(uid))
             return user.name, [friend.name for friend in user.friends]
@@ -50,7 +51,7 @@ class SteamSearch:
             raise ValueError
 
     @staticmethod
-    def get_games(uid):
+    async def get_games(uid):
         try:
             user = steamapi.user.SteamUser(userurl=str(uid))
             return user.name, [game.name for game in user.games]
@@ -60,7 +61,7 @@ class SteamSearch:
             raise ValueError
 
     @staticmethod
-    def get_owned_games(uid):
+    async def get_owned_games(uid):
         try:
             user = steamapi.user.SteamUser(userurl=str(uid))
             return user.name, [game.name for game in user.owned_games]
@@ -75,6 +76,7 @@ class Steam:
         self.nano = kwargs.get("nano")
         self.client = kwargs.get("client")
         self.stats = kwargs.get("stats")
+        self.trans = kwargs.get("trans")
 
         key = parser.get("steam", "key")
         self.steam = SteamSearch(key)
@@ -84,6 +86,9 @@ class Steam:
 
         client = self.client
         prefix = kwargs.get("prefix")
+
+        trans = self.trans
+        lang = kwargs.get("lang")
 
         if not is_valid_command(message.content, valid_commands, prefix=prefix):
             return
@@ -106,27 +111,26 @@ class Steam:
                 try:
                     username, friends = self.steam.get_friends(uid)
                 except ValueError:
-                    await client.send_message(message.channel, NOT_WHOLE_URL)
+                    await client.send_message(message.channel, trans.get("MSG_STEAM_INVALID_URL", lang))
                     return
                 except (steamapi.errors.APIFailure, steamapi.errors.APIException):
-                    await client.send_message(message.channel, "Something went wrong. User could have a private profile. " + StandardEmoji.CRY)
+                    await client.send_message(message.channel, trans.get("MSG_STEAM_PRIVATE", lang))
                     reraise()
                     return
 
                 if not username:
-                    await client.send_message(message.channel, "User **does not exist**.")
+                    await client.send_message(message.channel, trans.get("ERROR_NO_USER2", lang))
                     self.stats.add(WRONG_ARG)
                     return
 
                 if not friends:
-                    await client.send_message(message.channel, "Could not fetch friends (probably because the user has a private profile.")
+                    await client.send_message(message.channel, trans.get("MSG_STEAM_PRIVATE_FRIENDS", lang))
                     self.stats.add(WRONG_ARG)
                     return
 
                 friends = ["`" + friend + "`" for friend in friends]
 
-                await client.send_message(message.channel,
-                                          "*User:* **{}**\n\n*Friends:* {}".format(username, ", ".join(friends)))
+                await client.send_message(message.channel, trans.get("MSG_STEAM_FRIENDS", lang).format(username, ", ".join(friends)))
 
             elif startswith(prefix + "steam games"):
                 uid = str(message.content)[len(prefix + "steam games "):]
@@ -137,31 +141,29 @@ class Steam:
                 try:
                     username, games = self.steam.get_owned_games(uid)
                 except ValueError:
-                    await client.send_message(message.channel, NOT_WHOLE_URL)
+                    await client.send_message(message.channel, trans.get("MSG_STEAM_INVALID_URL", lang))
                     return
                 except (steamapi.errors.APIFailure, steamapi.errors.APIException):
-                    await client.send_message(message.channel, "Something went wrong. User could have a private profile. " + StandardEmoji.CRY)
+                    await client.send_message(message.channel, trans.get("MSG_STEAM_PRIVATE", lang))
                     reraise()
                     return
 
                 if not username:
-                    await client.send_message(message.channel, "User **does not exist**.")
+                    await client.send_message(message.channel, trans.get("ERROR_NO_USER2", lang))
                     self.stats.add(WRONG_ARG)
                     return
 
                 if not games:
-                    await client.send_message(message.channel, "Could not fetch games (probably because the user has a private profile.")
+                    await client.send_message(message.channel, trans.get("MSG_STEAM_PRIVATE_GAMES", lang))
                     self.stats.add(WRONG_ARG)
                     return
 
                 games = ["`{}`".format(game) for game in games]
 
                 try:
-                    await client.send_message(message.channel,
-                                              "*User:* **{}**:\n\n*Owned games:* {}".format(username, ", ".join(games)))
+                    await client.send_message(message.channel, trans.get("MSG_STEAM_GAMES", lang).format(username, ", ".join(games)))
                 except HTTPException:
-                    await client.send_message(message.channel,
-                                              "This message can not fit onto Discord: **user has too many games to display (lol)**")
+                    await client.send_message(message.channel, trans.get("MSG_STEAM_GAMES_TOO_MANY", lang))
 
             elif startswith(prefix + "steam user "):
                 uid = str(message.content)[len(prefix + "steam user "):]
@@ -172,36 +174,34 @@ class Steam:
                 try:
                     steam_user = self.steam.get_user(uid)
                 except ValueError:
-                    await client.send_message(message.channel, NOT_WHOLE_URL)
+                    await client.send_message(message.channel, trans.get("MSG_STEAM_INVALID_URL", lang))
                     return
                 except (steamapi.errors.APIFailure, steamapi.errors.APIException):
-                    await client.send_message(message.channel, "Something went wrong. User could have a private profile. " + StandardEmoji.CRY)
+                    await client.send_message(message.channel, trans.get("MSG_STEAM_PRIVATE", lang))
                     reraise()
                     return
 
                 if not steam_user:
-                    await client.send_message(message.channel, "User **does not exist**.")
+                    await client.send_message(message.channel, trans.get("ERROR_NO_USER2", lang))
                     self.stats.add(WRONG_ARG)
                     return
 
+                state = trans.get("MSG_STEAM_ONLINE", lang) if steam_user.state else trans.get("MSG_STEAM_OFFLINE", lang)
+
                 try:
-                    info = "User: **{}**\n```css\nStatus: {}\nLevel: {}\nGames: {} owned (including free games)\nFriends: {}```\n" \
-                           "Direct link: http://steamcommunity.com/id/{}/".format(steam_user.name, "Online" if steam_user.state else "Offline",
-                                                                                  steam_user.level, len(steam_user.games), len(steam_user.friends), uid)
+                    info = trans.get("MSG_STEAM_USER_INFO", lang).format(steam_user.name, state, steam_user.level, len(steam_user.games), len(steam_user.friends), uid)
                 except AttributeError:
-                    await client.send_message(message.channel, "Could not display user info. This can happen when the user has a private profile. " + StandardEmoji.FROWN)
+                    await client.send_message(message.channel, trans.get("MSG_STEAM_PRIVATE", lang))
                     return
 
                 if len(info) > 2000:
-                    await client.send_message(message.channel,
-                                              "This message can not fit onto Discord: **user has too many friends to display (lol)**")
+                    await client.send_message(message.channel, trans.get("MSG_STEAM_FRIENDS_TOO_MANY", lang))
 
                 else:
                     await client.send_message(message.channel, info)
 
             elif startswith(prefix + "steam") or startswith(prefix + "steam help"):
-                await client.send_message(message.channel,
-                                          "**Steam commands:**\n`_steam user community_url`, `_steam friends community_url`, `_steam games community_url`".replace("_", prefix))
+                await client.send_message(message.channel, trans.get("MSG_STEAM_HELP", lang).replace("_", prefix))
 
 
 class NanoPlugin:

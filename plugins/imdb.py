@@ -1,20 +1,19 @@
 # coding=utf-8
-import logging
 import configparser
+import logging
+
+from discord import Message, errors
+
 # External library available here: https://github.com/DefaltSimon/TMDbie
 import tmdbie
-from discord import Message, errors
-from data.utils import is_valid_command, StandardEmoji
 from data.stats import MESSAGE
+from data.utils import is_valid_command
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 parser = configparser.ConfigParser()
 parser.read("plugins/config.ini")
-
-# CONSTANTS
-IMDB_PROBLEMS = "Something went wrong while trying to get IMDb info."
 
 commands = {
     "_imdb search": {"desc": "Searches for a film/series/person and displays general info", "use": "[command] [film/series/person name]", "alias": "_tmdb search"},
@@ -37,6 +36,7 @@ class TMDb:
         self.nano = kwargs.get("nano")
         self.stats = kwargs.get("stats")
         self.loop = kwargs.get("loop")
+        self.trans = kwargs.get("trans")
 
         try:
             self.tmdb = tmdbie.Client(api_key=parser.get("tmdb", "api-key"))
@@ -50,6 +50,9 @@ class TMDb:
 
         client = self.client
         prefix = kwargs.get("prefix")
+
+        trans = self.trans
+        lang = kwargs.get("lang")
 
         if not is_valid_command(message.content, valid_commands, prefix=prefix):
             return
@@ -73,23 +76,23 @@ class TMDb:
                 try:
                     data = await self.tmdb.search_multi(search)
                 except tmdbie.TMDbException:
-                    await client.send_message(message.channel, "Something went wrong... Try again?")
+                    await client.send_message(message.channel, trans.get("MSG_IMDB_ERROR2", lang))
                     raise
 
                 if not data:
-                    await client.send_message(message.channel, "No results.")
+                    await client.send_message(message.channel, trans.get("MSG_IMDB_NORESULTS", lang))
                     return
 
                 if data.media_type not in ["tv", "movie"]:
-                    await client.send_message(message.channel, "You can't get the plot of a person " + StandardEmoji.SMILE)
+                    await client.send_message(message.channel, trans.get("MSG_IMDB_CANTPERSON", lang))
                     return
 
                 try:
-                    info = "**{}**'s story\n```{}```".format(data.title, data.overview)
+                    info = trans.get("MSG_IMDB_PLOT", lang).format(data.title, data.overview)
 
                     await client.send_message(message.channel, info)
                 except AttributeError:
-                    await client.send_message(message.channel, "This title seems to have a missing plot description.")
+                    await client.send_message(message.channel, trans.get("MSG_IMDB_PLOT_MISSING", lang))
 
 
             elif startswith((prefix + "imdb search"), (prefix + "tmdb search")):
@@ -98,11 +101,11 @@ class TMDb:
                 try:
                     data = await self.tmdb.search_multi(search)
                 except tmdbie.TMDbException:
-                    await client.send_message(message.channel, "Something went wrong... Try again?")
+                    await client.send_message(message.channel, trans.get("MSG_IMDB_ERROR2", lang))
                     raise
 
                 if not data:
-                    await client.send_message(message.channel, "No results.")
+                    await client.send_message(message.channel, trans.get("MSG_IMDB_NORESULTS", lang))
                     return
 
                 if data.media_type in ["tv", "movie"]:
@@ -110,7 +113,7 @@ class TMDb:
 
                     # Step-by-step adding - some data might be missing
                     try:
-                        media_type = "series" if data.media_type == "tv" else ""
+                        media_type = trans.get("MSG_IMDB_SERIES", lang) if data.media_type == "tv" else ""
 
                         info.append("**{}** {}\n".format(data.title, media_type))
                     except AttributeError:
@@ -118,29 +121,29 @@ class TMDb:
 
                     try:
                         genres = "`{}`".format("`, `".join(data.genres))
-                        info.append("Genres: {}".format(genres))
+                        info.append(trans.get("MSG_IMDB_GENRES", lang).format(genres))
                     except AttributeError:
                         pass
 
                     try:
-                        info.append("Average rating: **{}/10**".format(data.vote_average))
+                        info.append(trans.get("MSG_IMDB_AVGRATING", lang).format(data.vote_average))
                     except AttributeError:
                         pass
 
                     if data.media_type == "tv":
                         try:
-                            info.append("Seasons: **{}**".format(len(data.seasons)))
+                            info.append(trans.get("MSG_IMDB_SEASONS", lang).format(len(data.seasons)))
                         except AttributeError:
                             pass
 
                     try:
-                        info.append("\nSummary:\n```{}```\n".format(data.overview))
+                        info.append(trans.get("MSG_IMDB_SUMMARY", lang).format(data.overview))
                     except AttributeError:
                         pass
 
                     try:
                         if data.poster:
-                            info.append("Poster: {}".format(data.poster))
+                            info.append(trans.get("MSG_IMDB_POSTER", lang).format(data.poster))
                     except AttributeError:
                         pass
 
@@ -148,14 +151,14 @@ class TMDb:
                     media_info = "\n".join(info)
 
                 else:
-                    await client.send_message("Person search is not yet supported.")
+                    await client.send_message(message.channel, trans.get("MSG_IMDB_PERSON_NOT_SUPPORTED", lang))
                     return
 
                 # Send the details
                 try:
                     await client.send_message(message.channel, media_info)
                 except errors.HTTPException:
-                    await client.send_message(message.channel, "Something went wrong, please report it to the dev, preferably with a screenshot. Thanks!")
+                    await client.send_message(message.channel, trans.get("MSG_IMDB_ERROR", lang))
 
             elif startswith((prefix + "imdb trailer"), (prefix + "tmdb trailer")):
                 search = str(message.content[len(prefix + "imdb trailer "):])
@@ -163,17 +166,17 @@ class TMDb:
                 try:
                     data = await self.tmdb.search_multi(search)
                 except tmdbie.TMDbException:
-                    await client.send_message(message.channel, "Something went wrong... Try again?")
+                    await client.send_message(message.channel, trans.get("MSG_IMDB_ERROR2", lang))
                     raise
 
                 if not data:
-                    await client.send_message(message.channel, "No results.")
+                    await client.send_message(message.channel, trans.get("MSG_IMDB_NORESULTS", lang))
                     return
 
                 try:
-                    await client.send_message(message.channel, "**{}**'s trailers on IMDB:\n\n{}".format(data.title, data.trailer))
+                    await client.send_message(message.channel, trans.get("MSG_IMDB_TRAILER", lang).format(data.title, data.trailer))
                 except AttributeError:
-                    await client.send_message(message.channel, "This title appears to have no trailer on IMDb. ")
+                    await client.send_message(message.channel, trans.get("MSG_IMDB_TRAILER_MISSING", lang))
 
             elif startswith((prefix + "imdb rating"), (prefix + "tmdb rating")):
                 search = str(message.content[len(prefix + "imdb rating "):])
@@ -181,23 +184,21 @@ class TMDb:
                 try:
                     data = await self.tmdb.search_multi(search)
                 except tmdbie.TMDbException:
-                    await client.send_message(message.channel, "Something went wrong... Try again?")
+                    await client.send_message(message.channel, trans.get("MSG_IMDB_ERROR2", lang))
                     raise
 
                 if not data:
-                    await client.send_message(message.channel, "No results.")
+                    await client.send_message(message.channel, trans.get("MSG_IMDB_NORESULTS", lang))
                     return
 
                 try:
-                    content = "**{}**'s ratings\n\nUser ratings on TMDb: __**{}** out of 10__".format(data.title, data.vote_average)
+                    content = trans.get("MSG_IMDB_RATINGS", lang).format(data.title, data.vote_average)
                     await client.send_message(message.channel, content)
                 except AttributeError:
-                    await client.send_message(message.channel, "It appears that this title does not have any ratings. Weird.")
+                    await client.send_message(message.channel, trans.get("MSG_IMDB_RATINGS_MISSING", lang))
 
             else:
-                await client.send_message(message.channel,
-                                          "**TMDb/IMDb help**\n\n`_imdb search [name or title]`, `_imdb plot [title]`, "
-                                          "`_imdb trailer [title]`, `_imdb rating [title]`".replace("_", prefix))
+                await client.send_message(message.channel, trans.get("MSG_IMDB_HELP", lang).replace("_", prefix))
 
 
 class NanoPlugin:

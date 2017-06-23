@@ -1,8 +1,10 @@
 # coding=utf-8
-import aiohttp
 import logging
 from json import loads, JSONDecodeError
+
+import aiohttp
 from discord import Client, Message
+
 from data.stats import MESSAGE, WRONG_ARG, IMAGE_SENT
 from data.utils import is_valid_command
 
@@ -148,6 +150,7 @@ class Minecraft:
         self.client = kwargs.get("client")
         self.stats = kwargs.get("stats")
         self.loop = kwargs.get("loop")
+        self.trans = kwargs.get("trans")
 
         self.mc = McItems(self.loop)
 
@@ -155,6 +158,9 @@ class Minecraft:
         prefix = kwargs.get("prefix")
         client = self.client
         mc = self.mc
+
+        trans = self.trans
+        lang = kwargs.get("lang")
 
         assert isinstance(client, Client)
         assert isinstance(message, Message)
@@ -174,48 +180,50 @@ class Minecraft:
         if startswith(prefix + "mc", prefix + "minecraft"):
             if startswith(prefix + "mc help", prefix + "minecraft help"):
                 # Help message
-                await client.send_message(message.channel,
-                                          "**Minecraft**\n```css\n"
-                                          "_mc name/id:meta - search for items and display their details```".replace("_", prefix))
+                await client.send_message(message.channel, trans.get("MSG_MC_HELP", lang).replace("_", prefix))
                 return
 
             elif startswith(prefix + "mc "):
-                da = message.content[len(prefix + "mc "):]
+                item_name = message.content[len(prefix + "mc "):]
             elif startswith(prefix + "minecraft "):
-                da = message.content[len(prefix + "minecraft "):]
+                item_name = message.content[len(prefix + "minecraft "):]
 
             else:
                 return
 
             # Determines if arg is id or name
-            if len(str(da).split(":")) > 1:
-                typ = ITEM_ID_PAIR
+            if len(str(item_name).split(":")) > 1:
+                item_type = ITEM_ID_PAIR
 
             else:
                 try:
-                    int(da)
-                    typ = ITEM_ID
+                    int(item_name)
+                    item_type = ITEM_ID
                 except ValueError:
-                    typ = ITEM_NAME
+                    item_type = ITEM_NAME
 
-            # Requests item data from minecraft plugin
-            if typ == ITEM_ID_PAIR or typ == ITEM_ID:
-                data = mc.id_to_data(da)
-            else:
-                # Check for groupings
-                if mc.get_group_by_name(da):
-                    data = mc.get_group_by_name(da)
-
+            try:
+                # Requests item data from minecraft module
+                if item_type == ITEM_ID_PAIR or item_type == ITEM_ID:
+                    data = mc.id_to_data(item_name)
                 else:
-                    data = mc.name_to_data(str(da))
+                    # Check for groupings
+                    if mc.get_group_by_name(item_name):
+                        data = mc.get_group_by_name(item_name)
+
+                    else:
+                        data = mc.name_to_data(str(item_name))
+            except ValueError:
+                await client.send_message(message.channel, trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
+                return
 
             if not data:
-                await client.send_message(message.channel, "**No item with that name/id**")
+                await client.send_message(message.channel, trans.get("MSG_MC_NO_ITEMS", lang))
                 self.stats.add(WRONG_ARG)
                 return
 
             if not isinstance(data, list):
-                details = "**{}**```css\nId: {}:{}```".format(data.get("name"), data.get("type"), data.get("meta"))
+                details = trans.get("MSG_MC_DETAILS", lang).format(data.get("name"), data.get("type"), data.get("meta"))
 
                 # Details are uploaded simultaneously with the picture
                 try:
@@ -229,7 +237,7 @@ class Minecraft:
             else:
                 combined = []
                 for item in data:
-                    details = "**{}**```css\nId: {}:{}```".format(item.get("name"), item.get("type"), item.get("meta"))
+                    details = trans.get("MSG_MC_DETAILS", lang).format(item.get("name"), item.get("type"), item.get("meta"))
                     combined.append(details)
 
                 await client.send_message(message.channel, "".join(combined))
@@ -237,7 +245,7 @@ class Minecraft:
 
 class NanoPlugin:
     name = "Minecraft Commands"
-    version = "0.1.1"
+    version = "0.1.2"
 
     handler = Minecraft
     events = {
