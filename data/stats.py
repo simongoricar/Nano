@@ -1,11 +1,10 @@
 # coding=utf-8
-import time
 import os
 import importlib
 import configparser
 import logging
 # yaml is a conditional import
-from .utils import threaded, decode
+from .utils import decode
 
 __author__ = "DefaltSimon"
 # Stats handler for Nano
@@ -36,7 +35,7 @@ stat_types = [MESSAGE, WRONG_ARG, SERVER_LEFT, SLEPT, WRONG_PERMS, HELP, IMAGE_S
 
 def get_NanoStats(legacy=False):
     if legacy:
-        return LegacyNanoStats()
+        raise NotImplementedError
     else:
         setup_type = 1 if par.get("Redis", "setup") == "openshift" else 2
 

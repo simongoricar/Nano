@@ -1,10 +1,10 @@
 # coding=utf-8
 import threading
-import os, sys
+import os
 import uuid
 from datetime import datetime
 
-# Threading helper
+# Threading helper (OBSOLETE)
 
 
 def threaded(fn):
@@ -243,8 +243,7 @@ def log_to_file(content, type_="log"):
     fn = "data/bugs.txt" if type_ == "bug" else "data/log.txt"
 
     with open(fn, "a") as file:
-        date = datetime.now()
-        cn = date.strftime("%d-%m-%Y %H:%M:%S") + " - " + str(content)
+        cn = datetime.now().strftime("%d-%m-%Y %H:%M:%S") + " - " + str(content)
 
         try:
             file.write(cn + "\n")
@@ -275,11 +274,11 @@ def is_disabled(ct):
     return False
 
 
-def invert_num(integer):
+def invert_num(integer: int):
     return int(str(integer)[::-1])
 
 
-def invert_str(str_):
+def invert_str(str_: str):
     return str(str_[::-1])
 
 
@@ -291,8 +290,7 @@ def split_every(content, num):
 
 def decode(c):
     if not c:
-        # Return empty type
-        return type(c)()
+        return None
 
     return boolify(decode_auto(c))
 

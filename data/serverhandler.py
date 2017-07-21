@@ -1,15 +1,13 @@
 # coding=utf-8
 import configparser
 # redis is a conditional import
-import time
 import logging
-import copy
 import os
 import importlib
 # yaml is a conditional import
 # json is a conditional import
-from discord import Member, User
-from .utils import threaded, Singleton, matches_list, decode, decode_auto
+from discord import Member
+from .utils import Singleton, decode, decode_auto
 
 __author__ = "DefaltSimon"
 
@@ -39,10 +37,6 @@ server_defaults = {
     "kickmsg": "**:user** has been kicked.",
     "banmsg": "**:user** has been banned.",
     "leavemsg": "**:user** has left the server :cry:",
-    "blacklisted": [],
-    "muted": [],
-    "customcmds": {},
-    "admins": [],
     "logchannel": None,
     "prefix": str(parser.get("Servers", "defaultprefix")),
     "selfrole": None,
@@ -69,7 +63,7 @@ def validate_input(fn):
     return wrapper
 
 # (Redis)ServerHandler is a singleton, --> only one instance
-# imported from utils
+# Singleton imported from utils
 
 
 class ServerHandler:
@@ -104,7 +98,7 @@ class ServerHandler:
     def get_handler(cls, legacy=False):
         # Factory method
         if legacy:
-            return LegacyServerHandler()
+            raise NotImplementedError
         else:
             redis_ip, redis_port, redis_pass = cls.get_redis_credentials()
             return RedisServerHandler(redis_ip, redis_port, redis_pass)
@@ -209,7 +203,7 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
     def server_exists(self, server_id):
         return bool(decode(self.redis.exists("server:{}".format(server_id))))
 
-    def check_serv(self, server):
+    def check_server(self, server):
         # shortcut for checking sever existence
         if not self.server_exists(server.id):
             self.server_setup(server)
@@ -326,7 +320,7 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
 
     @validate_input
     def change_prefix(self, server, prefix):
-        self.check_serv(server)
+        self.check_server(server)
 
         self.redis.hset("server:{}".format(server.id), "prefix", prefix)
 

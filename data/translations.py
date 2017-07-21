@@ -10,19 +10,20 @@ log.setLevel(logging.INFO)
 
 DEFAULT_LANGUAGE = "en"
 
-# TODO implement xml escape chars
-
 def get_meta() -> dict:
     with open("translations/meta.json", "r") as meta:
         d = meta.read()
         if not d:
-            log.critical("meta.json is empty")
             raise RuntimeError("meta.json is empty")
 
         return loads(d)
 
 
 class TranslationManager:
+    __slots__ = (
+        "meta", "translations", "default_lang"
+    )
+
     def __init__(self):
         self.meta = get_meta()
 
@@ -38,15 +39,14 @@ class TranslationManager:
             xml_dict = self.parse_xml_to_dict(etree)
 
             if type(xml_dict) is not dict:
-                log.warning("Could not parse xml to dict, got {}".format(type(xml_dict)))
                 raise TypeError("expected dict, got {}".format(type(xml_dict)))
-
 
             self.translations[lang] = xml_dict
 
         log.info("Parsed {} languages: {}".format(len(self.meta.keys()), ",".join(self.meta.keys())))
 
-    def parse_xml_to_dict(self, tree: ElementTree) -> Union[dict, None]:
+    @staticmethod
+    def parse_xml_to_dict(tree: ElementTree) -> Union[dict, None]:
         tree = tree.getroot()
 
         buffer = {}
