@@ -11,7 +11,7 @@ __pycache__/*
 # Files generated on the fly
 backup/
 cache/
-data/data.rdb
+data/data*.rdb
 
 # Sensitive info
 settings.ini
