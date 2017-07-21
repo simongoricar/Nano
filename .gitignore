@@ -14,6 +14,7 @@ cache/
 data/data.rdb
 
 # Sensitive info
-#settings.ini
-#redis.conf
-#plugins/config.ini
+settings.ini
+redis.conf
+plugins/config.ini
+redis.bat
