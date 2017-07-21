@@ -4,6 +4,7 @@ plugins/mc/Thumbs.db
 
 # Python cache
 __pycache__/*
+/*/__pycache__/*
 
 # PyCharm config
 .idea/*
