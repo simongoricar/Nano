@@ -1,8 +1,5 @@
 @echo off
 @title Nano
 
-# Make sure to adapt your python version below
+# Make sure to adapt your python version below (linux - python3, python3.5)
 python nano.py
-
-# pause - the window won't close right away, making it easier to debug problems
-pause
