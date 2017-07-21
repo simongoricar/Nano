@@ -17,7 +17,7 @@ from data.utils import log_to_file
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '3.6'
+__version__ = '3.6.1'
 
 
 # EVENTS
@@ -169,7 +169,6 @@ class Nano(metaclass=Singleton):
             except RuntimeError:
                 self.plugin_names.pop(self.plugin_names.index(plugin))
                 ignored.append(plugin)
-                del instance
                 del plug
                 continue
             except Exception as e:
@@ -297,7 +296,8 @@ class Nano(metaclass=Singleton):
         """
         Dispatches any discord event (for example: on_message)
         """
-        if not self.plugin_events.get(event_type):
+        if event_type not in self.plugin_events.keys():
+            log.warning("No such event: {}".format(event_type))
             return
 
         # Plugins have already been ordered from most important to least important

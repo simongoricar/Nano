@@ -59,7 +59,7 @@ Gif command powered by **Giphy**</string>
     <string name="INFO_SPAM">spam</string>
     <string name="INFO_SWEARING">swearing</string>
     <string name="INFO_INVITE_LINK">invite link</string>
-    <string name="INFO_CONFIRM">confirm</string>
+    <string name="INFO_CONFIRM">CONFIRM</string>
     <string name="INFO_NONE">None</string>
     <string name="INFO_RANDOM">random</string>
     <string name="INFO_ERROR">error</string>
@@ -100,12 +100,17 @@ Gif command powered by **Giphy**</string>
     <string name="MSG_MUTE_OWNER">:warning: You cannot mute the owner of the server.</string>
     <string name="MSG_MUTE_SELF">Trying to mute yourself? Not gonna work :rofl:</string>
     <string name="MSG_MUTE_SUCCESS">**{}** now can't speak here. :zipper_mouth:</string>
+    <string name="MSG_MUTE_PERM_ERROR">Could not create a role to assign to the muted person (missing permissions), please contact an admin.</string>
     <string name="MSG_UNMUTE_SUCCESS">**{}** can now speak here again :rofl:</string>
 
     <string name="MSG_JOIN">Join message has been updated :smile:</string>
+    <string name="MSG_JOIN_DISABLED">Join message has been disabled :white_check_mark:</string>
     <string name="MSG_BAN">Ban message has been updated :smile:</string>
+    <string name="MSG_BAN_DISABLED">Ban message has been disabled :white_check_mark:</string>
     <string name="MSG_KICK">Kick message has been updated :smile:</string>
+    <string name="MSG_KICK_DISABLED">Kick message has been disabled :white_check_mark:</string>
     <string name="MSG_LEAVE">Leave message has been updated :smile:</string>
+    <string name="MSG_LEAVE_DISABLED">Leave message has been disabled :white_check_mark:</string>
 
     <string name="MSG_USERINFO_STATUS">Status</string>
     <string name="MSG_USERINFO_MENTION">Mention</string>
@@ -144,6 +149,7 @@ Try `{}language list` to see all available languages.</string>
     <string name="MSG_SETTINGS_WRONG_USAGE">Incorrect usage, see `{}help nano.settings`.</string>
     <string name="MSG_SETTINGS_NOT_TEXT">Log channel cannot be a voice channel! Nice try :smile:</string>
     <string name="MSG_SETTINGS_LOGCHANNEL_SET">Log channel set to **{}** :smile:</string>
+    <string name="MSG_SETTINGS_LOGCHANNEL_DISABLED">Log channel **disabled** :ok_hand:</string>
     <string name="MSG_SETTINGS_SELFROLE_DISABLED">:ok: Selfrole disabled.</string>
     <string name="MSG_SETTINGS_SELFROLE_INACCESSIBLE">:warning:  **{}** is inaccessible (could be higher than Nano's top role or Nano does not have the permission 'Manage Roles')</string>
     <string name="MSG_SETTINGS_SELFROLE_SET">:ok: Selfrole set to **{}**.</string>
@@ -220,12 +226,14 @@ For a list of all commands and their explanations, use `>cmds`.</string>
     <string name="MSG_DICE">{}, the dice shows... **{}**</string>
     <string name="MSG_DECIDE_NORMAL">**drum roll**... I have decided: {}</string>
     <string name="MSG_DECIDE_SPECIAL">Guess what? It's {}. **ba dum tss.**</string>
+    <string name="MSG_DECIDE_NO_ARGS">:grey_exclamation: You have to provide at least two options to choose from.</string>
     <string name="MSG_8BALL">The magic 8ball says: *{}*.</string>
     <string name="MSG_8BALL_STRINGS">It is certain | It is surely so | Without a doubt | You may rely on it | Most likely | Yes | Ask again later | Cannot predict now | Concentrate and ask again | I would say yes | JUST DO IT | My reply is no | My sources say no | Signs point to yes</string>
     <string name="MSG_AVATAR_OWNERSHIP">**{}**'s avatar: {}</string>
     <string name="MSG_AVATAR_NONE">**{}** does not have an avatar. :expressionless:</string>
 
     <string name="MSG_SELFROLE_NOT_ENABLED">:warning: Selfrole is not enabled on this server.</string>
+    <string name="MSG_SELFROLE_NOT_PRESENT">:warning: Could not add role: **{}** does not exist on this server</string>
     <string name="MSG_SELFROLE_REMOVED">:ok_hand: Removed **{}** from your list of roles.</string>
     <string name="MSG_SELFROLE_ADDED">:ok_hand: Role added.</string>
 
@@ -353,6 +361,7 @@ Total PP: **{}**"</string>
     <string name="MSG_REMINDER_DELETE_NONE">No reminder with such content.</string>
     <string name="MSG_REMINDER_DELETE_SUCCESS">Reminder removed.</string>
     <string name="MSG_REMINDER_LIMIT_EXCEEDED">:warning: You have exceeded the maximum amount of reminders (**{}** at once)</string>
+    <string name="MSG_REMINDER_INVALID_FORMAT">:warning: Invalid time format, please use sec, min, d, etc...</string>
 
     <string name="MSG_STATUS_STATS">Stats</string>
     <string name="MSG_STATUS_SERVERS">Servers</string>
@@ -373,7 +382,7 @@ Total PP: **{}**"</string>
     <string name="MSG_DEBUG_R_MEM">Redis memory</string>
     <string name="MSG_DEBUG_R_KEYS">Redis keys</string>
     <string name="MSG_DEBUG_UPTIME">Uptime</string>
-    <string name="MSG_DEBUG_UPTIME_L">"{} days, {}:{}:{}"</string>
+    <string name="MSG_DEBUG_UPTIME_L">{} days, {}:{}:{}</string>
     <string name="MSG_DEBUG_INFO">**Debug stuff:**</string>
 
     <string name="MSG_STATS_MSGS">Messages sent</string>
@@ -444,7 +453,9 @@ Direct link: http://steamcommunity.com/id/{}/</string>
 
     <string name="MSG_VOTING_NO_PROGRESS">:warning: There is no vote in progress.</string>
     <string name="MSG_VOTING_IN_PROGRESS">:warning: A vote is already in progress.</string>
-    <string name="MSG_VOTING_I_USAGE">Incorrect usage. Check {}help vote start for info.</string>
+    <string name="MSG_VOTING_I_USAGE">Incorrect usage. (encapsulate the title in **\"**)
+Check `{}help vote start` for more info.</string>
+    <string name="MSG_VOTING_NO_TITLE">Please include a title.</string>
     <string name="MSG_VOTING_STARTED">Vote started:
 **{}**
 ```js

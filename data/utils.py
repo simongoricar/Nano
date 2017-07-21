@@ -345,8 +345,3 @@ def is_number(string):
         return True
     except ValueError:
         return False
-
-
-def reraise():
-    t, v, tb = sys.exc_info()
-    raise v.with_traceback(tb)

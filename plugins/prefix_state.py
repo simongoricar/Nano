@@ -17,14 +17,6 @@ DEFAULT_PREFIX = parser.get("Servers", "defaultprefix")
 
 # Prefix getter plugin
 
-common_bots = [
-    159985870458322944,  # Mee6
-    150300454708838401,  # Aethex
-    116275390695079945,  # Nadeko
-    195244363339530240,  # KawaiiBot
-    172002275412279296,  # Tatsumaki
-]
-
 commands = {
     "nano.sleep": {"desc": "Puts Nano to sleep. (per-server basis)", "use": None, "alias": None},
     "nano.wake": {"desc": "Wakes Nano up. (per-server basis)", "use": None, "alias": None},
@@ -53,8 +45,8 @@ class PrefixState:
             return "return"
             # return "add_var", parser.get("Servers", "defaultprefix")
 
-        if message.author.id in common_bots:
-            # Ignore commands from common bots
+        if message.author.bot:
+            # Ignore commands from bots
             return "return"
 
         # Set up the server if it is not present in servers.yml

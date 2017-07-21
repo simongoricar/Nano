@@ -6,7 +6,7 @@ import steamapi
 from discord import Message, HTTPException
 
 from data.stats import MESSAGE, WRONG_ARG
-from data.utils import is_valid_command, reraise
+from data.utils import is_valid_command
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -109,14 +109,13 @@ class Steam:
                 # Friend search
                 await client.send_typing(message.channel)
                 try:
-                    username, friends = self.steam.get_friends(uid)
+                    username, friends = await self.steam.get_friends(uid)
                 except ValueError:
                     await client.send_message(message.channel, trans.get("MSG_STEAM_INVALID_URL", lang))
                     return
                 except (steamapi.errors.APIFailure, steamapi.errors.APIException):
                     await client.send_message(message.channel, trans.get("MSG_STEAM_PRIVATE", lang))
-                    reraise()
-                    return
+                    raise
 
                 if not username:
                     await client.send_message(message.channel, trans.get("ERROR_NO_USER2", lang))
@@ -139,14 +138,13 @@ class Steam:
                 await client.send_typing(message.channel)
 
                 try:
-                    username, games = self.steam.get_owned_games(uid)
+                    username, games = await self.steam.get_owned_games(uid)
                 except ValueError:
                     await client.send_message(message.channel, trans.get("MSG_STEAM_INVALID_URL", lang))
                     return
                 except (steamapi.errors.APIFailure, steamapi.errors.APIException):
                     await client.send_message(message.channel, trans.get("MSG_STEAM_PRIVATE", lang))
-                    reraise()
-                    return
+                    raise
 
                 if not username:
                     await client.send_message(message.channel, trans.get("ERROR_NO_USER2", lang))
@@ -172,14 +170,13 @@ class Steam:
                 await client.send_typing(message.channel)
 
                 try:
-                    steam_user = self.steam.get_user(uid)
+                    steam_user = await self.steam.get_user(uid)
                 except ValueError:
                     await client.send_message(message.channel, trans.get("MSG_STEAM_INVALID_URL", lang))
                     return
                 except (steamapi.errors.APIFailure, steamapi.errors.APIException):
                     await client.send_message(message.channel, trans.get("MSG_STEAM_PRIVATE", lang))
-                    reraise()
-                    return
+                    raise
 
                 if not steam_user:
                     await client.send_message(message.channel, trans.get("ERROR_NO_USER2", lang))

@@ -5,14 +5,13 @@ import logging
 import time
 
 from typing import Union
-from discord import Message, utils, Client, Embed, Colour, DiscordException, HTTPException, Object, errors as derrors
+from discord import Message, utils, Client, Embed, Colour, DiscordException, HTTPException, Object, errors as derrors, Permissions
 
-from data.serverhandler import LegacyServerHandler, RedisServerHandler, INVITEFILTER_SETTING, SPAMFILTER_SETTING, \
-    WORDFILTER_SETTING
+
+from data.serverhandler import LegacyServerHandler, RedisServerHandler, INVITEFILTER_SETTING, SPAMFILTER_SETTING, WORDFILTER_SETTING
 from data.stats import WRONG_ARG
 from data.translations import TranslationManager
-from data.utils import convert_to_seconds, matches_list, is_valid_command, StandardEmoji, decode, resolve_time, \
-    log_to_file, is_disabled
+from data.utils import convert_to_seconds, matches_list, is_valid_command, StandardEmoji, decode, resolve_time, log_to_file, is_disabled
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -140,7 +139,7 @@ class RedisSoftBanScheduler:
 
 
 class MessageTracker:
-    def __init__(self, max_active_age=30):
+    def __init__(self, max_active_age=60*3):
         self.msgs = {}
         self.timestamps = {}
 
@@ -316,6 +315,13 @@ class Admin:
 
         self.bans = []
 
+    @staticmethod
+    def handle_channel(channel):
+        if is_disabled(channel):
+            return None
+
+        return channel
+
     async def resolve_role(self, name, message, lang):
         role = utils.find(lambda r: r.name == name, message.server.roles)
 
@@ -325,6 +331,20 @@ class Admin:
                 role = message.role_mentions[0]
             else:
                 await self.client.send_message(message.channel, self.trans.get("ERROR_NO_SUCH_ROLE", lang))
+                return None
+
+        return role
+
+    async def resolve_mute_role(self, server, name="Nano Mute"):
+        role = utils.find(lambda r: r.name == name, server.roles)
+        if not role:
+            perms = Permissions()
+            perms.update(send_messages=False, add_reactions=False, speak=False)
+            clr = Colour(0xd32f2f)
+
+            try:
+                role = await self.client.create_role(server, name=name, permissions=perms, hoist=False, colour=clr, mentionable=False)
+            except PermissionError:
                 return None
 
         return role
@@ -391,6 +411,8 @@ class Admin:
             await asyncio.sleep(1.5)
             await client.delete_message(m)
 
+            return
+
         # !kick
         elif startswith(prefix + "kick") and not startswith(prefix + "kickmsg"):
             if not handler.is_mod(message.author, message.server):
@@ -411,9 +433,11 @@ class Admin:
 
             if user.id == client.user.id:
                 await client.send_message(message.channel, trans.get("MSG_KICK_NANO", lang))
+                return
 
             await client.kick(user)
             await client.send_message(message.channel, handler.get_var(message.server.id, "kickmsg").replace(":user", user.name))
+            return
 
         # !ban
         elif startswith(prefix + "ban") and not startswith(prefix + "banmsg"):
@@ -434,7 +458,6 @@ class Admin:
                 return
 
             confirm = trans.get("INFO_CONFIRM", lang)
-
             await client.send_message(message.channel, trans.get("MSG_BAN_USER", lang).format(user.name, confirm))
 
             followup = await client.wait_for_message(author=message.author, channel=message.channel,
@@ -445,8 +468,9 @@ class Admin:
 
             else:
                 self.bans.append(user.id)
-
                 await client.ban(user, delete_message_days=0)
+
+            return
 
         # !unban
         elif startswith(prefix + "unban"):
@@ -463,10 +487,12 @@ class Admin:
 
             if not user:
                 await client.send_message(message.channel, trans.get("ERROR_NO_USER", lang))
+                await client.send_message(message.channel, trans.get("ERROR_NO_USER", lang))
                 return
 
             await client.unban(message.server, user)
             await client.send_message(message.channel, trans.get("MSG_UNBAN_SUCCESS", lang))
+            return
 
         # !softban [time]|@mention
         elif startswith(prefix + "softban"):
@@ -493,6 +519,7 @@ class Admin:
             await client.ban(user, delete_message_days=0)
 
             await client.send_message(message.channel, trans.get("MSG_SOFTBAN_SUCCESS", lang).format(user.name, resolve_time(parsed_time)))
+            return
 
         # !mute list
         elif startswith(prefix + "mute list"):
@@ -510,11 +537,11 @@ class Admin:
                         muted_ppl.append(usr.name)
 
                 final = trans.get("MSG_MUTE_LIST", lang) + "\n\n".join(["➤ {}".format(u) for u in muted_ppl])
-
             else:
                 final = trans.get("MSG_MUTE_NONE", lang)
 
             await client.send_message(message.channel, final)
+            return
 
         # !mute
         elif startswith(prefix + "mute"):
@@ -531,13 +558,20 @@ class Admin:
             if message.server.owner.id == user.id:
                 await client.send_message(message.channel, trans.get("MSG_MUTE_OWNER", lang))
                 return
-
             elif message.author.id == user.id:
                 await client.send_message(message.channel, trans.get("MSG_MUTE_SELF", lang))
+                return
+
+            # role = await self.resolve_mute_role(message.server)
+            # if not role:
+            #     await client.send_message(message.channel, trans.get("MSG_MUTE_PERM_ERROR", lang))
+            #     return
+            # await client.add_roles(user, role)
 
             handler.mute(message.server, user.id)
 
             await client.send_message(message.channel, trans.get("MSG_MUTE_SUCCESS", lang).format(user.name))
+            return
 
         # !unmute
         elif startswith(prefix + "unmute"):
@@ -551,53 +585,83 @@ class Admin:
 
             user = message.mentions[0]
 
+            # role = await self.resolve_mute_role(message.server)
+            # if not role:
+            #     await client.send_message(message.channel, trans.get("MSG_MUTE_PERM_ERROR", lang))
+            #     return
+            # await client.remove_roles(user, role)
+
             handler.unmute(user)
 
             await client.send_message(message.channel,trans.get("MSG_UNMUTE_SUCCESS", lang).format(user.name))
+            return
 
-        else:
-            if not handler.can_use_restricted_commands(message.author, message.server):
-                await client.send_message(message.channel, trans.get("PERM_ADMIN", lang))
-                return
+        # PERMISSION CHECK
+        if not handler.can_use_restricted_commands(message.author, message.server):
+            await client.send_message(message.channel, trans.get("PERM_ADMIN", lang))
+            return
 
         # Users from here forth must be admins
 
         # !joinmsg
         if startswith(prefix + "joinmsg"):
             change = message.content[len(prefix + "joinmsg "):]
-            handler.update_var(message.server.id, "welcomemsg", change)
 
-            await client.send_message(message.channel, trans.get("MSG_JOIN", lang))
+            if is_disabled(change):
+                handler.update_var(message.server.id, "welcomemsg", None)
+                await client.send_message(message.channel, trans.get("MSG_JOIN_DISABLED", lang))
+
+            else:
+                handler.update_var(message.server.id, "welcomemsg", change)
+                await client.send_message(message.channel, trans.get("MSG_JOIN", lang))
 
         # !welcomemsg
-        if startswith(prefix + "welcomemsg"):
+        elif startswith(prefix + "welcomemsg"):
             change = message.content[len(prefix + "welcomemsg "):]
-            handler.update_var(message.server.id, "welcomemsg", change)
 
-            await client.send_message(message.channel, trans.get("MSG_JOIN", lang))
+            if is_disabled(change):
+                handler.update_var(message.server.id, "welcomemsg", None)
+                await client.send_message(message.channel, trans.get("MSG_JOIN_DISABLED", lang))
+
+            else:
+                handler.update_var(message.server.id, "welcomemsg", change)
+                await client.send_message(message.channel, trans.get("MSG_JOIN", lang))
 
         # !banmsg
         elif startswith(prefix + "banmsg"):
             change = message.content[len(prefix + "banmsg "):]
-            handler.update_var(message.server.id, "banmsg", change)
 
-            await client.send_message(message.channel, trans.get("MSG_BAN", lang))
+            if is_disabled(change):
+                handler.update_var(message.server.id, "banmsg", None)
+                await client.send_message(message.channel, trans.get("MSG_BAN_DISABLED", lang))
+
+            else:
+                handler.update_var(message.server.id, "banmsg", change)
+                await client.send_message(message.channel, trans.get("MSG_BAN", lang))
 
         # !kickmsg
         elif startswith(prefix + "kickmsg"):
             change = message.content[len(prefix + "kickmsg "):]
-            handler.update_var(message.server.id, "kickmsg", change)
 
-            await client.send_message(message.channel, trans.get("MSG_KICK", lang))
+            if is_disabled(change):
+                handler.update_var(message.server.id, "kickmsg", None)
+                await client.send_message(message.channel, trans.get("MSG_KICK_DISABLED", lang))
+
+            else:
+                handler.update_var(message.server.id, "kickmsg", change)
+                await client.send_message(message.channel, trans.get("MSG_KICK", lang))
 
         # !leavemsg
         elif startswith(prefix + "leavemsg"):
             change = message.content[len(prefix + "leavemsg "):]
-            handler.update_var(message.server.id, "leavemsg", change)
 
-            await client.send_message(message.channel, trans.get("MSG_LEAVE", lang))
+            if is_disabled(change):
+                handler.update_var(message.server.id, "leavemsg", None)
+                await client.send_message(message.channel, trans.get("MSG_LEAVE_DISABLED", lang))
 
-
+            else:
+                handler.update_var(message.server.id, "leavemsg", change)
+                await client.send_message(message.channel, trans.get("MSG_LEAVE", lang))
 
         # !user
         elif startswith(prefix + "user"):
@@ -658,7 +722,7 @@ class Admin:
                 await client.send_message(message.channel, trans.get("ERROR_NO_MENTION", lang))
                 return
 
-            elif len(message.mentions) >= 2:
+            elif len(message.mentions) > 2:
                 await client.send_message(message.channel, trans.get("ERROR_MENTION_ONE", lang))
                 return
 
@@ -679,6 +743,7 @@ class Admin:
                 a_role = str(message.content[len(prefix + "role add "):]).split("<")[0].strip()
 
                 role = await self.resolve_role(a_role, message, lang)
+                # Error is already hanled by resolve_role
                 if not role:
                     return
 
@@ -779,8 +844,8 @@ class Admin:
                 msg_list = await client.send_message(message.channel, final)
                 await self.cmd.new_message(msg_list, page, cmd_list)
             except HTTPException:
-                raise
                 await client.send_message(message.channel, trans.get("MSG_CMD_LIST_TOO_LONG", lang))
+                raise
 
         # !cmd status
         elif startswith(prefix + "cmd status"):
@@ -843,8 +908,13 @@ class Admin:
             if matches_list(user_set, "logchannel"):
                 chan_id = cut[1].replace("<#", "").replace(">", "")
 
-                chan = utils.find(lambda chann: chann.id == chan_id, message.server.channels)
+                # When the channel is disabled
+                if is_disabled(chan_id):
+                    await client.send_message(message.channel, trans.get("MSG_SETTINGS_LOGCHANNEL_DISABLED", lang))
+                    handler.update_var(message.server.id, "logchannel", None)
+                    return
 
+                chan = utils.find(lambda chann: chann.id == chan_id, message.server.channels)
                 if not chan:
                     await client.send_message(message.channel, trans.get("ERROR_NOT_CHANNEL", lang))
                     return
@@ -853,6 +923,7 @@ class Admin:
                     await client.send_message(message.channel, trans.get("MSG_SETTINGS_NOT_TEXT", lang))
                     return
 
+                # At this point, the channel should be valid
                 handler.update_var(message.server.id, "logchannel", chan_id)
                 await client.send_message(message.channel, trans.get("MSG_SETTINGS_LOGCHANNEL_SET", lang).format(chan.name))
 
@@ -892,6 +963,7 @@ class Admin:
                 await client.send_message(message.channel, trans.get("MSG_SETTINGS_SELFROLE_SET", lang).format(selfrole_name))
 
             elif matches_list(user_set, "defaultchannel"):
+                # TODO clean up
                 if len(message.channel_mentions) != 1:
                     chan = str(message.content[len("nano.settings defaultchannel "):])
 

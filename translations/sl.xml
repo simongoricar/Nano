@@ -92,9 +92,13 @@ Gif ukaz omogoča **Giphy**</string>
   <string name="MSG_MUTE_SUCCESS">**{}** zdaj ne more govoriti tukaj. :zipper_mouth:</string>
   <string name="MSG_UNMUTE_SUCCESS">**{}** lahko spet govori tukaj :rofl:</string>
   <string name="MSG_JOIN">Sporočilo ob prihodu na server je bilo posodobljeno :smile:</string>
+  <string name="MSG_JOIN_DISABLED">Sporočilo ob prihodu je bilo onemogočeno :white_check_mark:</string>
   <string name="MSG_BAN">Sporočilo ob izključitvi je bilo posodobljeno :smile:</string>
+  <string name="MSG_BAN_DISABLED">Sporočilo ob izključitvi je bilo onemogočeno :white_check_mark:</string>
   <string name="MSG_KICK">Sporočilo ob zbrcanju s serverja je bilo posodobljeno :smile:</string>
+  <string name="MSG_KICK_DISABLED">Sporočilo ob prisilnem odhodu je bilo onemogočeno :white_check_mark:</string>
   <string name="MSG_LEAVE">Sporočilo po odhodu s serverja je bilo posodobljeno :smile:</string>
+  <string name="MSG_LEAVE_DISABLED">Sporočilo ob odhodu je bilo onemogočeno :white_check_mark:</string>
   <string name="MSG_USERINFO_STATUS">Status</string>
   <string name="MSG_USERINFO_MENTION">Klic</string>
   <string name="MSG_USERINFO_ID">Id</string>
@@ -200,6 +204,7 @@ Za seznam ukazov in njihove razlage uporabi `&gt;cmds`.</string>
   <string name="MSG_DICE">{}, kocka kaže... **{}**</string>
   <string name="MSG_DECIDE_NORMAL">**bobnanje**... Jaz mislim takole: {}</string>
   <string name="MSG_DECIDE_SPECIAL">Veš, kaj? {} je. **ba dum tss.**</string>
+  <string name="MSG_DECIDE_NO_ARGS">:grey_exclamation: Navesti moraš vsaj dve možnosti.</string>
   <string name="MSG_8BALL">Čarobna 8-žogca pravi: *{}*.</string>
   <string name="MSG_8BALL_STRINGS">Gotovo je | Skoraj gotovo | Brez dvoma | Zanesi se na to | Verjetno | Da | Vprašaj kasneje | Zdaj ne morem predvideti | Zberi se in zopet vprašaj | Mislim, da ja | JUST DO IT | Moj odgovor je... ne | Moj viri so skeptični | Znamenja kažejo, da ja</string>
   <string name="MSG_AVATAR_OWNERSHIP">Avatar uporabnika **{}**: {}</string>
@@ -322,6 +327,7 @@ Skupno PP: **{}**"</string>
   <string name="MSG_REMINDER_DELETE_NONE">Ni opomnika s to vsebino.</string>
   <string name="MSG_REMINDER_DELETE_SUCCESS">Opomnik odstranjen.</string>
   <string name="MSG_REMINDER_LIMIT_EXCEEDED">:warning: Presegel/la si maksimalno število opomnikov (**{}** naenkrat)</string>
+  <string name="MSG_REMINDER_INVALID_FORMAT">:warning: Neveljaven časovni format, prosim uporabi \"sec\", \"min\", \"h\", \"d\" itd...</string>
   <string name="MSG_STATUS_STATS">Statistika</string>
   <string name="MSG_STATUS_SERVERS">Serverji</string>
   <string name="MSG_STATUS_SERVERS_L">{} serverjev</string>
@@ -340,8 +346,8 @@ Skupno PP: **{}**"</string>
   <string name="MSG_DEBUG_R_MEM">Spomin na Redisu</string>
   <string name="MSG_DEBUG_R_KEYS">Ključi na Redisu</string>
   <string name="MSG_DEBUG_UPTIME">Čas delovanja</string>
-  <string name="MSG_DEBUG_UPTIME_L">"{} dni, {}:{}:{}"</string>
-  <string name="MSG_DEBUG_INFO">**Porihtanih hroščkov:**</string>
+  <string name="MSG_DEBUG_UPTIME_L">{} dni, {}:{}:{}</string>
+  <string name="MSG_DEBUG_INFO">**Tehnično čudo:**</string>
   <string name="MSG_STATS_MSGS">Sporočila poslana</string>
   <string name="MSG_STATS_ARGS">Dobljeni napačni argumenti</string>
   <string name="MSG_STATS_PERM">Št. poskusov zlorabe ukazov</string>
@@ -405,7 +411,9 @@ Neposredna povezava: http://steamcommunity.com/id/{}/</string>
 {}</string>
   <string name="MSG_VOTING_NO_PROGRESS">:warning: Trenutno ne poteka nobeno glasovanje.</string>
   <string name="MSG_VOTING_IN_PROGRESS">:warning: Glasovanje že poteka.</string>
-  <string name="MSG_VOTING_I_USAGE">Nepravilna uporaba. Za več informacij o ukazu si preberi {}help vote start.</string>
+  <string name="MSG_VOTING_I_USAGE">Nepravilna uporaba (Naslov obdaj z **\"**).
+Za več informacij poglej pod `{}help vote start`.</string>
+  <string name="MSG_VOTING_NO_TITLE">Prosim navedi naslov.</string>
   <string name="MSG_VOTING_STARTED">Glasovanje se je začelo:
 **{}**
 ```js

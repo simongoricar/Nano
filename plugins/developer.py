@@ -266,7 +266,7 @@ class DevFeatures:
         elif startswith("nano.dev.servers.clean"):
             self.handler.delete_server_by_list([s.id for s in self.client.servers])
 
-        elif startswith("nano.dev.server.leave"):
+        elif startswith("nano.dev.servers.leave"):
             s_id = int(str(message.content)[len("nano.dev.server.leave "):])
             serv = Object(id=s_id)
 
@@ -310,6 +310,30 @@ class DevFeatures:
             await client.change_presence(game=Game(name=str(status)))
 
             await client.send_message(message.channel, "Status changed " + StandardEmoji.THUMBS_UP)
+
+        # nano.dev.translations.reload
+        elif startswith("nano.dev.translations.reload"):
+            self.trans.reload_translations()
+
+            await client.send_message(message.channel, StandardEmoji.PERFECT)
+
+        # nano.dev.announce
+        elif startswith("nano.dev.announce"):
+            await client.send_message(message.channel, "Sending...")
+            ann = message.content[len("nano.dev.announce "):]
+
+            s = []
+            for g in self.client.servers:
+                try:
+                    await client.send_message(g.default_channel, ann)
+                    log_to_file("Sending announcement for {}".format(g.name))
+                    s.append(g.name)
+                except:
+                    pass
+
+
+            await client.send_message(message.channel, "Sent to {}".format("\n".join(s)))
+            await client.send_message(message.channel, "Sent :ok_hand:".format())
 
     async def on_ready(self):
         self.loop.create_task(self.backup.start())

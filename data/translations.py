@@ -29,6 +29,9 @@ class TranslationManager:
         self.translations = {}
         self.default_lang = DEFAULT_LANGUAGE
 
+        self.parse_languages_from_meta()
+
+    def parse_languages_from_meta(self):
         for lang in self.meta.keys():
             etree = ElementTree.parse("translations/{}.xml".format(lang))
 
@@ -95,3 +98,7 @@ class TranslationManager:
                 return c
 
         return None
+
+    def reload_translations(self):
+        self.meta = get_meta()
+        self.parse_languages_from_meta()

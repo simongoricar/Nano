@@ -16,6 +16,9 @@ from data.utils import is_valid_command, log_to_file, is_disabled
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
+BOT_FARM_RATIO = 0.55
+BOT_FARM_MIN_MEMBERS = 40
+
 commands = {
     "_debug": {"desc": "Displays EVEN MORE stats about Nano.", "use": None, "alias": None},
     "_status": {"desc": "Displays current status: server, user and channel count.", "use": None, "alias": "nano.status"},
@@ -162,16 +165,14 @@ class ServerManagement:
             embed.add_field(name=trans.get("MSG_DEBUG_REMINDERS", lang), value=str(reminders))
             embed.add_field(name=trans.get("MSG_DEBUG_VOTES", lang), value=str(polls))
 
-            # Balances some stats
-            if isinstance(self.handler, RedisServerHandler):
-                redis_mem = self.handler.db_info("memory").get("used_memory_human")
-                embed.add_field(name=trans.get("MSG_DEBUG_R_MEM", lang), value=redis_mem, inline=False)
 
-                redis_size = self.handler.db_size()
-                embed.add_field(name=trans.get("MSG_DEBUG_R_KEYS", lang), value=redis_size)
+            redis_mem = self.handler.db_info("memory").get("used_memory_human")
+            embed.add_field(name=trans.get("MSG_DEBUG_R_MEM", lang), value=redis_mem)
 
-            else:
-                embed.add_field(name=trans.get("MSG_DEBUG_UPTIME", lang), value=uptime)
+            redis_size = self.handler.db_size()
+            embed.add_field(name=trans.get("MSG_DEBUG_R_KEYS", lang), value=redis_size)
+
+            embed.add_field(name=trans.get("MSG_DEBUG_UPTIME", lang), value=uptime)
 
             await client.send_message(message.channel, trans.get("MSG_DEBUG_INFO", lang), embed=embed)
 
@@ -344,15 +345,31 @@ class ServerManagement:
             await self.send_message_failproof(def_c, leave_msg)
 
     async def on_server_join(self, server, **kwargs):
+        # Check if server is bot farm
+        # user_count = 0
+        # bot_count = 0
+        # for usr in server.members:
+        #     if usr.bot:
+        #         bot_count += 1
+        #     else:
+        #         user_count += 1
+        #
+        # ratio = bot_count / (user_count + bot_count)
+        #
+        # # Log
+        # log_to_file("Joined server: {} (ratio: {}%, count: {})".format(server.name, ratio * 100, len(server.members)))
+        #
+        # if ratio > BOT_FARM_RATIO and len(server.members) > BOT_FARM_MIN_MEMBERS:
+        #     log_to_file("Leaving server {}: ratio hit".format(server.name))
+        #     await self.client.leave_server(server)
+        #     return
+
         lang = kwargs.get("lang")
         # Say hi to the server
         await self.send_message_failproof(server.default_channel, self.trans.get("EVENT_SERVER_JOIN", lang))
 
         # Create server settings
         self.handler.server_setup(server)
-
-        # Log
-        log_to_file("Joined server: {}".format(server.name))
 
     async def on_server_remove(self, server, **_):
         # Deletes server data

@@ -1,3 +1,8 @@
+3.6.1
+- Bugfixes from previous release
+- Additional messages for different cases
+- Fixed exploits in !selfrole
+
 3.6
 - Dropped support for the old storage system
 - Added multi language support!

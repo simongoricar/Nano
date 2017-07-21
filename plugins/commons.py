@@ -214,6 +214,10 @@ class Commons:
         elif startswith(prefix + "decide"):
             cut = str(message.content)[len(prefix + "decide "):]
 
+            if not cut.strip(" "):
+                await client.send_message(message.channel, trans.get("MSG_DECIDE_NO_ARGS", lang))
+                return
+
             if len(cut.split("|")) == 1:
                 await client.send_message(message.channel, trans.get("MSG_DECIDE_SPECIAL", lang).format(cut))
 
@@ -238,15 +242,23 @@ class Commons:
             await client.send_message(message.channel, "{}\n- __{}__".format(chosen[:place], chosen[place+1:]))
 
         # !invite
-        elif startswith(prefix + "invite", "nano.invite"):
-            application = await client.application_info()
+        elif startswith(prefix + "invite", "nano.invite", "nano invite"):
+            # ONLY FOR TESTING
+            if startswith("nano.invite.make_real"):
+                application = await client.application_info()
 
-            # Most of the permissions that Nano uses
-            perms = "1543765079"
-            url = "<https://discordapp.com/oauth2/" \
-                  "authorize?client_id={}&scope=bot&permissions={}>".format(application.id, perms)
+                # Most of the permissions that Nano uses
+                perms = "1543765079"
+                url = "<https://discordapp.com/oauth2/" \
+                      "authorize?client_id={}&scope=bot&permissions={}>".format(application.id, perms)
 
-            await client.send_message(message.channel, trans.get("INFO_INVITE", lang).replace("<link>", url))
+                await client.send_message(message.channel, trans.get("INFO_INVITE", lang).replace("<link>", url))
+                return
+
+
+            link = "<http://invite.nanobot.pw>"
+
+            await client.send_message(message.channel, trans.get("INFO_INVITE", lang).replace("<link>", link))
 
         # !avatar
         elif startswith(prefix + "avatar"):
@@ -292,26 +304,33 @@ class Commons:
             role = str(message.content[len(prefix + "selfrole"):]).strip(" ")
             s_role = self.handler.get_selfrole(message.server.id)
 
+            # Check stuff
             if is_disabled(s_role):
                 await client.send_message(message.channel, trans.get("MSG_SELFROLE_NOT_ENABLED", lang))
+                return
             elif (role != s_role) and len(message.role_mentions) == 0:
+                # Not a selfrole
                 await client.send_message(message.channel, trans.get("ERROR_INVALID_ROLE_NAME", lang))
+            elif len(message.role_mentions) != 0:
+                role = message.role_mentions[0]
+                if role.name != s_role:
+                    await client.send_message(message.channel, trans.get("ERROR_INVALID_ROLE_NAME", lang))
+                    return
             else:
-                if len(message.role_mentions) != 0:
-                    role = message.role_mentions[0]
-                else:
-                    role = utils.find(lambda r: r.name == s_role, message.server.roles)
-
+                # If arguments are correct, find the Role object
+                role = utils.find(lambda r: r.name == s_role, message.server.roles)
                 if not role:
+                    await client.send_message(message.channel, trans.get("MSG_SELFROLE_NOT_PRESENT", lang).format(s_role))
                     return
 
-                # If user already has the role, remove it
-                if role in message.author.roles:
-                    await client.remove_roles(message.author, role)
-                    await client.send_message(message.channel, trans.get("MSG_SELFROLE_REMOVED", lang).format(s_role))
-                else:
-                    await client.add_roles(message.author, role)
-                    await client.send_message(message.channel, trans.get("MSG_SELFROLE_ADDED", lang))
+
+            # If user already has the role, remove it
+            if role in message.author.roles:
+                await client.remove_roles(message.author, role)
+                await client.send_message(message.channel, trans.get("MSG_SELFROLE_REMOVED", lang).format(s_role))
+            else:
+                await client.add_roles(message.author, role)
+                await client.send_message(message.channel, trans.get("MSG_SELFROLE_ADDED", lang))
 
     async def on_reaction_add(self, reaction, _, **kwargs):
         if reaction.message.id in self.pings.keys():
@@ -326,7 +345,7 @@ class Commons:
 
 class NanoPlugin:
     name = "Common Commands"
-    version = "0.3.1"
+    version = "0.3.2"
 
     handler = Commons
     events = {

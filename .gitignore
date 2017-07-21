@@ -1,4 +1,19 @@
+# Thumbnails
 data/images/Thumbs.db
 plugins/mc/Thumbs.db
+
+# Python cache
 __pycache__/*
+
+# PyCharm config
 .idea/*
+
+# Files generated on the fly
+backup/
+cache/
+data/data.rdb
+
+# Sensitive info
+#settings.ini
+#redis.conf
+#plugins/config.ini

@@ -85,16 +85,21 @@ Comando de gif distribuído por **Giphy**</string>
   <string name="MSG_SOFTBAN_SUCCESS">{} foi banido temporariamente por: {}</string>
   <string name="MSG_SOFTBAN_PLSMENTION">Favor mencionar o membro que você deseja banir temporariamente. (apenas um)</string>
   <string name="MSG_SOFTBAN_DELIMIT">:no_entry_sign: Favor delimitar tempo e @menção com |</string>
-  <string name="MSG_MUTE_LIST">Membros mutados:</string>
+  <string name="MSG_MUTE_LIST">Membros mutados:
+</string>
   <string name="MSG_MUTE_NONE">Nenhum membro está mutado neste servidor.</string>
   <string name="MSG_MUTE_OWNER">:warning: Você não pode mutar o dono do servidor.</string>
   <string name="MSG_MUTE_SELF">Tentando mutar você mesmo? Não vai funcionar :rofl:</string>
   <string name="MSG_MUTE_SUCCESS">**{}** agora não pode falar aqui. :zipper_mouth:</string>
   <string name="MSG_UNMUTE_SUCCESS">**{}** agora pode falar aqui novamente :rofl:</string>
   <string name="MSG_JOIN">Mensagem de boas-vindas atualizada :smile:</string>
+  <string name="MSG_JOIN_DISABLED">Mensagem de boas vindas foi desativada :white_check_mark:</string>
   <string name="MSG_BAN">Mensagem de banimento atualizada :smile:</string>
+  <string name="MSG_BAN_DISABLED">Mensagem de ban foi desativada :white_check_mark:</string>
   <string name="MSG_KICK">A mensagem de kick foi atualizada :smile:</string>
+  <string name="MSG_KICK_DISABLED">Mensagem de kick foi desativada :white_check_mark:</string>
   <string name="MSG_LEAVE">A mensagem de saída foi atualizada :smile:</string>
+  <string name="MSG_LEAVE_DISABLED">Mensagem de despedida foi desativada :white_check_mark:</string>
   <string name="MSG_USERINFO_STATUS">Status</string>
   <string name="MSG_USERINFO_MENTION">Menção</string>
   <string name="MSG_USERINFO_ID">Id</string>
@@ -192,13 +197,14 @@ Comandos de Admin e Mod só podem ser utilizados por pessoas com os cargos \"Nan
 Você e todos os admins podem também adicionar/remover/listar comandos personalizados utilizando `&gt;cmd add/remove/list comando | resposta`.
 Para uma lista de todos os comandos e suas explicações, use `&gt;cmds`.</string>
   <string name="MSG_PING_MEASURING">Medindo...</string>
-  <string name="MSG_PING_RESULT">**Pong!** (lag: {} ms, reaction: {} ms)</string>
+  <string name="MSG_PING_RESULT">**Pong!** (lag: {} ms, reação: {} ms)</string>
   <string name="MSG_LOGPOST_SAY">Executou {}say</string>
   <string name="MSG_UPTIME">Eu estou incansavelmente atendendo pessoas por **{} dias, {} horas, {} minutos e {} segundos!** :open_mouth:</string>
   <string name="MSG_ROLL">{}, você rolou {}</string>
   <string name="MSG_DICE">{}, o dado mostra... **{}**</string>
   <string name="MSG_DECIDE_NORMAL">**tambores**... Eu decidi: {}</string>
   <string name="MSG_DECIDE_SPECIAL">Adivinha? É {}. **ba dum tss.**</string>
+  <string name="MSG_DECIDE_NO_ARGS">:grey_exclamation: Você deve fornecer pelo menos duas opções.</string>
   <string name="MSG_8BALL">A bola 8 mágica diz: *{}*.</string>
   <string name="MSG_8BALL_STRINGS">É certo | Certamente é assim | Sem dúvida | Você pode contar com isso | Bem provável | Sim | Pergunte novamente mais tarde | Não posso prever agora | Concentre-se e pergunte novamente | Eu diria que sim | JUST DO IT | Minha resposta é não | Minhas fontes dizem que não | Pesquisas apontam que sim</string>
   <string name="MSG_AVATAR_OWNERSHIP">Avatar de **{}**: {}</string>
@@ -248,9 +254,9 @@ Você pode me encontrar aqui: https://discord.gg/FZJB6UJ</string>
   <string name="MSG_IMDB_ERROR_REPDEV">Algo deu errado, favor reportar ao desenvolvedor, de preferência com uma screenshot. Obrigado!</string>
   <string name="MSG_IMDB_NORESULTS">Nenhum resultado.</string>
   <string name="MSG_IMDB_CANTPERSON">Você não pode pedir a sinopse de uma pessoa :rofl:</string>
-  <string name="MSG_IMDB_PLOT">História de **{}**
+  <string name="MSG_IMDB_PLOT">Sinopse de **{}**
 ```{}```</string>
-  <string name="MSG_IMDB_SERIES">séries</string>
+  <string name="MSG_IMDB_SERIES">- Séries</string>
   <string name="MSG_IMDB_PLOT_MISSING">Este título parece não ter uma sinopse.</string>
   <string name="MSG_IMDB_GENRES">Gêneros: {}</string>
   <string name="MSG_IMDB_AVGRATING">Avaliação média: **{}/10**</string>
@@ -322,6 +328,7 @@ PP total: **{}**"</string>
   <string name="MSG_REMINDER_DELETE_NONE">Nenhum lembrete com este conteúdo.</string>
   <string name="MSG_REMINDER_DELETE_SUCCESS">Lembrete removido.</string>
   <string name="MSG_REMINDER_LIMIT_EXCEEDED">:warning: Você excedeu a quantidade máxima de lembretes (**{}** simultâneos)</string>
+  <string name="MSG_REMINDER_INVALID_FORMAT">:warning: Formato de tempo inválido, favor usar sec, min, d, etc...</string>
   <string name="MSG_STATUS_STATS">Estatísticas</string>
   <string name="MSG_STATUS_SERVERS">Servidores</string>
   <string name="MSG_STATUS_SERVERS_L">{} servidores</string>
@@ -340,7 +347,7 @@ PP total: **{}**"</string>
   <string name="MSG_DEBUG_R_MEM">Memória Redis</string>
   <string name="MSG_DEBUG_R_KEYS">Chaves Redis</string>
   <string name="MSG_DEBUG_UPTIME">Tempo de atividade</string>
-  <string name="MSG_DEBUG_UPTIME_L">"{} dias, {}:{}:{}"</string>
+  <string name="MSG_DEBUG_UPTIME_L">{} dias, {}:{}:{}</string>
   <string name="MSG_DEBUG_INFO">**Coisas de depuração:**</string>
   <string name="MSG_STATS_MSGS">Mensagens enviadas</string>
   <string name="MSG_STATS_ARGS">Argumentos errados recebidos</string>
@@ -369,7 +376,7 @@ PP total: **{}**"</string>
   <string name="MSG_SERVER_MEMBERS">Membros [{} total]</string>
   <string name="MSG_SERVER_MEMBERS_L">{} online</string>
   <string name="MSG_SERVER_CHANNELS">Canais [{} total]</string>
-  <string name="MSG_SERVER_CHANNELS_L">{} voz| {} texto</string>
+  <string name="MSG_SERVER_CHANNELS_L">{} voz | {} texto</string>
   <string name="MSG_SERVER_ROLES">Cargos</string>
   <string name="MSG_SERVER_ROLES_L">{} personalizados</string>
   <string name="MSG_SERVER_OWNER">Proprietário do servidor</string>
@@ -405,7 +412,9 @@ Link direto: http://steamcommunity.com/id/{}/</string>
 {}</string>
   <string name="MSG_VOTING_NO_PROGRESS">:warning: Não há votações em andamento.</string>
   <string name="MSG_VOTING_IN_PROGRESS">:warning: Uma votação está em andamento.</string>
-  <string name="MSG_VOTING_I_USAGE">Uso incorreto. Veja {}help vote start para informações.</string>
+  <string name="MSG_VOTING_I_USAGE">Uso incorreto. (Coloque o título entre **\"**)
+Veja `{}help vote start` para mais informações.</string>
+  <string name="MSG_VOTING_NO_TITLE">Favor incluir um título.</string>
   <string name="MSG_VOTING_STARTED">Votação:
 **{}**
 ```js

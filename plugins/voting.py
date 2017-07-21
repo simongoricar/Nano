@@ -155,9 +155,14 @@ class Vote:
                 self.stats.add(WRONG_ARG)
                 return
 
-            title = str(base[1])
+            title = str(base[1]).strip(" ")
+
+            if not title:
+                await client.send_message(message.channel, trans.get("MSG_VOTING_NO_TITLE", lang))
+                return
+
             vote_items = str(base[2]).split("|")
-            vote_items = [a.strip(" ") for a in list(vote_items)]
+            vote_items = [a.strip(" ") for a in list(vote_items) if a.strip(" ")]
 
             if len(vote_items) > VOTE_ITEM_LIMIT:
                 await client.send_message(message.channel, trans.get("MSG_VOTING_OPTIONS_TM", lang).format(VOTE_ITEM_LIMIT, len(vote_items)))
@@ -191,13 +196,14 @@ class Vote:
             embed = Embed(title=title, colour=Colour(0x303F9F), description=trans.get("MSG_VOTING_AMOUNT", lang).format(sum(votes.values())))
 
             for name, val in votes.items():
-                embed.add_field(name=name, value=trans.get("MSG_VOTING_AMOUNT2", lang).format(val))
+                embed.add_field(name=name or "'empty'", value=trans.get("MSG_VOTING_AMOUNT2", lang).format(val))
 
             try:
                 await client.send_message(message.channel, trans.get("MSG_VOTING_ENDED", lang), embed=embed)
             except errors.HTTPException as e:
                 await client.send_message(message.channel, trans.get("MSG_VOTING_ERROR", lang))
-                log_to_file("VOTING ({}): {}".format(e, embed.to_dict()))
+                self.vote.end_voting(message.server)
+                log_to_file("VOTING ({}): {}".format(e, embed.to_dict()), "bug")
                 return
 
             # Actually end the voting

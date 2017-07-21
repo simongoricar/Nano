@@ -252,7 +252,12 @@ class Reminder:
                     await client.send_message(message.channel, trans.get("MSG_REMINDER_NO_BRACKETS", lang))
                     return
 
-                ttr = convert_to_seconds(args[0])
+                try:
+                    ttr = convert_to_seconds(args[0])
+                except ValueError:
+                    await client.send_message(message.channel, trans.get("MSG_REMINDER_INVALID_FORMAT", lang))
+                    return
+
             else:
                 ttr = int(args[0])
 

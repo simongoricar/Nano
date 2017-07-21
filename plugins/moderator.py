@@ -188,7 +188,7 @@ class LogManager:
     async def send_message(self, channel, embed):
         await self.client.send_message(channel, embed=embed)
 
-    async def send_log(self, message: Message, lang, reason=None):
+    async def send_log(self, message: Message, lang, reason=""):
         if not self.getter:
             self.loop.call_later(5, self.send_log(message, lang, reason))
             logger.warning("Getter is not set, calling in 5 seconds...")
@@ -201,7 +201,7 @@ class LogManager:
 
         author = message.author
 
-        embed_title = self.trans.get("MSG_MOD_MSG_DELETED", lang).format()
+        embed_title = self.trans.get("MSG_MOD_MSG_DELETED", lang).format(reason)
 
         embed = Embed(title=embed_title, description=make_dots(message.content))
         embed.set_author(name="{} ({})".format(author.name, author.id), icon_url=author.avatar_url)
