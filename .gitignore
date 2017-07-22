@@ -19,3 +19,7 @@ settings.ini
 redis.conf
 plugins/config.ini
 redis.bat
+
+# Logs, etc...
+data/log.txt
+data/bugs.txt
