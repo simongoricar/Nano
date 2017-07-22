@@ -313,7 +313,7 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
 
     def get_blacklist(self, server):
         serv = "blacklist:{}".format(server.id)
-        return list(decode(self.redis.smembers(serv)))
+        return list(decode(self.redis.smembers(serv)) or [])
 
     def get_prefix(self, server):
         return decode(self.redis.hget("server:{}".format(server.id), "prefix"))
@@ -335,10 +335,6 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
 
     def get_log_channel(self, server):
         return decode(self.redis.hget("server:{}".format(server.id), "logchannel"))
-
-    def has_logging(self, server):
-        # Deprecated, but still here
-        return bool(self.get_log_channel(server.id))
 
     def is_sleeping(self, server):
         return decode(self.redis.hget("server:{}".format(server.id), "sleeping"))
@@ -363,7 +359,7 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
 
     def get_mute_list(self, server):
         serv = "mutes:{}".format(server.id)
-        return list(decode(self.redis.smembers(serv)))
+        return list(decode(self.redis.smembers(serv)) or [])
 
     def get_defaultchannel(self, server):
         return decode(self.redis.hget("server:{}".format(server.id), "dchan"))
