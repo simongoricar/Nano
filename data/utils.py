@@ -298,26 +298,30 @@ def decode(c):
 def boolify(s):
     if s == "True" or s == 1:
         return True
-    elif s == "False" or s == 0:
+    if s == "False" or s == 0:
         return False
-    elif s == "None":
+    if s == "None":
         return None
-    else:
-        return s
+
+    return s
 
 
 def decode_auto(some):
     if isinstance(some, bytes):
-        return some.decode()
+        return boolify(some.decode())
+    if isinstance(some, (str, int)):
+        return boolify(some)
+
     if isinstance(some, dict):
-        return {boolify(decode_auto(k)): boolify(decode_auto(v)) for k, v in some.items()}
-    if isinstance(some, list):
-        return list(map(decode_auto, some))
+        return dict(map(decode_auto, some.items()))
     if isinstance(some, tuple):
         return tuple(map(decode_auto, some))
+    if isinstance(some, list):
+        return list(map(decode_auto, some))
     if isinstance(some, set):
         return set(map(decode_auto, some))
 
+    # In case it's some other type
     return some
 
 
@@ -334,7 +338,7 @@ def make_dots(content, max_len=50):
     if not len(content) > max_len:
         return content
     else:
-        return "{}[...]".format(content[:max_len])
+        return "{} [...]".format(content[:max_len])
 
 
 def is_number(string):

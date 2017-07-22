@@ -5,7 +5,6 @@ from pickle import load
 
 from discord import Message, Client, Embed
 
-from data.serverhandler import LegacyServerHandler, RedisServerHandler
 from data.stats import SUPPRESS
 from data.utils import make_dots
 
@@ -240,7 +239,6 @@ class Moderator:
         lang = kwargs.get("lang")
 
         assert isinstance(client, Client)
-        assert isinstance(handler, (LegacyServerHandler, RedisServerHandler))
 
         if message.channel.is_private:
             return "return"

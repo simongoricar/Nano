@@ -4,7 +4,7 @@ import logging
 
 from discord import Message, Member
 
-from data.serverhandler import RedisServerHandler, LegacyServerHandler
+from data.serverhandler import RedisServerHandler
 from data.stats import SLEPT
 
 log = logging.getLogger(__name__)
@@ -33,7 +33,6 @@ class PrefixState:
         self.trans = kwargs.get("trans")
 
     async def on_message(self, message, **_):
-        assert isinstance(self.handler, (LegacyServerHandler, RedisServerHandler))
         assert isinstance(message, Message)
 
 
@@ -43,7 +42,6 @@ class PrefixState:
 
         if message.channel.is_private:
             return "return"
-            # return "add_var", parser.get("Servers", "defaultprefix")
 
         if message.author.bot:
             # Ignore commands from bots

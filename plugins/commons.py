@@ -130,16 +130,17 @@ class Commons:
         # Custom commands registered for the server
         server_commands = self.handler.get_custom_commands(message.server)
 
-        # Checks for server specific commands
-        for command in server_commands:
-            # UPDATE 2.1.4: not .startswith anymore!
-            if str(message.content) == command:
-                # Maybe same replacement logic in the future update?
-                # /todo implement advanced replacement logic
-                await client.send_message(message.channel, server_commands.get(command))
-                self.stats.add(MESSAGE)
+        if server_commands:
+            # Checks for server specific commands
+            for command in server_commands.keys():
+                # UPDATE 2.1.4: not .startswith anymore!
+                if str(message.content) == command:
+                    # Maybe same replacement logic in the future update?
+                    # /todo implement advanced replacement logic
+                    await client.send_message(message.channel, server_commands.get(command))
+                    self.stats.add(MESSAGE)
 
-                return
+                    return
 
         if not is_valid_command(message.content, valid_commands, prefix=prefix):
             return

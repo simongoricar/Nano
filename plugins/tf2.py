@@ -10,10 +10,12 @@ import aiohttp
 from discord import Message
 
 from data.stats import MESSAGE, WRONG_ARG
-from data.utils import threaded, is_valid_command
+from data.utils import is_valid_command
 
-__author__ = "DefaltSimon"
-# Backpack.tf price plugin for Nano
+#####
+# TF2 plugin
+# Uses API by backpack.tf
+#####
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -271,11 +273,10 @@ class CommunityPrices:
                 else:
                     return (await resp.json()).get("response")
 
-    @threaded
-    def _update_cache(self):
+    async def _update_cache(self):
         if not self.is_updating:
             self.is_updating = True
-            self.download_data(self.allow_cache, self.allow_cache)
+            await self.download_data(self.allow_cache, self.allow_cache)
 
     @staticmethod
     def _write_temp(data):
@@ -284,26 +285,26 @@ class CommunityPrices:
 
         dump(data, open("cache/bptf_cache.temp", "w"))
 
-    def _check_cache(self):
+    async def _check_cache(self):
         if (time.time() - self.cache_timestamp) > self.max_age:
-            self._update_cache()
+            await self._update_cache()
 
-    def get_item_list(self):
+    async def get_item_list(self):
         """
         Gets all items on backpack.tf
         :return: A list of un
         """
-        self._check_cache()
+        await self._check_cache()
 
         if not self.cached_items:
             self.cached_items = [Item(name, self.cached_raw_items.get(name).get("defindex"), self.cached_raw_items.get(name).get("prices")) for name in self.cached_raw_items]
         return self.cached_items
 
-    def get_item_by_name(self, name):
+    async def get_item_by_name(self, name):
         if not name:
             return None
 
-        self._check_cache()
+        await self._check_cache()
 
         try:
             return Item(name, self.cached_raw_items.get(name).get("defindex"), self.cached_raw_items.get(name).get("prices"))
@@ -356,7 +357,7 @@ class TeamFortress:
 
             item_name = message.content[len(prefix + "tf "):]
 
-            item = self.tf.get_item_by_name(str(item_name))
+            item = await self.tf.get_item_by_name(str(item_name))
 
             if not item:
                 await client.send_message(message.channel, trans.get("MSG_TF_NO_SUCH_ITEM", lang).format(item_name))

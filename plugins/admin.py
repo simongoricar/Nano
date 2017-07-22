@@ -7,22 +7,32 @@ import time
 from typing import Union
 from discord import Message, utils, Client, Embed, Colour, DiscordException, HTTPException, Object, errors as derrors, Permissions
 
-
-from data.serverhandler import LegacyServerHandler, RedisServerHandler, INVITEFILTER_SETTING, SPAMFILTER_SETTING, WORDFILTER_SETTING
+from data.serverhandler import INVITEFILTER_SETTING, SPAMFILTER_SETTING, WORDFILTER_SETTING
 from data.stats import WRONG_ARG
-from data.translations import TranslationManager
 from data.utils import convert_to_seconds, matches_list, is_valid_command, StandardEmoji, decode, resolve_time, log_to_file, is_disabled
+
+
+#####
+# Administration plugin
+# Mostly Nano settings
+#####
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 # CONSTANTS
-
 CMD_LIMIT = 40
-
 CMD_LIMIT_T = 40
 CMD_LIMIT_A = 500
 TICK_DURATION = 15
+
+# 15 seconds
+REMINDER_MIN = 15
+# 5 Days
+REMINDER_MAX = 5 * 24 * 60 * 60
+
+# Maximum age (in seconds) of a message that should be kept in cache
+MAX_MSG_AGE = 60 * 3
 
 commands = {
     "_ban": {"desc": "Bans a member.", "use": "[command] [mention]", "alias": "nano.ban"},
@@ -95,7 +105,7 @@ class RedisSoftBanScheduler:
         else:
             tim = int(tim)
 
-        if not (5 <= tim < 172800):  # 5 sec to 2 days
+        if not (REMINDER_MIN <= tim <= REMINDER_MAX):
             return False
 
         # Add the reminder to the list
@@ -107,13 +117,15 @@ class RedisSoftBanScheduler:
     async def tick(last_time):
         """
         Very simple implementation of a self-correcting tick system
-        :return: None
+        :return: epoch time
         """
-        current_time = time.time()
-        delta = TICK_DURATION - (current_time - last_time)
+        delta = TICK_DURATION - (time.time() - last_time)
+
+        # If previous loop took more than TICK_DURATION, do one right away
+        if delta <= 0:
+            return time.time()
 
         await asyncio.sleep(delta)
-
         return time.time()
 
     async def dispatch(self, reminder):
@@ -129,7 +141,7 @@ class RedisSoftBanScheduler:
         while True:
             # Iterate through users and their reminders
             for ban in self.get_all_bans():
-                # If enough time has passed, send the reminder
+                # If time is up, send the reminder
                 if int(ban.get("time_target", 0)) <= last_time:
                     await self.dispatch(ban)
                     self.redis.delete(ban.get("member"))
@@ -139,29 +151,28 @@ class RedisSoftBanScheduler:
 
 
 class MessageTracker:
-    def __init__(self, max_active_age=60*3):
+    __slots__ = (
+        "msgs", "timestamps", "max_age"
+    )
+
+    def __init__(self, max_active_age=MAX_MSG_AGE):
         self.msgs = {}
         self.timestamps = {}
 
         self.max_age = max_active_age
 
     def is_active(self, message_id):
-        if self.timestamps.get(message_id):
-            return self.timestamps.get(message_id)
-        else:
-            return False
+        return self.timestamps.get(message_id, False)
 
     def set_message_data(self, msg_id, data, renew_timestamp=False):
         # Update timestamp
-        if msg_id not in self.msgs.keys():
-            self.timestamps[msg_id] = time.time()
-        elif renew_timestamp:
+        if (msg_id not in self.msgs.keys()) or renew_timestamp:
             self.timestamps[msg_id] = time.time()
 
         # Set data
         self.msgs[msg_id] = data
 
-    def get_message_data(self, msg_id, check_active=True) -> Union[None, dict]:
+    def get_message_data(self, msg_id) -> Union[None, dict]:
         if not self.is_active(msg_id):
             return None
 
@@ -186,8 +197,8 @@ class MessageTracker:
         while True:
             # Iterate through users and their reminders
             for msg_id, ts in self.timestamps.items():
+                # If message is too old, remove it
                 if (last_time - ts) > self.max_age:
-                    print("deleted {}".format(msg_id))
                     del self.msgs[msg_id]
                     del self.timestamps[msg_id]
 
@@ -195,24 +206,34 @@ class MessageTracker:
             last_time = await self.tick(last_time)
 
 
-def make_pages(commands: dict):
+def make_pages(cmds: dict):
+    """
+    Makes pages out of a custom command list
+    :param cmds: dictionary containing custom commands
+    :return: tuple -> dict(page_index:[lines], etc...), total_pages
+    """
     cmd_list = {0: []}
     c_page = 0
-    for trigger, value in commands.items():
+
+    for trigger, value in cmds.items():
         fm = "{} : {}".format(trigger, value)
 
+        # Creates a new page index if this command is the first one in the new page
         if not cmd_list.get(c_page):
             cmd_list[c_page] = []
 
+        # Shifts the page counter if page is too long
         if sum([len(a) for a in cmd_list[c_page]]) > 1250:
             c_page += 1
             cmd_list[c_page] = []
 
         cmd_list[c_page].append(fm)
 
+    # dict(page_index:[lines], etc...), total_pages
     return cmd_list, c_page
 
 class CommandListReactions:
+    # Emojis to react with
     UP = "\U00002B06"
     DOWN = "\U00002B07"
 
@@ -228,10 +249,11 @@ class CommandListReactions:
         if len(cmds.keys()) == 1:
             return
 
-        # Adds reactions
+        # Adds reactions for navigation
         await self.client.add_reaction(message, CommandListReactions.UP)
         await self.client.add_reaction(message, CommandListReactions.DOWN)
 
+        # Caches data into MessageTracker
         data = {
             "page": int(page),
             "serv_id": message.server.id,
@@ -241,12 +263,14 @@ class CommandListReactions:
         self.track.set_message_data(message.id, data)
 
     async def handle_reaction(self, reaction, user, **kwargs):
+        # Ignore reactions from self
         if user.id == self.client.user.id:
             return
 
         msg = reaction.message
         lang = kwargs.get("lang")
 
+        # Get and verify data existence
         data = self.track.get_message_data(msg.id)
         if not data:
             return
@@ -263,13 +287,16 @@ class CommandListReactions:
             if react.count > 1:
                 if react.emoji == CommandListReactions.UP:
                     up_down = True
+                    break
                 elif react.emoji == CommandListReactions.DOWN:
                     up_down = False
+                    break
 
         # This will not get set if a custom/some other emoji was added
         if up_down is None:
             return
 
+        # True - goes up one page
         if up_down:
             # Can't go higher
             if c_page <= 0:
@@ -278,6 +305,7 @@ class CommandListReactions:
             page = data.get("cmds").get(c_page - 1)
             c_page -= 1
 
+        # False - goes down one page
         else:
             # Can't go lower
             if c_page + 1 >= page_amount:
@@ -295,6 +323,7 @@ class CommandListReactions:
         await self.client.add_reaction(msg, CommandListReactions.UP)
         await self.client.add_reaction(msg, CommandListReactions.DOWN)
 
+        # Updates the page counter
         data["page"] = c_page
         self.track.set_message_data(msg.id, data)
 
@@ -315,16 +344,10 @@ class Admin:
 
         self.bans = []
 
-    @staticmethod
-    def handle_channel(channel):
-        if is_disabled(channel):
-            return None
-
-        return channel
-
     async def resolve_role(self, name, message, lang):
         role = utils.find(lambda r: r.name == name, message.server.roles)
 
+        # No such role - couldn't find by name
         if not role:
             # Try role mentions
             if len(message.role_mentions) != 0:
@@ -335,8 +358,28 @@ class Admin:
 
         return role
 
+    async def resolve_user(self, name, message, lang, no_error=False):
+        # Tries @mentions
+        if len(message.mentions) > 0:
+            return message.mentions[0]
+
+        # If there's no mentions and no name provided
+        if name is None:
+            if no_error:   return None
+            else:          await self.client.send_message(message.channel, self.trans.get("ERROR_NO_MENTION", lang))
+
+        # No mentions, username is provided
+        user = utils.find(lambda u: u.name == name, message.server.members)
+        if user is None:
+            if no_error:   return None
+            else:          await self.client.send_message(message.channel, self.trans.get("ERROR_NO_USER", lang))
+
+        return user
+
+    # DEPRECATED
     async def resolve_mute_role(self, server, name="Nano Mute"):
         role = utils.find(lambda r: r.name == name, server.roles)
+
         if not role:
             perms = Permissions()
             perms.update(send_messages=False, add_reactions=False, speak=False)
@@ -365,18 +408,16 @@ class Admin:
         lang = kwargs.get("lang")
 
         assert isinstance(message, Message)
-        assert isinstance(handler, (LegacyServerHandler, RedisServerHandler))
         assert isinstance(client, Client)
-        assert isinstance(trans, TranslationManager)
 
 
         # Check if this is a valid command
         if not is_valid_command(message.content, commands, prefix=prefix):
             return
 
-        def startswith(*msg):
-            for om in msg:
-                if message.content.startswith(om):
+        def startswith(*matches):
+            for match in matches:
+                if message.content.startswith(match):
                     return True
 
             return False
@@ -417,19 +458,10 @@ class Admin:
         elif startswith(prefix + "kick") and not startswith(prefix + "kickmsg"):
             if not handler.is_mod(message.author, message.server):
                 await client.send_message(message.channel, trans.get("PERM_MOD", lang))
-                return "return"
-
-            if len(message.mentions) >= 1:
-                user = message.mentions[0]
-
-            else:
-                user_name = str(str(message.content)[len(prefix + "kick "):])
-
-                user = utils.find(lambda u: u.name == str(user_name), message.server.members)
-
-            if not user:
-                await client.send_message(message.channel, trans.get("ERROR_NO_USER", lang))
                 return
+
+            name = message.content[len(prefix + "kick "):]
+            user = await self.resolve_user(name, message, lang)
 
             if user.id == client.user.id:
                 await client.send_message(message.channel, trans.get("MSG_KICK_NANO", lang))
@@ -437,6 +469,7 @@ class Admin:
 
             await client.kick(user)
             await client.send_message(message.channel, handler.get_var(message.server.id, "kickmsg").replace(":user", user.name))
+
             return
 
         # !ban
