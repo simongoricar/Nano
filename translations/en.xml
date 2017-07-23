@@ -63,6 +63,12 @@ Gif command powered by **Giphy**</string>
     <string name="INFO_NONE">None</string>
     <string name="INFO_RANDOM">random</string>
     <string name="INFO_ERROR">error</string>
+    <string name="INFO_ALL">all</string>
+
+    <string name="TIME_DAYS">days</string>
+    <string name="TIME_HOURS">hours</string>
+    <string name="TIME_MINUTES">minutes</string>
+    <string name="TIME_SECONDS">seconds</string>
 
     <string name="INFO_HELP">help</string>
 
@@ -89,19 +95,28 @@ Gif command powered by **Giphy**</string>
 
     <string name="MSG_KICK_NANO">Nice try :smiley:</string>
     <string name="MSG_BAN_USER">Are you sure you want to ban {}? Confirm by replying '{}'.</string>
+    <string name="MSG_BAN_NANO">Nice try :smiley:</string>
     <string name="MSG_BAN_TIMEOUT">Confirmation not received, NOT banning :upside_down:</string>
     <string name="MSG_UNBAN_SUCCESS">**{}** has been unbanned.</string>
+    <string name="MSG_UNBAN_NO_BAN">:x: No ban with that name.</string>
+    <string name="MSG_UNBAN_WRONG_USAGE">Incorrect usage. See `{}help unban`</string>
     <string name="MSG_SOFTBAN_SUCCESS">{} has been softbanned for: {}</string>
     <string name="MSG_SOFTBAN_PLSMENTION">Please mention the member you want to softban. (only one)</string>
-    <string name="MSG_SOFTBAN_DELIMIT">:no_entry_sign: Please delimit time and @mention with |</string>
+    <string name="MSG_SOFTBAN_DELIMIT">:no_entry_sign: Please delimit **time** and **@mention/username** with `|`</string>
+    <string name="MSG_SOFTBAN_NO_TIME">:warning: Please specify the time to ban for.</string>
 
-    <string name="MSG_MUTE_LIST">Muted members:</string>
+    <string name="MSG_MUTE_LIST">**Muted members:** (page **{}**/{})
+
+{}</string>
     <string name="MSG_MUTE_NONE">No members are muted on this server.</string>
     <string name="MSG_MUTE_OWNER">:warning: You cannot mute the owner of the server.</string>
     <string name="MSG_MUTE_SELF">Trying to mute yourself? Not gonna work :rofl:</string>
     <string name="MSG_MUTE_SUCCESS">**{}** now can't speak here. :zipper_mouth:</string>
-    <string name="MSG_MUTE_PERM_ERROR">Could not create a role to assign to the muted person (missing permissions), please contact an admin.</string>
+    <string name="MSG_MUTE_TOO_MANY">Too many muted people to display...</string>
     <string name="MSG_UNMUTE_SUCCESS">**{}** can now speak here again :rofl:</string>
+    <string name="MSG_UNMUTE_ALL_CONFIRM">Are you sure you want to unmute everyone? Type "{}" to confirm.</string>
+    <string name="MSG_UNMUTE_TIMEOUT">Confirmation not received, not un-muting. :upside_down:</string>
+    <string name="MSG_UNMUTE_MASS_DONE">All previously muted members are now unmuted.</string>
 
     <string name="MSG_JOIN">Join message has been updated :smile:</string>
     <string name="MSG_JOIN_DISABLED">Join message has been disabled :white_check_mark:</string>
