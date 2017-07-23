@@ -137,7 +137,7 @@ class Vote:
 
         # !vote start
         if startswith(prefix + "vote start"):
-            if not self.handler.can_use_restricted_commands(message.author, message.server):
+            if not self.handler.can_use_admin_commands(message.author, message.server):
                 await client.send_message(message.channel, trans.get("PERM_ADMIN", lang))
 
                 self.stats.add(WRONG_PERMS)
@@ -180,7 +180,7 @@ class Vote:
 
         # !vote end
         elif startswith(prefix + "vote end"):
-            if not self.handler.can_use_restricted_commands(message.author, message.server):
+            if not self.handler.can_use_admin_commands(message.author, message.server):
                 await client.send_message(message.channel, trans.get("PERM_ADMIN", lang))
 
                 self.stats.add(WRONG_PERMS)

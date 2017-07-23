@@ -4,7 +4,7 @@ import traceback
 
 from discord import errors, Message, Member, User, Server
 
-from data.utils import log_to_file
+from data.utils import log_to_file, IgnoredException
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -43,6 +43,9 @@ class Reporter:
         elif e_type == errors.NotFound:
             log.warning("Not Found 404")
             log_to_file("Not Found 404: {}".format(value))
+
+        elif e_type == IgnoredException:
+            return
 
         else:
             if isinstance(args[0], (User, Member)):

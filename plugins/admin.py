@@ -5,11 +5,11 @@ import logging
 import time
 
 from typing import Union
-from discord import Message, utils, Client, Embed, Colour, DiscordException, HTTPException, Object, errors as derrors, Permissions
+from discord import Message, utils, Client, Embed, Colour, DiscordException, HTTPException, Object, errors as derrors
 
 from data.serverhandler import INVITEFILTER_SETTING, SPAMFILTER_SETTING, WORDFILTER_SETTING
 from data.stats import WRONG_ARG
-from data.utils import convert_to_seconds, matches_list, is_valid_command, StandardEmoji, decode, resolve_time, log_to_file, is_disabled
+from data.utils import convert_to_seconds, matches_list, is_valid_command, StandardEmoji, decode, resolve_time, log_to_file, is_disabled, IgnoredException
 
 
 #####
@@ -33,6 +33,7 @@ REMINDER_MAX = 5 * 24 * 60 * 60
 
 # Maximum age (in seconds) of a message that should be kept in cache
 MAX_MSG_AGE = 60 * 3
+MAX_MSG_AGE = 20
 
 commands = {
     "_ban": {"desc": "Bans a member.", "use": "[command] [mention]", "alias": "nano.ban"},
@@ -41,7 +42,7 @@ commands = {
     "nano.kick": {"desc": "Kicks a member", "use": "[command] [mention]", "alias": "_kick"},
     "_unban": {"desc": "Unbans a member.", "use": "[command] [mention]", "alias": "nano.unban"},
     "nano.unban": {"desc": "Unbans a member.", "use": "[command] [mention]", "alias": "_unban"},
-    "_softban": {"desc": "Temporarily bans a member (for time formatting see reminders)", "use": "[command] [time]|@mention", "alias": None},
+    "_softban": {"desc": "Temporarily bans a member (for time formatting see reminders)", "use": "[command] @mention/username | [time] or [command] @mention [time]", "alias": None},
     "_cmd add": {"desc": "Adds a command to the server.", "use": "[command] command|response", "alias": None},
     "_cmd remove": {"desc": "Removes a command from the server.", "use": "[command] command", "alias": None},
     "_cmd status": {"desc": "Displays how many commands you have and how many more you can register.", "use": "[command] command", "alias": None},
@@ -196,7 +197,7 @@ class MessageTracker:
 
         while True:
             # Iterate through users and their reminders
-            for msg_id, ts in self.timestamps.items():
+            for msg_id, ts in self.timestamps.copy().items():
                 # If message is too old, remove it
                 if (last_time - ts) > self.max_age:
                     del self.msgs[msg_id]
@@ -206,16 +207,16 @@ class MessageTracker:
             last_time = await self.tick(last_time)
 
 
-def make_pages(cmds: dict):
+def make_pages_from_dict(item_dict: dict):
     """
     Makes pages out of a custom command list
-    :param cmds: dictionary containing custom commands
+    :param item_dict: dictionary containing custom commands
     :return: tuple -> dict(page_index:[lines], etc...), total_pages
     """
     cmd_list = {0: []}
     c_page = 0
 
-    for trigger, value in cmds.items():
+    for trigger, value in item_dict.items():
         fm = "{} : {}".format(trigger, value)
 
         # Creates a new page index if this command is the first one in the new page
@@ -232,7 +233,35 @@ def make_pages(cmds: dict):
     # dict(page_index:[lines], etc...), total_pages
     return cmd_list, c_page
 
+def make_pages_from_list(item_list: list):
+    """
+    Makes pages out of a mute list
+    :param item_list: list containing mutes
+    :return: tuple -> dict(page_index:[lines], etc...), total_pages
+    """
+    cmd_list = {0: []}
+    c_page = 0
+
+    for item in item_list:
+        # Creates a new page index if this command is the first one in the new page
+        if not cmd_list.get(c_page):
+            cmd_list[c_page] = []
+
+        # Shifts the page counter if page is too long
+        if sum([len(a) for a in cmd_list[c_page]]) > 15:
+            c_page += 1
+            cmd_list[c_page] = []
+
+        cmd_list[c_page].append("➤ " + str(item))
+
+    # dict(page_index:[lines], etc...), total_pages
+    return cmd_list, c_page
+
 class CommandListReactions:
+    __slots__ = (
+        "client", "handler", "trans", "track"
+    )
+
     # Emojis to react with
     UP = "\U00002B06"
     DOWN = "\U00002B07"
@@ -327,6 +356,104 @@ class CommandListReactions:
         data["page"] = c_page
         self.track.set_message_data(msg.id, data)
 
+class MuteListReactions:
+    __slots__ = (
+        "client", "handler", "trans", "track"
+    )
+
+    # Emojis to react with
+    UP = "\U000023EB"
+    DOWN = "\U000023EC"
+
+    def __init__(self, client, handler, trans):
+        self.client = client
+        self.handler = handler
+        self.trans = trans
+
+        self.track = MessageTracker()
+
+    async def new_message(self, message, page: int, mute_list: dict):
+        # Ignore if there is only one page
+        if len(mute_list) == 1:
+            return
+
+        # Adds reactions for navigation
+        await self.client.add_reaction(message, MuteListReactions.UP)
+        await self.client.add_reaction(message, MuteListReactions.DOWN)
+
+        # Caches data into MessageTracker
+        data = {
+            "page": int(page),
+            "serv_id": message.server.id,
+            "mutes": mute_list
+        }
+
+        self.track.set_message_data(message.id, data)
+
+    async def handle_reaction(self, reaction, user, **kwargs):
+        # Ignore reactions from self
+        if user.id == self.client.user.id:
+            return
+
+        msg = reaction.message
+        lang = kwargs.get("lang")
+
+        # Get and verify data existence
+        data = self.track.get_message_data(msg.id)
+        if not data:
+            return
+
+        c_page = data.get("page")
+        page_amount = len(data.get("mutes").keys())
+
+        # Default to down, even though it should always change
+        # True - up
+        # False - down
+        up_down = None
+        for react in msg.reactions:
+
+            if react.count > 1:
+                if react.emoji == MuteListReactions.UP:
+                    up_down = True
+                    break
+                elif react.emoji == MuteListReactions.DOWN:
+                    up_down = False
+                    break
+
+        # This will not get set if a custom/some other emoji was added
+        if up_down is None:
+            return
+
+        # True - goes up one page
+        if up_down:
+            # Can't go higher
+            if c_page <= 0:
+                return
+
+            page = data.get("mutes").get(c_page - 1)
+            c_page -= 1
+
+        # False - goes down one page
+        else:
+            # Can't go lower
+            if c_page + 1 >= page_amount:
+                return
+
+            page = data.get("mutes").get(c_page + 1)
+            c_page += 1
+
+        # Reset reactions and edit message
+        await self.client.clear_reactions(msg)
+
+        new_msg = self.trans.get("MSG_MUTE_LIST", lang).format(c_page + 1, page_amount, "\n".join(page))
+        await self.client.edit_message(msg, new_msg)
+
+        await self.client.add_reaction(msg, MuteListReactions.UP)
+        await self.client.add_reaction(msg, MuteListReactions.DOWN)
+
+        # Updates the page counter
+        data["page"] = c_page
+        self.track.set_message_data(msg.id, data)
 
 
 class Admin:
@@ -341,6 +468,10 @@ class Admin:
         self.loop.create_task(self.timer.start_monitoring())
 
         self.cmd = CommandListReactions(self.client, self.handler, self.trans)
+        self.mute = MuteListReactions(self.client, self.handler, self.trans)
+
+        self.loop.create_task(self.cmd.track.start_monitoring())
+        self.loop.create_task(self.mute.track.start_monitoring())
 
         self.bans = []
 
@@ -365,32 +496,22 @@ class Admin:
 
         # If there's no mentions and no name provided
         if name is None:
-            if no_error:   return None
-            else:          await self.client.send_message(message.channel, self.trans.get("ERROR_NO_MENTION", lang))
+            if no_error:
+                return None
+            else:
+                await self.client.send_message(message.channel, self.trans.get("ERROR_NO_MENTION", lang))
+                raise IgnoredException
 
         # No mentions, username is provided
         user = utils.find(lambda u: u.name == name, message.server.members)
-        if user is None:
-            if no_error:   return None
-            else:          await self.client.send_message(message.channel, self.trans.get("ERROR_NO_USER", lang))
+        if not user:
+            if no_error:
+                return None
+            else:
+                await self.client.send_message(message.channel, self.trans.get("ERROR_NO_USER", lang))
+                raise IgnoredException
 
         return user
-
-    # DEPRECATED
-    async def resolve_mute_role(self, server, name="Nano Mute"):
-        role = utils.find(lambda r: r.name == name, server.roles)
-
-        if not role:
-            perms = Permissions()
-            perms.update(send_messages=False, add_reactions=False, speak=False)
-            clr = Colour(0xd32f2f)
-
-            try:
-                role = await self.client.create_role(server, name=name, permissions=perms, hoist=False, colour=clr, mentionable=False)
-            except PermissionError:
-                return None
-
-        return role
 
     @staticmethod
     async def handle_def_channel(server, channel_id):
@@ -400,11 +521,11 @@ class Admin:
             return utils.find(lambda c: c.id == channel_id, server.channels)
 
     async def on_message(self, message, **kwargs):
-        prefix = kwargs.get("prefix")
         client = self.client
         handler = self.handler
         trans = self.trans
 
+        prefix = kwargs.get("prefix")
         lang = kwargs.get("lang")
 
         assert isinstance(message, Message)
@@ -452,8 +573,6 @@ class Admin:
             await asyncio.sleep(1.5)
             await client.delete_message(m)
 
-            return
-
         # !kick
         elif startswith(prefix + "kick") and not startswith(prefix + "kickmsg"):
             if not handler.is_mod(message.author, message.server):
@@ -470,40 +589,31 @@ class Admin:
             await client.kick(user)
             await client.send_message(message.channel, handler.get_var(message.server.id, "kickmsg").replace(":user", user.name))
 
-            return
-
         # !ban
         elif startswith(prefix + "ban") and not startswith(prefix + "banmsg"):
             if not handler.is_mod(message.author, message.server):
                 await client.send_message(message.channel, trans.get("PERM_MOD", lang))
                 return "return"
 
-            if len(message.mentions) >= 1:
-                user = message.mentions[0]
+            name = message.content[len(prefix + "kick "):]
+            user = await self.resolve_user(name, message, lang)
 
-            else:
-                user_name = str(str(message.content)[len(prefix + "ban "):])
-
-                user = utils.find(lambda u: u.name == str(user_name), message.server.members)
-
-            if not user:
-                await client.send_message(message.channel, trans.get("ERROR_NO_USER", lang))
+            if user.id == client.user.id:
+                await client.send_message(message.channel, trans.get("MSG_BAN_NANO", lang))
                 return
 
             confirm = trans.get("INFO_CONFIRM", lang)
             await client.send_message(message.channel, trans.get("MSG_BAN_USER", lang).format(user.name, confirm))
 
             followup = await client.wait_for_message(author=message.author, channel=message.channel,
-                                                     timeout=15, content="CONFIRM")
+                                                     timeout=15, content=confirm)
 
             if followup is None:
                 await client.send_message(message.channel, trans.get("MSG_BAN_TIMEOUT", lang))
+                return
 
-            else:
-                self.bans.append(user.id)
-                await client.ban(user, delete_message_days=0)
-
-            return
+            self.bans.append(user.id)
+            await client.ban(user, delete_message_days=0)
 
         # !unban
         elif startswith(prefix + "unban"):
@@ -513,46 +623,55 @@ class Admin:
 
             name = message.content[len(prefix + "unban "):]
 
+            if not name:
+                await client.send_message(message.channel, trans.get("MSG_UNBAN_WRONG_USAGE", lang).format(prefix))
+                return
+
             user = None
             for ban in await self.client.get_bans(message.server):
                 if ban.name == name:
                     user = ban
 
             if not user:
-                await client.send_message(message.channel, trans.get("ERROR_NO_USER", lang))
-                await client.send_message(message.channel, trans.get("ERROR_NO_USER", lang))
+                await client.send_message(message.channel, trans.get("MSG_UNBAN_NO_BAN", lang))
                 return
 
             await client.unban(message.server, user)
-            await client.send_message(message.channel, trans.get("MSG_UNBAN_SUCCESS", lang))
-            return
+            await client.send_message(message.channel, trans.get("MSG_UNBAN_SUCCESS", lang).format(name))
 
-        # !softban [time]|@mention
+        # !softban @mention/username | [time]
         elif startswith(prefix + "softban"):
             if not handler.is_mod(message.author, message.server):
                 await client.send_message(message.channel, trans.get("PERM_MOD", lang))
                 return "return"
 
-            if len(message.mentions) != 1:
-                await client.send_message(message.channel, trans.get("MSG_SOFTBAN_PLSMENTION", lang))
-                return
+            cut = message.content[len(prefix + "softban "):]
 
-            user = message.mentions[0]
-            tim = str(message.content[len(prefix + "softban "):])
+            try:
+                name, tim = cut.split("|")
+                name, tim = name.strip(" "), tim.strip(" ")
+            # In case the value can't be unpacked: no |
+            except ValueError:
+                if len(message.mentions) == 0:
+                    await client.send_message(message.channel, trans.get("MSG_SOFTBAN_PLSMENTION", lang))
+                    return
 
-            if tim.find("|") != -1:
-                tim = tim[:tim.find("|")].strip(" ")
-            else:
-                await client.send_message(message.channel, trans.get("MSG_SOFTBAN_DELIMIT", lang))
-                return
+                # Alternate method: @mention [time] (without |)
+                name = message.mentions[0].name
+                tim = cut.replace("<@{}>".format(message.mentions[0].id), "").strip(" ")
 
-            parsed_time = convert_to_seconds(tim)
+                if tim == "":
+                    await client.send_message(message.channel, trans.get("MSG_SOFTBAN_NO_TIME", lang))
+                    return
 
-            self.timer.set_softban(message.server, user, parsed_time)
+            user = await self.resolve_user(name, message, lang)
+
+            total_seconds = convert_to_seconds(tim)
+
+            self.timer.set_softban(message.server, user, total_seconds)
             await client.ban(user, delete_message_days=0)
 
-            await client.send_message(message.channel, trans.get("MSG_SOFTBAN_SUCCESS", lang).format(user.name, resolve_time(parsed_time)))
-            return
+            await client.send_message(message.channel, trans.get("MSG_SOFTBAN_SUCCESS", lang).format(user.name, resolve_time(total_seconds, lang)))
 
         # !mute list
         elif startswith(prefix + "mute list"):
@@ -561,20 +680,34 @@ class Admin:
                 return "return"
 
             mutes = handler.get_mute_list(message.server)
+            page = message.content[len(prefix + "mute list "):].strip(" ")
+            if page:
+                try:
+                    page -= 1
+                except ValueError:
+                    await client.send_message(message.channel, trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
+                    return
+
+            else:
+                page = 0
 
             if mutes:
+                # Verifies the presence of users
                 muted_ppl = []
-                for a in mutes:
-                    usr = utils.find(lambda b: b.id == a, message.server.members)
+                for u_id in mutes:
+                    usr = utils.find(lambda b: b.id == u_id, message.server.members)
                     if usr:
                         muted_ppl.append(usr.name)
 
-                final = trans.get("MSG_MUTE_LIST", lang) + "\n\n".join(["➤ {}".format(u) for u in muted_ppl])
-            else:
-                final = trans.get("MSG_MUTE_NONE", lang)
+                mute_list, m_page = make_pages_from_list(muted_ppl)
 
-            await client.send_message(message.channel, final)
-            return
+                final = trans.get("MSG_MUTE_LIST", lang).format(page + 1, m_page + 1, "\n".join(mute_list[page]))
+
+                msg = await client.send_message(message.channel, final)
+                await self.mute.new_message(msg, page, mute_list)
+
+            else:
+                await client.send_message(message.channel, trans.get("MSG_MUTE_NONE", lang))
 
         # !mute
         elif startswith(prefix + "mute"):
@@ -582,29 +715,19 @@ class Admin:
                 await client.send_message(message.channel, trans.get("PERM_MOD", lang))
                 return "return"
 
-            if len(message.mentions) == 0:
-                await client.send_message(message.channel, trans.get("ERROR_NO_MENTION", lang))
-                return
-
-            user = message.mentions[0]
+            name = message.content[len(prefix + "mute "):]
+            user = await self.resolve_user(name, message, lang)
 
             if message.server.owner.id == user.id:
                 await client.send_message(message.channel, trans.get("MSG_MUTE_OWNER", lang))
                 return
-            elif message.author.id == user.id:
+
+            if message.author.id == user.id:
                 await client.send_message(message.channel, trans.get("MSG_MUTE_SELF", lang))
                 return
 
-            # role = await self.resolve_mute_role(message.server)
-            # if not role:
-            #     await client.send_message(message.channel, trans.get("MSG_MUTE_PERM_ERROR", lang))
-            #     return
-            # await client.add_roles(user, role)
-
             handler.mute(message.server, user.id)
-
             await client.send_message(message.channel, trans.get("MSG_MUTE_SUCCESS", lang).format(user.name))
-            return
 
         # !unmute
         elif startswith(prefix + "unmute"):
@@ -612,25 +735,39 @@ class Admin:
                 await client.send_message(message.channel, trans.get("PERM_MOD", lang))
                 return "return"
 
-            if len(message.mentions) == 0:
-                await client.send_message(message.channel, trans.get("ERROR_NO_MENTION", lang))
+            name = message.content[len(prefix + "unmute "):]
+
+            # In case an admin wishes to unmute everyone
+            if name == trans.get("INFO_ALL", lang):
+                conf = trans.get("INFO_CONFIRM", lang)
+
+                await client.send_message(message.channel, trans.get("MSG_UNMUTE_ALL_CONFIRM", lang).format(conf))
+                followup = await client.wait_for_message(author=message.author, channel=message.channel,
+                                                         timeout=15, content=conf)
+
+                if followup is None:
+                    await client.send_message(message.channel, trans.get("MSG_UNMUTE_TIMEOUT", lang))
+                    return
+
+                mutes = handler.get_mute_list(message.server)
+                for user_id in mutes:
+                    handler.unmute(user_id, message.server.id)
+
+                await client.send_message(message.channel, trans.get("MSG_UNMUTE_MASS_DONE", lang))
                 return
 
-            user = message.mentions[0]
-
-            # role = await self.resolve_mute_role(message.server)
-            # if not role:
-            #     await client.send_message(message.channel, trans.get("MSG_MUTE_PERM_ERROR", lang))
-            #     return
-            # await client.remove_roles(user, role)
-
-            handler.unmute(user)
+            # Normal unmuting
+            user = await self.resolve_user(name, message, lang)
+            handler.unmute(user.id, message.server.id)
 
             await client.send_message(message.channel,trans.get("MSG_UNMUTE_SUCCESS", lang).format(user.name))
-            return
 
-        # PERMISSION CHECK
-        if not handler.can_use_restricted_commands(message.author, message.server):
+        # END of mod commands
+
+        ################################
+        # PERMISSION CHECK (only admins)
+        ################################
+        if not handler.can_use_admin_commands(message.author, message.server):
             await client.send_message(message.channel, trans.get("PERM_ADMIN", lang))
             return
 
@@ -652,6 +789,10 @@ class Admin:
         elif startswith(prefix + "welcomemsg"):
             change = message.content[len(prefix + "welcomemsg "):]
 
+            if not change:
+                await client.send_message(message.channel, trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
+                return
+
             if is_disabled(change):
                 handler.update_var(message.server.id, "welcomemsg", None)
                 await client.send_message(message.channel, trans.get("MSG_JOIN_DISABLED", lang))
@@ -663,6 +804,10 @@ class Admin:
         # !banmsg
         elif startswith(prefix + "banmsg"):
             change = message.content[len(prefix + "banmsg "):]
+
+            if not change:
+                await client.send_message(message.channel, trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
+                return
 
             if is_disabled(change):
                 handler.update_var(message.server.id, "banmsg", None)
@@ -676,6 +821,10 @@ class Admin:
         elif startswith(prefix + "kickmsg"):
             change = message.content[len(prefix + "kickmsg "):]
 
+            if not change:
+                await client.send_message(message.channel, trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
+                return
+
             if is_disabled(change):
                 handler.update_var(message.server.id, "kickmsg", None)
                 await client.send_message(message.channel, trans.get("MSG_KICK_DISABLED", lang))
@@ -687,6 +836,10 @@ class Admin:
         # !leavemsg
         elif startswith(prefix + "leavemsg"):
             change = message.content[len(prefix + "leavemsg "):]
+
+            if not change:
+                await client.send_message(message.channel, trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
+                return
 
             if is_disabled(change):
                 handler.update_var(message.server.id, "leavemsg", None)
@@ -870,7 +1023,7 @@ class Admin:
                 await client.send_message(message.channel, trans.get("MSG_CMD_NO_CUSTOM", lang).format(prefix))
                 return
 
-            cmd_list, c_page = make_pages(custom_cmds)
+            cmd_list, c_page = make_pages_from_dict(custom_cmds)
             final = trans.get("MSG_CMD_LIST", lang).format(page + 1, c_page + 1, "\n".join(cmd_list[page]))
 
             try:
@@ -1341,6 +1494,7 @@ class Admin:
 
     async def on_reaction_add(self, reaction, user, **kwargs):
         await self.cmd.handle_reaction(reaction, user, **kwargs)
+        await self.mute.handle_reaction(reaction, user, **kwargs)
 
 class NanoPlugin:
     name = "Admin Commands"

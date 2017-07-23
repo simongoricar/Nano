@@ -71,7 +71,7 @@ class PrefixState:
         # SLEEP/WAKE Commands!
         # nano.sleep
         if startswith("nano.sleep"):
-            if not self.handler.can_use_restricted_commands(message.author, message.server):
+            if not self.handler.can_use_admin_commands(message.author, message.server):
                 return
 
             self.handler.set_sleeping(message.server, 1)
@@ -80,7 +80,7 @@ class PrefixState:
 
         # nano.wake
         elif startswith("nano.wake"):
-            if not self.handler.can_use_restricted_commands(message.author, message.server):
+            if not self.handler.can_use_admin_commands(message.author, message.server):
                 return
 
             self.handler.set_sleeping(message.server, 0)

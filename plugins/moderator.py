@@ -283,7 +283,7 @@ class Moderator:
 
         if needs_invite_filter:
 
-            if not handler.can_use_restricted_commands(message.author, message.server):
+            if not handler.can_use_admin_commands(message.author, message.server):
                 invite = self.checker.check_invite(message)
 
             else:

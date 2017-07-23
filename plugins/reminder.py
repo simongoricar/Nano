@@ -321,7 +321,7 @@ class Reminder:
                 if (ttl != abs(ttl)) or ttl == 0:
                     when = trans.get("MSG_REMINDER_SOON", lang)
                 else:
-                    when = "in **{}**".format(resolve_time(ttl))
+                    when = "in **{}**".format(resolve_time(ttl, lang))
 
                 rem.append("➤ {} ({})".format(cont, when))
 
