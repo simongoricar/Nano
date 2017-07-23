@@ -33,7 +33,6 @@ REMINDER_MAX = 5 * 24 * 60 * 60
 
 # Maximum age (in seconds) of a message that should be kept in cache
 MAX_MSG_AGE = 60 * 3
-MAX_MSG_AGE = 20
 
 commands = {
     "_ban": {"desc": "Bans a member.", "use": "[command] [mention]", "alias": "nano.ban"},
@@ -72,9 +71,10 @@ commands = {
     "nano.changeprefix": {"desc": "Changes the prefix on the server.", "use": "[command] prefix", "alias": None},
     "nano.serverreset": {"desc": "Resets all server settings to the default.", "use": None, "alias": None},
 
-    "_role add": {"desc": "Adds a role to the user.", "use": "[command] [role name] [mention]", "alias": None},
-    "_role remove": {"desc": "Removes a role from the user.", "use": "[command] [role name] [mention]", "alias": None},
-    "_role replaceall": {"desc": "Replace all roles with the specified one for a user.", "use": "[command] [role name] [mention]", "alias": None},
+    "_role": {"desc": "General role stuff. Subcommands:\n`add` `remove`", "use": None, "alias": None},
+    "_role add": {"desc": "Adds a role to the user.", "use": "[command] [role name] | [@mention @mention ...] OR [role name] @mention", "alias": None},
+    "_role remove": {"desc": "Removes a role from the user.", "use": "[command] [role name] | [@mention @mention ...] OR [role name] @mention", "alias": None},
+    #"_role replaceall": {"desc": "Replace all roles with the specified one for a user.", "use": "[command] [role name] [mention]", "alias": None},
 
     "_language": {"desc": "Displays the current language you're using. \nSee `_language list` for available languages or use `_language set [language_code] to set your language.", "use": "[command] [argument]", "alias": None},
     "_language list": {"desc": "Lists all available languages", "use": "[command]", "alias": None},
@@ -475,21 +475,34 @@ class Admin:
 
         self.bans = []
 
-    async def resolve_role(self, name, message, lang):
-        role = utils.find(lambda r: r.name == name, message.server.roles)
+    async def resolve_role(self, name, message, lang, no_error=False):
+        if len(message.role_mentions) > 0:
+            return message.role_mentions[0]
 
-        # No such role - couldn't find by name
-        if not role:
-            # Try role mentions
-            if len(message.role_mentions) != 0:
-                role = message.role_mentions[0]
+        if name is None:
+            if no_error:
+                return None
             else:
                 await self.client.send_message(message.channel, self.trans.get("ERROR_NO_SUCH_ROLE", lang))
+                raise IgnoredException
+
+        role = utils.find(lambda r: r.name == name, message.server.roles)
+
+        if not role:
+            if no_error:
                 return None
+            else:
+                await self.client.send_message(message.channel, self.trans.get("ERROR_NO_SUCH_ROLE", lang))
+                raise IgnoredException
 
         return role
 
     async def resolve_user(self, name, message, lang, no_error=False):
+        """
+        Searches for an user from the provided name and mentions
+        Mentions take precedence, after that the name. If no user is found and no_error is False, ERROR_NO_MENTION/NO_USER will be sent.
+        If no_error is True, it will return None
+        """
         # Tries @mentions
         if len(message.mentions) > 0:
             return message.mentions[0]
@@ -515,10 +528,65 @@ class Admin:
 
     @staticmethod
     async def handle_def_channel(server, channel_id):
+        """
+        Returns the default channel of the server (can be customized)
+        """
         if is_disabled(channel_id):
             return server.default_channel
         else:
             return utils.find(lambda c: c.id == channel_id, server.channels)
+
+    @staticmethod
+    def can_access_role(member_a, s_role):
+        """
+        Checks if the user is permitted to change this role (can only change roles lower in the hierarchy)
+        """
+        return (member_a.top_role.position >= s_role.position) or member_a.server.owner
+
+    async def _role_command_parameters(self, message, prefix, lang, cut_length) -> tuple:
+        """
+        Used by !role add and !role remove to parse parameters
+        Returns tuple: role, user_list
+        """
+        users = message.mentions or []
+
+        # Notation without |
+        if "|" not in message.content[cut_length:]:
+            if len(message.mentions) == 0:
+                await self.client.send_message(message.channel, self.trans.get("MSG_ROLE_NEED_MENTION", lang))
+                raise IgnoredException
+
+            # Notation without | does not support multiple mentions
+            if len(message.mentions) > 1:
+                await self.client.send_message(message.channel, self.trans.get("MSG_ROLE_TOO_MANY_MENTIONS", lang))
+                raise IgnoredException
+
+            a_role, usr = message.content[cut_length:].rsplit("<", maxsplit=1)
+
+            role = await self.resolve_role(a_role.strip(" "), message, lang)
+
+        # Notation with | as separator
+        else:
+            if len(message.role_mentions) != 0:
+                role = message.role_mentions[0]
+
+                # Search by name if no mention
+                if len(message.mentions) == 0:
+                    usr = message.content[cut_length:].split("|")[1].strip(" ")
+                    usr = await self.resolve_user(usr.strip(" "), message, lang)
+                    users.append(usr)
+
+            else:
+                role_raw, user_raw = message.content[cut_length:].split("|")
+
+                # Search by name if no mention
+                if len(message.mentions) == 0:
+                    usr = await self.resolve_user(user_raw.strip(" "), message, lang)
+                    users.append(usr)
+
+                role = await self.resolve_role(role_raw.strip(" "), message, lang)
+
+        return role, users
 
     async def on_message(self, message, **kwargs):
         client = self.client
@@ -852,14 +920,14 @@ class Admin:
         # !user
         elif startswith(prefix + "user"):
             # Selects the proper user
-            if len(message.mentions) == 0:
-                name = message.content[len(prefix + "user "):]
-                member = utils.find(lambda u: u.name == name, message.server.members)
+            name = message.content[len(prefix + "user "):]
 
+            if name == "":
+                member = message.author
             else:
-                member = message.mentions[0]
+                member = await self.resolve_user(name, message, lang, no_error=True)
 
-            # If the member does not exist
+            # If the member does not exist / none was mentioned
             if not member:
                 await client.send_message(message.channel, trans.get("ERROR_NO_USER", lang))
                 return
@@ -867,10 +935,10 @@ class Admin:
             # Gets info
             name = member.name
             mid = member.id
-            bot = ":robot:" if member.bot else ":cowboy:"
+            bot = "Bot :robot:" if member.bot else "Person :cowboy:"
 
-            # Just removes the @ in @everyone
-            role = str(member.top_role).rstrip("@")
+            # @everyone in embeds doesn't mention
+            role = "**" + str(member.top_role) + "**"
 
             account_created = str(member.created_at).rsplit(".")[0]
             status = str(member.status)
@@ -885,9 +953,9 @@ class Admin:
                 color = Colour.red()
 
             embed = Embed(colour=color)
-            embed.set_author(name="{} #{}".format(name, member.discriminator), icon_url=member.avatar_url)
+            embed.set_author(name="{}#{}".format(name, member.discriminator), icon_url=member.avatar_url)
 
-            embed.add_field(name=trans.get("MSG_USERINFO_STATUS", lang), value=status)
+            embed.add_field(name=trans.get("MSG_USERINFO_STATUS", lang), value=status.capitalize())
             embed.add_field(name=trans.get("MSG_USERINFO_MENTION", lang), value=member.mention)
             embed.add_field(name=trans.get("MSG_USERINFO_ID", lang), value=mid)
             embed.add_field(name=trans.get("MSG_USERINFO_TYPE", lang), value=bot)
@@ -896,78 +964,53 @@ class Admin:
 
             embed.set_image(url=member.avatar_url)
 
-            embed.set_footer(text=trans.get("MSG_USERINFO_DATEGOT", lang).format(
-                datetime.datetime.now(datetime.timezone.utc).strftime("%a, %d %B %Y")))
+            c_time = datetime.datetime.now(datetime.timezone.utc).strftime("%a, %d %B %Y")
+            embed.set_footer(text=trans.get("MSG_USERINFO_DATEGOT", lang).format(c_time))
 
             await client.send_message(message.channel, trans.get("MSG_USERINFO_USER", lang), embed=embed)
 
         # !role
         elif startswith(prefix + "role"):
-            # This selects the proper user
-            if len(message.mentions) == 0:
-                await client.send_message(message.channel, trans.get("ERROR_NO_MENTION", lang))
+            if len(message.role_mentions) > 2:
+                await client.send_message(message.channel, trans.get("ERROR_MENTION_ONE_ROLE", lang))
                 return
 
-            elif len(message.mentions) > 2:
-                await client.send_message(message.channel, trans.get("ERROR_MENTION_ONE", lang))
-                return
-
-            else:
-                user = message.mentions[0]
-
-            # Checks if the user is permitted to change this role (can only change roles lower in the hierarchy)
-            def is_lower(user_role, selected_role):
-                return user_role.position >= selected_role.position
-
-            # Combines both
-            def can_change_role(member_a, selected_role):
-                return is_lower(member_a.top_role, selected_role)
-
-            # Branching
-
+            # !role add [role name] | [@mention @mention ...] OR !role add [role name] @mention
             if startswith(prefix + "role add "):
-                a_role = str(message.content[len(prefix + "role add "):]).split("<")[0].strip()
+                role, users = await self._role_command_parameters(message, prefix, lang, len(prefix + "role add "))
 
-                role = await self.resolve_role(a_role, message, lang)
-                # Error is already hanled by resolve_role
-                if not role:
-                    return
-
-                if not can_change_role(message.author, role):
+                # Checks permissions
+                if not self.can_access_role(message.author, role):
                     await client.send_message(message.channel, trans.get("PERM_HIERARCHY", lang))
                     return
 
-                await client.add_roles(user, role)
-                await client.send_message(message.channel, trans.get("INFO_DONE", lang) + StandardEmoji.OK)
+                # Adds role to each user
+                for user in users:
+                    await client.add_roles(user, role)
 
-            elif startswith(prefix + "role " + "remove "):
-                a_role = str(message.content[len(prefix + "role remove "):]).split("<")[0].strip()
+                if len(users) == 1:
+                    await client.send_message(message.channel, trans.get("INFO_DONE", lang) + " " + StandardEmoji.OK)
+                else:
+                    await client.send_message(message.channel, trans.get("MSG_ROLE_ADDED_MP", lang).format(role.name, len(users)))
 
-                role = await self.resolve_role(a_role, message, lang)
-                if not role:
-                    return
+            # !role remove [role name] | [@mention @mention ...] OR !role add [role name] @mention
+            elif startswith(prefix + "role remove "):
+                role, users = await self._role_command_parameters(message, prefix, lang, len(prefix + "role remove "))
 
-                if not can_change_role(message.author, role):
+                if not self.can_access_role(message.author, role):
                     await client.send_message(message.channel, trans.get("PERM_HIERARCHY", lang))
                     return
 
-                await client.remove_roles(user, role)
-                await client.send_message(message.channel, trans.get("INFO_DONE", lang) + StandardEmoji.OK)
+                # Removes role from each user
+                for user in users:
+                    await client.remove_roles(user, role)
 
-            elif startswith(prefix + "role replaceall "):
-                a_role = str(message.content[len(prefix + "role replaceall "):]).split("<")[0].strip()
+                if len(users) == 1:
+                    await client.send_message(message.channel, trans.get("INFO_DONE", lang) + " " + StandardEmoji.OK)
+                else:
+                    await client.send_message(message.channel, trans.get("MSG_ROLE_REMOVED_MP", lang).format(role.name, len(users)))
 
-                role = await self.resolve_role(a_role, message, lang)
-                if not role:
-                    return
-
-                if not can_change_role(message.author, role):
-                    await client.send_message(message.channel, trans.get("PERM_HIERARCHY", lang))
-                    return
-
-                await client.replace_roles(user, role)
-                await client.send_message(message.channel, trans.get("INFO_DONE", lang) + StandardEmoji.OK)
-
+        # TODO continue from here
         # !cmd add
         elif startswith(prefix + "cmd add"):
             try:
