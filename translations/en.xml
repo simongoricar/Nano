@@ -79,6 +79,8 @@ Gif command powered by **Giphy**</string>
     <string name="ERROR_NO_USER">:warning: Member does not exist.</string>
     <string name="ERROR_NO_USER2">:warning: No such user.</string>
     <string name="ERROR_MENTION_ONE">Please mention only one person at a time.</string>
+    <string name="ERROR_MENTION_ONE_ROLE">Please mention only one role at a time.</string>
+    <string name="ERROR_MENTION_ONE_CH">Please mention only one channel at a time.</string>
     <string name="ERROR_NO_MENTION">Please @mention a member.</string>
     <string name="ERROR_NO_CHMENTION">Please #mention a channel.</string>
     <string name="ERROR_NO_CHANNEL_MENTION">Please mention a channel.</string>
@@ -135,6 +137,11 @@ Gif command powered by **Giphy**</string>
     <string name="MSG_USERINFO_CREATION">Account Creation Date</string>
     <string name="MSG_USERINFO_DATEGOT">Data got at {} UTC</string>
     <string name="MSG_USERINFO_USER">**User info:**</string>
+
+    <string name="MSG_ROLE_TOO_MANY_MENTIONS">Too many mentions! This notation (without separator **|**) does not support more than one mention). Please use the notation with **|**.</string>
+    <string name="MSG_ROLE_NEED_MENTION">Need a mention! This notation (without separator **|**) does not support searching by name). Please use the notation with **|** or a @mention.</string>
+    <string name="MSG_ROLE_ADDED_MP">Added **{}** to {} users.</string>
+    <string name="MSG_ROLE_REMOVED_MP">Removed **{}** from {} users.</string>
 
     <string name="MSG_CMD_WRONG_PARAMS">Incorrect parameters.
 `{}cmd add trigger|response`</string>
