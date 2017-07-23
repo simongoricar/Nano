@@ -114,7 +114,7 @@ class ServerHandler:
 
         return False
 
-    def can_use_restricted_commands(self, user, server):
+    def can_use_admin_commands(self, user, server):
         bo = self.is_bot_owner(user.id)
         so = self.is_server_owner(user.id, server)
         ia = self.is_admin(user, server)
@@ -133,7 +133,11 @@ class ServerHandler:
         return self.has_role(user, server, "Nano Admin")
 
     def is_mod(self, user, server):
-        return self.has_role(user, server, "Nano Mod") or self.is_bot_owner(user.id) or self.is_server_owner(user.id, server)
+        bo = self.is_bot_owner(user.id)
+        so = self.is_server_owner(user.id, server)
+        ia = self.has_role(user, server, "Nano Mod")
+
+        return bo or so or ia
 
 
 # Everything regarding RedisServerHandler below
@@ -349,9 +353,9 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
         return bool(self.redis.sadd(serv, user_id))
 
     @validate_input
-    def unmute(self, member):
-        serv = "mutes:{}".format(member.server.id)
-        return bool(self.redis.srem(serv, member.id))
+    def unmute(self, member_id, server_id):
+        serv = "mutes:{}".format(server_id)
+        return bool(self.redis.srem(serv, member_id))
 
     def is_muted(self, server, user_id):
         serv = "mutes:{}".format(server.id, user_id)

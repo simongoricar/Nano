@@ -8,6 +8,16 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 
+# To avoid circular import from utils.py
+class Singleton(type):
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+
 DEFAULT_LANGUAGE = "en"
 
 def get_meta() -> dict:
@@ -19,7 +29,7 @@ def get_meta() -> dict:
         return loads(d)
 
 
-class TranslationManager:
+class TranslationManager(metaclass=Singleton):
     __slots__ = (
         "meta", "translations", "default_lang"
     )

@@ -4,6 +4,8 @@ import os
 import uuid
 from datetime import datetime
 
+from .translations import TranslationManager
+
 # Threading helper (OBSOLETE)
 
 
@@ -12,6 +14,11 @@ def threaded(fn):
         threading.Thread(target=fn, args=args, kwargs=kwargs).start()
     return wrapper
 
+class IgnoredException(Exception):
+    """
+    An exception that will be ignored (for flow control)
+    """
+    pass
 
 # Singleton
 
@@ -97,7 +104,9 @@ class BotEmoji:
     EMPTY = "<:empty:314349398723264512>"
 
 
-def resolve_time(tm):
+tr = TranslationManager()
+
+def resolve_time(tm, lang):
     try:
         tm = int(round(tm, 0))
     except TypeError:
@@ -123,18 +132,17 @@ def resolve_time(tm):
         else:
             break
 
-    def get(t, name):
-        return "{} {}".format(t, name) if t else ""
+    fields = []
+    if days:
+        fields.append("{} {}".format(days, tr.get("TIME_DAYS", lang)))
+    if hours:
+        fields.append("{} {}".format(days, tr.get("TIME_HOURS", lang)))
+    if minutes:
+        fields.append("{} {}".format(days, tr.get("TIME_MINUTES", lang)))
 
-    def comma(statement):
-        return ", " if statement else ""
+    last = "{} {}".format(int(tm), tr.get("TIME_SECONDS", lang))
 
-    # Ayy lmao
-    return "{}{}{}{}{}{}{}".format(get(days, "days"), comma(days and hours),
-                                   get(hours, "hours"), comma(hours and minutes),
-                                   get(minutes, "minutes"),
-                                   " and " if minutes and tm else "",
-                                   get(int(round(tm, 0)), "seconds")).strip(" ")
+    return ", ".join(fields) + " and " + last
 
 
 possibilities = [
