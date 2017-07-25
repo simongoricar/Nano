@@ -1020,7 +1020,7 @@ class Admin:
                     await client.send_message(message.channel, trans.get("MSG_CMD_WRONG_PARAMS", lang).format(prefix))
                     return
 
-                if len(handler.get_custom_commands(message.server)) >= CMD_LIMIT:
+                if len(handler.get_custom_commands(message.server.id)) >= CMD_LIMIT:
                     await client.send_message(message.channel, trans.get("MSG_CMD_LIMIT_EXCEEDED", lang).format(CMD_LIMIT))
                     return
 
@@ -1060,7 +1060,7 @@ class Admin:
             except ValueError:
                 page = 0
 
-            custom_cmds = handler.get_custom_commands(message.server)
+            custom_cmds = handler.get_custom_commands(message.server.id)
 
             if not custom_cmds:
                 await client.send_message(message.channel, trans.get("MSG_CMD_NO_CUSTOM", lang).format(prefix))
@@ -1078,7 +1078,7 @@ class Admin:
 
         # !cmd status
         elif startswith(prefix + "cmd status"):
-            cc = handler.get_custom_commands(message.server)
+            cc = handler.get_custom_commands(message.server.id)
             percent = int((len(cc) / CMD_LIMIT) * 100)
 
             await client.send_message(message.channel, trans.get("MSG_CMD_STATUS", lang).format(len(cc), CMD_LIMIT, percent))

@@ -128,7 +128,7 @@ class Commons:
         trans = self.trans
 
         # Custom commands registered for the server
-        server_commands = self.handler.get_custom_commands(message.server)
+        server_commands = self.handler.get_custom_commands(message.server.id)
 
         if server_commands:
             # Checks for server specific commands

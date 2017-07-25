@@ -297,9 +297,11 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
         else:
             return False
 
-    def get_custom_commands(self, server):
-        cmds = decode(self.redis.hgetall("commands:{}".format(server.id)))
-        return cmds
+    def get_custom_commands(self, server_id):
+        return decode(self.redis.hgetall("commands:{}".format(server_id)))
+
+    def get_custom_cmd_amount(self, server_id):
+        return decode(self.redis.hlen("commands:{}".format(server_id)))
 
     @validate_input
     def add_channel_blacklist(self, server, channel_id):
