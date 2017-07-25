@@ -148,12 +148,15 @@ Gif command powered by **Giphy**</string>
     <string name="MSG_CMD_LIMIT_EXCEEDED">:warning: You have reached the maximum limit of custom commands ({}).</string>
     <string name="MSG_CMD_NAME_TOO_LONG">:warning: Your command name is too long (max. {}, you got {})</string>
     <string name="MSG_CMD_RESPONSE_TOO_LONG">:warning: Your command response is too long (max. {}, you got {})</string>
+    <string name="MSG_CMD_ALREADY_EXISTS">This command already exists! Do you want to overwrite it? Type '{}' to confirm.</string>
     <string name="MSG_CMD_ADDED">Command '{}' added.</string>
     <string name="MSG_CMD_SEPARATE">:no_entry_sign: Wrong args, separate command and response with |</string>
+    <string name="MSG_CMD_TIMEOUT">Confirmation not received, not overwriting the current command. :upside_down:</string>
     <string name="MSG_CMD_NO_SUCH_COMMAND">:warning: Failed to remove command (does not exist)</string>
     <string name="MSG_CMD_NO_CUSTOM">No custom commands on this server. Add one with `{}cmd add trigger|response`!</string>
     <string name="MSG_CMD_LIST">Custom commands: (page **{}**/{})
 ```{}```</string>
+    <string name="MSG_CMD_LIST_NO_PAGE">No such page! There are currently only **{}** command pages.</string>
     <string name="MSG_CMD_REMOVE_FAIL">:warning: Failed to remove command (does not exist)</string>
     <string name="MSG_CMD_LIST_TOO_LONG">Your commands are too long to display. Consider cleaning some of them or ask the bot owner to do it for you if you don't remember the commands.</string>
     <string name="MSG_CMD_STATUS">You have **{}** out of *{}* custom commands (*{}%*)</string>
@@ -162,7 +165,7 @@ Gif command powered by **Giphy**</string>
 {}
 
 Please keep in mind that this feature is not yet perfect and some translations might be missing. Also, !help messages are **not** translated.</string>
-    <string name="MSG_LANG_NOT_AVAILABLE">No such translation available. :cry:</string>
+    <string name="MSG_LANG_NOT_AVAILABLE">No such language available. :cry:</string>
     <string name="MSG_LANG_SET">Language has been set to **{}**. {}</string>
     <string name="MSG_LANG_TRANS">(translators: {})</string>
     <string name="MSG_LANG_CURRENT">You're currently using `{}` ({}), but you probably knew that :stuck_out_tongue:
@@ -172,9 +175,20 @@ Try `{}language list` to see all available languages.</string>
     <string name="MSG_SETTINGS_NOT_TEXT">Log channel cannot be a voice channel! Nice try :smile:</string>
     <string name="MSG_SETTINGS_LOGCHANNEL_SET">Log channel set to **{}** :smile:</string>
     <string name="MSG_SETTINGS_LOGCHANNEL_DISABLED">Log channel **disabled** :ok_hand:</string>
-    <string name="MSG_SETTINGS_SELFROLE_DISABLED">:ok: Selfrole disabled.</string>
-    <string name="MSG_SETTINGS_SELFROLE_INACCESSIBLE">:warning:  **{}** is inaccessible (could be higher than Nano's top role or Nano does not have the permission 'Manage Roles')</string>
-    <string name="MSG_SETTINGS_SELFROLE_SET">:ok: Selfrole set to **{}**.</string>
+
+    <string name="MSG_SELFROLE_REMOVED">:ok: **{}** removed from list of selfroles.</string>
+    <string name="MSG_SELFROLE_ALR_EX">:warning: This selfrole already exists!</string>
+    <string name="MSG_SELFROLE_INACCESSIBLE">:warning:  **{}** is inaccessible (could be higher than Nano's top role or Nano does not have the permission 'Manage Roles')</string>
+    <string name="MSG_SELFROLE_ADDED">:ok: Selfrole added.</string>
+    <string name="MSG_SELFROLE_REMOVED">:ok: Selfrole removed.</string>
+    <string name="MSG_SELFROLE_REMOVE_NOT_PRESENT">:warning: Not currently a selfrole.</string>
+    <string name="MSG_SELFROLE_LIST">**Selfroles** {}
+
+{}</string>
+    <string name="MSG_SELFROLE_LIST_PAGES">(page **{}**/{})</string>
+    <string name="MSG_SELFROLE_NONE">No selfrole are currently available on this server. Add one with `nano.settings selfrole add [role]` !</string>
+    <string name="MSG_SELFROLE_NO_PAGE">No such page! There are currently only **{}** pages.</string>
+
     <string name="MSG_SETTINGS_DEFCHAN_SET">:ok: Default channel set to **{}**.</string>
     <string name="MSG_SETTINGS_DEFCHAN_RESET">:ok: Default channel set back to default - **{}**.</string>
     <string name="MSG_SETTINGS_WORD">Word filter {}</string>

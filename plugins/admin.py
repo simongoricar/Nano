@@ -26,6 +26,9 @@ CMD_LIMIT_T = 40
 CMD_LIMIT_A = 500
 TICK_DURATION = 15
 
+# Threshold for when to make a new command page
+NEW_PAGE_BEFORE = 2000 - CMD_LIMIT_T + CMD_LIMIT_A
+
 # 15 seconds
 REMINDER_MIN = 15
 # 5 Days
@@ -44,7 +47,7 @@ commands = {
     "_softban": {"desc": "Temporarily bans a member (for time formatting see reminders)", "use": "[command] @mention/username | [time] or [command] @mention [time]", "alias": None},
     "_cmd add": {"desc": "Adds a command to the server.", "use": "[command] command|response", "alias": None},
     "_cmd remove": {"desc": "Removes a command from the server.", "use": "[command] command", "alias": None},
-    "_cmd status": {"desc": "Displays how many commands you have and how many more you can register.", "use": "[command] command", "alias": None},
+    "_cmd status": {"desc": "Displays how many commands you have and how many more you can add.", "use": "[command] command", "alias": None},
     "_cmd list": {"desc": "Returns a server-specific command list.", "use": "[command] (page number)", "alias": None},
 
     "_mute": {"desc": "Mutes the user - deletes all future messages from the user until he/she is un-muted.", "use": "[command] [mention or name]", "alias": None},
@@ -224,7 +227,7 @@ def make_pages_from_dict(item_dict: dict):
             cmd_list[c_page] = []
 
         # Shifts the page counter if page is too long
-        if sum([len(a) for a in cmd_list[c_page]]) > 1250:
+        if sum([len(a) for a in cmd_list[c_page]]) > NEW_PAGE_BEFORE:
             c_page += 1
             cmd_list[c_page] = []
 
@@ -256,6 +259,8 @@ def make_pages_from_list(item_list: list):
 
     # dict(page_index:[lines], etc...), total_pages
     return cmd_list, c_page
+
+# List trackers
 
 class CommandListReactions:
     __slots__ = (
@@ -455,6 +460,105 @@ class MuteListReactions:
         data["page"] = c_page
         self.track.set_message_data(msg.id, data)
 
+class SelfroleListReactions:
+    __slots__ = (
+        "client", "handler", "trans", "track"
+    )
+
+    # Emojis to react with
+    UP = "\U000023EB"
+    DOWN = "\U000023EC"
+
+    def __init__(self, client, handler, trans):
+        self.client = client
+        self.handler = handler
+        self.trans = trans
+
+        self.track = MessageTracker()
+
+    async def new_message(self, message, page: int, mute_list: dict):
+        # Ignore if there is only one page
+        if len(mute_list) == 1:
+            return
+
+        # Adds reactions for navigation
+        await self.client.add_reaction(message, SelfroleListReactions.UP)
+        await self.client.add_reaction(message, SelfroleListReactions.DOWN)
+
+        # Caches data into MessageTracker
+        data = {
+            "page": int(page),
+            "serv_id": message.server.id,
+            "sr": mute_list
+        }
+
+        self.track.set_message_data(message.id, data)
+
+    async def handle_reaction(self, reaction, user, **kwargs):
+        # Ignore reactions from self
+        if user.id == self.client.user.id:
+            return
+
+        msg = reaction.message
+        lang = kwargs.get("lang")
+
+        # Get and verify data existence
+        data = self.track.get_message_data(msg.id)
+        if not data:
+            return
+
+        c_page = data.get("page")
+        page_amount = len(data.get("sr").keys())
+
+        # Default to down, even though it should always change
+        # True - up
+        # False - down
+        up_down = None
+        for react in msg.reactions:
+
+            if react.count > 1:
+                if react.emoji == SelfroleListReactions.UP:
+                    up_down = True
+                    break
+                elif react.emoji == SelfroleListReactions.DOWN:
+                    up_down = False
+                    break
+
+        # This will not get set if a custom/some other emoji was added
+        if up_down is None:
+            return
+
+        # True - goes up one page
+        if up_down:
+            # Can't go higher
+            if c_page <= 0:
+                return
+
+            page = data.get("sr").get(c_page - 1)
+            c_page -= 1
+
+        # False - goes down one page
+        else:
+            # Can't go lower
+            if c_page + 1 >= page_amount:
+                return
+
+            page = data.get("sr").get(c_page + 1)
+            c_page += 1
+
+        # Reset reactions and edit message
+        await self.client.clear_reactions(msg)
+
+        new_msg = self.trans.get("MSG_SELFROLE_LIST", lang).format(c_page + 1, page_amount, "\n".join(page))
+        await self.client.edit_message(msg, new_msg)
+
+        await self.client.add_reaction(msg, SelfroleListReactions.UP)
+        await self.client.add_reaction(msg, SelfroleListReactions.DOWN)
+
+        # Updates the page counter
+        data["page"] = c_page
+        self.track.set_message_data(msg.id, data)
+
 
 class Admin:
     def __init__(self, **kwargs):
@@ -469,9 +573,11 @@ class Admin:
 
         self.cmd = CommandListReactions(self.client, self.handler, self.trans)
         self.mute = MuteListReactions(self.client, self.handler, self.trans)
+        self.sr = SelfroleListReactions(self.client, self.handler, self.trans)
 
         self.loop.create_task(self.cmd.track.start_monitoring())
         self.loop.create_task(self.mute.track.start_monitoring())
+        self.loop.create_task(self.sr.track.start_monitoring())
 
         self.bans = []
 
@@ -525,6 +631,30 @@ class Admin:
                 raise IgnoredException
 
         return user
+
+    async def resolve_channel(self, name, message, lang, no_error=False):
+        # Tries #mentions
+        if len(message.channel_mentions) > 0:
+            return message.channel_mentions[0]
+
+        # When no channel name is provided
+        if name is None:
+            if no_error:
+                return None
+            else:
+                await self.client.send_message(message.channel, self.trans.get("ERROR_NO_CHMENTION", lang))
+                raise IgnoredException
+
+        # Tries to find by name
+        chan = utils.find(lambda c: c.name == name, message.server.channels)
+        if not chan:
+            if no_error:
+                return None
+            else:
+                await self.client.send_message(message.channel, self.trans.get("ERROR_NO_CHMENTION", lang))
+                raise IgnoredException
+
+        return chan
 
     @staticmethod
     async def handle_def_channel(server, channel_id):
@@ -1010,53 +1140,64 @@ class Admin:
                 else:
                     await client.send_message(message.channel, trans.get("MSG_ROLE_REMOVED_MP", lang).format(role.name, len(users)))
 
-        # TODO continue from here
         # !cmd add
         elif startswith(prefix + "cmd add"):
-            try:
-                cut = str(message.content)[len(prefix + "cmd add "):].split("|")
+            cut = message.content[len(prefix + "cmd add "):].split("|", maxsplit=1)
 
-                if len(cut) != 2:
-                    await client.send_message(message.channel, trans.get("MSG_CMD_WRONG_PARAMS", lang).format(prefix))
+            if len(cut) < 2:
+                await client.send_message(message.channel, trans.get("MSG_CMD_WRONG_PARAMS", lang).format(prefix))
+                return
+
+            if handler.get_command_amount(message.server.id) >= CMD_LIMIT:
+                await client.send_message(message.channel, trans.get("MSG_CMD_LIMIT_EXCEEDED", lang).format(CMD_LIMIT))
+                return
+
+            trigger, resp = cut[0].strip(" "), cut[1].strip(" ")
+
+            if handler.custom_command_exists(message.server.id, trigger):
+                conf = trans.get("INFO_CONFIRM", lang)
+
+                await client.send_message(message.channel, trans.get("MSG_CMD_ALREADY_EXISTS", lang).format(conf))
+
+                # Wait for confirmation
+                followup = await client.wait_for_message(author=message.author, channel=message.channel, timeout=15, content=conf)
+                # No confirmation, exit
+                if followup is None:
+                    await client.send_message(message.channel, trans.get("MSG_CMD_TIMEOUT", lang))
                     return
+                # Else, continue normally
 
-                if len(handler.get_custom_commands(message.server.id)) >= CMD_LIMIT:
-                    await client.send_message(message.channel, trans.get("MSG_CMD_LIMIT_EXCEEDED", lang).format(CMD_LIMIT))
-                    return
 
-                trigger = cut[0].strip(" ")
-                resp = cut[1]
+            if len(trigger) >= CMD_LIMIT_T:
+                await client.send_message(message.channel, trans.get("MSG_CMD_NAME_TOO_LONG", lang).format(CMD_LIMIT_T, len(trigger)))
+                return
+            if len(resp) >= CMD_LIMIT_A:
+                await client.send_message(message.channel, trans.get("MSG_CMD_RESPONSE_TOO_LONG", lang).format(CMD_LIMIT_A, len(resp)))
+                return
 
-                if len(trigger) >= CMD_LIMIT_T:
-                    await client.send_message(message.channel, trans.get("MSG_CMD_NAME_TOO_LONG", lang).format(CMD_LIMIT_T, len(trigger)))
-                    return
-                elif len(resp) >= CMD_LIMIT_A:
-                    await client.send_message(message.channel, trans.get("MSG_CMD_RESPONSE_TOO_LONG", lang).format(CMD_LIMIT_A, len(resp)))
-                    return
-
-                handler.set_command(message.server, trigger, resp)
-
-                await client.send_message(message.channel, trans.get("MSG_CMD_ADDED", lang).format(cut[0].strip(" ")))
-
-            except (KeyError or IndexError):
-                await client.send_message(message.channel, trans.get("MSG_CMD_SEPARATE", lang))
+            handler.set_command(message.server, trigger, resp)
+            await client.send_message(message.channel, trans.get("MSG_CMD_ADDED", lang).format(cut[0].strip(" ")))
 
         # !cmd remove
         elif startswith(prefix + "cmd remove"):
-            cut = str(message.content)[len(prefix + "cmd remove "):]
+            cut = message.content[len(prefix + "cmd remove "):]
+
             success = handler.remove_command(message.server, cut)
-
-            final = trans.get("INFO_OK", lang) + StandardEmoji.OK if success else trans.get("MSG_CMD_REMOVE_FAIL", lang)
-
-            await client.send_message(message.channel, final)
+            if success:
+                await client.send_message(message.channel, trans.get("INFO_OK", lang) + " " + StandardEmoji.OK)
+            else:
+                await client.send_message(message.channel, trans.get("MSG_CMD_REMOVE_FAIL", lang))
 
         # !cmd list
         elif startswith(prefix + "cmd list"):
             page = str(message.content)[len(prefix + "cmd list"):].strip(" ")
 
             try:
-                page = int(page) - 1
-                if page < 0: page = 0
+                page = int(page)
+
+                if page != 0:
+                    page -= 1
+            # If no page is specified
             except ValueError:
                 page = 0
 
@@ -1067,14 +1208,17 @@ class Admin:
                 return
 
             cmd_list, c_page = make_pages_from_dict(custom_cmds)
+
+            # If user requests a page that does not exist
+            if page > c_page:
+                await client.send_message(message.channel, trans.get("MSG_CMD_LIST_NO_PAGE", lang).format(c_page + 1))
+                return
+
             final = trans.get("MSG_CMD_LIST", lang).format(page + 1, c_page + 1, "\n".join(cmd_list[page]))
 
-            try:
-                msg_list = await client.send_message(message.channel, final)
-                await self.cmd.new_message(msg_list, page, cmd_list)
-            except HTTPException:
-                await client.send_message(message.channel, trans.get("MSG_CMD_LIST_TOO_LONG", lang))
-                raise
+            # Mark for reaction monitoring
+            msg_list = await client.send_message(message.channel, final)
+            await self.cmd.new_message(msg_list, page, cmd_list)
 
         # !cmd status
         elif startswith(prefix + "cmd status"):
@@ -1083,9 +1227,11 @@ class Admin:
 
             await client.send_message(message.channel, trans.get("MSG_CMD_STATUS", lang).format(len(cc), CMD_LIMIT, percent))
 
+        # !language
         elif startswith(prefix + "language"):
-            cut = str(message.content)[len(prefix + "language "):].strip(" ")
+            cut = message.content[len(prefix + "language "):].strip(" ")
 
+            # !language list
             if cut.startswith("list"):
                 lang_list = []
                 for l_code, l_details in self.trans.meta.items():
@@ -1101,97 +1247,146 @@ class Admin:
 
                 await client.send_message(message.channel, trans.get("MSG_LANG_LIST", lang).format("\n".join(lang_list)))
 
+            # !language set [lang]
             elif cut.startswith("set"):
-                to_set = cut[len("set "):].strip(" ").lower()
+                lang_code = cut[len("set "):].strip(" ").lower()
 
-                if not self.trans.is_language_code(to_set):
+                if not self.trans.is_language_code(lang_code):
                     # Try to find the language by name
-                    to_set = self.trans.find_language_code(to_set)
-                    if not to_set:
+                    lang_code = self.trans.find_language_code(lang_code)
+                    if not lang_code:
                         await client.send_message(message.channel, trans.get("MSG_LANG_NOT_AVAILABLE", lang))
                         return
 
-                self.handler.set_lang(message.server.id, to_set)
+                self.handler.set_lang(message.server.id, lang_code)
 
-                msg = trans.get("MSG_LANG_SET", lang).format(to_set, trans.get("INFO_HELLO", to_set))
-                await client.send_message(message.channel, msg)
+                await client.send_message(message.channel, trans.get("MSG_LANG_SET", lang).format(
+                                                                     lang_code, trans.get("INFO_HELLO", lang_code)))
 
+            # !language
+            # Displays current language
             else:
                 resp = trans.get("MSG_LANG_CURRENT", lang).format(lang, self.trans.meta.get(lang).get("name"), prefix)
                 await client.send_message(message.channel, resp)
 
         # nano.settings
         elif startswith("nano.settings"):
-            try:
-                cut = str(message.content)[len("nano.settings "):].split(" ", 1)
-            except IndexError:
-                return
+            cut = message.content[len("nano.settings "):].split(" ", 1)
 
-            if len(cut) != 2:
+            if len(cut) < 2:
                 await client.send_message(message.channel, trans.get("MSG_SETTINGS_WRONG_USAGE", lang).format(prefix))
                 return
 
-            user_set = cut[0]
+            setting, arg = cut[0].strip(" "), cut[1].strip(" ")
 
-            # Set logchannel
-            if matches_list(user_set, "logchannel"):
-                chan_id = cut[1].replace("<#", "").replace(">", "")
+            # nano.settings logchannel
+            # TODO test
+            if setting == "logchannel":
+                if len(message.channel_mentions) == 0:
+                    # User wants to disable the logchannel
+                    if is_disabled(arg):
+                        handler.update_var(message.server.id, "logchannel", None)
+                        await client.send_message(message.channel, trans.get("MSG_SETTINGS_LOGCHANNEL_DISABLED", lang))
+                        return
 
-                # When the channel is disabled
-                if is_disabled(chan_id):
-                    await client.send_message(message.channel, trans.get("MSG_SETTINGS_LOGCHANNEL_DISABLED", lang))
-                    handler.update_var(message.server.id, "logchannel", None)
-                    return
+                    # No channel mention / parameter
+                    else:
+                        await client.send_message(message.channel, trans.get("ERROR_NOT_CHANNEL", lang))
+                        return
 
-                chan = utils.find(lambda chann: chann.id == chan_id, message.server.channels)
-                if not chan:
-                    await client.send_message(message.channel, trans.get("ERROR_NOT_CHANNEL", lang))
-                    return
+                chan = message.channel_mentions[0]
 
+                # Can't set to voice channel
                 if chan.type == chan.type.voice:
                     await client.send_message(message.channel, trans.get("MSG_SETTINGS_NOT_TEXT", lang))
                     return
 
                 # At this point, the channel should be valid
-                handler.update_var(message.server.id, "logchannel", chan_id)
+                handler.update_var(message.server.id, "logchannel", chan.id)
                 await client.send_message(message.channel, trans.get("MSG_SETTINGS_LOGCHANNEL_SET", lang).format(chan.name))
 
-            # Set allowed selfrole role
-            elif matches_list(user_set, "selfrole"):
-                if len(message.role_mentions) != 0:
-                    selfrole_name = message.role_mentions[0].name
-                    raw_role = message.role_mentions[0]
-                else:
-                    selfrole_name = str(cut[1])
-                    raw_role = utils.find(lambda r: r.name == selfrole_name, message.server.roles)
+            # nano.settings selfrole
+            # TODO multiple selfroles
+            # TODO test
+            elif setting == "selfrole":
+                # For branching - splits the argument again
+                setting, arg = arg.split(" ", 1)
+                setting, arg = setting.strip(" "), arg.strip(" ")
 
-                # If user wants to disable the role with None, Disabled, etc.., ignore existence checks
-                if is_disabled(selfrole_name):
-                    self.handler.set_selfrole(message.server.id, None)
-                    await client.send_message(message.channel, trans.get("MSG_SETTINGS_SELFROLE_DISABLED", lang))
-                    return
+                # nano.settings selfrole add
+                if setting == "add":
+                    role = await self.resolve_role(arg, message, lang)
 
-                if not raw_role:
-                    await client.send_message(message.channel, trans.get("ERROR_INVALID_ROLE_NAME", lang))
-                    return
+                    nano_user = utils.find(lambda me: me.id == client.user.id, message.server.members)
+                    if not nano_user:
+                        log_to_file("SELFROLE: Nano Member is NONE", "bug")
+                        return
 
-                # Checks role position
-                nano_user = utils.find(lambda me: me.id == client.user.id, message.server.members)
-                if not nano_user:
-                    log_to_file("SELFROLE: Nano Member is NONE", "bug")
-                    return
+                    # Checks role position
+                    perms = self.can_access_role(nano_user, role)
+                    if not perms:
+                        await client.send_message(message.channel, trans.get("MSG_SELFROLE_INACCESSIBLE", lang))
+                        return
 
-                try:
-                    await client.add_roles(nano_user, raw_role)
-                    await client.remove_roles(nano_user, raw_role)
-                except derrors.Forbidden:
-                    await client.send_message(message.channel, StandardEmoji.WARNING + trans.get("MSG_SETTINGS_SELFROLE_INACCESSIBLE", lang).format(raw_role.name))
-                    return
+                    r_name = role.name
 
-                self.handler.set_selfrole(message.server.id, selfrole_name)
-                await client.send_message(message.channel, trans.get("MSG_SETTINGS_SELFROLE_SET", lang).format(selfrole_name))
+                    # Check if this role is already a selfrole
+                    if self.handler.is_selfrole(message.server.id, r_name):
+                        await client.send_message(message.channel, trans.get("MSG_SELFROLE_ALR_EX", lang))
+                        return
 
-            elif matches_list(user_set, "defaultchannel"):
+                    self.handler.add_selfrole(message.server.id, r_name)
+                    await client.send_message(message.channel, trans.get("MSG_SELFROLE_ADDED", lang))
+
+                # nano.settings selfrole remove
+                elif setting == "remove":
+                    role = await self.resolve_role(arg, message, lang)
+                    r_name = role.name
+
+                    if not self.handler.is_selfrole(message.server.id, r_name):
+                        await client.send_message(message.channel, trans.get("MSG_SELFROLE_REMOVE_NOT_PRESENT", lang))
+                        return
+
+                    self.handler.remove_selfrole(message.server.id, r_name)
+                    await client.send_message(message.channel, trans.get("MSG_SELFROLE_REMOVED", lang))
+
+                # nano.settings selfrole list
+                elif setting == "list":
+                    try:
+                        page = int(arg)
+
+                        if page != 0:
+                            page -= 1
+                    # If no page is specified
+                    except ValueError:
+                        page = 0
+
+                    roles = self.handler.get_selfroles(message.server.id)
+
+                    if not roles:
+                        await client.send_message(message.channel, trans.get("MSG_SELFROLE_NONE", lang))
+                        return
+
+                    r_list, r_page = make_pages_from_list(roles)
+
+                    # If user wants a page that doesn't exist
+                    if page > r_page:
+                        await client.send_message(message.channel, trans.get("MSG_SELFROLE_NO_PAGE", lang))
+                        return
+
+                    # Only show page counter if necessary
+                    if r_page > 0:
+                        disp_pages = trans.get("MSG_SELFROLE_LIST_PAGES", lang).format(page + 1, r_page + 1)
+                    else:
+                        disp_pages = ""
+
+                    msg = trans.get("MSG_SELFROLE_LIST", lang).format(disp_pages, "\n".join(r_list[page]))
+                    msg_list = await client.send_message(message.channel, msg)
+
+                    await self.sr.new_message(msg_list, page, r_list)
+
+
+            elif matches_list(setting, "defaultchannel"):
                 # TODO clean up
                 if len(message.channel_mentions) != 1:
                     chan = str(message.content[len("nano.settings defaultchannel "):])
@@ -1215,26 +1410,26 @@ class Admin:
                     await client.send_message(message.channel, trans.get("MSG_SETTINGS_DEFCHAN_RESET", lang).format(message.server.default_channel.name))
 
             # Otherwise, set word/spam/invite filter
-            elif matches_list(user_set, "word filter", "wordfilter"):
-                decision = matches_list(cut[1])
+            elif matches_list(setting, "word filter", "wordfilter"):
+                decision = matches_list(arg)
                 handler.update_moderation_settings(message.server, cut[0], decision)
 
                 await client.send_message(message.channel, trans.get("MSG_SETTINGS_WORD", lang).format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
 
-            elif matches_list(user_set, "spam filter", "spamfilter"):
-                decision = matches_list(cut[1])
+            elif matches_list(setting, "spam filter", "spamfilter"):
+                decision = matches_list(arg)
                 handler.update_moderation_settings(message.server, cut[0], decision)
 
                 await client.send_message(message.channel, trans.get("MSG_SETTINGS_SPAM", lang).format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
 
-            elif matches_list(user_set, "filterinvite", "filterinvites", "invitefilter"):
-                decision = matches_list(cut[1])
+            elif matches_list(setting, "filterinvite", "filterinvites", "invitefilter"):
+                decision = matches_list(arg)
                 handler.update_moderation_settings(message.server, cut[0], decision)
 
                 await client.send_message(message.channel, trans.get("MSG_SETTINGS_INVITE", lang).format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
 
             else:
-                await client.send_message(message.channel, trans.get("MSG_SETTINGS_NOT_A_SETTING", lang).format(user_set))
+                await client.send_message(message.channel, trans.get("MSG_SETTINGS_NOT_A_SETTING", lang).format(setting))
 
         # nano.displaysettings
         elif startswith("nano.displaysettings"):
