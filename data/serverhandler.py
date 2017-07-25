@@ -7,7 +7,7 @@ import importlib
 # yaml is a conditional import
 # json is a conditional import
 from discord import Member
-from .utils import Singleton, decode, decode_auto
+from .utils import Singleton, decode, decode_auto, bin2bool
 
 __author__ = "DefaltSimon"
 
@@ -165,6 +165,7 @@ mod_settings_map = {
 # For commands => commands:id_here
 # For mutes => mutes:id_here
 # For blacklist => blacklist:id_here
+# For the selfroles => sr:
 
 
 class RedisServerHandler(ServerHandler, metaclass=Singleton):
@@ -290,18 +291,23 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
     def remove_command(self, server, trigger):
         serv = "commands:{}".format(server.id)
 
-        if decode(self.redis.hget(serv, trigger)):
-            self.redis.hdel(serv, trigger)
-            return True
+        # if decode(self.redis.hexists(serv, trigger)):
+        #     self.redis.hdel(serv, trigger)
+        #     return True
+        #
+        # else:
+        #     return False
 
-        else:
-            return False
+        return bin2bool(decode_auto(self.redis.hdel(serv, trigger)))
 
     def get_custom_commands(self, server_id):
         return decode(self.redis.hgetall("commands:{}".format(server_id)))
 
-    def get_custom_cmd_amount(self, server_id):
+    def get_command_amount(self, server_id):
         return decode(self.redis.hlen("commands:{}".format(server_id)))
+
+    def custom_command_exists(self, server_id, trigger):
+        return decode(self.redis.hexists("commands:{}".format(server_id), trigger))
 
     @validate_input
     def add_channel_blacklist(self, server, channel_id):
@@ -382,19 +388,28 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
     @validate_input
     def remove_server(self, server_id):
         # Not used
-        s = bool(self.redis.delete("server:{}".format(server_id)))
-        c = bool(self.redis.delete("commands:{}".format(server_id)))
-        m = bool(self.redis.delete("mutes:{}".format(server_id)))
-        b = bool(self.redis.delete("blacklist:{}".format(server_id)))
+        s = bin2bool(self.redis.delete("server:{}".format(server_id)))
+        c = bin2bool(self.redis.delete("commands:{}".format(server_id)))
+        m = bin2bool(self.redis.delete("mutes:{}".format(server_id)))
+        b = bin2bool(self.redis.delete("blacklist:{}".format(server_id)))
 
         return s and c and m and b
 
-    def get_selfrole(self, server_id):
-        return decode(self.redis.hget("server:{}".format(server_id), "selfrole"))
+    def get_selfroles(self, server_id):
+        return decode(self.redis.smembers("sr:{}".format(server_id)))
 
-    def set_selfrole(self, server_id, role_name):
-        role = str(role_name)
-        return self.redis.hset("server:{}".format(server_id), "selfrole", role)
+    def add_selfrole(self, server_id, role_name, role_id):
+        if not decode(self.redis.hexists("sr:{}".format(server_id), role_name)):
+            self.redis.sadd("sr:{}".format(server_id), role_id)
+            return True
+
+        return False
+
+    def remove_selfrole(self, server_id, role_name):
+        return bin2bool(self.redis.srem("sr:{}".format(server_id), role_name))
+
+    def is_selfrole(self, server_id, role_name):
+        return bin2bool(self.redis.sismember("sr:{}".format(server_id), role_name))
 
     # Special debug methods
     def db_info(self, section=None):

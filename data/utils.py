@@ -297,16 +297,27 @@ def split_every(content, num):
 
 
 def decode(c):
-    if not c:
+    if c is None:
         return None
 
     return boolify(decode_auto(c))
 
 
-def boolify(s):
-    if s == "True" or s == 1:
+def bin2bool(c):
+    if isinstance(c, bytes):
+        c = c.decode()
+
+    if c == 0:
+        return False
+    if c == 1:
         return True
-    if s == "False" or s == 0:
+
+    return c
+
+def boolify(s):
+    if s == "True":
+        return True
+    if s == "False":
         return False
     if s == "None":
         return None
