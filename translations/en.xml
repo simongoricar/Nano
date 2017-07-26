@@ -74,7 +74,7 @@ Gif command powered by **Giphy**</string>
 
 
     <string name="ERROR_MISSING_CHANNEL">Channel could not be found.</string>
-    <string name="ERROR_PREFIX_TOO_LONG">:warning: Prefix is too long! Maximum length is 100 characters.</string>
+    <string name="ERROR_PREFIX_TOO_LONG">:warning: Prefix is too long! Maximum length is {} characters.</string>
     <string name="ERROR_NOT_MEMBER">Argument must be a member</string>
     <string name="ERROR_NO_USER">:warning: Member does not exist.</string>
     <string name="ERROR_NO_USER2">:warning: No such user.</string>
@@ -90,6 +90,7 @@ Gif command powered by **Giphy**</string>
     <string name="ERROR_INVALID_CMD_ARGUMENTS">Something went wrong, check your command arguments.</string>
     <string name="ERROR_SOMETHING">:warning: Something went wrong...</string>
     <string name="ERROR_NO_SUCH_ROLE">:warning: Role does not exist!</string>
+    <string name="ERROR_MSG_TOO_LONG">:x: Message was too long to display, consider making whatever it was a little shorter.</string>
 
     <string name="MSG_NUKE_PURGING">Purging last {} messages... :boom:</string>
     <string name="MSG_NUKE_PURGED">Purged {} messages :ok_hand:.</string>
@@ -176,18 +177,21 @@ Try `{}language list` to see all available languages.</string>
     <string name="MSG_SETTINGS_LOGCHANNEL_SET">Log channel set to **{}** :smile:</string>
     <string name="MSG_SETTINGS_LOGCHANNEL_DISABLED">Log channel **disabled** :ok_hand:</string>
 
-    <string name="MSG_SELFROLE_REMOVED">:ok: **{}** removed from list of selfroles.</string>
+    <string name="MSG_SELFROLE_ADMIN_REMOVED">:ok: **{}** removed from list of selfroles.</string>
+    <string name="MSG_SELFROLE_ADMIN_ADDED">:ok: Selfrole added.</string>
     <string name="MSG_SELFROLE_ALR_EX">:warning: This selfrole already exists!</string>
     <string name="MSG_SELFROLE_INACCESSIBLE">:warning:  **{}** is inaccessible (could be higher than Nano's top role or Nano does not have the permission 'Manage Roles')</string>
-    <string name="MSG_SELFROLE_ADDED">:ok: Selfrole added.</string>
-    <string name="MSG_SELFROLE_REMOVED">:ok: Selfrole removed.</string>
-    <string name="MSG_SELFROLE_REMOVE_NOT_PRESENT">:warning: Not currently a selfrole.</string>
-    <string name="MSG_SELFROLE_LIST">**Selfroles** {}
+    <string name="MSG_SELFROLE_REMOVE_NOT_PRESENT">:warning: Not a selfrole.</string>
+    <string name="MSG_SELFROLE_NOT_ANYMORE">:warning: Not a role in this server.</string>
+    <string name="MSG_SELFROLE_LIST">**Selfroles** (page **{}**/{})
 
 {}</string>
-    <string name="MSG_SELFROLE_LIST_PAGES">(page **{}**/{})</string>
+    <string name="MSG_SELFROLE_NOT_PRESENT">:warning: Could not add role: **{}** does not exist on this server</string>
+    <string name="MSG_SELFROLE_REMOVED">:ok_hand: Removed **{}** from your list of roles.</string>
+    <string name="MSG_SELFROLE_ADDED">:ok_hand: Role added.</string>
     <string name="MSG_SELFROLE_NONE">No selfrole are currently available on this server. Add one with `nano.settings selfrole add [role]` !</string>
     <string name="MSG_SELFROLE_NO_PAGE">No such page! There are currently only **{}** pages.</string>
+    <string name="MSG_SELFROLE_TOO_MANY">:warning: Selfrole limit reached! You can only have **{}** selfroles at a time.</string>
 
     <string name="MSG_SETTINGS_DEFCHAN_SET">:ok: Default channel set to **{}**.</string>
     <string name="MSG_SETTINGS_DEFCHAN_RESET">:ok: Default channel set back to default - **{}**.</string>
@@ -196,35 +200,70 @@ Try `{}language list` to see all available languages.</string>
     <string name="MSG_SETTINGS_INVITE">Invite filter {}</string>
     <string name="MSG_SETTINGS_NOT_A_SETTING">**{}** is not a setting. Should be one of: logchannel, selfrole, invitefilter, wordfilter, spamfilter, defaultchannel.</string>
     <string name="MSG_SETTINGS_NO_BLACKLIST">No blacklists</string>
-    <string name="MSG_SETTINGS_DISPLAY">**Settings for current server:**```
-Blacklisted channels: {}
-Spam filter: {}
-Word filter: {}
-Invite removal: {}
-Log channel: {} {}
-Default channel: {}
-Prefix: {}
-Selfrole: {}```
-Messages:
-➤ Join: `{}`
-➤ Leave: `{}`
-➤ Ban: `{}`
-➤ Kick: `{}`</string>
+    <string name="MSG_SETTINGS_DISPLAY">**Server Settings**
+```markdown
+## Prefix
+{}
+
+## Blacklisted channels
+{}
+
+====================
+
+## Spam Filter
+{}
+
+## Word filter
+{}
+
+## Invite filter
+{}
+
+====================
+
+## Log Channel
+{}
+
+## Default Channel
+{}
+
+===================
+```</string>
+    <string name="MSG_SETTINGS_DISPLAY_2">**Messages**
+```markdown
+
+[1.]: Join
+{}
+
+[2.]: Leave
+{}
+
+[3.]: Kick
+{}
+
+[4.]: Ban
+{}
+```</string>
 
     <string name="MSG_BLACKLIST_ADDED">Successfully added &lt;#{}> to the blacklist :ok_hand:</string>
-    <string name="MSG_BLACKLIST_REMOVED">Channel blacklist for {} removed :ok_hand:</string>
+    <string name="MSG_BLACKLIST_REMOVED">Channel blacklist for &lt;#{}> removed :ok_hand:</string>
     <string name="MSG_BLACKLIST_REMOVE_FAIL">Channel blacklist could not be removed, because there is no channel under that name.</string>
+    <string name="MSG_BLACKLIST_DOESNT_EXIST">&lt;#{}> is not a blacklisted channel.</string>
+    <string name="MSG_BLACKLIST_TOO_MANY">Too many blacklists! **{}** is the maximum amount of blacklisted channels allowed.</string>
     <string name="MSG_BLACKLIST_LIST">Blacklisted channels:
+
 {}</string>
     <string name="MSG_BLACKLIST_NONE">There are no blacklisted channels on this server. :smile:</string>
 
-    <string name="MSG_RESET_CONFIRM">:warning: Are you sure you want to reset all Nano-related sever settings to default? Confirm by replying '{}'.</string>
+    <string name="MSG_RESET_CONFIRM">:warning: Are you sure you want to reset all Nano-related sever settings to default? (this doesn't include mutes, selfroles and commands)
+Confirm by replying with '{}'.</string>
     <string name="MSG_RESET_CONFIRM_TIMEOUT">Confirmation not received, NOT resetting :upside_down:</string>
     <string name="MSG_RESET_DONE">Reset. :white_check_mark:</string>
 
-    <string name="MSG_PREFIX_CHANGED">Prefix has been changed to {} :ok_hand:</string>
+    <string name="MSG_PREFIX_CHANGED">Prefix has been changed to **{}** :ok_hand:</string>
+    <string name="MSG_PREFIX_PLS_ARGUMENTS">This command needs an argument: the prefix you want to set.</string>
 
-    <string name="MSG_SETUP_TIMEOUT">You ran out of time :upside_down: (FYI: the timeout is 35 seconds)</string>
+    <string name="MSG_SETUP_TIMEOUT">You ran out of time :upside_down: (timeout is 35 seconds)</string>
     <string name="MSG_SETUP_WELCOME">**SERVER SETUP**
 You have started the server setup. It consists of a few steps, where you will be prompted to answer. Because you started the setup, only your answers will be taken into account.
 **Let's get started, shall we?**</string>
@@ -240,8 +279,9 @@ Reply with that message or with None if you want to disable welcome messages.
     <string name="MSG_SETUP_SPAM">Would you like me to filter spam? **{} / {}**</string>
     <string name="MSG_SETUP_SWEARING">Would you like me to filter swearing? **{} / {}**</string>
     <string name="MSG_SETUP_LOGCHANNEL">What channel would you like to use for logging? **channel name/{}**</string>
-    <string name="MSG_SETUP_LOGCHANNEL_DISABLED">Logging has been disabled.</string>
-    <string name="MSG_SETUP_LOGCHANNEL_SET">Log channel has been set to '{}'</string>
+    <string name="MSG_SETUP_LOGCHANNEL_DISABLED">Logging disabled.</string>
+    <string name="MSG_SETUP_LOGCHANNEL_SET">Log channel set to **{}**</string>
+    <string name="MSG_SETUP_LOGCHANNEL_INVALID">:x: Invalid log channel.</string>
     <string name="MSG_SETUP_COMPLETE">**This concludes the basic server setup.**
 But there are a few more settings to set up if you need'em:
 ➤ channel blacklisting - `nano.blacklist add/remove channel_name`
@@ -267,11 +307,6 @@ For a list of all commands and their explanations, use `>cmds`.</string>
     <string name="MSG_8BALL_STRINGS">It is certain | It is surely so | Without a doubt | You may rely on it | Most likely | Yes | Ask again later | Cannot predict now | Concentrate and ask again | I would say yes | JUST DO IT | My reply is no | My sources say no | Signs point to yes</string>
     <string name="MSG_AVATAR_OWNERSHIP">**{}**'s avatar: {}</string>
     <string name="MSG_AVATAR_NONE">**{}** does not have an avatar. :expressionless:</string>
-
-    <string name="MSG_SELFROLE_NOT_ENABLED">:warning: Selfrole is not enabled on this server.</string>
-    <string name="MSG_SELFROLE_NOT_PRESENT">:warning: Could not add role: **{}** does not exist on this server</string>
-    <string name="MSG_SELFROLE_REMOVED">:ok_hand: Removed **{}** from your list of roles.</string>
-    <string name="MSG_SELFROLE_ADDED">:ok_hand: Role added.</string>
 
     <string name="MSG_AYYLMAO">My inspiration in the world of memes.</string>
     <string name="MSG_WHOKNOWS">¯\_(ツ)_/¯</string>
