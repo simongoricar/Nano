@@ -194,7 +194,7 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
 
     def server_setup(self, server, **_):
         # These are server defaults
-        s_data = dict(server_defaults).copy()
+        s_data = server_defaults.copy()
         s_data["owner"] = server.owner.id
         s_data["name"] = server.name
 
@@ -217,7 +217,7 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
         # Special: HGETALL returns a dict with binary keys and values!
         base = decode(self.redis.hgetall("server:{}".format(server.id)))
         cmd_list = self.get_custom_commands(server)
-        bl = self.get_blacklist(server)
+        bl = self.get_blacklists(server)
         mutes = self.get_mute_list(server)
 
         data = decode(base)
@@ -310,21 +310,21 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
         return decode(self.redis.hexists("commands:{}".format(server_id), trigger))
 
     @validate_input
-    def add_channel_blacklist(self, server, channel_id):
-        serv = "blacklist:{}".format(server.id)
+    def add_channel_blacklist(self, server_id, channel_id):
+        serv = "blacklist:{}".format(server_id)
         return bool(self.redis.sadd(serv, channel_id))
 
     @validate_input
-    def remove_channel_blacklist(self, server, channel_id):
-        serv = "blacklist:{}".format(server.id)
+    def remove_channel_blacklist(self, server_id, channel_id):
+        serv = "blacklist:{}".format(server_id)
         return bool(self.redis.srem(serv, channel_id))
 
-    def is_blacklisted(self, server, channel_id):
-        serv = "blacklist:{}".format(server.id)
-        return bool(self.redis.sismember(serv, channel_id))
+    def is_blacklisted(self, server_id, channel_id):
+        serv = "blacklist:{}".format(server_id)
+        return bin2bool(self.redis.sismember(serv, channel_id))
 
-    def get_blacklist(self, server):
-        serv = "blacklist:{}".format(server.id)
+    def get_blacklists(self, server_id):
+        serv = "blacklist:{}".format(server_id)
         return list(decode(self.redis.smembers(serv)) or [])
 
     def get_prefix(self, server):
@@ -398,12 +398,8 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
     def get_selfroles(self, server_id):
         return decode(self.redis.smembers("sr:{}".format(server_id)))
 
-    def add_selfrole(self, server_id, role_name, role_id):
-        if not decode(self.redis.hexists("sr:{}".format(server_id), role_name)):
-            self.redis.sadd("sr:{}".format(server_id), role_id)
-            return True
-
-        return False
+    def add_selfrole(self, server_id, role_name):
+        return bin2bool(self.redis.sadd("sr:{}".format(server_id), role_name))
 
     def remove_selfrole(self, server_id, role_name):
         return bin2bool(self.redis.srem("sr:{}".format(server_id), role_name))

@@ -251,7 +251,7 @@ class Moderator:
             return "return"
 
         # Channel blacklisting
-        if handler.is_blacklisted(message.server, message.channel.id):
+        if handler.is_blacklisted(message.server.id, message.channel.id):
             return "return"
 
         # Ignore existing commands

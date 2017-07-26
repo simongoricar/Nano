@@ -63,7 +63,6 @@ commands = {
     "_say": {"desc": "Says something (#channel is optional)", "use": "[command] (#channel) [message]", "alias": None},
     "nano.info": {"desc": "A little info about me.", "use": None, "alias": "_ayybot"},
     "_nano": {"desc": "A little info about me.", "use": None, "alias": "nano.info"},
-    "_selfrole": {"desc": "Allows everyone to give themselves an admin-set role (but you have to know the name of the role)\nIf you already have the role, this command removes it.", "use": "[command] [role name]", "alias": None},
 }
 
 valid_commands = commands.keys()
@@ -298,40 +297,6 @@ class Commons:
 
             await client.send_message(channel, content)
             await self.log_say_command(message, content, prefix, lang)
-
-
-        # !selfrole [role name]
-        elif startswith(prefix + "selfrole"):
-            role = str(message.content[len(prefix + "selfrole"):]).strip(" ")
-            s_role = self.handler.get_selfrole(message.server.id)
-
-            # Check stuff
-            if is_disabled(s_role):
-                await client.send_message(message.channel, trans.get("MSG_SELFROLE_NOT_ENABLED", lang))
-                return
-            elif (role != s_role) and len(message.role_mentions) == 0:
-                # Not a selfrole
-                await client.send_message(message.channel, trans.get("ERROR_INVALID_ROLE_NAME", lang))
-            elif len(message.role_mentions) != 0:
-                role = message.role_mentions[0]
-                if role.name != s_role:
-                    await client.send_message(message.channel, trans.get("ERROR_INVALID_ROLE_NAME", lang))
-                    return
-            else:
-                # If arguments are correct, find the Role object
-                role = utils.find(lambda r: r.name == s_role, message.server.roles)
-                if not role:
-                    await client.send_message(message.channel, trans.get("MSG_SELFROLE_NOT_PRESENT", lang).format(s_role))
-                    return
-
-
-            # If user already has the role, remove it
-            if role in message.author.roles:
-                await client.remove_roles(message.author, role)
-                await client.send_message(message.channel, trans.get("MSG_SELFROLE_REMOVED", lang).format(s_role))
-            else:
-                await client.add_roles(message.author, role)
-                await client.send_message(message.channel, trans.get("MSG_SELFROLE_ADDED", lang))
 
     async def on_reaction_add(self, reaction, _, **kwargs):
         if reaction.message.id in self.pings.keys():
