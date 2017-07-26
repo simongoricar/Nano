@@ -664,7 +664,7 @@ class Admin:
                 await client.send_message(message.channel, trans.get("PERM_MOD", lang))
                 return "return"
 
-            name = message.content[len(prefix + "kick "):]
+            name = message.content[len(prefix + "ban "):]
             user = await self.resolve_user(name, message, lang)
 
             if user.id == client.user.id:
@@ -1608,6 +1608,7 @@ class Admin:
             return "return"
 
         # check for normal ban
+        # Prevents double messages
         elif member.id in self.bans:
             self.bans.remove(member.id)
             return "return"
