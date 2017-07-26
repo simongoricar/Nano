@@ -49,9 +49,9 @@ class Reporter:
 
         else:
             if isinstance(args[0], (User, Member)):
-                readable = "{}:{}".format(args[0].name, args[0].id)
+                readable = "{}:{} (server:{})".format(args[0].name, args[0].id, args[0].server.id)
             elif isinstance(args[0], Message):
-                readable = "'{}' by {}".format(args[0].content, args[0].author.name)
+                readable = "'{}' by {} (server:{})".format(args[0].content, args[0].author.name, args[0].server.id)
             elif isinstance(args[0], Server):
                 readable = "{} (server)({})".format(args[0].name, args[0].id)
             else:
