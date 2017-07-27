@@ -6,14 +6,16 @@ from random import randint
 
 from discord import Message, utils, Embed
 
-from data.serverhandler import ServerHandler
 from data.stats import MESSAGE, PING
-from data.utils import is_valid_command, is_disabled, make_dots
+from data.utils import is_valid_command, make_dots
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
-# Strings
+#####
+# Commons plugin
+# Mostly simple commands like !ping and !quote
+#####
 
 quotes = [
     "You miss 100% of the shots you don’t take. –Wayne Gretzky",
@@ -52,8 +54,9 @@ commands = {
     "_uptime": {"desc": "Tells you for how long I have been running.", "use": None, "alias": None},
     "_github": {"desc": "Link to my project on GitHub.", "use": None, "alias": None},
     "_ping": {"desc": "Just to check if I'm alive. fyi: I love ping-pong.", "use": None, "alias": None},
-    "_roll": {"desc": "Replies with a random number in range from 0 to your number.", "use": "[command] [number]", "alias": None},
-    "_dice": {"desc": "Rolls the dice", "use": "[command]", "alias": None},
+    "_roll": {"desc": "Replies with a random number in range from 0 to your number.", "use": "[command] [number]", "alias": "_rng"},
+    "_rng": {"desc": "Replies with a random number in range from 0 to your number.", "use": "[command] [number]", "alias": "_roll"},
+    "_dice": {"desc": "Rolls the dice\nDice expression example: `5d6` - rolls five dices with six sides, `1d9` - rolls one dice with nine sides", "use": "[command] [dice expression]", "alias": None},
     "_decide": {"desc": "Decides between different choices so you don't have to.", "use": "[command] word1|word2|word3|...", "alias": None},
     "_8ball": {"desc": "Answers your questions. 8ball style.", "use": "[command] [question]", "alias": None},
     "_quote": {"desc": "Brightens your day with a random quote.", "use": None, "alias": None},
@@ -67,7 +70,6 @@ commands = {
 
 valid_commands = commands.keys()
 
-# Common commands plugin
 
 
 class Commons:
@@ -81,11 +83,11 @@ class Commons:
 
         self.pings = {}
         self.getter = None
-
-        assert isinstance(self.handler, ServerHandler)
+        self.resolve_user = None
 
     async def on_plugins_loaded(self):
         self.getter = self.nano.get_plugin("server").get("instance")
+        self.resolve_user = self.nano.get_plugin("admin").get("instance").resolve_user
 
     async def log_say_command(self, message, content, prefix, lang):
         log_channel = await self.getter.handle_log_channel(message.server)
@@ -108,48 +110,61 @@ class Commons:
                 ok = True
                 break
 
-        if server.owner.id == author.id:
+        if server.owner == author:
             ok = True
 
+        # Removes mentions if user doesn't have the permission to mention
         if not ok:
             content = str(content).replace("@everyone", "").replace("@here", "")
 
         return content
 
     async def on_message(self, message, **kwargs):
-        # Things
-        assert isinstance(message, Message)
         client = self.client
+        handler = self.handler
+        trans = self.trans
 
-        # Prefixes
         prefix = kwargs.get("prefix")
         lang = kwargs.get("lang")
-        trans = self.trans
+
+        assert isinstance(message, Message)
 
         # Custom commands registered for the server
         server_commands = self.handler.get_custom_commands(message.server.id)
 
+        # TODO rewrite
         if server_commands:
             # Checks for server specific commands
             for command in server_commands.keys():
                 # UPDATE 2.1.4: not .startswith anymore!
                 if str(message.content) == command:
                     # Maybe same replacement logic in the future update?
-                    # /todo implement advanced replacement logic
+                    # TODO implement advanced replacement logic
                     await client.send_message(message.channel, server_commands.get(command))
                     self.stats.add(MESSAGE)
 
                     return
 
-        if not is_valid_command(message.content, valid_commands, prefix=prefix):
+        # if server_commands:
+        #     # According to tests, .startswith is faster than slicing, wtf
+        #     pass
+        #
+        #     for k in server_commands.keys():
+        #         if message.content.startswith(k):
+        #             # TODO parse logic
+        #             # TODO reply
+        #             pass
+
+
+        # Check if this is a valid command
+        if not is_valid_command(message.content, commands, prefix=prefix):
             return
         else:
             self.stats.add(MESSAGE)
 
-        # A shortcut
-        def startswith(*msg):
-            for b in msg:
-                if message.content.startswith(b):
+        def startswith(*matches):
+            for match in matches:
+                if message.content.startswith(match):
                     return True
 
             return False
@@ -178,14 +193,14 @@ class Commons:
         elif startswith(prefix + "github"):
             await client.send_message(message.channel, trans.get("INFO_GITHUB", lang))
 
-        # !roll
-        elif startswith(prefix + "roll"):
+        # !roll [number]
+        elif startswith(prefix + "roll", prefix + "rng "):
             if startswith(prefix + "roll"):
                 num = message.content[len(prefix + "roll "):]
             else:
                 num = message.content[len(prefix + "rng "):]
 
-            if not str(num).isnumeric():
+            if not num.isnumeric():
                 await client.send_message(message.channel, trans.get("ERROR_NOT_NUMBER", lang))
                 return
 
@@ -194,15 +209,40 @@ class Commons:
 
             await client.send_message(message.channel, trans.get("MSG_ROLL", lang).format(message.author.mention, result))
 
-        # !dice
+        # !dice [dice expression: 5d6 + 1d8]
         elif startswith(prefix + "dice"):
-            rn = randint(1, 6)
-            await client.send_message(message.channel, trans.get("MSG_DICE", lang).format(message.author.mention, rn))
+            cut = message.content[len(prefix + "dice "):]
+
+            # Defaults to a normal dice
+            if not cut:
+                dice_types = ["1d6"]
+            else:
+                dice_types = [a.strip(" ") for a in cut.split("+")]
+
+            results = []
+            tt = 0
+            for dice in dice_types:
+                try:
+                    times, sides = dice.split("d")
+                    times, sides = int(times), int(sides)
+                except ValueError:
+                    await client.send_message(message.channel, trans.get("MSG_DICE_INVALID", lang))
+                    return
+
+                total = 0
+                for _ in range(times):
+                    total += randint(1, sides)
+
+                tt += total
+
+                results.append(trans.get("MSG_DICE_ENTRY", lang).format(dice, total))
+
+            await client.send_message(message.channel, trans.get("MSG_DICE_RESULTS", lang).format(message.author.mention, "\n".join(results), tt))
 
         # !ping
         elif startswith(prefix + "ping"):
             base_time = datetime.now() - message.timestamp
-            base_taken = int(divmod(base_time.total_seconds(), 60)[1] * 100)
+            base_taken = int(divmod(base_time.total_seconds(), 60)[1] * 1000)
 
             a = await client.send_message(message.channel, trans.get("MSG_PING_MEASURING", lang))
             self.pings[a.id] = [time.monotonic(), message.channel.id, base_taken]
@@ -210,11 +250,11 @@ class Commons:
             await client.add_reaction(a, "\U0001F44D")
             self.stats.add(PING)
 
-        # !decide
+        # !decide [item1]|[item2]|etc...
         elif startswith(prefix + "decide"):
-            cut = str(message.content)[len(prefix + "decide "):]
+            cut = str(message.content)[len(prefix + "decide "):].strip(" ")
 
-            if not cut.strip(" "):
+            if not cut:
                 await client.send_message(message.channel, trans.get("MSG_DECIDE_NO_ARGS", lang))
                 return
 
@@ -242,8 +282,8 @@ class Commons:
             await client.send_message(message.channel, "{}\n- __{}__".format(chosen[:place], chosen[place+1:]))
 
         # !invite
-        elif startswith(prefix + "invite", "nano.invite", "nano invite"):
-            # ONLY FOR TESTING
+        elif startswith(prefix + "invite", "nano.invite"):
+            # ONLY FOR TESTING - if nano beta is active
             if startswith("nano.invite.make_real"):
                 application = await client.application_info()
 
@@ -255,22 +295,13 @@ class Commons:
                 await client.send_message(message.channel, trans.get("INFO_INVITE", lang).replace("<link>", url))
                 return
 
-
-            link = "<http://invite.nanobot.pw>"
-
-            await client.send_message(message.channel, trans.get("INFO_INVITE", lang).replace("<link>", link))
+            await client.send_message(message.channel, trans.get("INFO_INVITE", lang).replace("<link>", "<http://invite.nanobot.pw>"))
 
         # !avatar
+        # TODO test
         elif startswith(prefix + "avatar"):
-            # Selects the proper user
-            if len(message.mentions) == 0:
-                name = str(str(message.content)[len(prefix + "avatar "):])
-                member = utils.find(lambda m: m.name == name, message.server.members)
-            else:
-                member = message.mentions[0]
-
-            if not member:
-                member = message.author
+            name = message.content[len(prefix + "avatar "):]
+            member = self.resolve_user(name, message, lang)
 
             url = member.avatar_url
 
@@ -279,13 +310,17 @@ class Commons:
             else:
                 await client.send_message(message.channel, trans.get("MSG_AVATAR_NONE", lang).format(member.name))
 
-        # !say
+        # !say (#channel) [message]
         elif startswith(prefix + "say"):
             if not self.handler.is_mod(message.author, message.server):
                 await client.send_message(message.channel, trans.get("PERM_MOD", lang))
                 return "return"
 
             content = str(message.content[len(prefix + "say "):]).strip(" ")
+
+            if not content:
+                await client.send_message(message.channel, trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
+                return
 
             if len(message.channel_mentions) != 0:
                 channel = message.channel_mentions[0]
@@ -305,8 +340,9 @@ class Commons:
 
             delta = round((time.monotonic() - int(data[0])) * 100, 2)
             msg = await self.client.get_message(self.client.get_channel(data[1]), reaction.message.id)
+
             await self.client.edit_message(msg, self.trans.get("MSG_PING_RESULT", lang).format(data[2], delta))
-            await self.client.remove_reaction(msg, "\U0001F44D", reaction.message.server.me)
+            await self.client.clear_reacions(msg)
 
 
 class NanoPlugin:

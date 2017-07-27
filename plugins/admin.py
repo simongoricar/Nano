@@ -9,6 +9,7 @@ from discord import Message, utils, Client, Embed, Colour, DiscordException, Obj
 
 from data.serverhandler import INVITEFILTER_SETTING, SPAMFILTER_SETTING, WORDFILTER_SETTING
 from data.utils import convert_to_seconds, matches_list, is_valid_command, StandardEmoji, decode, resolve_time, log_to_file, is_disabled, IgnoredException
+from data.stats import MESSAGE
 
 
 #####
@@ -301,7 +302,7 @@ class ObjectListReactions:
 
         self.track.set_message_data(message.id, data)
 
-    async def handle_reaction(self, reaction, user, **kwargs):
+    async def handle_reaction(self, reaction, user, **_):
         # Ignore reactions from self
         if user.id == self.client.user.id:
             return
@@ -534,6 +535,8 @@ class Admin:
         # Check if this is a valid command
         if not is_valid_command(message.content, commands, prefix=prefix):
             return
+        else:
+            self.stats.add(MESSAGE)
 
         def startswith(*matches):
             for match in matches:
@@ -1442,8 +1445,8 @@ class Admin:
             NONE = trans.get("INFO_NONE", lang)
             DONE = trans.get("INFO_DONE", lang)
 
-            async def timeout(msg):
-                await client.send_message(msg.channel, trans.get("MSG_SETUP_TIMEOUT", lang))
+            async def timeout(a_msg):
+                await client.send_message(a_msg.channel, trans.get("MSG_SETUP_TIMEOUT", lang))
 
             msg_intro = trans.get("MSG_SETUP_WELCOME", lang)
             await client.send_message(message.channel, msg_intro)

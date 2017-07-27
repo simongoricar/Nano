@@ -137,10 +137,11 @@ class Fun:
         }
 
         # Loop over simple commands
-        for trigger, response in simple_commands.items():
-            if message.content.startswith(trigger.replace("_", prefix)):
-                await client.send_message(message.channel, response)
+        for k, v in simple_commands.items():
+            if message.content.startswith(k):
+                await client.send_message(message.channel, v)
                 self.stats.add(MESSAGE)
+                return
 
         if not is_valid_command(message.content, valid_commands, prefix=prefix):
             return
