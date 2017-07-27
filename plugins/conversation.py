@@ -38,9 +38,10 @@ class Conversation:
             await client.send_message(message.channel, msg)
 
         # RESPONSES
+        # TODO rewrite with fuzzywuzzy
 
         # If it is just a raw mention, send the help message
-        if str(message.content).replace("<@{}>".format(self.client.user.id), "").strip(" ") == "":
+        if message.content.replace("<@{}>".format(self.client.user.id), "").strip(" ") == "":
             await client.send_message(message.channel, trans.get("MSG_HELP", lang).replace("_", prefix))
 
         elif has("prefix"):

@@ -36,15 +36,16 @@ game_list = [
     "with DefaltSimon",
     "with Discord",
     "with python",
-    "get a 'nano.invite'",
+    "nano.invite",
     "with you all",
-    "jazz",
-    "party hard (▀̿Ĺ̯▀̿ ̿)"
+    "party hard (▀̿Ĺ̯▀̿ ̿)",
+    "nanobot.pw",
+    ""
 ]
 
 commands = {
-    "nano.dev.": {},
-    "nano.playing": {"desc": "Restricted to owner(!), changes 'playing' status.", "use": "[command] [status]", "alias": None},
+    "nano.dev": {"desc": "Developer commands, resticted."},
+    "nano.playing": {"desc": "Restricted to owner, changes 'playing' status.", "use": "[command] [status]", "alias": None},
     "nano.restart": {"desc": "Restricted to owner, restarts down the bot.", "use": "[command]", "alias": None},
     "nano.reload": {"desc": "Restricted to owner, reloads all settings from config file.", "use": None, "alias": "_reload"},
     "nano.kill": {"desc": "Restricted to owner, shuts down the bot.", "use": "[command]", "alias": None},
@@ -91,11 +92,9 @@ class StatusRoller:
 
 class BackupManager:
     def __init__(self, time=86400, keep_backup_every=3):  # 86400 seconds = one day (backup is executed once a day)
-        storage = parser.get("Storage", "type")
-
         log.info("Backup enabled: redis")
-        self.serv_path = os.path.join("data", "data.rdb")
-        self.serv_path2 = os.path.join("backup", "data.rdb.bak")
+        self.s_path = os.path.join("data", "data.rdb")
+        self.s_path_d = os.path.join("backup", "data.rdb.bak")
 
         if not os.path.isdir("backup"):
             os.mkdir("backup")
@@ -123,11 +122,11 @@ class BackupManager:
 
             buff_name = "data{}.rdb".format(str(datetime.now().strftime("%d-%B-%Y_%H-%M-%S")))
             f_name = os.path.join("backup", "full", buff_name)
-            copy2(self.serv_path, f_name)
+            copy2(self.s_path, f_name)
             log.info("Created a dated backup.")
 
         try:
-            copy2(self.serv_path, self.serv_path2)
+            copy2(self.s_path, self.s_path_d)
         except FileNotFoundError:
             pass
 
