@@ -377,7 +377,7 @@ class TeamFortress:
 
 class NanoPlugin:
     name = "Team Fortress 2"
-    version = "0.2.2"
+    version = "18"
 
     handler = TeamFortress
     events = {

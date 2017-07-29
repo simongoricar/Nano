@@ -245,7 +245,7 @@ class Minecraft:
 
 class NanoPlugin:
     name = "Minecraft Commands"
-    version = "0.1.2"
+    version = "12"
 
     handler = Minecraft
     events = {

@@ -350,7 +350,7 @@ class Reminder:
 
 class NanoPlugin:
     name = "Reminder Commands"
-    version = "0.2.3"
+    version = "19"
 
     handler = Reminder
     events = {

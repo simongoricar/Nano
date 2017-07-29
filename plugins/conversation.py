@@ -145,7 +145,7 @@ class Conversation:
 
 class NanoPlugin:
     name = "Conversation Commands"
-    version = "0.2.1"
+    version = "7"
 
     handler = Conversation
     events = {

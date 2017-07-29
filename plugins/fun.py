@@ -213,7 +213,7 @@ class Fun:
 
 class NanoPlugin:
     name = "Admin Commands"
-    version = "0.1.1"
+    version = "11"
 
     handler = Fun
     events = {

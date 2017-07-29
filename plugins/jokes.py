@@ -372,7 +372,7 @@ class Joke:
 
 class NanoPlugin:
     name = "Joke-telling module"
-    version = "0.1.3"
+    version = "6"
 
     handler = Joke
     events = {

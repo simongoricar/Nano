@@ -322,7 +322,7 @@ class Moderator:
 
 class NanoPlugin:
     name = "Moderator"
-    version = "0.3"
+    version = "29"
 
     handler = Moderator
     events = {
