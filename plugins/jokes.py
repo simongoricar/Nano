@@ -7,7 +7,7 @@ from ujson import loads
 
 import aiohttp
 from bs4 import BeautifulSoup
-from discord import Message, Client, Embed, Colour
+from discord import Message, Client, Embed
 
 from data.stats import MESSAGE, IMAGE_SENT
 from data.utils import is_valid_command, is_number, log_to_file

@@ -40,11 +40,12 @@ game_list = [
     "with you all",
     "party hard (▀̿Ĺ̯▀̿ ̿)",
     "nanobot.pw",
+    "nanobot.pw/commands.html",
     ""
 ]
 
 commands = {
-    "nano.dev": {"desc": "Developer commands, resticted."},
+    "nano.dev": {"desc": "Developer commands, restricted."},
     "nano.playing": {"desc": "Restricted to owner, changes 'playing' status.", "use": "[command] [status]", "alias": None},
     "nano.restart": {"desc": "Restricted to owner, restarts down the bot.", "use": "[command]", "alias": None},
     "nano.reload": {"desc": "Restricted to owner, reloads all settings from config file.", "use": None, "alias": "_reload"},
@@ -85,6 +86,7 @@ class StatusRoller:
                 await self.change_status(game)
                 await sleep(self.time)
 
+            # Shuffle when the whole list is used
             shuffle(game_list)
 
         log_to_file("Exited status changer")
