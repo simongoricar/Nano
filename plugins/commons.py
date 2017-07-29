@@ -4,7 +4,7 @@ import time
 from datetime import timedelta, datetime
 from random import randint
 
-from discord import Message, utils, Embed
+from discord import Message, Embed, Forbidden
 
 from data.stats import MESSAGE, PING
 from data.utils import is_valid_command, make_dots
@@ -121,7 +121,6 @@ class Commons:
 
     async def on_message(self, message, **kwargs):
         client = self.client
-        handler = self.handler
         trans = self.trans
 
         prefix = kwargs.get("prefix")
@@ -298,10 +297,13 @@ class Commons:
             await client.send_message(message.channel, trans.get("INFO_INVITE", lang).replace("<link>", "<http://invite.nanobot.pw>"))
 
         # !avatar
-        # TODO test
         elif startswith(prefix + "avatar"):
             name = message.content[len(prefix + "avatar "):]
-            member = self.resolve_user(name, message, lang)
+
+            if not name:
+                member = message.author
+            else:
+                member = await self.resolve_user(name, message, lang)
 
             url = member.avatar_url
 
@@ -330,8 +332,11 @@ class Commons:
 
             content = self.at_everyone_filter(content, message.author, message.server)
 
-            await client.send_message(channel, content)
-            await self.log_say_command(message, content, prefix, lang)
+            try:
+                await client.send_message(channel, content)
+                await self.log_say_command(message, content, prefix, lang)
+            except Forbidden:
+                await client.send_message(message.channel, trans.get("MSG_SAY_NOPERM", lang).format(channel.id))
 
     async def on_reaction_add(self, reaction, _, **kwargs):
         if reaction.message.id in self.pings.keys():
@@ -342,7 +347,7 @@ class Commons:
             msg = await self.client.get_message(self.client.get_channel(data[1]), reaction.message.id)
 
             await self.client.edit_message(msg, self.trans.get("MSG_PING_RESULT", lang).format(data[2], delta))
-            await self.client.clear_reacions(msg)
+            await self.client.clear_reactions(msg)
 
 
 class NanoPlugin:

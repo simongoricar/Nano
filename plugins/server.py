@@ -9,7 +9,6 @@ from datetime import datetime, timedelta
 import discord
 import psutil
 
-from data.serverhandler import RedisServerHandler
 from data.stats import MESSAGE
 from data.utils import is_valid_command, log_to_file, is_disabled
 

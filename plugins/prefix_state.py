@@ -4,7 +4,6 @@ import logging
 
 from discord import Message, Member
 
-from data.serverhandler import RedisServerHandler
 from data.stats import SLEPT
 
 log = logging.getLogger(__name__)
