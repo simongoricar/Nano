@@ -9,7 +9,7 @@ from datetime import datetime
 from random import shuffle
 from shutil import copy2
 
-from discord import Message, Game, utils, Embed, Colour, Object
+from discord import Message, Game, utils, Embed, Colour, Object, HTTPException
 
 from data.stats import MESSAGE
 from data.utils import is_valid_command, log_to_file, StandardEmoji
@@ -24,10 +24,8 @@ log.setLevel(logging.INFO)
 parser = configparser.ConfigParser()
 parser.read("settings.ini")
 
-
-initial_status = "Hi there!"
-
 game_list = [
+    "Hi there!"
     "(formerly AyyBot)",
     "HI MOM!",
     "@Nano",
@@ -57,10 +55,10 @@ valid_commands = commands.keys()
 
 class StatusRoller:
     def __init__(self, client, time=21600):  # 6 Hours
+        log.info("Status changer enabled")
+
         self.time = time
         self.client = client
-
-        log.info("Status changer enabled")
 
     async def change_status(self, name):
         log.debug("Changing status to {}".format(name))
@@ -69,32 +67,30 @@ class StatusRoller:
         await self.client.change_presence(game=Game(name=str(name)))
 
     async def run(self):
+        # TODO test
         await self.client.wait_until_ready()
 
-        await self.change_status(initial_status)
-
-        # Shuffle the game list
+        # Shuffle the game list in place
         shuffle(game_list)
-        await sleep(self.time)
 
-        while not self.client.is_closed:
-            for game in game_list:
+        for game in game_list:
 
-                if self.client.is_closed:
-                    break
+            if self.client.is_closed:
+                break
 
-                await self.change_status(game)
-                await sleep(self.time)
+            await self.change_status(game)
+            await sleep(self.time)
 
-            # Shuffle when the whole list is used
-            shuffle(game_list)
+        # Shuffle when the whole list is used
+        shuffle(game_list)
 
         log_to_file("Exited status changer")
 
 
 class BackupManager:
     def __init__(self, time=86400, keep_backup_every=3):  # 86400 seconds = one day (backup is executed once a day)
-        log.info("Backup enabled: redis")
+        log.info("Backup enabled")
+
         self.s_path = os.path.join("data", "data.rdb")
         self.s_path_d = os.path.join("backup", "data.rdb.bak")
 
@@ -103,15 +99,15 @@ class BackupManager:
 
         self.time = int(time)
         self.keep_every = int(keep_backup_every)
-        self.keep_buffer = int(self.keep_every)
+        self.temp_keep = int(self.keep_every)
 
-        self.running = True
+        self.enabled = True
 
-    def stop(self):
-        self.running = False
+    def disable(self):
+        self.enabled = False
 
     def backup(self, make_dated_backup=False):
-        if not self.running:
+        if not self.enabled:
             return
 
         if not os.path.isdir("backup"):
@@ -119,14 +115,17 @@ class BackupManager:
 
         # Make a dated backup if needed
         if make_dated_backup:
-            if not os.path.isdir(os.path.join("backup", "full")):
-                os.mkdir(os.path.join("backup", "full"))
+            path_full = os.path.join("backup", "full")
 
-            buff_name = "data{}.rdb".format(str(datetime.now().strftime("%d-%B-%Y_%H-%M-%S")))
-            f_name = os.path.join("backup", "full", buff_name)
-            copy2(self.s_path, f_name)
+            if not os.path.isdir(path_full):
+                os.mkdir(path_full)
+
+            bkp_name = "data{}.rdb".format(str(datetime.now().strftime("%d-%B-%Y_%H-%M-%S")))
+            bkp_path = os.path.join("backup", "full", bkp_name)
+            copy2(self.s_path, bkp_path)
             log.info("Created a dated backup.")
 
+        # Always copy one to .bak
         try:
             copy2(self.s_path, self.s_path_d)
         except FileNotFoundError:
@@ -137,16 +136,16 @@ class BackupManager:
         log.info("Manual backup complete")
 
     async def start(self):
-        while self.running:
-            # Run the backup every day
+        while self.enabled:
+            # Run the backup every day or as specified
             await sleep(self.time)
 
             # Full backup counter
-            self.keep_buffer -= 1
+            self.temp_keep -= 1
 
-            if self.keep_buffer <= 0:
+            if self.temp_keep <= 0:
                 dated_backup = True
-                self.keep_buffer = int(self.keep_every)
+                self.temp_keep = int(self.keep_every)
             else:
                 dated_backup = False
 
@@ -166,22 +165,25 @@ class DevFeatures:
         self.backup = BackupManager()
         self.roller = StatusRoller(self.client)
 
-        self.mode = None
+        self.shutdown_mode = None
 
     async def on_message(self, message, **kwargs):
-        if not is_valid_command(message.content, valid_commands, prefix=kwargs.get("prefix")):
+        client = self.client
+
+        prefix = kwargs.get("prefix")
+        lang = kwargs.get("lang")
+
+        assert isinstance(message, Message)
+
+        # Check if this is a valid command
+        if not is_valid_command(message.content, commands, prefix=prefix):
             return
         else:
             self.stats.add(MESSAGE)
 
-        assert isinstance(message, Message)
-        client = self.client
-
-        lang = kwargs.get("lang")
-
-        def startswith(*msg):
-            for a in msg:
-                if message.content.startswith(a):
+        def startswith(*matches):
+            for match in matches:
+                if message.content.startswith(match):
                     return True
 
             return False
@@ -210,7 +212,7 @@ class DevFeatures:
             srv = utils.find(lambda s: s.id == s_id, client.servers)
 
             if not srv:
-                await client.send_message(message.channel, "Error. " + StandardEmoji.CROSS)
+                await client.send_message(message.channel, "No such server. " + StandardEmoji.CROSS)
                 return
 
             nano_data = self.handler.get_server_data(srv)
@@ -219,7 +221,7 @@ class DevFeatures:
 
             await client.send_message(message.channel, to_send)
 
-        # nano.dev.test_error
+        # nano.dev.test_exception
         elif startswith("nano.dev.test_exception"):
             int("abcdef")
 
@@ -237,7 +239,11 @@ class DevFeatures:
 
         # nano.dev.leave_server
         elif startswith("nano.dev.leave_server"):
-            sid = int(message.content[len("nano.dev.leave_server "):])
+            try:
+                sid = int(message.content[len("nano.dev.leave_server "):])
+            except ValueError:
+                await client.send_message(message.channel, "Not a number.")
+                return
 
             srv = Object(id=sid)
             await client.leave_server(srv)
@@ -251,7 +257,7 @@ class DevFeatures:
 
         # nano.dev.plugin.reload
         elif startswith("nano.dev.plugin.reload"):
-            name = str(message.content)[len("nano.dev.plugin.reload "):]
+            name = message.content[len("nano.dev.plugin.reload "):]
 
             v_old = self.nano.get_plugin(name).get("plugin").NanoPlugin.version
             s = await self.nano.reload_plugin(name)
@@ -264,35 +270,16 @@ class DevFeatures:
                 await client.send_message(message.channel, "Something went wrong, check the logs.")
 
         # nano.dev.servers.clean
-        elif startswith("nano.dev.servers.clean"):
+        elif startswith("nano.dev.servers.tidy"):
             self.handler.delete_server_by_list([s.id for s in self.client.servers])
-
-        elif startswith("nano.dev.servers.leave"):
-            s_id = int(str(message.content)[len("nano.dev.server.leave "):])
-            serv = Object(id=s_id)
-
-            if not serv:
-                await client.send_messsage(message.channel, "Could not leave server: does not exist")
-            else:
-                await client.leave_server(serv)
-                await client.send_message(message.channel, StandardEmoji.PERFECT + " Left {}".format(serv.id))
-
-        # nano.reload
-        elif startswith("nano.reload"):
-            self.handler.reload()
-
-            await client.send_message(message.channel, "Refreshed server data {} {}".format(StandardEmoji.MUSCLE, StandardEmoji.SMILE))
 
         # nano.restart
         elif startswith("nano.restart"):
-            m = await client.send_message(message.channel, "Restarting...")
-
-            await client.send_message(message.channel, "**DED**")
-            await client.delete_message(m)
+            await client.send_message(message.channel, "**DED, but gonna come back**")
 
             await client.logout()
 
-            self.mode = "restart"
+            self.shutdown_mode = "restart"
             return "shutdown"
 
         # nano.kill
@@ -301,7 +288,7 @@ class DevFeatures:
 
             await client.logout()
 
-            self.mode = "exit"
+            self.shutdown_mode = "exit"
             return "shutdown"
 
         # nano.playing
@@ -309,7 +296,6 @@ class DevFeatures:
             status = message.content[len("nano.playing "):]
 
             await client.change_presence(game=Game(name=str(status)))
-
             await client.send_message(message.channel, "Status changed " + StandardEmoji.THUMBS_UP)
 
         # nano.dev.translations.reload
@@ -320,7 +306,7 @@ class DevFeatures:
 
         # nano.dev.announce
         elif startswith("nano.dev.announce"):
-            await client.send_message(message.channel, "Sending...")
+            await client.send_message(message.channel, "Sending... ")
             ann = message.content[len("nano.dev.announce "):]
 
             s = []
@@ -332,19 +318,18 @@ class DevFeatures:
                 except:
                     pass
 
+            await client.send_message(message.channel, "Sent to {} servers".format(len(s)))
 
-            await client.send_message(message.channel, "Sent to {}".format("\n".join(s)))
-            await client.send_message(message.channel, "Sent :ok_hand:".format())
 
     async def on_ready(self):
         self.loop.create_task(self.backup.start())
         self.loop.create_task(self.roller.run())
 
     async def on_shutdown(self):
-        # Make redis BGSAVE data
+        # Make redis save data with BGSAVE
         self.handler.bg_save()
 
-        if self.mode == "restart":
+        if self.shutdown_mode == "restart":
             # Launches a new instance of Nano...
             if sys.platform == "win32":
                 subprocess.Popen("startbot.bat")
@@ -354,7 +339,7 @@ class DevFeatures:
 
 class NanoPlugin:
     name = "Developer Commands"
-    version = "0.2.4"
+    version = "24"
 
     handler = DevFeatures
     events = {
