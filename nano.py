@@ -301,7 +301,7 @@ class Nano(metaclass=Singleton):
             return
 
         # Plugins have already been ordered from most important to least important
-        for plugin in self.plugin_events.get(event_type):
+        for plugin in self.plugin_events[event_type]:
             log.debug("Executing {}".format(getattr(self.plugins[plugin].get("instance"), event_type)))
 
             # Execute the corresponding method in the plugin
