@@ -1,25 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="CONV_Q_HOW">how are you</string>
-    <string name="CONV_Q_WUP">what's up</string>
-    <string name="CONV_Q_SNOW">do you wanna build a snowman</string>
+    <string name="CONV_Q_HOW">how are you | what's up | how's the day? | how is the day</string>
+    <string name="CONV_Q_SNOW">do you want to build a snowman | do you wanna build a snowman</string>
     <string name="CONV_Q_DIE">die</string>
-    <string name="CONV_Q_AYY">ayy</string>
+    <string name="CONV_Q_AYY">ayy lmao | my dude</string>
     <string name="CONV_Q_SLEEP">do you ever stop | do you ever get tired | do you even sleep | do you sleep</string>
-    <string name="CONV_Q_RIP">rip</string>
-    <string name="CONV_Q_MASTER">do you have a master</string>
+    <string name="CONV_Q_RIP">rip | rest in peace | rest in pepperoni</string>
+    <string name="CONV_Q_MASTER">do you have a master | who is your master?</string>
     <string name="CONV_Q_WHAT">what is this</string>
+    <string name="CONV_Q_BIRTH">when were you born</string>
+    <string name="CONV_Q_MAKER">who made you | who is your owner | who is your maker</string>
     <string name="CONV_Q_LOVE">i love you</string>
-    <string name="CONV_Q_HELLO">hi | hello</string>
+    <string name="CONV_Q_HELLO">hi | hello | sup</string>
     <string name="CONV_MOOD_LIST">I'm awesome! | Doing great. | Doing awesome. Pumpin' dem messages out like it's christmas babyyy! | It's been a beautiful day so far.</string>
     <string name="CONV_SNOW">C'mon lets go out and play!</string>
     <string name="CONV_NAH">Nah :wink:</string>
     <string name="CONV_NOPE">Nope.avi</string>
-    <string name="CONV_AYYLMAO">Ayy. Lmao.</string>
+    <string name="CONV_AYYLMAO">Ayy lmaooo</string>
     <string name="CONV_RIP">Rest in pepperoni indeed **pays respects**</string>
     <string name="CONV_MASTER">Dobby has no master.</string>
     <string name="CONV_SPARTA">THIS IS SPARTA!</string>
+    <string name="CONV_BEGINDATE">I started as a private bot in late october 2015, but was soon put on GitHub and made public for everyone to use (end of december 2015).</string>
+    <string name="CONV_OWNER">My owner is DefaltSimon.</string>
     <string name="CONV_LOVE">&lt;3</string>
     <string name="CONV_HI">Hi there!</string>
 
@@ -31,6 +34,7 @@
 
 
     <string name="INFO_PREFIX">The prefix for this server is **{}**</string>
+    <string name="INFO_PREFIX_LITERAL">prefix</string>
     <string name="INFO_DONE">Done</string>
     <string name="INFO_OK">Ok</string>
     <string name="INFO_ON">On</string>
@@ -320,6 +324,7 @@ For a list of all commands and their explanations, use `>cmds`.</string>
     <string name="MSG_8BALL_STRINGS">It is certain | It is surely so | Without a doubt | You may rely on it | Most likely | Yes | Ask again later | Cannot predict now | Concentrate and ask again | I would say yes | JUST DO IT | My reply is no | My sources say no | Signs point to yes</string>
     <string name="MSG_AVATAR_OWNERSHIP">**{}**'s avatar: {}</string>
     <string name="MSG_AVATAR_NONE">**{}** does not have an avatar. :expressionless:</string>
+    <string name="MSG_SAY_NOPERM">Can't send messages to **&lt;#{}}>**: missing permission!</string>
 
     <string name="MSG_AYYLMAO">My inspiration in the world of memes.</string>
     <string name="MSG_WHOKNOWS">¯\_(ツ)_/¯</string>

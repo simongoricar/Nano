@@ -1,0 +1,14 @@
+wikipedia
+ujson
+discord.py
+aiohttp
+giphypop
+beautifulsoup4
+psutil
+
+fuzzywuzzy
+python-Levenshtein
+
+git+https://github.com/DefaltSimon/TMDbie.git#egg=TMDbie
+git+https://github.com/DefaltSimon/osu-ds#egg=osu-ds
+git+https://github.com/smiley/steamapi#egg=steamapi
