@@ -39,7 +39,6 @@ server_defaults = {
     "leavemsg": "**:user** has left the server :cry:",
     "logchannel": None,
     "prefix": str(parser.get("Servers", "defaultprefix")),
-    "selfrole": None,
     "dchan": None,
     "lang": "en",
 }
