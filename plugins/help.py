@@ -1,8 +1,9 @@
 # coding=utf-8
 import time
+import configparser
 from datetime import datetime
 
-from discord import Message, utils, Embed, Colour
+from discord import Message, Embed, Colour, utils
 
 from data.stats import MESSAGE, HELP, WRONG_ARG
 from data.utils import is_valid_command
@@ -26,13 +27,19 @@ commands = {
     "_cmds": {"desc": "Displays a link to the wiki page where all commands are listed.", "use": None, "alias": "_commands"},
     "_commands": {"desc": "Displays a link to the wiki page where all commands are listed.", "use": None, "alias": "_cmds"},
     "_help": {"desc": "This is here.", "use": None, "alias": None},
-    "_report": {"desc": "Sends a message to the developer", "use": "[command] [message]", "alias": "_suggest"},
-    "_suggest": {"desc": "Sends a message to the developer", "use": "[command] [message]", "alias": "_report"},
+    "_suggest": {"desc": "Sends a message to the developer", "use": "[command] [message]", "alias": None},
     "_bug": {"desc": "Place where you can report bugs.", "use": None, "alias": "nano.bug"},
     "nano.bug": {"desc": "Place where you can report bugs.", "use": None, "alias": "_bug"},
 }
 
 valid_commands = commands.keys()
+
+
+parser = configparser.ConfigParser()
+parser.read("settings.ini")
+
+OWNER_ID = parser.get("Settings", "ownerid")
+DEVSERVER_ID = parser.get("Dev", "server")
 
 
 async def save_submission(sub):
@@ -58,6 +65,39 @@ class Help:
         self.last_times = {}
         self.commands = {}
 
+    def get_command_info(self, cmd, prefix, lang):
+        # Normal commands
+        cmd1 = self.commands.get(str(cmd.replace(prefix, "_").strip(" ")))
+        if cmd1 is not None:
+            cmd_name = cmd.replace(prefix, "")
+
+            description = cmd1.get("desc")
+
+            use = cmd1.get("use")
+            if use:
+                use = cmd1.get("use").replace("[command]",
+                                              prefix + cmd_name if not cmd_name.startswith("nano.") else cmd_name)
+
+            alias = cmd1.get("alias")
+            if alias:
+                alias = cmd1.get("alias").replace("_", prefix)
+
+            emb = Embed(colour=Colour.blue())
+
+            emb.add_field(name=self.trans.get("MSG_HELP_DESC", lang), value=description)
+
+            if use:
+                emb.add_field(name=self.trans.get("MSG_HELP_USE", lang), value=use, inline=False)
+            if alias:
+                emb.add_field(name=self.trans.get("MSG_HELP_ALIASES", lang), value=alias, inline=False)
+
+            self.stats.add(HELP)
+            return "**{}**".format(cmd_name), emb
+
+        if not cmd1:
+            self.stats.add(WRONG_ARG)
+            return None, None
+
     async def on_plugins_loaded(self):
         # Collect all commands
         plugins = [a.get("plugin") for a in self.nano.plugins.values() if a.get("plugin")]
@@ -70,38 +110,30 @@ class Help:
                     self.commands[command] = info
 
     async def on_message(self, message, *_, **kwargs):
-        assert isinstance(message, Message)
         client = self.client
+        trans = self.trans
 
         prefix = kwargs.get("prefix")
-
-        trans = self.trans
         lang = kwargs.get("lang")
 
-        if not is_valid_command(message.content, valid_commands, prefix=prefix):
+        assert isinstance(message, Message)
+
+        # Check if this is a valid command
+        if not is_valid_command(message.content, commands, prefix=prefix):
             return
         else:
             self.stats.add(MESSAGE)
 
-        # A shortcut
-        def startswith(*msg):
-            for a in msg:
-                if message.content.startswith(a):
+        def startswith(*matches):
+            for match in matches:
+                if message.content.startswith(match):
                     return True
 
             return False
 
-        # !help and @Nanos
+        # Bare !help
         if message.content.strip(" ") == (prefix + "help"):
             await client.send_message(message.channel, trans.get("MSG_HELP", lang).replace("_", prefix))
-
-            self.stats.add(HELP)
-
-        # @Nano help
-        elif self.client.user in message.mentions:
-            un_mentioned = str(message.content[21:])
-            if un_mentioned == "" or un_mentioned == " ":
-                await client.send_message(message.channel, trans.get("MSG_HELP", lang).replace("_", prefix))
 
             self.stats.add(HELP)
 
@@ -121,75 +153,33 @@ class Help:
         elif startswith(prefix + "help"):
             search = str(message.content)[len(prefix + "help "):]
 
-            self.stats.add(HELP)
-
-            def get_command_info(cmd):
-                # Normal commands
-                cmd1 = self.commands.get(str(cmd.replace(prefix, "_").strip(" ")))
-                if cmd1 is not None:
-                    cmd_name = cmd.replace(prefix, "")
-
-                    description = cmd1.get("desc")
-
-                    use = cmd1.get("use")
-                    if use:
-                        use = cmd1.get("use").replace("[command]",
-                                                      prefix + cmd_name if not cmd_name.startswith("nano.") else cmd_name)
-
-                    alias = cmd1.get("alias")
-                    if alias:
-                        alias = cmd1.get("alias").replace("_", prefix)
-
-                    emb = Embed(colour=Colour.blue())
-
-                    emb.add_field(name=trans.get("MSG_HELP_DESC", lang), value=description)
-
-                    if use:
-                        emb.add_field(name=trans.get("MSG_HELP_USE", lang), value=use, inline=False)
-                    if alias:
-                        emb.add_field(name=trans.get("MSG_HELP_ALIASES", lang), value=alias, inline=False)
-
-                    self.stats.add(HELP)
-                    return "**{}**".format(cmd_name), emb
-
-                if not cmd1:
-                    self.stats.add(WRONG_ARG)
-                    return None, None
-
             # Allows for !help ping AND !help !ping
             if search.startswith(prefix) or search.startswith("nano."):
-                name, embed = get_command_info(search)
+                name, embed = self.get_command_info(search, prefix, lang)
 
                 if name:
                     await client.send_message(message.channel, name, embed=embed)
-
                 else:
                     await client.send_message(message.channel, trans.get("MSG_HELP_CMDNOTFOUND", lang).replace("_", prefix))
 
             else:
-                name, embed = get_command_info(prefix + search)
+                name, embed = self.get_command_info(prefix + search, prefix, lang)
 
                 if name:
                     await client.send_message(message.channel, name, embed=embed)
-
                 else:
                     await client.send_message(message.channel, trans.get("MSG_HELP_CMDNOTFOUND", lang).replace("_", prefix))
+
+                self.stats.add(HELP)
 
         # !notifydev
-        elif startswith(prefix + "report", prefix + "suggest"):
-            if startswith(prefix + "report"):
-                report = message.content[len(prefix + "report "):]
-                typ = "Report"
-
-            elif startswith(prefix + "suggest"):
-                report = message.content[len(prefix + "suggest "):]
-                typ = "Suggestion"
-
-            else:
-                return
+        # Not translated
+        elif startswith(prefix + "suggest"):
+            report = message.content[len(prefix + "suggest "):].strip(" ")
+            typ = "Suggestion"
 
             # Disallow empty reports
-            if not report.strip(" "):
+            if not report:
                 await client.send_message(message.channel, trans.get("MSG_REPORT_EMPTY", lang))
                 return
 
@@ -205,7 +195,7 @@ class Help:
                 else:
                     self.last_times[message.author.id] = time.time()
 
-            # Find Nano Lounge (or whatever is in settings.ini under Dev)
+
             dev_server = utils.get(client.servers, id=self.nano.dev_server)
             # Timestamp
             ts = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
@@ -221,7 +211,7 @@ class Help:
             await save_submission(comp.replace(message.author.mention, "{} ({})\n".format(message.author.name, message.author.id)))
 
             await client.send_message(dev_server.owner, comp)
-            await client.send_message(message.channel, trans.get("MSG_REPORT_THANKS", lang).format(trans.get("MSG_REPORT_R", lang) if typ == "Report" else trans.get("MSG_REPORT_S", lang)))
+            await client.send_message(message.channel, trans.get("MSG_REPORT_THANKS", lang))
 
         # !bug
         elif startswith(prefix + "bug"):

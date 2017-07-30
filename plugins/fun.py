@@ -5,7 +5,7 @@ import logging
 
 import aiohttp
 import giphypop
-from discord import Message
+from discord import Message, Embed, Colour
 
 from data.stats import PRAYER, MESSAGE, IMAGE_SENT
 from data.utils import is_valid_command
@@ -39,7 +39,7 @@ class MemeGenerator:
         self.password = str(password)
 
         self.meme_list = []
-        self.meme_name_id_pairs = {}
+        self.meme_name_id = {}
 
         loop.create_task(self.prepare())
 
@@ -52,7 +52,7 @@ class MemeGenerator:
         self.meme_list = list(raw.get("data").get("memes"))
 
         for m_dict in self.meme_list:
-            self.meme_name_id_pairs[str(m_dict.get("name")).lower()] = m_dict.get("id")
+            self.meme_name_id[str(m_dict.get("name")).lower()] = m_dict.get("id")
 
         log.info("Ready to make memes")
 
@@ -62,7 +62,7 @@ class MemeGenerator:
                 return await resp.json()
 
     async def caption_meme(self, name, top, bottom):
-        meme_id = self.meme_name_id_pairs.get(str(name).lower())
+        meme_id = self.meme_name_id.get(str(name).lower())
 
         if not meme_id:
             return None
@@ -105,6 +105,8 @@ class Fun:
             log.critical("Missing api key for giphy, disabling command...")
             self.giphy_enabled = False
 
+            raise RuntimeError
+
         try:
             username = parser.get("imgflip", "username")
             password = parser.get("imgflip", "password")
@@ -115,21 +117,21 @@ class Fun:
             log.critical("Missing api key for imgflip, disabling command...")
             self.imgflip_enabled = False
 
+            raise RuntimeError
+
+        self.everyone_filter = None
+
+    async def on_plugins_loaded(self):
+        self.everyone_filter = self.nano.get_plugin("commons").get("instance").at_everyone_filter
+
     async def on_message(self, message, **kwargs):
-        assert isinstance(message, Message)
+        client = self.client
+        trans = self.trans
 
         prefix = kwargs.get("prefix")
-        client = self.client
-
-        trans = self.trans
         lang = kwargs.get("lang")
 
-        def startswith(*msg):
-            for a in msg:
-                if message.content.startswith(a):
-                    return True
-
-            return False
+        assert isinstance(message, Message)
 
         simple_commands = {
             "ayy lmao": trans.get("MSG_AYYLMAO", lang),
@@ -143,10 +145,18 @@ class Fun:
                 self.stats.add(MESSAGE)
                 return
 
-        if not is_valid_command(message.content, valid_commands, prefix=prefix):
+        # Check if this is a valid command
+        if not is_valid_command(message.content, commands, prefix=prefix):
             return
         else:
             self.stats.add(MESSAGE)
+
+        def startswith(*matches):
+            for match in matches:
+                if message.content.startswith(match):
+                    return True
+
+            return False
 
         # Other commands
         if startswith(prefix + "kappa"):
@@ -155,55 +165,60 @@ class Fun:
             self.stats.add(IMAGE_SENT)
 
         elif startswith(prefix + "randomgif"):
-            # Check if giphy is enabled
-            if not self.giphy_enabled:
-                return
-
             random_gif = self.gif.screensaver().media_url
             await client.send_message(message.channel, str(random_gif))
 
             self.stats.add(IMAGE_SENT)
 
-        elif startswith(prefix + "meme", prefix + "caption"):
-            # Check if imgflip is enabled
-            if not self.imgflip_enabled:
+        # !meme [meme name]|[top text]|[bottom text]
+        elif startswith(prefix + "meme"):
+            query = message.content[len(prefix + "meme "):]
+
+            if not query:
+                await client.send_message(message.channel, trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
                 return
 
-            if startswith(prefix + "meme"):
-                query = message.content[len(prefix + "meme "):]
-            elif startswith(prefix + "caption"):
-                query = message.content[len(prefix + "caption "):]
-            else:
-                # u wot pycharm
-                return
+            middle = [a.strip(" ") for a in query.split("|")]
 
-            middle = [str(a).strip(" ") for a in str(query).split("|")]
+            # If only two arguments are passed, assume no bottom text
+            if len(middle) == 2:
+                name = middle[0]
+                top = middle[1]
+                bottom = ""
 
-            if len(middle) != 3:
+            # 0, 1 or more than 3 arguments - error
+            elif len(middle) < 2 or len(middle) > 3:
                 await client.send_message(message.channel, trans.get("MSG_MEME_USAGE", lang).replace("_", prefix))
                 return
 
-            name = middle[0]
-            top = middle[1]
-            bottom = middle[2]
+            # Normal
+            else:
+                name = middle[0]
+                top = middle[1]
+                bottom = middle[2]
+
             meme = await self.generator.caption_meme(name, top, bottom)
 
             if not meme:
                 await client.send_message(message.channel, trans.get("MSG_MEME_NONEXISTENT", lang))
             else:
-                await client.send_message(message.channel, meme)
+                embed = Embed(colour=Colour(0x607D8B))
+                embed.set_image(url=meme)
+                embed.set_footer(text=trans.get("MSG_MEME_FOOTER", lang))
+
+                await client.send_message(message.channel, embed=embed)
 
         elif startswith(prefix + "rip"):
             if len(message.mentions) == 1:
-                ripperoni = message.mentions[0].mention
+                ripperoni = " " + message.mentions[0].name
 
             elif len(message.mentions) == 0:
-                ripperoni = message.content[len(prefix + "rip "):]
+                ripperoni = " " + message.content[len(prefix + "rip "):]
 
             else:
                 ripperoni = ""
 
-            ripperoni = self.nano.get_plugin("commons").get("instance").at_everyone_filter(ripperoni, message.author, message.server)
+            ripperoni = self.everyone_filter(ripperoni, message.author, message.server)
 
             prays = self.stats.get_amount(PRAYER)
             await client.send_message(message.channel, trans.get("MSG_RIP", lang).format(ripperoni, prays))
@@ -217,6 +232,7 @@ class NanoPlugin:
 
     handler = Fun
     events = {
-        "on_message": 10
+        "on_message": 10,
+        "on_plugins_loaded": 5,
         # type : importance
     }
