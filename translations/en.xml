@@ -329,8 +329,10 @@ For a list of all commands and their explanations, use `>cmds`.</string>
     <string name="MSG_AYYLMAO">My inspiration in the world of memes.</string>
     <string name="MSG_WHOKNOWS">¯\_(ツ)_/¯</string>
     <string name="MSG_MEME_USAGE">Incorrect usage. See _help caption/_help meme for info.</string>
-    <string name="MSG_MEME_NONEXISTENT">Meme is non-existent. rip</string>
-    <string name="MSG_RIP">Rest in pepperoni {}.
+    <string name="MSG_MEME_NONEXISTENT">Meme is non-existent. rip (pssst, check top memes that are available here https://imgflip.com/memetemplates )</string>
+    <string name="MSG_MEME_FOOTER">Provided by imgflip.com</string>
+    <string name="MSG_RIP">Rest in pepperoni{}.
+
 `{}` *prayers said so far*...</string>
 
     <string name="MSG_HELP">**Hey, I'm Nano!**
@@ -362,9 +364,7 @@ These are just a few of some of the simpler commands. For more info about each c
 You can find me here: https://discord.gg/FZJB6UJ</string>
     <string name="MSG_REPORT_EMPTY">You cannot submit an empty report.</string>
     <string name="MSG_REPORT_RATELIMIT">You are being rate limited. Try again in 5 minutes.</string>
-    <string name="MSG_REPORT_THANKS">**Thank you** for your *{}*.</string>
-    <string name="MSG_REPORT_R">report</string>
-    <string name="MSG_REPORT_S">suggestion</string>
+    <string name="MSG_REPORT_THANKS">**Thank you** for your suggestion.</string>
 
     <string name="MSG_IMDB_ERROR">Something went wrong while trying to get movie info.</string>
     <string name="MSG_IMDB_ERROR2">Something went wrong... Try again?</string>

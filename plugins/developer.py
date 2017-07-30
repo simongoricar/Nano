@@ -67,19 +67,17 @@ class StatusRoller:
         await self.client.change_presence(game=Game(name=str(name)))
 
     async def run(self):
-        # TODO test
         await self.client.wait_until_ready()
 
         # Shuffle the game list in place
         shuffle(game_list)
 
         for game in game_list:
+            await self.change_status(game)
+            await sleep(self.time)
 
             if self.client.is_closed:
                 break
-
-            await self.change_status(game)
-            await sleep(self.time)
 
         # Shuffle when the whole list is used
         shuffle(game_list)
