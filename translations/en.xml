@@ -368,6 +368,8 @@ You can find me here: https://discord.gg/FZJB6UJ</string>
 
     <string name="MSG_IMDB_ERROR">Something went wrong while trying to get movie info.</string>
     <string name="MSG_IMDB_ERROR2">Something went wrong... Try again?</string>
+    <string name="MSG_IMDB_INVALID_USAGE">Invalid command usage, see `{}help imdb`</string>
+    <string name="MSG_IMDB_NEED_TITLE">:warning: Need a title to search for.</string>
     <string name="MSG_IMDB_ERROR_REPDEV">Something went wrong, please report it to the dev, preferably with a screenshot. Thanks!</string>
     <string name="MSG_IMDB_NORESULTS">No results.</string>
     <string name="MSG_IMDB_CANTPERSON">You can't get the plot of a person :rofl:</string>
@@ -394,7 +396,7 @@ User ratings on TMDb: __**{}** out of 10__</string>
     <string name="MSG_IMDB_RATINGS_MISSING">It appears that this title does not have any ratings. Weird.</string>
     <string name="MSG_IMDB_HELP">**TMDb/IMDb help**
 
-`_imdb search [name or title]`, `_imdb plot [title]`, `_imdb trailer [title]`, `_imdb rating [title]`"</string>
+`_imdb search [name or title]`, `_imdb plot [title]`, `_imdb trailer [title]`, `_imdb rating [title]`</string>
 
     <string name="MSG_CAT_FAILED">Could not get a random cat picture... :cry:</string>
     <string name="MSG_XKCD_FAILED">Could not fetch xkcd :cry:</string>
@@ -407,6 +409,7 @@ User ratings on TMDb: __**{}** out of 10__</string>
 ```css
 _mc name/id:meta - search for items and display their details```</string>
     <string name="MSG_MC_NO_ITEMS">**No item with that name/id**</string>
+    <string name="MSG_MC_PLSARUGMENTS">Please specify an item name/id.</string>
     <string name="MSG_MC_DETAILS">**{}**```css
 Id: {}:{}```</string>
 
