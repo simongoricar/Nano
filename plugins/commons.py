@@ -126,12 +126,9 @@ class Commons:
         prefix = kwargs.get("prefix")
         lang = kwargs.get("lang")
 
-        assert isinstance(message, Message)
-
         # Custom commands registered for the server
         server_commands = self.handler.get_custom_commands(message.server.id)
 
-        # TODO rewrite
         if server_commands:
             # Checks for server specific commands
             for command in server_commands.keys():
@@ -151,7 +148,6 @@ class Commons:
         #     for k in server_commands.keys():
         #         if message.content.startswith(k):
         #             # TODO parse logic
-        #             # TODO reply
         #             pass
 
 

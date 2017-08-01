@@ -528,9 +528,7 @@ class Admin:
         prefix = kwargs.get("prefix")
         lang = kwargs.get("lang")
 
-        assert isinstance(message, Message)
         assert isinstance(client, Client)
-
 
         # Check if this is a valid command
         if not is_valid_command(message.content, commands, prefix=prefix):

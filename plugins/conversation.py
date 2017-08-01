@@ -89,7 +89,6 @@ class Conversation:
         extracted = message.content.replace("<@{}>".format(self.client.user.id), "").strip(" ")
 
         # RESPONSES
-        # TODO rewrite with fuzzywuzzy
 
         # If it is just a raw mention, send the help message
         if extracted == "":
