@@ -1,12 +1,13 @@
 # coding=utf-8
 import logging
+import os
 from json import loads, JSONDecodeError
 
 import aiohttp
-from discord import Client, Message
+from discord import Message
 
 from data.stats import MESSAGE, WRONG_ARG, IMAGE_SENT
-from data.utils import is_valid_command
+from data.utils import is_valid_command, is_number
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -17,8 +18,7 @@ ITEM_ID = 2
 ITEM_NAME = 3
 
 commands = {
-    "_mc": {"desc": "Searches for items and displays their details", "use": "[command] [item name or id:meta]", "alias": "_minecraft"},
-    "_minecraft": {"desc": "Searches for items and displays their details", "use": "[command] [item name or id:meta]", "alias": "_mc"},
+    "_mc": {"desc": "Searches for items and displays their details", "use": "[command] [item name or id:meta]", "alias": None},
 }
 
 valid_commands = commands.keys()
@@ -30,6 +30,9 @@ class McItems:
     def __init__(self, loop):
         # Gets a fresh copy of items at each startup.
         self.data = None
+        self.ids = {}
+        self.names = {}
+
         loop.run_until_complete(self.request_data())
 
     async def request_data(self):
@@ -40,27 +43,27 @@ class McItems:
 
                 try:
                     self.data = loads(raw_data)
+                    await self._parse_items(self.data)
                 except JSONDecodeError as e:
                     log.critical("Could not load JSON: {}".format(e))
+                    raise RuntimeError
+
+        log.info("Done")
+
+    async def _parse_items(self, data):
+        for item in data:
+            idmeta_string = "{}:{}".format(item.get("type"), item.get("meta"))
+            name_string = str(item.get("name")).lower()
+
+            self.ids[idmeta_string] = item
+            self.names[name_string] = item
 
 
-    def id_to_data(self, num):
-        if len(str(num).split(":")) > 1:
-            idd = str(num).split(":")[0]
-            meta = str(num).split(":")[1]
-        else:
-            idd = num
-            meta = 0
+    def find_by_id_meta(self, id_, meta):
+        return self.ids.get("{}:{}".format(id_, meta))
 
-        for item in self.data:
-            if int(item.get("type")) == int(idd):
-                if int(item.get("meta")) == int(meta):
-                    return item
-
-    def name_to_data(self, name):
-        for c, item in enumerate(self.data):
-            if item.get("name").lower() == str(name).lower():
-                return self.data[c]
+    def find_by_name(self, name):
+        return self.names.get(name)
 
     def group_to_list(self, group):
         items = []
@@ -70,14 +73,13 @@ class McItems:
 
         return items
 
-    def id_to_pic(self, num):
-        if num > len(self.data):
+    @staticmethod
+    def get_picture_path_by_item(item):
+        path = "plugins/mc/{}-{}.png".format(item.get("type"), item.get("meta"))
+        if not os.path.isfile(path):
             return None
-
-        data = self.data[num]
-
-        with open("plugins/mc/{}-{}.png".format(num, data.get("metadata"))) as pic:
-            return pic
+        else:
+            return path
 
     def get_group_by_name(self, name):
         data = None
@@ -155,85 +157,82 @@ class Minecraft:
         self.mc = McItems(self.loop)
 
     async def on_message(self, message, **kwargs):
-        prefix = kwargs.get("prefix")
         client = self.client
+        trans = self.trans
         mc = self.mc
 
-        trans = self.trans
+        prefix = kwargs.get("prefix")
         lang = kwargs.get("lang")
 
-        assert isinstance(client, Client)
         assert isinstance(message, Message)
 
-        if not is_valid_command(message.content, valid_commands, prefix=prefix):
+        # Check if this is a valid command
+        if not is_valid_command(message.content, commands, prefix=prefix):
             return
         else:
             self.stats.add(MESSAGE)
 
-        def startswith(*msg):
-            for a in msg:
-                if message.content.startswith(a):
+        def startswith(*matches):
+            for match in matches:
+                if message.content.startswith(match):
                     return True
 
             return False
 
-        if startswith(prefix + "mc", prefix + "minecraft"):
-            if startswith(prefix + "mc help", prefix + "minecraft help"):
-                # Help message
+        # !mc
+        if startswith(prefix + "mc"):
+            argument = message.content[len(prefix + "mc "):].strip(" ")
+
+            if not argument:
+                await client.send_message(message.channel, trans.get("MSG_MC_PLSARUGMENTS", lang))
+                return
+
+            # !mc help
+            if argument == "help":
                 await client.send_message(message.channel, trans.get("MSG_MC_HELP", lang).replace("_", prefix))
                 return
 
-            elif startswith(prefix + "mc "):
-                item_name = message.content[len(prefix + "mc "):]
-            elif startswith(prefix + "minecraft "):
-                item_name = message.content[len(prefix + "minecraft "):]
+            # Argument is name
+            if not is_number(argument.split(":")[0]):
+                # Check for groupings
+                gr = mc.get_group_by_name(argument)
+                if gr:
+                    data = gr
+                # Not a group
+                else:
+                    data = mc.find_by_name(str(argument))
 
-            else:
-                return
-
-            # Determines if arg is id or name
-            if len(str(item_name).split(":")) > 1:
-                item_type = ITEM_ID_PAIR
-
+            # Argument is id and meta
             else:
                 try:
-                    int(item_name)
-                    item_type = ITEM_ID
+                    i_type, i_meta = argument.split(":")
                 except ValueError:
-                    item_type = ITEM_NAME
+                    i_type, i_meta = argument, 0
 
-            try:
-                # Requests item data from minecraft module
-                if item_type == ITEM_ID_PAIR or item_type == ITEM_ID:
-                    data = mc.id_to_data(item_name)
-                else:
-                    # Check for groupings
-                    if mc.get_group_by_name(item_name):
-                        data = mc.get_group_by_name(item_name)
-
-                    else:
-                        data = mc.name_to_data(str(item_name))
-            except ValueError:
-                await client.send_message(message.channel, trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
-                return
+                data = mc.find_by_id_meta(i_type, i_meta)
 
             if not data:
                 await client.send_message(message.channel, trans.get("MSG_MC_NO_ITEMS", lang))
                 self.stats.add(WRONG_ARG)
                 return
 
+            # One item, not a group
             if not isinstance(data, list):
                 details = trans.get("MSG_MC_DETAILS", lang).format(data.get("name"), data.get("type"), data.get("meta"))
 
                 # Details are uploaded simultaneously with the picture
-                try:
-                    with open("plugins/mc/{}-{}.png".format(data.get("type"), data.get("meta") or 0), "rb") as pic:
-                        await client.send_file(message.channel, pic, content=details)
-                        self.stats.add(IMAGE_SENT)
-                except FileNotFoundError:
+
+                # No image
+                path = mc.get_picture_path_by_item(data)
+                if not path:
                     await client.send_message(message.channel, details)
                     self.stats.add(IMAGE_SENT)
+                else:
+                    with open(mc.get_picture_path_by_item(data), "rb") as pic:
+                        await client.send_file(message.channel, pic, content=details)
+                        self.stats.add(IMAGE_SENT)
 
+            # Multiple items, a group
             else:
                 combined = []
                 for item in data:

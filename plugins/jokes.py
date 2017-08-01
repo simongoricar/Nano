@@ -24,7 +24,6 @@ parser = configparser.ConfigParser()
 parser.read("plugins/config.ini")
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
 
 
 class APIFailure(Exception):
@@ -33,7 +32,13 @@ class APIFailure(Exception):
 
 class Requester:
     def __init__(self):
-        pass
+        self.session = None
+
+    def _handle_session(self):
+        if not self.session:
+            self.session = aiohttp.ClientSession()
+
+        return self.session
 
     @staticmethod
     def _build_url(url, **fields):
@@ -44,23 +49,25 @@ class Requester:
         return str(url) + "&".join(field_list)
 
     async def get_json(self, url, **fields) -> dict:
-        async with aiohttp.ClientSession() as session:
-            async with session.get(self._build_url(url, **fields)) as resp:
-                # Check if everything is ok
-                if not (200 <= resp.status < 300):
-                    raise APIFailure("response code: {}".format(resp.status))
+        session = self._handle_session()
 
-                text = await resp.text()
-                return loads(text)
+        async with session.get(self._build_url(url, **fields)) as resp:
+            # Check if everything is ok
+            if not (200 <= resp.status < 300):
+                raise APIFailure("response code: {}".format(resp.status))
+
+            text = await resp.text()
+            return loads(text)
 
     async def get_html(self, url, **fields):
-        async with aiohttp.ClientSession() as session:
-            async with session.get(self._build_url(url, **fields)) as resp:
-                # Check if everything is ok
-                if not (200 <= resp.status < 300):
-                    raise APIFailure("response code: {}".format(resp.status))
+        session = self._handle_session()
 
-                return await resp.text()
+        async with session.get(self._build_url(url, **fields)) as resp:
+            # Check if everything is ok
+            if not (200 <= resp.status < 300):
+                raise APIFailure("response code: {}".format(resp.status))
+
+            return await resp.text()
 
 
 class CatGenerator:
@@ -69,7 +76,7 @@ class CatGenerator:
             self.key = parser.get("catapi", "api-key")
         except (configparser.NoOptionError, configparser.NoSectionError):
             log.critical("Cat Api key not found, disabling")
-            raise LookupError
+            raise RuntimeError
 
         self.url = "http://thecatapi.com/api/images/get"
         self.format = "html"
@@ -83,7 +90,7 @@ class CatGenerator:
             data = await self.req.get_html(self.url, api_key=self.key, format=self.format, size=self.size, type=type_)
             link = BeautifulSoup(data, "lxml").find("img").get("src")
         except (APIFailure, Exception) as e:
-            log_to_file("CAT: {}".format(e))
+            log_to_file("CatGenerator exception: {}".format(e))
             return None
 
         return link
@@ -101,7 +108,7 @@ class ComicImage:
 
 
 class XKCD:
-    def __init__(self, loop=asyncio.get_event_loop()):
+    def __init__(self, loop=None):
         self.url_latest = "http://xkcd.com/info.0.json"
         self.url_number = "http://xkcd.com/{}/info.0.json"
         self.link_base = "https://xkcd.com/{}"
@@ -110,6 +117,9 @@ class XKCD:
         self.cache = {}
 
         self.req = Requester()
+
+        if not loop:
+            loop = asyncio.get_event_loop()
         self.loop = loop
 
         self.running = True
@@ -138,19 +148,20 @@ class XKCD:
     async def updater(self):
         while self.running:
             await self._set_last_num()
+            # Update every 6 hours
             await asyncio.sleep(3600*6)
 
-    async def _set_last_num(self, multiply=1):
+    async def _set_last_num(self, time_falloff=1):
         c = await self.get_latest_xkcd()
 
         if c:
             self.last_num = int(c.num)
             log.info("Last comic number gotten: {}".format(self.last_num))
         else:
-            log.warning("Could not get latest xkcd number! (retrying in {} min)".format(5 * multiply))
+            log.warning("Could not get latest xkcd number! (retrying in {} min)".format(5 * time_falloff))
             # First retry is always 5 minutes, after that, 25 minutes
-            await asyncio.sleep(60 * 5 * multiply)
-            await self._set_last_num(multiply=5)
+            await asyncio.sleep(60 * 5 * time_falloff)
+            await self._set_last_num(time_falloff=5)
 
     async def get_latest_xkcd(self):
         # Checks cache
@@ -206,7 +217,7 @@ class JokeGenerator:
         ]
 
     async def get_random_cache(self):
-        if self.cache and (len(self.cache) > 3):
+        if len(self.cache) > 8:
             rand = randint(0, len(self.cache) - 1)
             return self.cache[rand]
 
@@ -214,7 +225,7 @@ class JokeGenerator:
         else:
             await self.get_joke(randint(0, 1))
 
-    async def add_to_cache(self, joke):
+    def add_to_cache(self, joke):
         if joke not in self.cache:
             self.cache.append(joke)
 
@@ -224,7 +235,7 @@ class JokeGenerator:
         if not joke:
             return None
 
-        await self.add_to_cache(joke.get("joke"))
+        self.add_to_cache(joke.get("joke"))
         return joke.get("joke")
 
     async def chuck_joke(self):
@@ -233,11 +244,11 @@ class JokeGenerator:
         if not joke:
             return None
 
-        await self.add_to_cache(joke.get("value"))
+        self.add_to_cache(joke.get("value"))
         return joke.get("value")
 
     async def get_joke(self, type_=None):
-        # Defaults to a random num
+        # Defaults to a random joke type
         if type_ is None:
             type_ = randint(0, 2)
 
@@ -259,105 +270,103 @@ class Joke:
         self.stats = kwargs.get("stats")
         self.trans = kwargs.get("trans")
 
-        try:
-            self.cat = CatGenerator()
-        except LookupError:
-            raise RuntimeError
-
+        self.cats = CatGenerator()
         self.xkcd = XKCD(self.loop)
         self.joke = JokeGenerator()
 
-        assert isinstance(self.client, Client)
-
     async def on_message(self, message, **kwargs):
-        assert isinstance(message, Message)
         client = self.client
+        trans = self.trans
 
         prefix = kwargs.get("prefix")
-
-        trans = self.trans
         lang = kwargs.get("lang")
 
-        if not is_valid_command(message.content, valid_commands, prefix=prefix):
+        assert isinstance(message, Message)
+
+        # Check if this is a valid command
+        if not is_valid_command(message.content, commands, prefix=prefix):
             return
         else:
             self.stats.add(MESSAGE)
 
-        def startswith(*args):
-            for a in args:
-                if message.content.startswith(a):
+        def startswith(*matches):
+            for match in matches:
+                if message.content.startswith(match):
                     return True
 
             return False
 
         # !cat gif/jpg/png
         if startswith(prefix + "cat"):
-            args = str(message.content[len(prefix + "cat"):]).strip(" ")
+            fmt = str(message.content[len(prefix + "cat"):]).strip(" ")
 
             # GIF is the default type!
-            type_ = "gif"
-            if len(args) != 0:
-                if args == "jpg":
-                    type_ = "jpg"
-                elif args == "png":
-                    type_ = "png"
-
-            pic = await self.cat.random_cat(type_)
-
-            if not pic:
-                await client.send_message(message.channel, trans.get("MSG_CAT_FAILED", lang))
+            if fmt == "jpg":
+                type_ = "jpg"
+            elif fmt == "png":
+                type_ = "png"
             else:
+                type_ = "gif"
+
+            pic = await self.cats.random_cat(type_)
+
+            if pic:
                 await client.send_message(message.channel, pic)
+            else:
+                await client.send_message(message.channel, trans.get("MSG_CAT_FAILED", lang))
 
             self.stats.add(IMAGE_SENT)
 
         # !xkcd random/number/latest
         elif startswith(prefix + "xkcd"):
-            args = str(message.content[len(prefix + "xkcd"):]).strip(" ")
+            fmt = str(message.content[len(prefix + "xkcd"):]).strip(" ")
 
             # Decides mode
             fetch = "random"
-            if len(args) != 0:
-                if is_number(args):
+            if fmt:
+                if is_number(fmt):
                     # Check if number is valid
-                    if int(args) > self.xkcd.last_num:
+                    if int(fmt) > self.xkcd.last_num:
                         await client.send_message(message.channel, trans.get("MSG_XKCD_NO_SUCH", lang))
                         return
                     else:
                         fetch = "number"
-                elif args == "random":
-                    # Already random mode
-                    pass
+                elif fmt == trans.get("INFO_RANDOM", lang) or fmt == "random":
+                    fetch = "random"
+                # Any other argument means latest
                 else:
                     fetch = "latest"
+            # Default: random
+            else:
+                fetch == "random"
 
-            if fetch == trans.get("INFO_RANDOM", lang):
+            if fetch == "random":
                 xkcd = await self.xkcd.get_random_xkcd()
             elif fetch == "number":
-                xkcd = await self.xkcd.get_xkcd_by_number(args)
+                xkcd = await self.xkcd.get_xkcd_by_number(fmt)
+            # Can only mean latest
             else:
                 xkcd = await self.xkcd.get_latest_xkcd()
 
+            # In case something went wrong
             if not xkcd:
                 await client.send_message(message.channel, trans.get("MSG_XKCD_FAILED", lang))
-                log_to_file("XKCD: string {}, fetch: {}, got None".format(args, fetch))
-            else:
-                xkcd_link = trans.get("MSG_XKCD_FULL_LINK", lang).format(self.xkcd.make_link(xkcd.num))
+                log_to_file("XKCD: string {}, fetch: {}, got None".format(fmt, fetch))
 
-                embed = Embed(title=trans.get("MSG_XKCD", lang).format(xkcd.num), description=xkcd_link)
-                embed.set_image(url=xkcd.img)
+            xkcd_link = trans.get("MSG_XKCD_FULL_LINK", lang).format(self.xkcd.make_link(xkcd.num))
 
-                await client.send_message(message.channel, embed=embed)
+            embed = Embed(title=trans.get("MSG_XKCD", lang).format(xkcd.num), description=xkcd_link)
+            embed.set_image(url=xkcd.img)
 
-                # await client.send_message(message.channel, trans.get("MSG_XKCD", lang).format(xkcd.num, xkcd.img))
+            await client.send_message(message.channel, embed=embed)
 
         # !joke (yo mama/chuck norris)
         elif startswith(prefix + "joke"):
-            arg = str(message.content[len(prefix + "joke"):]).strip(" ")
+            arg = str(message.content[len(prefix + "joke"):]).strip(" ").lower()
 
-            if arg.lower() == "yo mama":
+            if arg == "yo mama":
                 joke = await self.joke.get_joke(0)
-            elif arg.lower() == "chuck norris":
+            elif arg == "chuck norris":
                 joke = await self.joke.get_joke(1)
             else:
                 # Already random
