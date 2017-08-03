@@ -418,11 +418,11 @@ Id: {}:{}```</string>
     <string name="MSG_MOD_SWEARING">swearing</string>
     <string name="MSG_MOD_INVITE">invite link</string>
     <string name="MSG_OSU_ERROR">Something went wrong... :thinking:</string>
-    <string name="MSG_OSU_DESC">"**Level**: {}
+    <string name="MSG_OSU_DESC">**Level**: {}
 **Rank**:
     **Global**:            #{}
     **Country** (**{}**):  #{}
-Total PP: **{}**"</string>
+Total PP: **{}**</string>
     <string name="MSG_OSU_TOTAL_SC">Total score</string>
     <string name="MSG_OSU_RANKED_SC">Ranked score</string>
     <string name="MSG_OSU_AVG_ACC">Average accuracy</string>
@@ -430,6 +430,7 @@ Total PP: **{}**"</string>
 
     <string name="MSG_NANO_SLEEP">G'night! :sleeping:</string>
     <string name="MSG_NANO_WAKE">:wave:</string>
+    <string name="MSG_NANO_WASNT_SLEEPING">Was not in sleep mode.</string>
 
     <string name="MSG_REMINDER_PRIVATE">:alarm_clock: You asked me to remind you:
 ```{}```</string>
