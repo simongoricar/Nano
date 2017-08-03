@@ -125,7 +125,7 @@ class Nano(metaclass=Singleton):
         """
         Updates all plugins (imports them).
         """
-        log.info("Updating plugins...")
+        log.info("Loading plugins...")
 
         failed = []
         ignored = []
@@ -368,7 +368,6 @@ nano = Nano()
 
 @client.event
 async def on_message(message):
-    log.debug("Dispatching on_message")
     await nano.dispatch_event(ON_MESSAGE, message)
 
 

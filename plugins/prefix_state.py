@@ -32,28 +32,30 @@ class PrefixState:
         self.trans = kwargs.get("trans")
 
     async def on_message(self, message, **_):
+        trans = self.trans
+        client = self.client
         assert isinstance(message, Message)
-
 
         # Ignore your own messages
         if message.author == self.client.user:
             return "return"
 
+        # Ignore private messages
         if message.channel.is_private:
             return "return"
 
+        # Ignore bot messages
         if message.author.bot:
-            # Ignore commands from bots
             return "return"
 
-        # Set up the server if it is not present in servers.yml
+        # Set up the server if it is not present in redis db
         if not self.handler.server_exists(message.server.id):
-            self.handler.server_setup(message.server, wait=True)
+            self.handler.server_setup(message.server)
 
         # Ah, the shortcuts
-        def startswith(*msg):
-            for a in msg:
-                if message.content.startswith(a):
+        def startswith(*matches):
+            for match in matches:
+                if message.content.startswith(match):
                     return True
 
             return False
@@ -63,6 +65,7 @@ class PrefixState:
         if pref is None:
             pref = str(DEFAULT_PREFIX)
 
+        # Parse language
         lang = self.handler.get_lang(message.server.id)
         if not lang:
             lang = str(self.trans.default_lang)
@@ -71,27 +74,34 @@ class PrefixState:
         # nano.sleep
         if startswith("nano.sleep"):
             if not self.handler.can_use_admin_commands(message.author, message.server):
+                await client.send_message(message.channel, trans.get("PERM_ADMIN", lang))
                 return
 
-            self.handler.set_sleeping(message.server, 1)
-            await self.client.send_message(message.channel, self.trans.get("MSG_NANO_SLEEP", lang))
+            self.handler.set_sleeping(message.server, True)
+            await client.send_message(message.channel, self.trans.get("MSG_NANO_SLEEP", lang))
             return "return"
 
         # nano.wake
         elif startswith("nano.wake"):
             if not self.handler.can_use_admin_commands(message.author, message.server):
+                await client.send_message(message.channel, trans.get("PERM_ADMIN", lang))
                 return
 
-            self.handler.set_sleeping(message.server, 0)
+            if not self.handler.is_sleeping(message.server.id):
+                await client.send_message(message.channel, trans.get("MSG_NANO_WASNT_SLEEPING", lang))
+                return
+
+            self.handler.set_sleeping(message.server, False)
             await self.client.send_message(message.channel, self.trans.get("MSG_NANO_WAKE", lang))
 
             self.stats.add(SLEPT)
             return "return"
 
         # Quit if the bot is sleeping
-        if self.handler.is_sleeping(message.server):
+        if self.handler.is_sleeping(message.server.id):
             return "return"
 
+        # TODO not needed in rewrite
         if not isinstance(message.author, Member):
             user = message.server.get_member(message.author.id)
 
@@ -105,7 +115,7 @@ class PrefixState:
 
     async def on_member_join(self, member, **_):
         # Quit if the bot is sleeping
-        if self.handler.is_sleeping(member.server):
+        if self.handler.is_sleeping(member.server.id):
             return "return"
 
         lang = self.handler.get_lang(member.server.id)
@@ -116,7 +126,7 @@ class PrefixState:
 
     async def on_member_ban(self, member, **_):
         # Quit if the bot is sleeping
-        if self.handler.is_sleeping(member.server):
+        if self.handler.is_sleeping(member.server.id):
             return "return"
 
         lang = self.handler.get_lang(member.server.id)
@@ -127,7 +137,7 @@ class PrefixState:
 
     async def on_member_remove(self, member, **_):
         # Quit if the bot is sleeping
-        if self.handler.is_sleeping(member.server):
+        if self.handler.is_sleeping(member.server.id):
             return "return"
 
         lang = self.handler.get_lang(member.server.id)
@@ -141,15 +151,16 @@ class PrefixState:
 
         return [("add_var", dict(lang=lang))]
 
-    async def on_reaction_add(self, _, user, **__):
-        try:
-            lang = self.handler.get_lang(user.server.id)
-            if not lang:
-                lang = str(self.trans.default_lang)
+    async def on_reaction_add(self, reaction, user, **__):
+        # Ignore private messages
+        if reaction.message.channel.is_private:
+            return "return"
 
-            return [("add_var", dict(lang=lang))]
-        except AttributeError:
-            pass
+        lang = self.handler.get_lang(user.server.id)
+        if not lang:
+            lang = str(self.trans.default_lang)
+
+        return [("add_var", dict(lang=lang))]
 
 
 
