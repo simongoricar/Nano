@@ -191,7 +191,7 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
     def bg_save(self):
         return bool(self.redis.bgsave() == b"OK")
 
-    def server_setup(self, server, **_):
+    def server_setup(self, server):
         # These are server defaults
         s_data = server_defaults.copy()
         s_data["owner"] = server.owner.id
@@ -200,7 +200,7 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
         sid = "server:{}".format(server.id)
 
         self.redis.hmset(sid, s_data)
-        # commands:id, mutes:id and blacklist:id are created automatically when needed
+        # commands:id, mutes:id, blacklist:id and sr:id are created automatically when needed
 
         log.info("New server: {}".format(server.name))
 
@@ -347,12 +347,12 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
     def get_log_channel(self, server):
         return decode(self.redis.hget("server:{}".format(server.id), "logchannel"))
 
-    def is_sleeping(self, server):
-        return decode(self.redis.hget("server:{}".format(server.id), "sleeping"))
+    def is_sleeping(self, server_id):
+        return decode(self.redis.hget("server:{}".format(server_id), "sleeping"))
 
     @validate_input
-    def set_sleeping(self, server, var):
-        self.redis.hset("server:{}".format(server.id), "sleeping", bool(var))
+    def set_sleeping(self, server, bool_var):
+        self.redis.hset("server:{}".format(server.id), "sleeping", bool_var)
 
     @validate_input
     def mute(self, server, user_id):

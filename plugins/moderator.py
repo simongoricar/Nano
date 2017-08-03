@@ -33,7 +33,7 @@ def two_chars(line):
 
 def get_valid_commands(plugin):
         try:
-            return plugin.commands
+            return list(plugin.commands.keys())
         except AttributeError:
             return None
 
@@ -227,18 +227,21 @@ class Moderator:
     async def on_plugins_loaded(self):
         # Collect all valid commands
         plugins = [a.get("plugin") for a in self.nano.plugins.values() if a.get("plugin")]
-        self.valid_commands = [item for sub in [get_valid_commands(b) for b in plugins if get_valid_commands(b)] for item in sub]
+
+        for pl in plugins:
+            commands = get_valid_commands(pl)
+            if commands is not None:
+                # Joins two lists
+                self.valid_commands += commands
 
         await self.log.get_plugin()
 
     async def on_message(self, message, **kwargs):
         handler = self.handler
         client = self.client
+
         prefix = kwargs.get("prefix")
-
         lang = kwargs.get("lang")
-
-        assert isinstance(client, Client)
 
         if message.channel.is_private:
             return "return"
@@ -254,16 +257,9 @@ class Moderator:
         if handler.is_blacklisted(message.server.id, message.channel.id):
             return "return"
 
-        # Ignore existing commands
-        def is_command(content, valids):
-            for a in valids:
-                if str(content).startswith(str(a).replace("_", str(prefix))):
-                    return True
-
-            return False
-
         # Ignore the filter if user is executing a command
-        if is_command(message.content, self.valid_commands):
+        prless_command = message.content.replace(prefix, "_").split(" ")[0]
+        if prless_command in self.valid_commands:
             return
 
         # Spam, swearing and invite filter
@@ -282,7 +278,7 @@ class Moderator:
             swearing = False
 
         if needs_invite_filter:
-
+            # Ignore invites from admins
             if not handler.can_use_admin_commands(message.author, message.server):
                 invite = self.checker.check_invite(message)
 

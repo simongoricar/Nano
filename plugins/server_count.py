@@ -15,6 +15,7 @@ log.setLevel(logging.INFO)
 class POST:
     def __init__(self, **kwargs):
         self.client = kwargs.get("client")
+        self.loop = kwargs.get("loop")
 
         try:
             self.token = parser.get("bots.discord.pw", "token")
@@ -22,19 +23,27 @@ class POST:
             log.critical("Missing api key for bots.discord.pw, disabling plugin...")
             raise RuntimeError
 
-    async def on_server_join(self, server, **_):
-        amount = len(self.client.servers)
+        self.session = None
 
-        resp = await self.upload(amount, token=self.token)
+    async def handle_session(self) -> aiohttp.ClientSession:
+        if not self.session:
+            self.session = aiohttp.ClientSession(loop=self.loop)
+
+        return self.session
+
+    async def on_server_join(self, server, **_):
+        srv_amount = len(self.client.servers)
+
+        resp = await self.upload(srv_amount)
 
         if resp is True:
-            log.info("Updated guild count: {} (joined {})".format(amount, server.name))
+            log.info("Updated guild count: {} (joined {})".format(srv_amount, server.name))
         else:
-            log.info("Something went wrong when updating guild count: {} (for {}) - status code {}".format(amount, server.name, resp))
+            log.info("Something went wrong when updating guild count: {} (for {}) - status code {}".format(srv_amount, server.name, resp))
 
     async def upload(self, num, token=None):
         if not token:
-            return False
+            token = self.token
 
         url = "https://bots.discord.pw/api/bots/:user_id/stats/".replace(":user_id", self.client.user.id)
         payload = {"server_count": num}
@@ -43,9 +52,10 @@ class POST:
             "Authorization": str(token)
         }
 
-        async with aiohttp.ClientSession() as session:
-            async with session.post(url, data=json.dumps(payload), headers=head) as resp:
-                status_code = resp.status
+        session = await self.handle_session()
+
+        async with session.post(url, data=json.dumps(payload), headers=head) as resp:
+            status_code = resp.status
 
         return True if status_code == 200 else status_code
 

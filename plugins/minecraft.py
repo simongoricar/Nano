@@ -137,7 +137,7 @@ class McItems:
             data = self.group_to_list(349)
         elif str(name).lower() == "dye":
             data = self.group_to_list(351)
-        elif str(name).lower() == "egg":
+        elif str(name).lower() == "spawn egg":
             data = self.group_to_list(383)
         elif str(name).lower() == "head":
             data = self.group_to_list(397)

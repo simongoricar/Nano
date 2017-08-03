@@ -9,10 +9,11 @@ from discord import Message, Embed, Colour, errors
 from data.stats import MESSAGE
 from data.utils import is_valid_command, invert_num, invert_str, split_every
 
-# osu! plugin for Nano
+#####
+# osu! plugin
+#####
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 parser = configparser.ConfigParser()
 parser.read("plugins/config.ini")
@@ -22,6 +23,16 @@ commands = {
 }
 
 valid_commands = commands.keys()
+
+
+# About inverting: this inverts the number before and after the splitting
+# Makes the number formatted
+# 1000 -> 1,000
+def prepare(this):
+    if not isinstance(this, (float, int)):
+        return None
+
+    return invert_str(",".join(split_every(str(invert_num(this)), 3)))
 
 
 class Osu:
@@ -39,42 +50,35 @@ class Osu:
             raise RuntimeError
 
     async def on_message(self, message, **kwargs):
-        assert isinstance(message, Message)
         client = self.client
         trans = self.trans
 
         prefix = kwargs.get("prefix")
         lang = kwargs.get("lang")
 
-        if not is_valid_command(message.content, valid_commands, prefix=prefix):
+        # Check if this is a valid command
+        if not is_valid_command(message.content, commands, prefix=prefix):
             return
         else:
             self.stats.add(MESSAGE)
 
-        def startswith(*args):
-            for a in args:
-                if message.content.startswith(a):
+        def startswith(*matches):
+            for match in matches:
+                if message.content.startswith(match):
                     return True
 
             return False
 
+        # TODO fix osu-ds
         if startswith(prefix + "osu"):
             username = message.content[len(prefix + "osu "):]
-
             t_start = time.time()
 
-            user = self.osu.get_user(username)
+            user = await self.osu.get_user(username)
 
             if not user:
                 await client.send_message(message.channel, trans.get("ERROR_NO_USER2", lang))
                 return
-
-            # About inverting: this inverts the number before and after the splitting
-            def prepare(this):
-                if not type(this) in (float, int):
-                    return None
-
-                return invert_str(",".join(split_every(str(invert_num(this)), 3)))
 
             global_rank = prepare(user.world_rank)
             country_rank = prepare(user.country_rank)
@@ -83,12 +87,11 @@ class Osu:
             ranked_score = prepare(user.ranked_score)
 
             try:
-                acc = str(round(float(user.accuracy), 2)) + " %"
+                acc = "{} %".format(round(float(user.accuracy), 2))
             except TypeError:
                 acc = trans.get("INFO_ERROR", lang)
 
-            pp_amount = str(int(float(user.pp)))
-
+            pp_amount = int(float(user.pp))
             osu_level = int(float(user.level))
             avatar_url = "http://a.ppy.sh/{}".format(user.id)
 
@@ -105,7 +108,7 @@ class Osu:
                 color = Colour.dark_purple()
             elif osu_level < 100:
                 color = Colour.purple()
-            # Only the masters get the gold ;)
+            # Only masters get the gold ;)
             else:
                 color = Colour.gold()
 
