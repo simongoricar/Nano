@@ -197,6 +197,10 @@ class MessageTracker:
         current_time = time.time()
         delta = TICK_DURATION - (current_time - last_time)
 
+        # If previous loop took more than TICK_DURATION, do one right away
+        if delta <= 0:
+            return time.time()
+
         await asyncio.sleep(delta)
 
         return time.time()

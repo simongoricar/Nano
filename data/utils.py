@@ -142,7 +142,7 @@ def resolve_time(tm, lang):
 
     last = "{} {}".format(int(tm), tr.get("TIME_SECONDS", lang))
 
-    return ", ".join(fields) + " and " + last
+    return ", ".join(fields) + " and " if fields else "" + last
 
 
 possibilities = [
