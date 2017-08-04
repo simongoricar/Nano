@@ -436,25 +436,31 @@ Total PP: **{}**</string>
 ```{}```</string>
     <string name="MSG_REMINDER_CHANNEL">:alarm_clock: Timer is up!
 ```{}```</string>
-    <string name="MSG_REMINDER_HELP">"**Remind help**
+    <string name="MSG_REMINDER_HELP">**Remind help**
+
 `_remind me in [sometime]: [message]` - reminds you in your DM
-`_remind here in [sometime]: [message]` - reminds everyone in current channel"</string>
+`_remind here in [sometime]: [message]` - reminds everyone in current channel</string>
     <string name="MSG_REMINDER_WU_ME">Incorrect command use. See `{}help remind me in`</string>
     <string name="MSG_REMINDER_WU_HERE">Incorrect command use. See `{}help remind here in`</string>
     <string name="MSG_REMINDER_NO_BRACKETS">Do not use **[** and **]** ! Try again without them.</string>
-    <string name="MSG_REMINDER_INVALID_RANGE">Not a valid time range (5 seconds to 2 days)</string>
+    <string name="MSG_REMINDER_INVALID_RANGE">Not a valid time range (**{}** seconds to **{}** days)</string>
+    <string name="MSG_REMINDER_TO_LITERAL">to</string>
     <string name="MSG_REMINDER_SET">Reminder set :smile:</string>
     <string name="MSG_REMINDER_NO_PARTIALS">Please do not use partial minutes/hours/days etc.. (such as 1.7 days) - use `1d 16h 48min` instead :wink:</string>
-    <string name="MSG_REMINDER_SOON">**soon™**</string>
+    <string name="MSG_REMINDER_SOON">soon™</string>
     <string name="MSG_REMINDER_TIME_LEFT">in **{}**</string>
     <string name="MSG_REMINDER_LIST_NONE">You don't have any reminders.</string>
+    <string name="MSG_REMINDER_TOO_LONG_CONTENT">Your reminder content is too long! (maximum is {})</string>
     <string name="MSG_REMINDER_LIST">Your reminders:
-{}</string>
+```md
+{}```</string>
     <string name="MSG_REMINDER_DELETE_ALL">All reminders have been deleted.</string>
     <string name="MSG_REMINDER_DELETE_NONE">No reminder with such content.</string>
     <string name="MSG_REMINDER_DELETE_SUCCESS">Reminder removed.</string>
     <string name="MSG_REMINDER_LIMIT_EXCEEDED">:warning: You have exceeded the maximum amount of reminders (**{}** at once)</string>
     <string name="MSG_REMINDER_INVALID_FORMAT">:warning: Invalid time format, please use sec, min, d, etc...</string>
+    <string name="MSG_REMINDER_LIST_L">* {}
+> {}</string>
 
     <string name="MSG_STATUS_STATS">Stats</string>
     <string name="MSG_STATUS_SERVERS">Servers</string>
