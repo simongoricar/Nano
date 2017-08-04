@@ -45,6 +45,7 @@ class Reporter:
             log.warning("Not Found 404")
             log_to_file("Not Found 404: {}".format(value))
 
+        # Ignore this, used for flow control
         elif e_type == IgnoredException:
             return
 
@@ -67,7 +68,6 @@ class Reporter:
             log_to_file(exc, "bug")
 
             log.warning("New exception, see bugs.txt")
-
 
 
 class NanoPlugin:

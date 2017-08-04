@@ -15,8 +15,11 @@ from data.utils import is_valid_command, log_to_file, is_disabled
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
-BOT_FARM_RATIO = 0.55
-BOT_FARM_MIN_MEMBERS = 40
+# Might be implemented someday
+# BOT_FARM_RATIO = 0.55
+# BOT_FARM_MIN_MEMBERS = 40
+
+FAILPROOF_TIME_WAIT = 2.5
 
 commands = {
     "_debug": {"desc": "Displays EVEN MORE stats about Nano.", "use": None, "alias": None},
@@ -70,7 +73,7 @@ class ServerManagement:
         try:
             await self.client.send_message(channel, content=message, embed=embed)
         except discord.HTTPException:
-            await asyncio.sleep(3)
+            await asyncio.sleep(FAILPROOF_TIME_WAIT)
             await self.client.send_message(channel, content=message, embed=embed)
             raise
 
@@ -80,22 +83,21 @@ class ServerManagement:
         return discord.Embed(description="ID: {}".format(user.id), color=color).set_author(name="{} {}".format(user.name, action), icon_url=user.avatar_url)
 
     async def on_message(self, message, **kwargs):
-        assert isinstance(message, discord.Message)
+        client = self.client
+        trans = self.trans
 
         prefix = kwargs.get("prefix")
-        client = self.client
-
-        trans = self.trans
         lang = kwargs.get("lang")
 
-        if not is_valid_command(message.content, valid_commands, prefix=prefix):
+        # Check if this is a valid command
+        if not is_valid_command(message.content, commands, prefix=prefix):
             return
         else:
             self.stats.add(MESSAGE)
 
-        def startswith(*msg):
-            for a in msg:
-                if message.content.startswith(a):
+        def startswith(*matches):
+            for match in matches:
+                if message.content.startswith(match):
                     return True
 
             return False
@@ -125,24 +127,25 @@ class ServerManagement:
         elif startswith(prefix + "debug", prefix + "stats more"):
             # Some more debug data
 
+            # Ratelimit every 360 seconds
             if ((self.lt - time.time()) < 360) and not self.handler.is_bot_owner(message.author.id):
                 return
-            else:
-                self.lt = time.time()
+
+            self.lt = time.time()
 
             # CPU
-            cpu = psutil.cpu_percent(interval=0.5)
+            cpu = psutil.cpu_percent(interval=0.3)
 
             # RAM
-            def check_ram():
+            def get_ram_usage():
                 nano_process = psutil.Process(os.getpid())
                 return round(nano_process.memory_info()[0] / float(2 ** 20), 1)  # Converts to MB
 
-            mem_before = check_ram()
+            mem_before = get_ram_usage()
             # Attempt garbage collection
             gc.collect()
 
-            mem_after = check_ram()
+            mem_after = get_ram_usage()
             garbage = round(mem_after - mem_before, 2)
 
             # OTHER
@@ -164,7 +167,7 @@ class ServerManagement:
             embed.add_field(name=trans.get("MSG_DEBUG_REMINDERS", lang), value=str(reminders))
             embed.add_field(name=trans.get("MSG_DEBUG_VOTES", lang), value=str(polls))
 
-
+            # Redis db stats
             redis_mem = self.handler.db_info("memory").get("used_memory_human")
             embed.add_field(name=trans.get("MSG_DEBUG_R_MEM", lang), value=redis_mem)
 
@@ -198,7 +201,7 @@ class ServerManagement:
             embed.add_field(name=trans.get("MSG_STATS_VOTES", lang), value=votes)
             embed.add_field(name=trans.get("MSG_STATS_SLEPT", lang), value=sleeps)
             embed.add_field(name=trans.get("MSG_STATS_PONG", lang), value=pings)
-            # Left out "images uploaded" because there was no use
+            embed.add_field(name=trans.get("MSG_STATS_IMG", lang), value=imgs)
 
             await client.send_message(message.channel, trans.get("MSG_STATS_INFO", lang), embed=embed)
 
@@ -213,13 +216,14 @@ class ServerManagement:
         # !members
         elif startswith(prefix + "members"):
             ls = [member.name for member in message.server.members]
+            amount = len(ls)
 
             members = trans.get("MSG_MEMBERS_LIST", lang).format(", ".join(["`{}`".format(mem) for mem in ls])) + \
-                      trans.get("MSG_MEMBERS_TOTAL", lang).format(len(ls))
+                      trans.get("MSG_MEMBERS_TOTAL", lang).format(amount)
 
             if len(members) > 2000:
                 # Only send the number if the message is too long.
-                await client.send_message(message.channel, trans.get("MSG_MEMBERS_AMOUNT", lang).format(len(ls)))
+                await client.send_message(message.channel, trans.get("MSG_MEMBERS_AMOUNT", lang).format(amount))
 
             else:
                 await client.send_message(message.channel, members)
@@ -254,19 +258,27 @@ class ServerManagement:
 
             embed.set_footer(text=trans.get("MSG_SERVER_DATE_CREATED", lang).format(message.server.created_at))
 
-            embed.add_field(name=trans.get("MSG_SERVER_MEMBERS", lang).format(user_count), value=trans.get("MSG_SERVER_MEMBERS_L", lang).format(users_online))
-            embed.add_field(name=trans.get("MSG_SERVER_CHANNELS", lang).format(channels), value=trans.get("MSG_SERVER_CHANNELS_L", lang).format(voice_chan, text_chan))
+            embed.add_field(name=trans.get("MSG_SERVER_MEMBERS", lang).format(user_count),
+                            value=trans.get("MSG_SERVER_MEMBERS_L", lang).format(users_online))
+
+            embed.add_field(name=trans.get("MSG_SERVER_CHANNELS", lang).format(channels),
+                            value=trans.get("MSG_SERVER_CHANNELS_L", lang).format(voice_chan, text_chan))
+
             embed.add_field(name=trans.get("MSG_SERVER_VL", lang), value=v_level)
-            embed.add_field(name=trans.get("MSG_SERVER_ROLES", lang), value=trans.get("MSG_SERVER_ROLES_L", lang).format(len(message.server.roles) - 1))
-            embed.add_field(name=trans.get("MSG_SERVER_OWNER", lang), value=trans.get("MSG_SERVER_OWNER_L", lang).format(message.server.owner.name,
-                                                                                                                         message.server.owner.discriminator,
-                                                                                                                         message.server.owner.id))
+            embed.add_field(name=trans.get("MSG_SERVER_ROLES", lang),
+                            value=trans.get("MSG_SERVER_ROLES_L", lang).format(len(message.server.roles) - 1))
+
+            embed.add_field(name=trans.get("MSG_SERVER_OWNER", lang),
+                            value=trans.get("MSG_SERVER_OWNER_L", lang).format(message.server.owner.name,
+                                                                               message.server.owner.discriminator,
+                                                                               message.server.owner.id))
 
             await client.send_message(message.channel, trans.get("MSG_SERVER_INFO", lang), embed=embed)
 
     async def on_member_join(self, member, **kwargs):
         lang = kwargs.get("lang")
 
+        # TODO make more dynamic
         replacement_logic = {
             ":user": member.mention,
             ":username": member.name,
@@ -344,25 +356,7 @@ class ServerManagement:
             await self.send_message_failproof(def_c, leave_msg)
 
     async def on_server_join(self, server, **kwargs):
-        # Check if server is bot farm
-        # user_count = 0
-        # bot_count = 0
-        # for usr in server.members:
-        #     if usr.bot:
-        #         bot_count += 1
-        #     else:
-        #         user_count += 1
-        #
-        # ratio = bot_count / (user_count + bot_count)
-        #
-        # # Log
-        # log_to_file("Joined server: {} (ratio: {}%, count: {})".format(server.name, ratio * 100, len(server.members)))
-        #
-        # if ratio > BOT_FARM_RATIO and len(server.members) > BOT_FARM_MIN_MEMBERS:
-        #     log_to_file("Leaving server {}: ratio hit".format(server.name))
-        #     await self.client.leave_server(server)
-        #     return
-
+        # Always 'en'
         lang = kwargs.get("lang")
         # Say hi to the server
         await self.send_message_failproof(server.default_channel, self.trans.get("EVENT_SERVER_JOIN", lang))

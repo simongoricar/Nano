@@ -4,10 +4,10 @@ import importlib
 import logging
 import time
 
-from discord import Message, Client, DiscordException, Object, User
+from discord import Client, DiscordException, Object, User
 
 from data.stats import MESSAGE, WRONG_ARG
-from data.utils import resolve_time, convert_to_seconds, is_valid_command, decode, gen_id
+from data.utils import resolve_time, convert_to_seconds, is_valid_command, decode, gen_id, IgnoredException
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -17,13 +17,20 @@ log.setLevel(logging.INFO)
 DEFAULT_REMINDER_LIMIT = 2
 TICK_DURATION = 15
 
+REM_MIN_DURATION = 5
+REM_MAX_DURATION = 172800
+
+REM_MAX_CONTENT = 800
+
+REM_MAX_DAYS = int(REM_MAX_DURATION / 86400)
+
 REMINDER_PERSONAL = "personal"
 REMINDER_CHANNEL = "channel"
 
 commands = {
     "_remind": {"desc": "General module for timers\nSubcommands: remind me in, remind here in, remind list, remind remove", "use": None, "alias": None},
-    "_remind me in": {"desc": "Adds a reminder (reminds you in dm)", "use": "[command] [time (ex: 3h 5min)] : [message]", "alias": None},
-    "_remind here in": {"desc": "Adds a reminder (reminds everybody in current channel)", "use": "[command] [time (ex: 3h 5min)] : [message]", "alias": None},
+    "_remind me in": {"desc": "Adds a reminder (reminds you in dm)", "use": "[command] [time (ex: 3h 5min)] : [message] OR  [command] [time] to [message]", "alias": None},
+    "_remind here in": {"desc": "Adds a reminder (reminds everybody in current channel)", "use": "[command] [time (ex: 3h 5min)] : [message] OR  [command] [time] to [message]", "alias": None},
     "_remind list": {"desc": "Displays all ongoing timers.", "use": None, "alias": "_reminder list"},
     "_reminder list": {"desc": "Displays all ongoing timers.", "use": None, "alias": "_remind list"},
     "_remind help": {"desc": "Displays help for reminders.", "use": None, "alias": None},
@@ -57,7 +64,6 @@ class RedisReminderHandler:
         self.loop = loop
         self.client = client
         self.trans = trans
-        self.wait = False
 
         try:
             self.json = importlib.import_module("ujson")
@@ -83,36 +89,33 @@ class RedisReminderHandler:
 
     def get_reminders(self, user_id):
         if self.redis.exists(user_id):
-            return {int(idd): self.json.loads(a) for idd, a in self.redis.hgetall(user_id).items()}
+            return {int(rem_id): self.json.loads(rem_data) for rem_id, rem_data in self.redis.hgetall(user_id).items()}
         else:
             return {}
 
     def get_all_reminders(self):
+        # Not actually *, but reminder:*, due to how plugin manager works
         return [self.get_reminders(decode(a).strip("reminder:")) for a in self.redis.scan_iter("*")]
 
-    def find_id_from_content(self, user, content, lang):
-        reminders = self.get_reminders(user)
-        private_ann, channel_ann = self.prepare_remind_content(content, lang)
+    def find_id_from_content(self, user_id, content):
+        reminders = self.get_reminders(user_id)
 
         for rem_id, rem_content in reminders.items():
-            if rem_content.get("content") == private_ann or rem_content.get("content") == channel_ann:
+            if rem_content.get("raw") == content:
                 return rem_id
 
         return None
 
     def remove_all_reminders(self, user):
-        if self.redis.exists(user.id):
-            self.redis.delete(user.id)
+        self.redis.delete(user.id)
 
     def remove_reminder(self, user_id, rem_id):
         return self.redis.hdel(user_id, rem_id)
 
     def check_reminders(self, user):
         """
-        True == ok
-        False = not ok
         :param user: User or Member
-        :return: success
+        :return: bool indicating success
         """
         if self.redis.exists(user.id):
             return bool(len(self.get_reminders(user.id)) <= DEFAULT_REMINDER_LIMIT)
@@ -127,9 +130,9 @@ class RedisReminderHandler:
         :param author: Who is the author
         :param content: String : message
         :param tim: time (int)
-        :param reminder_type: type of reminder (personal or channel)
+        :param reminder_type: type of reminder (personal (DM) or channel)
         :param lang: language used in that server
-        :return: bool
+        :return: bool indicating success
         """
         t = time.time()
 
@@ -137,7 +140,7 @@ class RedisReminderHandler:
             return -1
 
         tim = convert_to_seconds(tim)
-        if not (5 <= tim < 172800):  # Allowed reminder duration: 5 sec to 2 days
+        if not (REM_MIN_DURATION <= tim < REM_MAX_DURATION):  # Allowed reminder duration: 5 sec to 2 days
             return False
 
         raw = str(content)
@@ -165,6 +168,10 @@ class RedisReminderHandler:
         """
         current_time = time.time()
         delta = TICK_DURATION - (current_time - last_time)
+
+        # If previous loop took more than TICK_DURATION, do one right away
+        if delta <= 0:
+            return time.time()
 
         await asyncio.sleep(delta)
 
@@ -211,94 +218,112 @@ class Reminder:
 
         self.reminder = RedisReminderHandler(self.client, self.handler, self.trans, self.loop)
 
+        self.filter = None
+
         self.loop.create_task(self.reminder.start_monitoring())
+
+    async def on_plugins_loaded(self):
+        self.filter = self.nano.get_plugin("commons").get("instance").at_everyone_filter
+
+    async def parse_parameters(self, message, cut_length, lang, prefix, fail_msg):
+        args = message.content[cut_length:].split(":")
+        if len(args) < 2:
+            # Try notation with "to" or equivalent in current language
+            args = message.content[cut_length:].split(self.trans.get("MSG_REMINDER_TO_LITERAL", lang), maxsplit=1)
+            # Still not valid
+            if len(args) < 2:
+                await self.client.send_message(message.channel, fail_msg)
+                self.stats.add(WRONG_ARG)
+                raise IgnoredException
+
+        r_time, text = args[0].strip(" "), args[1].strip(" ")
+
+        # If total seconds are not passed (valid), convert to total seconds
+        if not r_time.isnumeric():
+            if "[" in r_time or "]" in r_time:
+                # When people actually do !remind here in [1h 32min]: something
+                await self.client.send_message(message.channel, self.trans.get("MSG_REMINDER_NO_BRACKETS", lang))
+                raise IgnoredException
+
+            try:
+                r_time = convert_to_seconds(r_time)
+            except ValueError:
+                await self.client.send_message(message.channel, self.trans.get("MSG_REMINDER_INVALID_FORMAT", lang))
+                raise IgnoredException
+
+        else:
+            r_time = int(args[0])
+
+        # Check text validity
+        if len(text) > REM_MAX_CONTENT:
+            raise ValueError
+
+        return r_time, text
 
     async def on_message(self, message, **kwargs):
         client = self.client
-        prefix = kwargs.get("prefix")
-
         trans = self.trans
+
+        prefix = kwargs.get("prefix")
         lang = kwargs.get("lang")
 
-        assert isinstance(message, Message)
         assert isinstance(client, Client)
 
-        if not is_valid_command(message.content, valid_commands, prefix=prefix):
+        # Check if this is a valid command
+        if not is_valid_command(message.content, commands, prefix=prefix):
             return
         else:
             self.stats.add(MESSAGE)
 
-        def startswith(*msg):
-            for a in msg:
-                if message.content.startswith(a):
+        def startswith(*matches):
+            for match in matches:
+                if message.content.startswith(match):
                     return True
 
             return False
 
-        # !remind me in [time]:[reminder]
+        # !remind me in [time]:[text] or [time] to [text]
         if startswith(prefix + "remind me in"):
-            args = str(message.content)[len(prefix + "remind me in "):].strip().split(":")
-
-            if len(args) != 2:
-                await client.send_message(message.channel, trans.get("MSG_REMINDER_WU_ME", lang).format(prefix))
-                self.stats.add(WRONG_ARG)
+            try:
+                r_time, text = await self.parse_parameters(message, len(prefix) + 13,
+                                                           lang, prefix, trans.get("MSG_REMINDER_WU_ME", lang).format(prefix))
+            # Raised when reminder content is too long
+            except ValueError:
+                await client.send_message(message.channel, trans.get("MSG_REMINDER_TOO_LONG_CONTENT", lang).format(REM_MAX_CONTENT))
                 return
 
-            content = str(args[1]).strip(" ")
 
-            if not args[0].isnumeric():
-                if "[" in args[0]:
-                    # When people actually do !remind here in [1h 32min]: omg why
-                    await client.send_message(message.channel, trans.get("MSG_REMINDER_NO_BRACKETS", lang))
-                    return
+            resp = self.reminder.set_reminder(message.author, message.author, text, r_time, lang, reminder_type=REMINDER_PERSONAL)
 
-                try:
-                    ttr = convert_to_seconds(args[0])
-                except ValueError:
-                    await client.send_message(message.channel, trans.get("MSG_REMINDER_INVALID_FORMAT", lang))
-                    return
-
-            else:
-                ttr = int(args[0])
-
-            resp = self.reminder.set_reminder(message.author, message.author, content, ttr, lang, reminder_type=REMINDER_PERSONAL)
-
+            # Too many reminders going on
             if resp == -1:
                 await client.send_message(message.channel, trans.get("MSG_REMIDNER_LIMIT_EXCEEDED", lang).format(DEFAULT_REMINDER_LIMIT))
 
+            # Invalid range
             elif resp is False:
-                await client.send_message(message.channel, trans.get("MSG_REMINDER_INVALID_RANGE", lang))
+                await client.send_message(message.channel, trans.get("MSG_REMINDER_INVALID_RANGE", lang).format(REM_MIN_DURATION, REM_MAX_DAYS))
 
+            # Everything valid
             else:
                 await client.send_message(message.channel, trans.get("MSG_REMINDER_SET", lang))
 
         # !remind here in [time]:[reminder]
         elif startswith(prefix + "remind here in"):
-            args = str(message.content)[len(prefix + "remind here in "):].strip().split(":")
-
-            if len(args) != 2:
-                await client.send_message(message.channel, trans.get("MSG_REMINDER_WU_HERE", lang).format(prefix))
-                self.stats.add(WRONG_ARG)
+            try:
+                r_time, text = await self.parse_parameters(message, len(prefix) + 13,
+                                                           lang, prefix, trans.get("MSG_REMINDER_WU_HERE", lang).format(prefix))
+            # Raised when reminder content is too long
+            except ValueError:
+                await client.send_message(message.channel, trans.get("MSG_REMINDER_TOO_LONG_CONTENT", lang).format(REM_MAX_CONTENT))
                 return
 
-            content = str(args[1]).strip(" ")
-
-            if not args[0].isnumeric():
-                try:
-                    ttr = convert_to_seconds(args[0])
-                except ValueError:
-                    await client.send_message(message.channel, trans.get("MSG_REMINDER_NO_PARTIALS", lang))
-                    return
-            else:
-                ttr = int(args[0])
-
-            resp = self.reminder.set_reminder(message.channel, message.author, content, ttr, lang, reminder_type=REMINDER_CHANNEL)
+            resp = self.reminder.set_reminder(message.channel, message.author, text, r_time, lang, reminder_type=REMINDER_CHANNEL)
 
             if resp == -1:
                 await client.send_message(message.channel, trans.get("MSG_REMIDNER_LIMIT_EXCEEDED", lang).format(DEFAULT_REMINDER_LIMIT))
 
             elif resp is False:
-                await client.send_message(message.channel, trans.get("MSG_REMINDER_INVALID_RANGE", lang))
+                await client.send_message(message.channel, trans.get("MSG_REMINDER_INVALID_RANGE", lang).format(REM_MIN_DURATION, REM_MAX_DAYS))
 
             else:
                 await client.send_message(message.channel, trans.get("MSG_REMINDER_SET", lang))
@@ -312,35 +337,44 @@ class Reminder:
                 return
 
             rem = []
+            rem_literal = trans.get("MSG_REMINDER_LIST_L", lang)
+
             for reminder in reminders.values():
                 # Gets the remaining time
                 ttl = reminder.get("time_target") - time.time()
 
-                cont = self.nano.get_plugin("commons").get("instance").at_everyone_filter(reminder.get("raw"), message.author, message.server)
+                cont = self.filter(reminder.get("raw"), message.author, message.server)
 
-                if (ttl != abs(ttl)) or ttl == 0:
+                # Zero or negative number
+                if ttl <= 0:
                     when = trans.get("MSG_REMINDER_SOON", lang)
                 else:
-                    when = "in **{}**".format(resolve_time(ttl, lang))
+                    when = resolve_time(ttl, lang)
 
-                rem.append("➤ {} ({})".format(cont, when))
+                rem.append(rem_literal.format(cont, when))
 
-            await client.send_message(message.channel, trans.get("MSG_REMINDER_LIST", lang).format("\n".join(rem)))
+            await client.send_message(message.channel, trans.get("MSG_REMINDER_LIST", lang).format("\n\n".join(rem)))
 
         # !remind remove
         elif startswith(prefix + "remind remove"):
-            r_name = message.content[len(prefix + "remind remove"):].strip()
+            r_name = message.content[len(prefix + "remind remove "):]
+
+            if not r_name:
+                await client.send_message(message.channel, trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
+                return
 
             if r_name == "all":
                 self.reminder.remove_all_reminders(message.author)
                 await client.send_message(message.channel, trans.get("MSG_REMINDER_DELETE_ALL", lang))
 
             else:
-                r_resp = self.reminder.remove_reminder(message.author.id, r_name)
+                r_id = self.reminder.find_id_from_content(message.author.id, r_name)
 
-                if not r_resp:
+                # No reminder with such content
+                if not r_id:
                     await client.send_message(message.channel, trans.get("MSG_REMINDER_DELETE_NONE", lang))
                 else:
+                    self.reminder.remove_reminder(message.author.id, r_id)
                     await client.send_message(message.channel, trans.get("MSG_REMINDER_DELETE_SUCCESS", lang))
 
         # !remind help
@@ -355,5 +389,6 @@ class NanoPlugin:
     handler = Reminder
     events = {
         "on_message": 10,
+        "on_plugins_loaded": 5,
         # type : importance
     }
