@@ -1,13 +1,11 @@
 # Thumbnails
-data/images/Thumbs.db
-plugins/mc/Thumbs.db
+Thumbs.db
 
 # Python cache
-__pycache__/*
-/*/__pycache__/*
+__pycache__/
 
 # PyCharm config
-.idea/*
+.idea/
 
 # Files generated on the fly
 backup/
