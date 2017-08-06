@@ -4,7 +4,8 @@ import configparser
 import logging
 import os
 import time
-from json import load, dump, JSONDecodeError
+
+from ujson import load, dump, loads
 
 import aiohttp
 from discord import Message
@@ -18,7 +19,6 @@ from data.utils import is_valid_command
 #####
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
 
 parser = configparser.ConfigParser()
 parser.read("plugins/config.ini")
@@ -64,7 +64,7 @@ def get_quality_name(num):
     :param num: int
     :return: str
     """
-    return str(quality_names.get(int(num)))
+    return quality_names.get(int(num))
 
 
 # Exception classes
@@ -162,7 +162,7 @@ class CommunityPrices:
     """
     Community (backpack.tf) price parser.
     """
-    def __init__(self, loop, api_key, max_age=14400, allow_cache=True):
+    def __init__(self, loop, api_key, max_age=2880, allow_cache=True):
         """
         :param api_key: backpack.tf/developer key
         :param max_age: max cache age in s, if allow_local_cache is True (default)
@@ -170,7 +170,7 @@ class CommunityPrices:
         :return: None
         """
         self.api_key = api_key
-        self.max_age = max_age  # Defaults to 4 hours
+        self.max_age = max_age  # Defaults to 8 hours
         self.success = None
 
         self.loop = loop
@@ -202,9 +202,12 @@ class CommunityPrices:
             with open("cache/bptf_cache.temp", "r") as cache:
                 try:
                     data = load(cache)
-                except JSONDecodeError:
+
+                # Malformed json data
+                except:
                     data = await self._request()
 
+                # Everything is fine, validate data
                 else:
                     if not data:
                         return False
@@ -216,6 +219,7 @@ class CommunityPrices:
                         logger.info("Using cache")
                 if not data:
                     return False
+
         # Otherwise just normally request it
         else:
             data = await self._request()
@@ -253,7 +257,7 @@ class CommunityPrices:
         if not params:
             params = self.parameters
 
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(json_serialize=loads) as session:
             async with session.get(address, params=params) as resp:
                 if resp.status != 200:
                     if resp.status == 504:
@@ -331,34 +335,37 @@ class TeamFortress:
             raise RuntimeError
 
     async def on_message(self, message, **kwargs):
-        assert isinstance(message, Message)
         client = self.client
         trans = self.trans
 
         prefix = kwargs.get("prefix")
         lang = kwargs.get("lang")
 
-        if not is_valid_command(message.content, valid_commands, prefix=prefix):
+        # Check if this is a valid command
+        if not is_valid_command(message.content, commands, prefix=prefix):
             return
         else:
             self.stats.add(MESSAGE)
 
-        def startswith(*args):
-            for a in args:
-                if message.content.startswith(a):
+        def startswith(*matches):
+            for match in matches:
+                if message.content.startswith(match):
                     return True
 
             return False
 
+        # !tf [item name]
         if startswith(prefix + "tf"):
             if not self.tf.success:
                 await client.send_message(message.channel, trans.get("MSG_TF_UNAVAILABLE", lang))
                 return
 
             item_name = message.content[len(prefix + "tf "):]
+            if not item_name:
+                await client.send_message(message.channel, trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
+                return
 
             item = await self.tf.get_item_by_name(str(item_name))
-
             if not item:
                 await client.send_message(message.channel, trans.get("MSG_TF_NO_SUCH_ITEM", lang).format(item_name))
                 self.stats.add(WRONG_ARG)

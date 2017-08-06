@@ -111,26 +111,23 @@ class Vote:
 
         self.vote = RedisVoteHandler(self.handler)
 
-    def save_state(self):
-        with open("cache/voting.temp", "wb") as cache:
-            cache.write(dumps(self.vote))  # Save instance of Vote to be used on the next boot
-
     async def on_message(self, message, **kwargs):
-        assert isinstance(message, Message)
         client = self.client
-        prefix = kwargs.get("prefix")
-
+        handler = self.handler
         trans = self.trans
+
+        prefix = kwargs.get("prefix")
         lang = kwargs.get("lang")
 
-        if not is_valid_command(message.content, valid_commands, prefix=prefix):
+        # Check if this is a valid command
+        if not is_valid_command(message.content, commands, prefix=prefix):
             return
         else:
             self.stats.add(MESSAGE)
 
-        def startswith(*args):
-            for a in args:
-                if message.content.startswith(a):
+        def startswith(*matches):
+            for match in matches:
+                if message.content.startswith(match):
                     return True
 
             return False
@@ -139,7 +136,6 @@ class Vote:
         if startswith(prefix + "vote start"):
             if not self.handler.can_use_admin_commands(message.author, message.server):
                 await client.send_message(message.channel, trans.get("PERM_ADMIN", lang))
-
                 self.stats.add(WRONG_PERMS)
                 return
 
@@ -148,20 +144,19 @@ class Vote:
                 return
 
             vote_content = message.content[len(prefix + "vote start "):]
-            base = str(vote_content).split("\"")
+            base = vote_content.split("\"")
 
             if len(base) != 3:
                 await client.send_message(message.channel, trans.get("MSG_VOTING_I_USAGE", lang).format(prefix))
                 self.stats.add(WRONG_ARG)
                 return
 
-            title = str(base[1]).strip(" ")
-
+            title = base[1].strip(" ")
             if not title:
                 await client.send_message(message.channel, trans.get("MSG_VOTING_NO_TITLE", lang))
                 return
 
-            vote_items = str(base[2]).split("|")
+            vote_items = base[2].split("|")
             vote_items = [a.strip(" ") for a in list(vote_items) if a.strip(" ")]
 
             if len(vote_items) > VOTE_ITEM_LIMIT:
