@@ -309,7 +309,7 @@ def bin2bool(c):
 
     if c == 0:
         return False
-    if c == 1:
+    if c >= 1:
         return True
 
     return c

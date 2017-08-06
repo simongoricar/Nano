@@ -1,13 +1,10 @@
 # coding=utf-8
 import configparser
-# redis is a conditional import
+import redis
 import logging
 import os
-import importlib
-# yaml is a conditional import
-# json is a conditional import
-from discord import Member
-from .utils import Singleton, decode, decode_auto, bin2bool
+from discord import Member, Server
+from .utils import Singleton, decode, bin2bool
 
 __author__ = "DefaltSimon"
 
@@ -43,7 +40,7 @@ server_defaults = {
     "lang": "en",
 }
 
-# Utility for input validation
+# Decorator utility for input validation
 
 
 def validate_input(fn):
@@ -61,16 +58,13 @@ def validate_input(fn):
 
     return wrapper
 
-# (Redis)ServerHandler is a singleton, --> only one instance
+# RedisServerHandler is a singleton, --> only one instance
 # Singleton imported from utils
 
 
 class ServerHandler:
-    def __init__(self):
-        pass
-
     @staticmethod
-    def get_redis_credentials():
+    def get_redis_credentials() -> tuple:
         setup_type = 1 if par.get("Redis", "setup") == "openshift" else 2
 
         if setup_type == 1:
@@ -94,7 +88,7 @@ class ServerHandler:
         return redis_ip, redis_port, redis_pass
 
     @classmethod
-    def get_handler(cls, legacy=False):
+    def get_handler(cls, legacy: bool = False) -> "RedisServerHandler":
         # Factory method
         if legacy:
             raise NotImplementedError
@@ -103,38 +97,39 @@ class ServerHandler:
             return RedisServerHandler(redis_ip, redis_port, redis_pass)
 
     # Permission checker
-    def has_role(self, user, server, role_name):
-        if not isinstance(user, Member):
-            return False
+    @staticmethod
+    def has_role(member: Member, role_name: str):
+        if not isinstance(member, Member):
+            raise TypeError("expected Member, got {}".format(type(member).__name__))
 
-        for role in user.roles:
+        for role in member.roles:
             if role.name == role_name:
                 return True
 
         return False
 
-    def can_use_admin_commands(self, user, server):
-        bo = self.is_bot_owner(user.id)
-        so = self.is_server_owner(user.id, server)
-        ia = self.is_admin(user, server)
+    def can_use_admin_commands(self, member: Member, server: Server):
+        bo = self.is_bot_owner(member.id)
+        so = self.is_server_owner(member.id, server)
+        ia = self.is_admin(member)
 
         return bo or so or ia
 
     @staticmethod
-    def is_bot_owner(uid):
-        return str(uid) == str(par.get("Settings", "ownerid"))
+    def is_bot_owner(uid: int):
+        return uid == int(par.get("Settings", "ownerid"))
 
     @staticmethod
-    def is_server_owner(uid, server):
-        return str(uid) == str(server.owner.id)
+    def is_server_owner(user_id: int, server: Server):
+        return user_id == server.owner.id
 
-    def is_admin(self, user, server):
-        return self.has_role(user, server, "Nano Admin")
+    def is_admin(self, member: Member):
+        return self.has_role(member, "Nano Admin")
 
-    def is_mod(self, user, server):
-        bo = self.is_bot_owner(user.id)
-        so = self.is_server_owner(user.id, server)
-        ia = self.has_role(user, server, "Nano Mod")
+    def is_mod(self, member: Member, server: Server):
+        bo = self.is_bot_owner(member.id)
+        so = self.is_server_owner(member.id, server)
+        ia = self.has_role(member, "Nano Mod")
 
         return bo or so or ia
 
@@ -156,7 +151,7 @@ mod_settings_map = {
 
     "invite filter": INVITEFILTER_SETTING,
     "filterinvite": INVITEFILTER_SETTING,
-    "filterinvites": INVITEFILTER_SETTING,
+    "invitefilter": INVITEFILTER_SETTING,
 }
 
 # IMPORTANT
@@ -164,7 +159,7 @@ mod_settings_map = {
 # For commands => commands:id_here
 # For mutes => mutes:id_here
 # For blacklist => blacklist:id_here
-# For the selfroles => sr:
+# For selfroles => sr:
 
 
 class RedisServerHandler(ServerHandler, metaclass=Singleton):
@@ -173,25 +168,23 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
     def __init__(self, redis_ip, redis_port, redis_password):
         super().__init__()
 
-        self._redis = importlib.import_module("redis")
-
-        self.pool = self._redis.ConnectionPool(host=redis_ip, port=redis_port, password=redis_password, db=0)
+        self.pool = redis.ConnectionPool(host=redis_ip, port=redis_port, password=redis_password, db=0)
         log.info("Redis ConnectionPool created")
 
-        self.redis = self._redis.StrictRedis(connection_pool=self.pool)
+        self.redis = redis.StrictRedis(connection_pool=self.pool)
 
         try:
             self.redis.ping()
-        except self._redis.ConnectionError:
+        except redis.ConnectionError:
             log.critical("Could not connect to Redis db!")
-            return
+            raise RuntimeError
 
         log.info("Connected to Redis database")
 
     def bg_save(self):
         return bool(self.redis.bgsave() == b"OK")
 
-    def server_setup(self, server):
+    def server_setup(self, server: Server):
         # These are server defaults
         s_data = server_defaults.copy()
         s_data["owner"] = server.owner.id
@@ -204,16 +197,23 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
 
         log.info("New server: {}".format(server.name))
 
-    def server_exists(self, server_id):
+    def reset_server(self, server: Server):
+        sid = "server:{}".format(server.id)
+        self.redis.delete(sid)
+        self.redis.hmset(sid, server_defaults.copy())
+
+        log.info("Server reset: {}".format(server.name))
+
+    def server_exists(self, server_id: int) -> bool:
         return bool(decode(self.redis.exists("server:{}".format(server_id))))
 
-    def check_server(self, server):
+    def check_server(self, server: Server):
         # shortcut for checking sever existence
         if not self.server_exists(server.id):
             self.server_setup(server)
 
-    def get_server_data(self, server):
-        # Special: HGETALL returns a dict with binary keys and values!
+    def get_server_data(self, server) -> dict:
+        # NOTE: HGETALL returns a dict with binary keys and values!
         base = decode(self.redis.hgetall("server:{}".format(server.id)))
         cmd_list = self.get_custom_commands(server)
         bl = self.get_blacklists(server)
@@ -226,113 +226,102 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
 
         return data
 
-    def get_var(self, server_id, key):
+    def get_var(self, server_id: int, key: str):
         # If value is in json, it will be a json-encoded string and not parsed
         return decode(self.redis.hget("server:{}".format(server_id), key))
 
     @validate_input
-    def update_var(self, server_id, key, value):
-        self.redis.hset("server:{}".format(server_id), key, value)
+    def update_var(self, server_id: int, key: str, value: str) -> bool:
+        return bin2bool(self.redis.hset("server:{}".format(server_id), key, value))
 
     @validate_input
-    def update_moderation_settings(self, server, key, value):
+    def update_moderation_settings(self, server_id: int, key: str, value: bool) -> bool:
         if not mod_settings_map.get(key):
-            return False
+            raise TypeError("invalid moderation setting")
 
-        return decode(self.redis.hset("server:{}".format(server.id), mod_settings_map.get(key), value))
+        return bin2bool(self.redis.hset("server:{}".format(server_id), mod_settings_map.get(key), value))
 
-    def check_server_vars(self, server):
+    def check_server_vars(self, server: Server):
         try:
-            serv = "server:{}".format(server.id)
+            serv_ns = "server:{}".format(server.id)
 
-            if decode(self.redis.hget(serv, "owner")) != str(server.owner.id):
-                self.redis.hset(serv, "owner", server.owner.id)
+            if decode(self.redis.hget(serv_ns, "owner")) != str(server.owner.id):
+                self.redis.hset(serv_ns, "owner", server.owner.id)
 
-            if decode(self.redis.hget(serv, "name")) != str(server.name):
-                self.redis.hset(serv, "name", server.name)
+            if decode(self.redis.hget(serv_ns, "name")) != str(server.name):
+                self.redis.hset(serv_ns, "name", server.name)
         except AttributeError:
             pass
 
-    def delete_server_by_list(self, current_servers):
-        servers = ["server:{}".format(name) for name in current_servers]
+    def delete_server_by_list(self, current_servers: list):
+        servers = ["server:" + name for name in current_servers]
 
-        server_list = [decode_auto(a) for a in self.redis.scan(0, match="server:*")[1]]
+        # [1] beacuse a tuple with cursor index is returned
+        redis_servers = [decode(a) for a in self.redis.scan(0, match="server:*")[1]]
 
-        for server in servers:
-            try:
-                server_list.remove(server)
-            except ValueError:
-                pass
+        # Filter only removed servers
+        removed_servers = set(redis_servers) - set(servers)
+        print("about to remove {} servers".format(len(removed_servers)))
 
-        if server_list:
-            for rem_serv in server_list:
-                self.delete_server(rem_serv)
+        # Delete every old server
+        for rem_serv in removed_servers:
+            self.delete_server(rem_serv.strip("server:"))
 
-            log.info("Removed {} old servers.".format(len(server_list)))
+        log.info("Removed {} old servers.".format(len(removed_servers)))
 
-    def delete_server(self, server_id):
+    def delete_server(self, server_id: int):
         self.redis.delete("commands:{}".format(server_id))
         self.redis.delete("blacklist:{}".format(server_id))
         self.redis.delete("mutes:{}".format(server_id))
+        self.redis.delete("server:{}".format(server_id))
+        self.redis.delete("sr:{}".format(server_id))
 
-        return self.redis.delete("server:{}".format(server_id))
+        log.info("Deleted server: {}".format(server_id))
 
     @validate_input
-    def set_command(self, server, trigger, response):
-        serv = "commands:{}".format(server.id)
-
+    def set_command(self, server: Server, trigger: str, response: str) -> bool:
         if len(trigger) > 80:
             return False
 
-        self.redis.hset(serv, trigger, response)
-        return True
+        return self.redis.hset("commands:{}".format(server.id), trigger, response)
 
-    def remove_command(self, server, trigger):
+    def remove_command(self, server: Server, trigger: str) -> bool:
         serv = "commands:{}".format(server.id)
 
-        # if decode(self.redis.hexists(serv, trigger)):
-        #     self.redis.hdel(serv, trigger)
-        #     return True
-        #
-        # else:
-        #     return False
+        return bin2bool(self.redis.hdel(serv, trigger))
 
-        return bin2bool(decode_auto(self.redis.hdel(serv, trigger)))
-
-    def get_custom_commands(self, server_id):
+    def get_custom_commands(self, server_id: int) -> dict:
         return decode(self.redis.hgetall("commands:{}".format(server_id)))
 
-    def get_command_amount(self, server_id):
+    def get_command_amount(self, server_id: int) -> int:
         return decode(self.redis.hlen("commands:{}".format(server_id)))
 
-    def custom_command_exists(self, server_id, trigger):
-        return decode(self.redis.hexists("commands:{}".format(server_id), trigger))
+    def custom_command_exists(self, server_id: int, trigger: str):
+        return self.redis.hexists("commands:{}".format(server_id), trigger)
 
     @validate_input
-    def add_channel_blacklist(self, server_id, channel_id):
+    def add_channel_blacklist(self, server_id: int, channel_id: int):
         serv = "blacklist:{}".format(server_id)
         return bool(self.redis.sadd(serv, channel_id))
 
     @validate_input
-    def remove_channel_blacklist(self, server_id, channel_id):
+    def remove_channel_blacklist(self, server_id: int, channel_id: int):
         serv = "blacklist:{}".format(server_id)
         return bool(self.redis.srem(serv, channel_id))
 
     def is_blacklisted(self, server_id, channel_id):
         serv = "blacklist:{}".format(server_id)
-        return bin2bool(self.redis.sismember(serv, channel_id))
+        return self.redis.sismember(serv, channel_id)
 
     def get_blacklists(self, server_id):
         serv = "blacklist:{}".format(server_id)
         return list(decode(self.redis.smembers(serv)) or [])
 
-    def get_prefix(self, server):
+    def get_prefix(self, server: Server):
         return decode(self.redis.hget("server:{}".format(server.id), "prefix"))
 
     @validate_input
     def change_prefix(self, server, prefix):
-        self.check_server(server)
-
         self.redis.hset("server:{}".format(server.id), "prefix", prefix)
 
     def has_spam_filter(self, server):
@@ -384,16 +373,6 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
     def get_lang(self, server_id):
         return decode(self.redis.hget("server:{}".format(server_id), "lang"))
 
-    @validate_input
-    def remove_server(self, server_id):
-        # Not used
-        s = bin2bool(self.redis.delete("server:{}".format(server_id)))
-        c = bin2bool(self.redis.delete("commands:{}".format(server_id)))
-        m = bin2bool(self.redis.delete("mutes:{}".format(server_id)))
-        b = bin2bool(self.redis.delete("blacklist:{}".format(server_id)))
-
-        return s and c and m and b
-
     def get_selfroles(self, server_id):
         return decode(self.redis.smembers("sr:{}".format(server_id)))
 
@@ -408,20 +387,20 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
 
     # Special debug methods
     def db_info(self, section=None):
-        return decode_auto(self.redis.info(section=section))
+        return decode(self.redis.info(section=section))
 
     def db_size(self):
         return int(self.redis.dbsize())
 
     # Plugin storage system
     def get_plugin_data_manager(self, namespace, *args, **kwargs):
-        return RedisPluginDataManager(self._redis, self.pool, namespace, *args, **kwargs)
+        return RedisPluginDataManager(self.pool, namespace, *args, **kwargs)
 
 
 class RedisPluginDataManager:
-    def __init__(self, _redis, pool, namespace, *_, **__):
+    def __init__(self, pool, namespace, *_, **__):
         self.namespace = str(namespace)
-        self.redis = _redis.StrictRedis(connection_pool=pool)
+        self.redis = redis.StrictRedis(connection_pool=pool)
 
         log.info("New plugin namespace registered: {}".format(self.namespace))
 
