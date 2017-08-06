@@ -5,7 +5,7 @@ aiohttp
 giphypop
 beautifulsoup4
 psutil
-
+redis
 fuzzywuzzy
 python-Levenshtein
 
