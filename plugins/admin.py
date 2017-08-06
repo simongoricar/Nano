@@ -1147,7 +1147,8 @@ class Admin:
 
         # nano.settings
         elif startswith("nano.settings"):
-            cut = message.content[len("nano.settings "):].split(" ", 1)
+            raw = message.content[len("nano.settings "):]
+            cut = raw.split(" ", 1)
 
             if len(cut) < 2:
                 await client.send_message(message.channel, trans.get("MSG_SETTINGS_WRONG_USAGE", lang).format(prefix))
@@ -1254,25 +1255,25 @@ class Admin:
 
             else:
                 # Requires special preparation
-                spl = arg.rsplit(" ", 1)
-                setting, arg = setting + " " + spl[0], spl[1]
+                spl = raw.rsplit(" ", maxsplit=1)
+                setting, arg = spl[0], spl[1]
 
                 # Set word/spam/invite filter
                 if matches_list(setting, "word filter", "wordfilter", "filter words"):
                     decision = matches_list(arg)
-                    handler.update_moderation_settings(message.server, setting, decision)
+                    handler.update_moderation_settings(message.server.id, setting, decision)
 
                     await client.send_message(message.channel, trans.get("MSG_SETTINGS_WORD", lang).format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
 
                 elif matches_list(setting, "spam filter", "spamfilter", "filter spam"):
                     decision = matches_list(arg)
-                    handler.update_moderation_settings(message.server, setting, decision)
+                    handler.update_moderation_settings(message.server.id, setting, decision)
 
                     await client.send_message(message.channel, trans.get("MSG_SETTINGS_SPAM", lang).format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
 
-                elif matches_list(setting, "filterinvite", "filterinvites", "invite filter"):
+                elif matches_list(setting, "filterinvite", "invitefilter", "invite filter"):
                     decision = matches_list(arg)
-                    handler.update_moderation_settings(message.server, setting, decision)
+                    handler.update_moderation_settings(message.server.id, setting, decision)
 
                     await client.send_message(message.channel, trans.get("MSG_SETTINGS_INVITE", lang).format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
 
@@ -1416,7 +1417,7 @@ class Admin:
                 await client.send_message(message.channel, trans.get("MSG_RESET_CONFIRM_TIMEOUT", lang))
                 return
 
-            handler.server_setup(message.server)
+            handler.reset_server(message.server)
             await client.send_message(message.channel, trans.get("MSG_RESET_DONE", lang))
 
         # nano.changeprefix
@@ -1540,9 +1541,9 @@ class Admin:
 
             else:
                 if ch4.content.lower().strip(" ") == YES:
-                    handler.update_moderation_settings(message.server, "filterspam", True)
+                    handler.update_moderation_settings(message.server.id, "filterspam", True)
                 else:
-                    handler.update_moderation_settings(message.server, "filterspam", False)
+                    handler.update_moderation_settings(message.server.id, "filterspam", False)
 
                 # Edit to show that filtering is changed
                 edit = msg_four + "\n\n{} ".format(DONE) + StandardEmoji.OK
@@ -1561,9 +1562,9 @@ class Admin:
 
             else:
                 if ch4.content.lower().strip(" ") == YES:
-                    handler.update_moderation_settings(message.server, "filterwords", True)
+                    handler.update_moderation_settings(message.server.id, "filterwords", True)
                 else:
-                    handler.update_moderation_settings(message.server, "filterwords", False)
+                    handler.update_moderation_settings(message.server.id, "filterwords", False)
 
                 # Edit to show that filtering is changed
                 edit = msg_five + "\n\n{} ".format(DONE) + StandardEmoji.OK
