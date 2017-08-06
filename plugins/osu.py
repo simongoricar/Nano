@@ -29,9 +29,6 @@ valid_commands = commands.keys()
 # Makes the number formatted
 # 1000 -> 1,000
 def prepare(this):
-    if not isinstance(this, (float, int)):
-        return None
-
     return invert_str(",".join(split_every(str(invert_num(this)), 3)))
 
 
@@ -93,7 +90,7 @@ class Osu:
 
             pp_amount = int(float(user.pp))
             osu_level = int(float(user.level))
-            avatar_url = "http://a.ppy.sh/{}".format(user.id)
+            avatar_url = user.avatar_url
 
             # Color is determined by the level range
             if osu_level < 10:
@@ -112,10 +109,11 @@ class Osu:
             else:
                 color = Colour.gold()
 
-            desc = trans.get("MSG_OSU_DESC", lang).format(osu_level, global_rank, user.country, country_rank, pp_amount)
+            desc = trans.get("MSG_OSU_DESC", lang).format(global_rank, user.country, country_rank, pp_amount, user.playcount)
+            name = trans.get("MSG_OSU_TITLE", lang).format(user.name, osu_level)
 
             embed = Embed(url=user.profile_url, description=desc, colour=color)
-            embed.set_author(name=user.name)
+            embed.set_author(name=name)
             embed.set_thumbnail(url=avatar_url)
 
             embed.add_field(name=trans.get("MSG_OSU_TOTAL_SC", lang), value=total_score)
