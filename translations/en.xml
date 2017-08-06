@@ -81,7 +81,7 @@ Gif command powered by **Giphy**</string>
     <string name="ERROR_PREFIX_TOO_LONG">:warning: Prefix is too long! Maximum length is {} characters.</string>
     <string name="ERROR_NOT_MEMBER">Argument must be a member</string>
     <string name="ERROR_NO_USER">:warning: Member does not exist.</string>
-    <string name="ERROR_NO_USER2">:warning: No such user.</string>
+    <string name="ERROR_NO_USER2">:warning: No user found.</string>
     <string name="ERROR_MENTION_ONE">Please mention only one person at a time.</string>
     <string name="ERROR_MENTION_ONE_ROLE">Please mention only one role at a time.</string>
     <string name="ERROR_MENTION_ONE_CH">Please mention only one channel at a time.</string>
@@ -418,11 +418,12 @@ Id: {}:{}```</string>
     <string name="MSG_MOD_SWEARING">swearing</string>
     <string name="MSG_MOD_INVITE">invite link</string>
     <string name="MSG_OSU_ERROR">Something went wrong... :thinking:</string>
-    <string name="MSG_OSU_DESC">**Level**: {}
-**Rank**:
+    <string name="MSG_OSU_TITLE">{} (level {})</string>
+    <string name="MSG_OSU_DESC">**Rank**:
     **Global**:            #{}
     **Country** (**{}**):  #{}
-Total PP: **{}**</string>
+
+PP: **{}** (played {} songs)</string>
     <string name="MSG_OSU_TOTAL_SC">Total score</string>
     <string name="MSG_OSU_RANKED_SC">Ranked score</string>
     <string name="MSG_OSU_AVG_ACC">Average accuracy</string>
