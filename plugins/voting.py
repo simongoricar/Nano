@@ -1,13 +1,16 @@
 # coding=utf-8
 import asyncio
-import importlib
 import logging
-from pickle import dumps
 
-from discord import Message, Embed, Colour, errors
+try:
+    from ujson import loads, dumps
+except ImportError:
+    from json import loads, dumps
 
-from data.stats import MESSAGE, VOTE, WRONG_PERMS, WRONG_ARG
-from data.utils import is_valid_command, log_to_file
+from discord import Embed, Colour, errors
+
+from data.stats import MESSAGE, VOTE, WRONG_PERMS
+from data.utils import is_valid_command, log_to_file, decode, add_dots
 
 __author__ = "DefaltSimon"
 # Voting plugin
@@ -24,81 +27,114 @@ valid_commands = commands.keys()
 VOTE_ITEM_LIMIT = 10
 VOTE_ITEM_MAX_LENGTH = 800
 
-OK_EMOJI = "\U0001F44D"
+# OK_EMOJI = "\U0001F44D"
+OK_EMOJI = "👍"
+# X_EMOJI = "\U00002715"
+X_EMOJI = "❌"
+# BLOCK_EMOJI = "\U0001F4DB"
+BLOCK_EMOJI = "📛"
+# QUESTION_EMOJI = "\U0000003F"
+QUESTION_EMOJI = "❔"
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 
 class RedisVoteHandler:
+    """
+    Type: hash
+    Namespace: voting:*
+
+    Layout:
+
+        voters: list(voter_ids)
+        inprogress: bool
+        title: string
+        votes: json-encoded dict(index: amount)
+        choices: json-encoded list(choices)
+        author: int (author id)
+    """
     def __init__(self, handler):
         self.redis = handler.get_plugin_data_manager(namespace="voting")
 
-        try:
-            self.json = importlib.import_module("ujson")
-        except ImportError:
-            self.json = importlib.import_module("json")
-
-    def get_vote_amount(self):
+    def get_vote_amount(self) -> int:
         return len(self.redis.scan_iter("*"))
 
-    def start_vote(self, author_name, server, title, choices):
-        if self.redis.exists(server):
+    def start_vote(self, author_id: int, server_id: int, title: str, choices: list):
+        if self.redis.exists(server_id):
             return False
 
         payload = {
-            "author": str(author_name),
-            "votes": self.json.dumps({a: 0 for a in choices}),
-            "voters": self.json.dumps([]),
+            "author": author_id,
+            "votes": dumps([0 for _ in range(len(choices))]),
+            # Can safely be [] without using dumps()
+            "voters": "[]",
             "title": str(title),
-            "choices": self.json.dumps(choices),
-            "inprogress": True,
+            "choices": dumps(choices),
+            # no more inprogress, is pointless
         }
 
-        self.redis.hmset(server, payload)
-        return True
+        return self.redis.hmset(server_id, payload)
 
-    def in_progress(self, server):
-        return self.redis.exists(server.id)
+    def in_progress(self, server_id):
+        return self.redis.exists(server_id)
 
-    def plus_one(self, option, voter, server):
-        if not self.in_progress(server):
+    def plus_one(self, o_index: int, user_id: int, server_id: int):
+        """
+        Adds a vote
+        :return:
+            -1 -> person already voted
+            False -> no such option
+            True -> everything is ok
+        """
+        if not self.in_progress(server_id):
             return False
 
-        voters = self.json.loads(self.redis.hget(server.id, "voters"))
-        vote_counts = self.json.loads(self.redis.hget(server.id, "votes"))
+        data = decode(self.redis.hgetall(server_id))
+        voters, vote_counts, options = loads(data.get("voters")), loads(data.get("votes")), loads(data.get("choices"))
 
-        try:
-            choice_name = self.json.loads(self.redis.hget(server.id, "choices"))[option]
-        except IndexError:
+        # Missing option
+        if o_index > len(options) -1:
+            return False
+        # Negative number
+        if o_index < 0:
             return False
 
-        if voter not in voters:
-            voters.append(voter)
-        else:
+        # Add the voter to the list
+        if user_id in voters:
+            # Error: That person has already voted
             return -1
+        else:
+            voters.append(user_id)
 
-        try:
-            vote_counts[choice_name] += 1
-            self.redis.hset(server.id, "votes", self.json.dumps(vote_counts))
-            self.redis.hset(server.id, "voters", self.json.dumps(voters))
-        except KeyError:
-            return False
+        # Add +1 to option at index
+        vote_counts[o_index] += 1
 
-        return True
+        # Choice list doesn't change
+        payload = {
+            "votes": dumps(vote_counts),
+            "voters": dumps(voters),
+        }
 
-    def get_votes(self, server_id):
-        return self.json.loads(self.redis.hget(server_id, "votes"))
+        return self.redis.hmset(server_id, payload)
 
-    def get_vote_title(self, server_id):
+    def get_votes(self, server_id) -> dict:
+        """
+        :return dict(vote_text: amount)
+        """
+        by_index = loads(self.redis.hget(server_id, "votes"))
+        names = loads(self.redis.hget(server_id, "choices"))
+
+        return {names[c]: amount for c, amount in enumerate(by_index)}
+
+    def get_title(self, server_id):
         return self.redis.hget(server_id, "title")
 
-    def get_choices(self, server_id):
-        # get_content -> choices
-        return self.json.loads(self.redis.hget(server_id, "choices"))
+    def get_choices(self, server_id: int) -> list:
+        return loads(self.redis.hget(server_id, "choices"))
 
-    def end_voting(self, server):
-        return bool(self.redis.delete(server.id))
+    def end_voting(self, server_id: int):
+        return bool(self.redis.delete(server_id))
 
 
 class Vote:
@@ -113,7 +149,6 @@ class Vote:
 
     async def on_message(self, message, **kwargs):
         client = self.client
-        handler = self.handler
         trans = self.trans
 
         prefix = kwargs.get("prefix")
@@ -132,85 +167,88 @@ class Vote:
 
             return False
 
-        # !vote start
+        # !vote start [title]|[option1]|(option2)|...
         if startswith(prefix + "vote start"):
             if not self.handler.can_use_admin_commands(message.author, message.server):
                 await client.send_message(message.channel, trans.get("PERM_ADMIN", lang))
                 self.stats.add(WRONG_PERMS)
                 return
 
-            if self.vote.in_progress(message.server):
+            if self.vote.in_progress(message.server.id):
                 await client.send_message(message.channel, trans.get("MSG_VOTING_IN_PROGRESS", lang))
                 return
 
-            vote_content = message.content[len(prefix + "vote start "):]
-            base = vote_content.split("\"")
-
-            if len(base) != 3:
+            arguments = message.content[len(prefix + "vote start "):].strip(" ")
+            if not arguments:
                 await client.send_message(message.channel, trans.get("MSG_VOTING_I_USAGE", lang).format(prefix))
-                self.stats.add(WRONG_ARG)
                 return
 
-            title = base[1].strip(" ")
-            if not title:
-                await client.send_message(message.channel, trans.get("MSG_VOTING_NO_TITLE", lang))
+            s = arguments.split("|")
+
+            # Minimal is the title and one choice
+            if len(s) < 2:
+                await client.send_message(message.channel, trans.get("MSG_VOTING_I_USAGE", lang).format(prefix))
                 return
 
-            vote_items = base[2].split("|")
-            vote_items = [a.strip(" ") for a in list(vote_items) if a.strip(" ")]
+            title, *items = [a.strip(" ") for a in s]
 
-            if len(vote_items) > VOTE_ITEM_LIMIT:
-                await client.send_message(message.channel, trans.get("MSG_VOTING_OPTIONS_TM", lang).format(VOTE_ITEM_LIMIT, len(vote_items)))
+            # Check item amount
+            if len(items) > VOTE_ITEM_LIMIT:
+                await client.send_message(message.channel, trans.get("MSG_VOTING_OPTIONS_TM", lang).format(VOTE_ITEM_LIMIT, len(items)))
                 return
 
-            if (len(title) + sum([len(a) for a in vote_items])) > VOTE_ITEM_MAX_LENGTH:
-                await client.send_message(message.channel, trans.get("MSG_VOTING_OPTIONS_TL ", lang).format(VOTE_ITEM_MAX_LENGTH, sum([len(a) for a in vote_items])))
+            # Check total length
+            if (len(title) + sum([len(a) for a in items])) > VOTE_ITEM_MAX_LENGTH:
+                await client.send_message(message.channel, trans.get("MSG_VOTING_OPTIONS_TL ", lang).format(VOTE_ITEM_MAX_LENGTH, sum([len(a) for a in items])))
+                return
 
-            self.vote.start_vote(message.author.name, message.server.id, title, vote_items)
+            self.vote.start_vote(message.author.id, message.server.id, title, items)
 
-            ch = "\n".join(["{}. {}".format(en + 1, ch) for en, ch in
-                            enumerate(self.vote.get_choices(message.server.id))]).strip("\n")
+            # Generates a list of options to show
+            choices = "\n\n".join(["[{}]\n{}".format(en + 1, ch) for en, ch in
+                            enumerate(self.vote.get_choices(message.server.id))])
 
-            await client.send_message(message.channel, trans.get("MSG_VOTING_STARTED", lang).format(self.vote.get_vote_title(message.server.id), ch))
+            await client.send_message(message.channel, trans.get("MSG_VOTING_STARTED", lang).format(title, choices))
 
         # !vote end
         elif startswith(prefix + "vote end"):
             if not self.handler.can_use_admin_commands(message.author, message.server):
                 await client.send_message(message.channel, trans.get("PERM_ADMIN", lang))
-
                 self.stats.add(WRONG_PERMS)
                 return
 
-            if not self.vote.in_progress(message.server):
+            if not self.vote.in_progress(message.server.id):
                 await client.send_message(message.channel, trans.get("MSG_VOTING_NO_PROGRESS", lang))
                 return
 
             votes = self.vote.get_votes(message.server.id)
-            title = self.vote.get_vote_title(message.server.id)
+            title = self.vote.get_title(message.server.id)
 
-            embed = Embed(title=title, colour=Colour(0x303F9F), description=trans.get("MSG_VOTING_AMOUNT", lang).format(sum(votes.values())))
+            total_votes = sum(votes.values())
+
+            embed = Embed(title="**{}**".format(title), colour=Colour(0x303F9F), description=trans.get("MSG_VOTING_AMOUNT", lang).format(total_votes))
 
             for name, val in votes.items():
-                embed.add_field(name=name or "'empty'", value=trans.get("MSG_VOTING_AMOUNT2", lang).format(val))
-
-            try:
-                await client.send_message(message.channel, trans.get("MSG_VOTING_ENDED", lang), embed=embed)
-            except errors.HTTPException as e:
-                await client.send_message(message.channel, trans.get("MSG_VOTING_ERROR", lang))
-                self.vote.end_voting(message.server)
-                log_to_file("VOTING ({}): {}".format(e, embed.to_dict()), "bug")
-                return
+                # Zero-width space
+                dotted = add_dots(name, max_len=250) or "\u200B"
+                embed.add_field(name=dotted, value=trans.get("MSG_VOTING_AMOUNT2", lang).format(val))
 
             # Actually end the voting
-            self.vote.end_voting(message.server)
+            self.vote.end_voting(message.server.id)
+
+            try:
+                await client.send_message(message.channel, trans.get("MSG_VOTING_ENDED", lang) + "\n", embed=embed)
+            except errors.HTTPException as e:
+                await client.send_message(message.channel, trans.get("MSG_VOTING_ERROR", lang))
+                log_to_file("VOTING ({}): {}".format(e, embed.to_dict()), "bug")
 
         # !vote status
         elif startswith(prefix + "vote status"):
-            if not self.vote.in_progress(message.server):
+            if not self.vote.in_progress(message.server.id):
                 await client.send_message(message.channel, trans.get("MSG_VOTING_NO_PROGRESS", lang))
                 return
 
-            header = self.vote.get_vote_title(message.server.id)
+            header = self.vote.get_title(message.server.id)
             votes = sum(self.vote.get_votes(message.server.id).values())
 
             if votes == 0:
@@ -225,37 +263,41 @@ class Vote:
         # !vote
         elif startswith(prefix + "vote"):
             # Ignore if there is no vote going on instead of getting an exception
-            if not self.vote.in_progress(message.server):
+            if not self.vote.in_progress(message.server.id):
                 return
 
             # Get the choice, but tell the author if he/she didn't supply a number
             try:
                 choice = int(message.content[len(prefix + "vote "):]) - 1
             except ValueError:
+                await client.add_reaction(message, BLOCK_EMOJI)
+
                 m = await client.send_message(message.channel, trans.get("MSG_VOTING_NOT_NUMBER", lang))
-                await asyncio.sleep(1.5)
+                await asyncio.sleep(2)
                 await client.delete_message(m)
                 return
 
-            if choice < 0:
-                return
+            res = self.vote.plus_one(choice, message.author.id, message.server.id)
 
-            res = self.vote.plus_one(choice, message.author.id, message.server)
-
+            # User already voted
             if res == -1:
+                await client.add_reaction(message, BLOCK_EMOJI)
+
                 msg = await client.send_message(message.channel, trans.get("MSG_VOTING_CHEATER", lang))
-
-                await asyncio.sleep(1)
+                await asyncio.sleep(2)
                 await client.delete_message(msg)
 
-            elif res:
-                await client.add_reaction(message, OK_EMOJI)
+            # No such option
+            elif not res:
+                await client.add_reaction(message, X_EMOJI)
 
+                msg = await client.send_message(message.channel, trans.get("MSG_VOTING_INVALID_NUMBER", lang))
+                await asyncio.sleep(2)
+                await client.delete_message(msg)
+
+            # Everything ok, was added
             else:
-                msg = await client.send_message(message.channel, trans.get("MSG_VOTING_SOMETHING_WRONG", lang))
-
-                await asyncio.sleep(1)
-                await client.delete_message(msg)
+                await client.add_reaction(message, OK_EMOJI)
 
             self.stats.add(VOTE)
 
