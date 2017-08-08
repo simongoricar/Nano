@@ -553,25 +553,30 @@ Direct link: http://steamcommunity.com/id/{}/</string>
 
     <string name="MSG_VOTING_NO_PROGRESS">:warning: There is no vote in progress.</string>
     <string name="MSG_VOTING_IN_PROGRESS">:warning: A vote is already in progress.</string>
-    <string name="MSG_VOTING_I_USAGE">Incorrect usage. (encapsulate the title in **\"**)
-Check `{}help vote start` for more info.</string>
+    <string name="MSG_VOTING_I_USAGE">Incorrect usage. Check `{}help vote start` for more info.</string>
     <string name="MSG_VOTING_NO_TITLE">Please include a title.</string>
-    <string name="MSG_VOTING_STARTED">Vote started:
+    <string name="MSG_VOTING_STARTED">:scroll: Vote started:
+
 **{}**
-```js
+```ini
+# Choices
+
 {}```</string>
     <string name="MSG_VOTING_AMOUNT">In total, {} people voted</string>
     <string name="MSG_VOTING_AMOUNT2">{} votes</string>
-    <string name="MSG_VOTING_ENDED">**Voting ended:**</string>
+    <string name="MSG_VOTING_ENDED">:dividers: **Voting ended:**</string>
     <string name="MSG_VOTING_ERROR">Something went wrong when trying to end voting.</string>
     <string name="MSG_VOTING_OPTIONS_TM">:warning: Too many vote options (max is **{}**, you put *{}*)</string>
     <string name="MSG_VOTING_OPTIONS_TL">:warning: The whole thing is too long! (max length is {}, you have {})</string>
-    <string name="MSG_VOTING_S_NONE">no-one has voted yet</string>
-    <string name="MSG_VOTING_S_ONE">only one person has voted</string>
-    <string name="MSG_VOTING_S_MULTI">{} people have voted</string>
-    <string name="MSG_VOTING_STATUS">**Vote:** "{}"
-```So far, {}.```</string>
+    <string name="MSG_VOTING_S_NONE">So far, no-one has voted yet.</string>
+    <string name="MSG_VOTING_S_ONE">So far, only one person has voted.</string>
+    <string name="MSG_VOTING_S_MULTI">So far, {} people have voted.</string>
+    <string name="MSG_VOTING_STATUS">:bar_chart: Voting status:
+
+**{}**
+```{}```</string>
     <string name="MSG_VOTING_NOT_NUMBER">Vote argument must be a number.</string>
+    <string name="MSG_VOTING_INVALID_NUMBER">Invalid choice.</string>
     <string name="MSG_VOTING_CHEATER">Cheater :smiley:</string>
     <string name="MSG_VOTING_SOMETHING_WRONG">Something went wrong... :frowning2:</string>
 
