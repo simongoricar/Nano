@@ -253,15 +253,12 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
         except AttributeError:
             pass
 
-    def delete_server_by_list(self, current_servers: list):
-        servers = ["server:" + name for name in current_servers]
-
-        # [1] beacuse a tuple with cursor index is returned
-        redis_servers = [decode(a) for a in self.redis.scan(0, match="server:*")[1]]
+    def check_old_servers(self, current_servers: list):
+        servers = ["server:" + s_id for s_id in current_servers]
+        redis_servers = [decode(a) for a in self.redis.scan_iter(match="server:*")]
 
         # Filter only removed servers
         removed_servers = set(redis_servers) - set(servers)
-        print("about to remove {} servers".format(len(removed_servers)))
 
         # Delete every old server
         for rem_serv in removed_servers:

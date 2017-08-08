@@ -353,7 +353,7 @@ def chunks(item, n):
         yield item[i:i + n]
 
 
-def make_dots(content, max_len=50):
+def add_dots(content, max_len=50):
     if not len(content) > max_len:
         return content
     else:

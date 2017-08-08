@@ -6,7 +6,7 @@ from pickle import load
 from discord import Message, Client, Embed
 
 from data.stats import SUPPRESS
-from data.utils import make_dots
+from data.utils import add_dots
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -202,7 +202,7 @@ class LogManager:
 
         embed_title = self.trans.get("MSG_MOD_MSG_DELETED", lang).format(reason)
 
-        embed = Embed(title=embed_title, description=make_dots(message.content))
+        embed = Embed(title=embed_title, description=add_dots(message.content))
         embed.set_author(name="{} ({})".format(author.name, author.id), icon_url=author.avatar_url)
         embed.add_field(name=self.trans.get("INFO_CHANNEL", lang), value=message.channel.mention)
 

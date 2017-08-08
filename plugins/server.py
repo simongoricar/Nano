@@ -374,18 +374,20 @@ class ServerManagement:
     async def on_ready(self):
         await self.client.wait_until_ready()
 
+        # Delay in case servers are still being received
+        await asyncio.sleep(10)
+
         log.info("Checking server vars...")
         for server in self.client.servers:
             if not self.handler.server_exists(server.id):
                 self.handler.server_setup(server)
 
             self.handler.check_server_vars(server)
-
         log.info("Done.")
 
         log.info("Checking for non-used server data...")
         server_ids = [s.id for s in self.client.servers]
-        self.handler.delete_server_by_list(server_ids)
+        self.handler.check_old_servers(server_ids)
         log.info("Done.")
 
 

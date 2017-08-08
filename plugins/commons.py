@@ -7,7 +7,7 @@ from random import randint
 from discord import Message, Embed, Forbidden
 
 from data.stats import MESSAGE, PING
-from data.utils import is_valid_command, make_dots
+from data.utils import is_valid_command, add_dots
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -95,7 +95,7 @@ class Commons:
         if not log_channel:
             return
 
-        embed = Embed(title=self.trans.get("MSG_LOGPOST_SAY", lang).format(prefix), description=make_dots(content, 350))
+        embed = Embed(title=self.trans.get("MSG_LOGPOST_SAY", lang).format(prefix), description=add_dots(content, 350))
         embed.set_author(name="{} ({})".format(message.author.name, message.author.id), icon_url=message.author.avatar_url)
         embed.add_field(name=self.trans.get("INFO_CHANNEL", lang), value=message.channel.mention)
 
