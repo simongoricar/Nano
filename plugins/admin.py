@@ -363,7 +363,8 @@ class ObjectListReactions:
         await msg.clear_reactions()
 
         new_msg = data.get("trans_string").format(c_page + 1, page_amount, "\n".join(page))
-        await self.client.edit_message(msg, new_msg)
+        # REWRITE test
+        await msg.edit(new_msg)
 
         # REWRITE test
         await msg.add_reaction(ObjectListReactions.UP)
@@ -635,7 +636,8 @@ class Admin:
                 await client.send_message(message.channel, trans.get("ERROR_NOT_NUMBER", lang))
                 return
 
-            await client.delete_message(message)
+            # REWRITE test
+            await message.delete()
             await client.send_message(message.channel, trans.get("MSG_NUKE_PURGING", lang))
 
             additional = ""
@@ -649,7 +651,8 @@ class Admin:
             m = await client.send_message(message.channel, trans.get("MSG_NUKE_PURGED", lang).format(amount - 1) + additional)
             # Wait 1.5 sec and delete the message
             await asyncio.sleep(1.5)
-            await client.delete_message(m)
+            # REWRITE test
+            await m.delete()
 
         # !kick
         elif startswith(prefix + "kick") and not startswith(prefix + "kickmsg"):
@@ -1480,12 +1483,14 @@ class Admin:
 
                     # Edit message to confirm action
                     edit = msg_one + "\n\n{} ".format(DONE) + StandardEmoji.OK
-                    await client.edit_message(one, edit)
+                    # REWRITE test
+                    await one.edit(edit)
 
                 else:
                     # Edit message to confirm action
                     edit = msg_one + "\n\n{} ".format(OK) + StandardEmoji.OK
-                    await client.edit_message(one, edit)
+                    # REWRITE test
+                    await one.edit(edit)
 
 
             # SECOND MESSAGE
@@ -1509,7 +1514,8 @@ class Admin:
 
                 # Edit to show that the prefix has been changed
                 edit = msg_two + "\n\n{} {} ({})".format(DONE, StandardEmoji.OK, pref)
-                await client.edit_message(two, edit)
+                # REWRITE test
+                await two.edit(edit)
 
 
             # THIRD MESSAGE
@@ -1533,7 +1539,8 @@ class Admin:
 
                 # Again: edit to show that the welcome msg has been changed
                 edit = msg_three + "\n\n{} ".format(DONE) + StandardEmoji.OK
-                await client.edit_message(three, edit)
+                # REWRITE test
+                await three.edit(edit)
 
 
             # FOURTH MESSAGE
@@ -1554,7 +1561,8 @@ class Admin:
 
                 # Edit to show that filtering is changed
                 edit = msg_four + "\n\n{} ".format(DONE) + StandardEmoji.OK
-                await client.edit_message(four, edit)
+                # REWRITE test
+                await four.edit(edit)
 
 
             # FIFTH MESSAGE
@@ -1575,7 +1583,8 @@ class Admin:
 
                 # Edit to show that filtering is changed
                 edit = msg_five + "\n\n{} ".format(DONE) + StandardEmoji.OK
-                await client.edit_message(five, edit)
+                # REWRITE test
+                await five.edit(edit)
 
 
 
@@ -1598,7 +1607,8 @@ class Admin:
 
                     # Edit to show that filtering is changed
                     edit = msg_five + "\n\n{} {}".format(StandardEmoji.OK_BLUE, trans.get("MSG_SETUP_LOGCHANNEL_DISABLED", lang))
-                    await client.edit_message(six, edit)
+                    # REWRITE test
+                    await six.edit(edit)
 
                 else:
                     if len(ch6.channel_mentions) > 0:
@@ -1609,7 +1619,8 @@ class Admin:
 
                     # Edit to show that filtering is changed
                     edit = msg_six + "\n\n{} {}".format(StandardEmoji.OK_BLUE, trans.get("MSG_SETUP_LOGCHANNEL_SET", lang).format(ch6.channel_mentions[0].name))
-                    await client.edit_message(three, edit)
+                    # REWRITE test
+                    await three.edit(edit)
 
             # FINAL MESSAGE, formats with new prefix
             msg_final = trans.get("MSG_SETUP_COMPLETE", lang).replace("_", str(ch2.content))

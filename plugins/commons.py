@@ -344,7 +344,8 @@ class Commons:
             delta = round((time.monotonic() - int(data[0])) * 100, 2)
             msg = await self.client.get_message(self.client.get_channel(data[1]), reaction.message.id)
 
-            await self.client.edit_message(msg, self.trans.get("MSG_PING_RESULT", lang).format(data[2], delta))
+            # REWRITE test
+            await msg.edit(self.trans.get("MSG_PING_RESULT", lang).format(data[2], delta))
             # REWRITE test
             await msg.clear_reactions()
 

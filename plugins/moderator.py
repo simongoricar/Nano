@@ -248,7 +248,8 @@ class Moderator:
 
         # Muting
         if handler.is_muted(message.guild, message.author.id):
-            await client.delete_message(message)
+            # REWRITE test
+            await message.delete()
 
             self.stats.add(SUPPRESS)
             return "return"
@@ -291,7 +292,8 @@ class Moderator:
 
         # Delete if necessary
         if any([spam, swearing, invite]):
-            await client.delete_message(message)
+            # REWRITE test
+            await message.delete()
             logger.debug("Message filtered")
 
             # Check if current channel is the logging channel

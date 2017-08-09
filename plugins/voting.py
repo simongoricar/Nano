@@ -282,7 +282,8 @@ class Vote:
 
                 m = await client.send_message(message.channel, trans.get("MSG_VOTING_NOT_NUMBER", lang))
                 await asyncio.sleep(2)
-                await client.delete_message(m)
+                # REWRITE test
+                await m.delete()
                 return
 
             res = self.vote.plus_one(choice, message.author.id, message.guild.id)
@@ -294,7 +295,8 @@ class Vote:
 
                 msg = await client.send_message(message.channel, trans.get("MSG_VOTING_CHEATER", lang))
                 await asyncio.sleep(2)
-                await client.delete_message(msg)
+                # REWRITE test
+                await msg.delete()
 
             # No such option
             elif not res:
@@ -303,7 +305,8 @@ class Vote:
 
                 msg = await client.send_message(message.channel, trans.get("MSG_VOTING_INVALID_NUMBER", lang))
                 await asyncio.sleep(2)
-                await client.delete_message(msg)
+                # REWRITE test
+                await msg.delete()
 
             # Everything ok, was added
             else:
