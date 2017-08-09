@@ -5,7 +5,7 @@ import logging
 
 import aiohttp
 import giphypop
-from discord import Message, Embed, Colour
+from discord import Message, Embed, Colour, File
 
 from data.stats import PRAYER, MESSAGE, IMAGE_SENT
 from data.utils import is_valid_command
@@ -160,7 +160,8 @@ class Fun:
 
         # Other commands
         if startswith(prefix + "kappa"):
-            await client.send_file(message.channel, "data/images/kappasmall.png")
+            # REWRITE test
+            await message.channel.send(file=File("data/images/kappasmall.png", "kappa.png"))
 
             self.stats.add(IMAGE_SENT)
 

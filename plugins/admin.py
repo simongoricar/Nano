@@ -614,7 +614,8 @@ class Admin:
 
                 # If user already has the role, remove it
                 if role in message.author.roles:
-                    await client.remove_roles(message.author, role)
+                    # REWRITE test
+                    await message.author.remove_roles(role)
                     await client.send_message(message.channel, trans.get("MSG_SELFROLE_REMOVED", lang).format(role_n))
                 # Otherwise, add it
                 else:
@@ -667,7 +668,8 @@ class Admin:
                 await client.send_message(message.channel, trans.get("MSG_KICK_NANO", lang))
                 return
 
-            await client.kick(user)
+            # REWRITE test
+            await user.kick()
             await client.send_message(message.channel, handler.get_var(message.guild.id, "kickmsg").replace(":user", user.name))
 
         # !ban
@@ -1020,7 +1022,8 @@ class Admin:
 
                 # Removes role from each user
                 for user in users:
-                    await client.remove_roles(user, role)
+                    # REWRITE tets
+                    await user.remove_roles(role)
 
                 if len(users) == 1:
                     await client.send_message(message.channel, trans.get("INFO_DONE", lang) + " " + StandardEmoji.OK)

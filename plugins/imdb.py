@@ -86,7 +86,8 @@ class TMDb:
         # !imdb
         if startswith((prefix + "imdb"), (prefix + "tmdb")):
             # The process can take some time so we show that something is happening
-            await client.send_typing(message.channel)
+            # REWRITE test
+            await message.channel.trigger_typing()
 
             cut = message.content[len(prefix + "imdb "):]
 

@@ -4,7 +4,7 @@ import os
 from json import loads, JSONDecodeError
 
 import aiohttp
-from discord import Message
+from discord import Message, File
 
 from data.stats import MESSAGE, WRONG_ARG, IMAGE_SENT
 from data.utils import is_valid_command, is_number
@@ -229,7 +229,8 @@ class Minecraft:
                     self.stats.add(IMAGE_SENT)
                 else:
                     with open(mc.get_picture_path_by_item(data), "rb") as pic:
-                        await client.send_file(message.channel, pic, content=details)
+                        # REWRITE test
+                        await message.channel.send(details, file=File(pic))
                         self.stats.add(IMAGE_SENT)
 
             # Multiple items, a group
