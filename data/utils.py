@@ -353,11 +353,14 @@ def chunks(item, n):
         yield item[i:i + n]
 
 
-def add_dots(content, max_len=50):
+def add_dots(content, max_len=55, ending=" [...]"):
     if not len(content) > max_len:
         return content
     else:
-        return "{} [...]".format(content[:max_len])
+        # Make space for the ending as well
+        max_len -= len(ending)
+
+        return "{}".format(content[:max_len]) + ending
 
 
 def is_number(string):

@@ -4,7 +4,7 @@ import logging
 import time
 
 import osu_ds
-from discord import Message, Embed, Colour, errors
+from discord import Embed, Colour, errors
 
 from data.stats import MESSAGE
 from data.utils import is_valid_command, invert_num, invert_str, split_every
@@ -66,7 +66,6 @@ class Osu:
 
             return False
 
-        # TODO fix osu-ds
         if startswith(prefix + "osu"):
             username = message.content[len(prefix + "osu "):]
             t_start = time.time()
