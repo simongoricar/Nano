@@ -345,7 +345,8 @@ class Commons:
             msg = await self.client.get_message(self.client.get_channel(data[1]), reaction.message.id)
 
             await self.client.edit_message(msg, self.trans.get("MSG_PING_RESULT", lang).format(data[2], delta))
-            await self.client.clear_reactions(msg)
+            # REWRITE test
+            await msg.clear_reactions()
 
 
 class NanoPlugin:

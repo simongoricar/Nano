@@ -359,7 +359,8 @@ class ObjectListReactions:
             c_page += 1
 
         # Reset reactions and edit message
-        await self.client.clear_reactions(msg)
+        # REWRITE test
+        await msg.clear_reactions()
 
         new_msg = data.get("trans_string").format(c_page + 1, page_amount, "\n".join(page))
         await self.client.edit_message(msg, new_msg)
@@ -616,7 +617,8 @@ class Admin:
                     await client.send_message(message.channel, trans.get("MSG_SELFROLE_REMOVED", lang).format(role_n))
                 # Otherwise, add it
                 else:
-                    await client.add_roles(message.author, role)
+                    # REWRITE test
+                    await message.author.add_roles(role)
                     await client.send_message(message.channel, trans.get("MSG_SELFROLE_ADDED", lang))
 
         # !nuke
@@ -689,7 +691,8 @@ class Admin:
                 return
 
             self.bans.append(user.id)
-            await client.ban(user, delete_message_days=0)
+            # TODO rewrite
+            await user.ban(delete_message_days=0)
 
         # !unban
         elif startswith(prefix + "unban"):
@@ -745,7 +748,8 @@ class Admin:
             total_seconds = convert_to_seconds(tim)
 
             self.timer.set_softban(message.guild, user, total_seconds)
-            await client.ban(user, delete_message_days=0)
+            # REWRITE test
+            await user.ban(delete_message_days=0)
 
             await client.send_message(message.channel, trans.get("MSG_SOFTBAN_SUCCESS", lang).format(user.name, resolve_time(total_seconds, lang)))
 
@@ -994,7 +998,8 @@ class Admin:
 
                 # Adds role to each user
                 for user in users:
-                    await client.add_roles(user, role)
+                    # REWRITE test
+                    await user.add_roles(role)
 
                 if len(users) == 1:
                     await client.send_message(message.channel, trans.get("INFO_DONE", lang) + " " + StandardEmoji.OK)
