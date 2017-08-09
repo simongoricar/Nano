@@ -193,7 +193,7 @@ class LogManager:
             logger.warning("Getter is not set, calling in 5 seconds...")
             return
 
-        log_channel = await self.getter.handle_log_channel(message.server)
+        log_channel = await self.getter.handle_log_channel(message.guild)
 
         if not log_channel:
             return
@@ -206,7 +206,7 @@ class LogManager:
         embed.set_author(name="{} ({})".format(author.name, author.id), icon_url=author.avatar_url)
         embed.add_field(name=self.trans.get("INFO_CHANNEL", lang), value=message.channel.mention)
 
-        logger.debug("Sending logs for {}".format(message.server.name))
+        logger.debug("Sending logs for {}".format(message.guild.name))
         await self.send_message(log_channel, embed=embed)
 
 
@@ -247,14 +247,14 @@ class Moderator:
             return "return"
 
         # Muting
-        if handler.is_muted(message.server, message.author.id):
+        if handler.is_muted(message.guild, message.author.id):
             await client.delete_message(message)
 
             self.stats.add(SUPPRESS)
             return "return"
 
         # Channel blacklisting
-        if handler.is_blacklisted(message.server.id, message.channel.id):
+        if handler.is_blacklisted(message.guild.id, message.channel.id):
             return "return"
 
         # Ignore the filter if user is executing a command
@@ -263,9 +263,9 @@ class Moderator:
             return
 
         # Spam, swearing and invite filter
-        needs_spam_filter = handler.has_spam_filter(message.server)
-        needs_swearing_filter = handler.has_word_filter(message.server)
-        needs_invite_filter = handler.has_invite_filter(message.server)
+        needs_spam_filter = handler.has_spam_filter(message.guild)
+        needs_swearing_filter = handler.has_word_filter(message.guild)
+        needs_invite_filter = handler.has_invite_filter(message.guild)
 
         if needs_spam_filter:
             spam = self.checker.check_spam(message)
@@ -279,7 +279,7 @@ class Moderator:
 
         if needs_invite_filter:
             # Ignore invites from admins
-            if not handler.can_use_admin_commands(message.author, message.server):
+            if not handler.can_use_admin_commands(message.author, message.guild):
                 invite = self.checker.check_invite(message)
 
             else:
@@ -295,7 +295,7 @@ class Moderator:
             logger.debug("Message filtered")
 
             # Check if current channel is the logging channel
-            log_channel_name = self.handler.get_log_channel(message.server)
+            log_channel_name = self.handler.get_log_channel(message.guild)
             if log_channel_name == message.channel.name:
                 return
 

@@ -24,10 +24,10 @@ class Reporter:
             log.warning("Forbidden 403")
 
             if isinstance(args[0], Message):
-                log_to_file("Forbidden 403. Server: {}, channel: {}".format(args[0].server, args[0].channel))
+                log_to_file("Forbidden 403. Server: {}, channel: {}".format(args[0].guild, args[0].channel))
 
             elif isinstance(args[0], Member):
-                log_to_file("Forbidden 403. Server: {}, member: {}:{}".format(args[0].server, args[0].name, args[0].id))
+                log_to_file("Forbidden 403. Server: {}, member: {}:{}".format(args[0].guild, args[0].name, args[0].id))
 
             else:
                 try:
@@ -51,11 +51,11 @@ class Reporter:
 
         else:
             if isinstance(args[0], (User, Member)):
-                readable = "{}:{} (server:{})".format(args[0].name, args[0].id, args[0].server.id)
+                readable = "{}:{} (guild:{})".format(args[0].name, args[0].id, args[0].guild.id)
             elif isinstance(args[0], Message):
-                readable = "'{}' by {} (server:{})".format(args[0].content, args[0].author.name, args[0].server.id)
+                readable = "'{}' by {} (guild:{})".format(args[0].content, args[0].author.name, args[0].guild.id)
             elif isinstance(args[0], Server):
-                readable = "{} (server)({})".format(args[0].name, args[0].id)
+                readable = "{} (guild)({})".format(args[0].name, args[0].id)
             else:
                 try:
                     readable = "__dict__ of {}: ".format(type(args[0]), args[0].__dict__)

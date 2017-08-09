@@ -210,7 +210,7 @@ class DevFeatures:
             srv = utils.find(lambda s: s.id == s_id, client.servers)
 
             if not srv:
-                await client.send_message(message.channel, "No such server. " + StandardEmoji.CROSS)
+                await client.send_message(message.channel, "No such guild. " + StandardEmoji.CROSS)
                 return
 
             nano_data = self.handler.get_server_data(srv)

@@ -170,12 +170,12 @@ class Vote:
 
         # !vote start [title]|[option1]|(option2)|...
         if startswith(prefix + "vote start"):
-            if not self.handler.can_use_admin_commands(message.author, message.server):
+            if not self.handler.can_use_admin_commands(message.author, message.guild):
                 await client.send_message(message.channel, trans.get("PERM_ADMIN", lang))
                 self.stats.add(WRONG_PERMS)
                 return
 
-            if self.vote.in_progress(message.server.id):
+            if self.vote.in_progress(message.guild.id):
                 await client.send_message(message.channel, trans.get("MSG_VOTING_IN_PROGRESS", lang))
                 return
 
@@ -208,27 +208,27 @@ class Vote:
                 await client.send_message(message.channel, trans.get("MSG_VOTING_EMPTY_ITEM", lang))
                 return
 
-            self.vote.start_vote(message.author.id, message.server.id, title, items)
+            self.vote.start_vote(message.author.id, message.guild.id, title, items)
 
             # Generates a list of options to show
             choices = "\n\n".join(["[{}]\n{}".format(en + 1, ch) for en, ch in
-                            enumerate(self.vote.get_choices(message.server.id))])
+                            enumerate(self.vote.get_choices(message.guild.id))])
 
             await client.send_message(message.channel, trans.get("MSG_VOTING_STARTED", lang).format(title, choices))
 
         # !vote end
         elif startswith(prefix + "vote end"):
-            if not self.handler.can_use_admin_commands(message.author, message.server):
+            if not self.handler.can_use_admin_commands(message.author, message.guild):
                 await client.send_message(message.channel, trans.get("PERM_ADMIN", lang))
                 self.stats.add(WRONG_PERMS)
                 return
 
-            if not self.vote.in_progress(message.server.id):
+            if not self.vote.in_progress(message.guild.id):
                 await client.send_message(message.channel, trans.get("MSG_VOTING_NO_PROGRESS", lang))
                 return
 
-            votes = self.vote.get_votes(message.server.id)
-            title = self.vote.get_title(message.server.id)
+            votes = self.vote.get_votes(message.guild.id)
+            title = self.vote.get_title(message.guild.id)
 
             total_votes = sum(votes.values())
 
@@ -240,7 +240,7 @@ class Vote:
                 embed.add_field(name=dotted, value=trans.get("MSG_VOTING_AMOUNT2", lang).format(val))
 
             # Actually end the voting
-            self.vote.end_voting(message.server.id)
+            self.vote.end_voting(message.guild.id)
 
             try:
                 await client.send_message(message.channel, trans.get("MSG_VOTING_ENDED", lang) + "\n", embed=embed)
@@ -250,12 +250,12 @@ class Vote:
 
         # !vote status
         elif startswith(prefix + "vote status"):
-            if not self.vote.in_progress(message.server.id):
+            if not self.vote.in_progress(message.guild.id):
                 await client.send_message(message.channel, trans.get("MSG_VOTING_NO_PROGRESS", lang))
                 return
 
-            header = self.vote.get_title(message.server.id)
-            votes = sum(self.vote.get_votes(message.server.id).values())
+            header = self.vote.get_title(message.guild.id)
+            votes = sum(self.vote.get_votes(message.guild.id).values())
 
             if votes == 0:
                 vote_disp = trans.get("MSG_VOTING_S_NONE", lang)
@@ -269,7 +269,7 @@ class Vote:
         # !vote
         elif startswith(prefix + "vote"):
             # Ignore if there is no vote going on instead of getting an exception
-            if not self.vote.in_progress(message.server.id):
+            if not self.vote.in_progress(message.guild.id):
                 return
 
             # Get the choice, but tell the author if he/she didn't supply a number
@@ -284,7 +284,7 @@ class Vote:
                 await client.delete_message(m)
                 return
 
-            res = self.vote.plus_one(choice, message.author.id, message.server.id)
+            res = self.vote.plus_one(choice, message.author.id, message.guild.id)
 
             # User already voted
             if res == -1:

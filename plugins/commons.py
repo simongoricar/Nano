@@ -90,7 +90,7 @@ class Commons:
         self.resolve_user = self.nano.get_plugin("admin").get("instance").resolve_user
 
     async def log_say_command(self, message, content, prefix, lang):
-        log_channel = await self.getter.handle_log_channel(message.server)
+        log_channel = await self.getter.handle_log_channel(message.guild)
 
         if not log_channel:
             return
@@ -102,7 +102,7 @@ class Commons:
         await self.client.send_message(log_channel, embed=embed)
 
     @staticmethod
-    def at_everyone_filter(content, author, server):
+    def at_everyone_filter(content, author, guild):
         # See if the user is allowed to do @everyone
         ok = False
         for role in author.roles:
@@ -110,7 +110,7 @@ class Commons:
                 ok = True
                 break
 
-        if server.owner == author:
+        if guild.owner == author:
             ok = True
 
         # Removes mentions if user doesn't have the permission to mention
@@ -127,7 +127,7 @@ class Commons:
         lang = kwargs.get("lang")
 
         # Custom commands registered for the server
-        server_commands = self.handler.get_custom_commands(message.server.id)
+        server_commands = self.handler.get_custom_commands(message.guild.id)
 
         if server_commands:
             # Checks for server specific commands
@@ -310,7 +310,7 @@ class Commons:
 
         # !say (#channel) [message]
         elif startswith(prefix + "say"):
-            if not self.handler.is_mod(message.author, message.server):
+            if not self.handler.is_mod(message.author, message.guild):
                 await client.send_message(message.channel, trans.get("PERM_MOD", lang))
                 return "return"
 
@@ -326,7 +326,7 @@ class Commons:
             else:
                 channel = message.channel
 
-            content = self.at_everyone_filter(content, message.author, message.server)
+            content = self.at_everyone_filter(content, message.author, message.guild)
 
             try:
                 await client.send_message(channel, content)

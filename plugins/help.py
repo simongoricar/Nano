@@ -204,8 +204,8 @@ class Help:
             # NOT TRANSLATED!!
             comp = "{} from {} ({}):\n```{}```\n**__Timestamp__**: `{}`\n**__Server__**: `{}` ({} members)\n" \
                    "**__Server Owner__**: {}\n**Language used:** `{}`".format(typ, message.author.name, message.author.id, report, ts,
-                                                     message.server.name, message.server.member_count,
-                                                     "Yes" if message.author.id == message.server.owner.id else message.server.owner.id, lang)
+                                                     message.guild.name, message.guild.member_count,
+                                                     "Yes" if message.author.id == message.guild.owner.id else message.guild.owner.id, lang)
 
             # Saves the submission
             await save_submission(comp.replace(message.author.mention, "{} ({})\n".format(message.author.name, message.author.id)))

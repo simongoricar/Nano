@@ -218,7 +218,7 @@ class Fun:
             else:
                 ripperoni = ""
 
-            ripperoni = self.everyone_filter(ripperoni, message.author, message.server)
+            ripperoni = self.everyone_filter(ripperoni, message.author, message.guild)
 
             prays = self.stats.get_amount(PRAYER)
             await client.send_message(message.channel, trans.get("MSG_RIP", lang).format(ripperoni, prays))

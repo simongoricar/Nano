@@ -131,7 +131,7 @@ class RedisReminderHandler:
         :param content: String : message
         :param tim: time (int)
         :param reminder_type: type of reminder (personal (DM) or channel)
-        :param lang: language used in that server
+        :param lang: language used in that guild
         :return: bool indicating success
         """
         t = time.time()
@@ -343,7 +343,7 @@ class Reminder:
                 # Gets the remaining time
                 ttl = reminder.get("time_target") - time.time()
 
-                cont = self.filter(reminder.get("raw"), message.author, message.server)
+                cont = self.filter(reminder.get("raw"), message.author, message.guild)
 
                 # Zero or negative number
                 if ttl <= 0:

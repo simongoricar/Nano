@@ -49,23 +49,23 @@ class ServerManagement:
         self.lt = time.time()
         self.bans = {}
 
-    async def handle_log_channel(self, server):
-        chan = self.handler.get_var(server.id, "logchannel")
+    async def handle_log_channel(self, guild):
+        chan = self.handler.get_var(guild.id, "logchannel")
 
         if is_disabled(chan):
             return None
 
-        return discord.utils.find(lambda m: m.id == chan, server.channels)
+        return discord.utils.find(lambda m: m.id == chan, guild.channels)
 
     @staticmethod
-    async def handle_def_channel(server, channel_id):
+    async def handle_def_channel(guild, channel_id):
         if is_disabled(channel_id):
-            return server.default_channel
+            return guild.default_channel
         else:
-            chan = discord.utils.find(lambda c: c.id == channel_id, server.channels)
+            chan = discord.utils.find(lambda c: c.id == channel_id, guild.channels)
             if not chan:
-                log_to_file("Custom channel does not exist anymore: {} ({})".format(server.name, server.id))
-                return server.default_channel
+                log_to_file("Custom channel does not exist anymore: {} ({})".format(guild.name, guild.id))
+                return guild.default_channel
             else:
                 return chan
 
@@ -109,11 +109,11 @@ class ServerManagement:
             channels = 0
 
             # Iterate though servers and add up things
-            for server in client.servers:
+            for guild in client.servers:
 
                 server_count += 1
-                members += int(server.member_count)
-                channels += len(server.channels)
+                members += int(guild.member_count)
+                channels += len(guild.channels)
 
             embed = discord.Embed(name=trans.get("MSG_STATUS_STATS", lang), colour=discord.Colour.dark_blue())
 
@@ -215,7 +215,7 @@ class ServerManagement:
 
         # !members
         elif startswith(prefix + "members"):
-            ls = [member.name for member in message.server.members]
+            ls = [member.name for member in message.guild.members]
             amount = len(ls)
 
             members = trans.get("MSG_MEMBERS_LIST", lang).format(", ".join(["`{}`".format(mem) for mem in ls])) + \
@@ -230,10 +230,10 @@ class ServerManagement:
 
         # !server
         elif startswith(prefix + "server"):
-            user_count = message.server.member_count
-            users_online = len([user.id for user in message.server.members if user.status == user.status.online])
+            user_count = message.guild.member_count
+            users_online = len([user.id for user in message.guild.members if user.status == user.status.online])
 
-            v_level = message.server.verification_level
+            v_level = message.guild.verification_level
             if v_level == v_level.none:
                 v_level = trans.get("MSG_SERVER_VL_NONE", lang)
             elif v_level == v_level.low:
@@ -243,20 +243,20 @@ class ServerManagement:
             else:
                 v_level = trans.get("MSG_SERVER_VL_HIGH", lang)
 
-            channels = len(message.server.channels)
-            text_chan = len([chan.id for chan in message.server.channels if chan.type == chan.type.text])
-            voice_chan = len([chan.id for chan in message.server.channels if chan.type == chan.type.voice])
+            channels = len(message.guild.channels)
+            text_chan = len([chan.id for chan in message.guild.channels if chan.type == chan.type.text])
+            voice_chan = len([chan.id for chan in message.guild.channels if chan.type == chan.type.voice])
 
             # Teal Blue
-            embed = discord.Embed(colour=discord.Colour(0x3F51B5), description=trans.get("MSG_SERVER_ID", lang).format(message.server.id))
+            embed = discord.Embed(colour=discord.Colour(0x3F51B5), description=trans.get("MSG_SERVER_ID", lang).format(message.guild.id))
 
-            if message.server.icon:
-                embed.set_author(name=message.server.name, icon_url=message.server.icon_url)
-                embed.set_thumbnail(url=message.server.icon_url)
+            if message.guild.icon:
+                embed.set_author(name=message.guild.name, icon_url=message.guild.icon_url)
+                embed.set_thumbnail(url=message.guild.icon_url)
             else:
-                embed.set_author(name=message.server.name)
+                embed.set_author(name=message.guild.name)
 
-            embed.set_footer(text=trans.get("MSG_SERVER_DATE_CREATED", lang).format(message.server.created_at))
+            embed.set_footer(text=trans.get("MSG_SERVER_DATE_CREATED", lang).format(message.guild.created_at))
 
             embed.add_field(name=trans.get("MSG_SERVER_MEMBERS", lang).format(user_count),
                             value=trans.get("MSG_SERVER_MEMBERS_L", lang).format(users_online))
@@ -266,12 +266,12 @@ class ServerManagement:
 
             embed.add_field(name=trans.get("MSG_SERVER_VL", lang), value=v_level)
             embed.add_field(name=trans.get("MSG_SERVER_ROLES", lang),
-                            value=trans.get("MSG_SERVER_ROLES_L", lang).format(len(message.server.roles) - 1))
+                            value=trans.get("MSG_SERVER_ROLES_L", lang).format(len(message.guild.roles) - 1))
 
             embed.add_field(name=trans.get("MSG_SERVER_OWNER", lang),
-                            value=trans.get("MSG_SERVER_OWNER_L", lang).format(message.server.owner.name,
-                                                                               message.server.owner.discriminator,
-                                                                               message.server.owner.id))
+                            value=trans.get("MSG_SERVER_OWNER_L", lang).format(message.guild.owner.name,
+                                                                               message.guild.owner.discriminator,
+                                                                               message.guild.owner.id))
 
             await client.send_message(message.channel, trans.get("MSG_SERVER_INFO", lang), embed=embed)
 
@@ -282,17 +282,17 @@ class ServerManagement:
         replacement_logic = {
             ":user": member.mention,
             ":username": member.name,
-            ":server": member.server.name
+            ":server": member.guild.name
         }
 
-        welcome_msg = str(self.handler.get_var(member.server.id, "welcomemsg"))
+        welcome_msg = str(self.handler.get_var(member.guild.id, "welcomemsg"))
 
         # Replacement logic
         for trigg, repl in replacement_logic.items():
             welcome_msg = welcome_msg.replace(trigg, repl)
 
-        log_c = await self.handle_log_channel(member.server)
-        def_c = await self.handle_def_channel(member.server, self.handler.get_defaultchannel(member.server))
+        log_c = await self.handle_log_channel(member.guild)
+        def_c = await self.handle_def_channel(member.guild, self.handler.get_defaultchannel(member.guild))
 
         # Ignore if disabled
         if log_c:
@@ -310,15 +310,15 @@ class ServerManagement:
         replacement_logic = {
             ":user": member.mention,
             ":username": member.name,
-            ":server": member.server.name}
+            ":server": member.guild.name}
 
-        ban_msg = str(self.handler.get_var(member.server.id, "banmsg"))
+        ban_msg = str(self.handler.get_var(member.guild.id, "banmsg"))
 
         for trigg, repl in replacement_logic.items():
             ban_msg = ban_msg.replace(trigg, repl)
 
-        log_c = await self.handle_log_channel(member.server)
-        def_c = await self.handle_def_channel(member.server, self.handler.get_defaultchannel(member.server))
+        log_c = await self.handle_log_channel(member.guild)
+        def_c = await self.handle_def_channel(member.guild, self.handler.get_defaultchannel(member.guild))
 
         # Ignore if disabled
         if log_c:
@@ -338,15 +338,15 @@ class ServerManagement:
         replacement_logic = {
             ":user": member.mention,
             ":username": member.name,
-            ":server": member.server.name}
+            ":server": member.guild.name}
 
-        leave_msg = str(self.handler.get_var(member.server.id, "leavemsg"))
+        leave_msg = str(self.handler.get_var(member.guild.id, "leavemsg"))
 
         for trigg, repl in replacement_logic.items():
             leave_msg = leave_msg.replace(trigg, repl)
 
-        log_c = await self.handle_log_channel(member.server)
-        def_c = await self.handle_def_channel(member.server, self.handler.get_defaultchannel(member.server))
+        log_c = await self.handle_log_channel(member.guild)
+        def_c = await self.handle_def_channel(member.guild, self.handler.get_defaultchannel(member.guild))
 
         # Ignore if disabled
         if log_c:
@@ -356,21 +356,21 @@ class ServerManagement:
         if not is_disabled(leave_msg):
             await self.send_message_failproof(def_c, leave_msg)
 
-    async def on_server_join(self, server, **kwargs):
+    async def on_server_join(self, guild, **kwargs):
         # Always 'en'
         lang = kwargs.get("lang")
         # Say hi to the server
-        await self.send_message_failproof(server.default_channel, self.trans.get("EVENT_SERVER_JOIN", lang))
+        await self.send_message_failproof(guild.default_channel, self.trans.get("EVENT_SERVER_JOIN", lang))
 
         # Create server settings
-        self.handler.server_setup(server)
+        self.handler.server_setup(guild)
 
-    async def on_server_remove(self, server, **_):
+    async def on_server_remove(self, guild, **_):
         # Deletes server data
-        self.handler.delete_server(server.id)
+        self.handler.delete_server(guild.id)
 
         # Log
-        log_to_file("Removed from server: {}".format(server.name))
+        log_to_file("Removed from guild: {}".format(guild.name))
 
     async def on_ready(self):
         await self.client.wait_until_ready()
@@ -378,15 +378,15 @@ class ServerManagement:
         # Delay in case servers are still being received
         await asyncio.sleep(10)
 
-        log.info("Checking server vars...")
-        for server in self.client.servers:
-            if not self.handler.server_exists(server.id):
-                self.handler.server_setup(server)
+        log.info("Checking guild vars...")
+        for guild in self.client.servers:
+            if not self.handler.server_exists(guild.id):
+                self.handler.server_setup(guild)
 
-            self.handler.check_server_vars(server)
+            self.handler.check_server_vars(guild)
         log.info("Done.")
 
-        log.info("Checking for non-used server data...")
+        log.info("Checking for non-used guild data...")
         server_ids = [s.id for s in self.client.servers]
         self.handler.check_old_servers(server_ids)
         log.info("Done.")

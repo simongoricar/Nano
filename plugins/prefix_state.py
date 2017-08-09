@@ -49,8 +49,8 @@ class PrefixState:
             return "return"
 
         # Set up the server if it is not present in redis db
-        if not self.handler.server_exists(message.server.id):
-            self.handler.server_setup(message.server)
+        if not self.handler.server_exists(message.guild.id):
+            self.handler.server_setup(message.guild)
 
         # Ah, the shortcuts
         def startswith(*matches):
@@ -61,49 +61,49 @@ class PrefixState:
             return False
 
         # Add prefix to kwargs for future plugins
-        pref = self.handler.get_prefix(message.server)
+        pref = self.handler.get_prefix(message.guild)
         if pref is None:
             pref = str(DEFAULT_PREFIX)
 
         # Parse language
-        lang = self.handler.get_lang(message.server.id)
+        lang = self.handler.get_lang(message.guild.id)
         if not lang:
             lang = str(self.trans.default_lang)
 
         # SLEEP/WAKE Commands!
         # nano.sleep
         if startswith("nano.sleep"):
-            if not self.handler.can_use_admin_commands(message.author, message.server):
+            if not self.handler.can_use_admin_commands(message.author, message.guild):
                 await client.send_message(message.channel, trans.get("PERM_ADMIN", lang))
                 return
 
-            self.handler.set_sleeping(message.server, True)
+            self.handler.set_sleeping(message.guild, True)
             await client.send_message(message.channel, self.trans.get("MSG_NANO_SLEEP", lang))
             return "return"
 
         # nano.wake
         elif startswith("nano.wake"):
-            if not self.handler.can_use_admin_commands(message.author, message.server):
+            if not self.handler.can_use_admin_commands(message.author, message.guild):
                 await client.send_message(message.channel, trans.get("PERM_ADMIN", lang))
                 return
 
-            if not self.handler.is_sleeping(message.server.id):
+            if not self.handler.is_sleeping(message.guild.id):
                 await client.send_message(message.channel, trans.get("MSG_NANO_WASNT_SLEEPING", lang))
                 return
 
-            self.handler.set_sleeping(message.server, False)
+            self.handler.set_sleeping(message.guild, False)
             await self.client.send_message(message.channel, self.trans.get("MSG_NANO_WAKE", lang))
 
             self.stats.add(SLEPT)
             return "return"
 
         # Quit if the bot is sleeping
-        if self.handler.is_sleeping(message.server.id):
+        if self.handler.is_sleeping(message.guild.id):
             return "return"
 
         # TODO not needed in rewrite
         if not isinstance(message.author, Member):
-            user = message.server.get_member(message.author.id)
+            user = message.guild.get_member(message.author.id)
 
             if user:
                 # Sometimes monkeypatching is needed
@@ -115,10 +115,10 @@ class PrefixState:
 
     async def on_member_join(self, member, **_):
         # Quit if the bot is sleeping
-        if self.handler.is_sleeping(member.server.id):
+        if self.handler.is_sleeping(member.guild.id):
             return "return"
 
-        lang = self.handler.get_lang(member.server.id)
+        lang = self.handler.get_lang(member.guild.id)
         if not lang:
             lang = str(self.trans.default_lang)
 
@@ -126,10 +126,10 @@ class PrefixState:
 
     async def on_member_ban(self, member, **_):
         # Quit if the bot is sleeping
-        if self.handler.is_sleeping(member.server.id):
+        if self.handler.is_sleeping(member.guild.id):
             return "return"
 
-        lang = self.handler.get_lang(member.server.id)
+        lang = self.handler.get_lang(member.guild.id)
         if not lang:
             lang = str(self.trans.default_lang)
 
@@ -137,10 +137,10 @@ class PrefixState:
 
     async def on_member_remove(self, member, **_):
         # Quit if the bot is sleeping
-        if self.handler.is_sleeping(member.server.id):
+        if self.handler.is_sleeping(member.guild.id):
             return "return"
 
-        lang = self.handler.get_lang(member.server.id)
+        lang = self.handler.get_lang(member.guild.id)
         if not lang:
             lang = str(self.trans.default_lang)
 
@@ -156,7 +156,7 @@ class PrefixState:
         if reaction.message.channel.is_private:
             return "return"
 
-        lang = self.handler.get_lang(user.server.id)
+        lang = self.handler.get_lang(user.guild.id)
         if not lang:
             lang = str(self.trans.default_lang)
 

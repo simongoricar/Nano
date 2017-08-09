@@ -31,15 +31,15 @@ class POST:
 
         return self.session
 
-    async def on_server_join(self, server, **_):
+    async def on_server_join(self, guild, **_):
         srv_amount = len(self.client.servers)
 
         resp = await self.upload(srv_amount)
 
         if resp is True:
-            log.info("Updated guild count: {} (joined {})".format(srv_amount, server.name))
+            log.info("Updated guild count: {} (joined {})".format(srv_amount, guild.name))
         else:
-            log.info("Something went wrong when updating guild count: {} (for {}) - status code {}".format(srv_amount, server.name, resp))
+            log.info("Something went wrong when updating guild count: {} (for {}) - status code {}".format(srv_amount, guild.name, resp))
 
     async def upload(self, num, token=None):
         if not token:
