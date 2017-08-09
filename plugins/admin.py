@@ -710,7 +710,8 @@ class Admin:
                 return
 
             user = None
-            for ban in await self.client.get_bans(message.guild):
+            # REWRITE test
+            for ban in await message.guild.bans():
                 if ban.name == name:
                     user = ban
 

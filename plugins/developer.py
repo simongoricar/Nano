@@ -243,8 +243,9 @@ class DevFeatures:
                 await client.send_message(message.channel, "Not a number.")
                 return
 
-            srv = Object(id=sid)
-            await client.leave_server(srv)
+            # REWRITE test
+            srv = await self.client.get_guild(sid)
+            await srv.leave()
             await client.send_message(message.channel, "Left {}".format(srv.id))
 
         # nano.dev.tf.reload
