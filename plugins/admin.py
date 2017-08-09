@@ -293,8 +293,9 @@ class ObjectListReactions:
             return
 
         # Adds reactions for navigation
-        await self.client.add_reaction(message, ObjectListReactions.UP)
-        await self.client.add_reaction(message, ObjectListReactions.DOWN)
+        # REWRITE test
+        await message.add_reaction(ObjectListReactions.UP)
+        await message.add_reaction(ObjectListReactions.DOWN)
 
         # Caches data into MessageTracker
         data = {
@@ -363,8 +364,9 @@ class ObjectListReactions:
         new_msg = data.get("trans_string").format(c_page + 1, page_amount, "\n".join(page))
         await self.client.edit_message(msg, new_msg)
 
-        await self.client.add_reaction(msg, ObjectListReactions.UP)
-        await self.client.add_reaction(msg, ObjectListReactions.DOWN)
+        # REWRITE test
+        await msg.add_reaction(ObjectListReactions.UP)
+        await msg.add_reaction(ObjectListReactions.DOWN)
 
         # Updates the page counter
         data["page"] = c_page

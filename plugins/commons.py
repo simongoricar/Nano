@@ -242,7 +242,9 @@ class Commons:
             a = await client.send_message(message.channel, trans.get("MSG_PING_MEASURING", lang))
             self.pings[a.id] = [time.monotonic(), message.channel.id, base_taken]
 
-            await client.add_reaction(a, "\U0001F44D")
+            # Thumbs up
+            # REWRITE test
+            await a.add_reaction("\U0001F44D")
             self.stats.add(PING)
 
         # !decide [item1]|[item2]|etc...
