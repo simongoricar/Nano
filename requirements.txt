@@ -1,9 +1,7 @@
-wikipedia
 ujson
 discord.py
 aiohttp
 giphypop
-beautifulsoup4
 psutil
 redis
 fuzzywuzzy

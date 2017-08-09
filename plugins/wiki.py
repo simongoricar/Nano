@@ -3,12 +3,16 @@ import configparser
 import logging
 
 import aiohttp
-import wikipedia
-from bs4 import BeautifulSoup
+from typing import Union
 from discord import Message
 
+try:
+    from ujson import loads
+except ImportError:
+    from json import loads
+
 from data.stats import MESSAGE
-from data.utils import is_valid_command
+from data.utils import is_valid_command, add_dots
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -16,8 +20,9 @@ logger.setLevel(logging.INFO)
 parser = configparser.ConfigParser()
 parser.read("plugins/config.ini")
 
-# SHOULD NOT BE TRANSLATED
-QUERY_TOO_LONG = "Search request is longer than the maximum allowed length."
+MAX_WIKI_LENGTH = parser.getint("wiki", "max-length")
+MAX_URBAN_LENGTH = parser.getint("urban", "max-length")
+
 
 commands = {
     "_wiki": {"desc": "Gives you the definition of a word from Wikipedia.", "use": "[command] [word]", "alias": "_define"},
@@ -28,12 +33,90 @@ commands = {
 valid_commands = commands.keys()
 
 
+def build_url(url, **fields):
+    if not url.endswith("?"):
+        url += "?"
+
+    field_list = ["{}={}".format(key, value) for key, value in fields.items()]
+    return str(url) + "&".join(field_list)
+
+
+class WikipediaParser:
+    def __init__(self, loop):
+        self.session = aiohttp.ClientSession(loop=loop)
+        self.endpoint = "https://en.wikipedia.org/w/api.php"
+    async def get_definition(self, query: str) -> Union[str, None]:
+        data = await self._get_definition(query)
+
+        pages = data.get("query").get("pages")
+        # No results
+        if "-1" in pages.keys():
+            return None
+
+        # Get first (only, due to rvlimit) page
+        f_page = pages[list(pages.keys())[0]]
+        return f_page.get("extract")
+
+    async def _get_definition(self, query: str):
+        # Reference
+        # https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exintro=&explaintext=&titles=Bicycle
+        payload = {
+            "format": "json",
+            "action": "query",
+            "titles": query,
+            "prop": "extracts",
+            "exintro": "",
+            "explaintext": "",
+            "redirects": 1,
+            "exlimit": 1
+        }
+
+        async with self.session.get(build_url(self.endpoint, **payload)) as resp:
+            if 200 < resp.status <= 300:
+                # Anything other than 200 is not good
+                raise ConnectionError("WikipediaParser status code: {}".format(resp.status))
+
+            # Converts to json format
+            return await resp.json(loads=loads)
+
+
+class UrbanDictionary:
+    def __init__(self, loop):
+        self.session = aiohttp.ClientSession(loop=loop)
+        self.endpoint = "http://api.urbandictionary.com/v0/define"
+
+    async def urban_dictionary(self, query: str) -> Union[str, None]:
+        data = await self._get_definition(query)
+
+        items = data.get("list")
+        if not items:
+            return None
+
+        return items[0].get("definition")
+
+    async def _get_definition(self, query: str):
+        payload = {
+            "term": query
+        }
+
+        async with self.session.get(build_url(self.endpoint, **payload)) as resp:
+            if 200 < resp.status <= 300:
+                # Anything other than 200 is not good
+                raise ConnectionError("UrbanDictionary status code: {}".format(resp.status))
+
+            # Converts to json format
+            return await resp.json(loads=loads)
+
 class Definitions:
     def __init__(self, **kwargs):
         self.client = kwargs.get("client")
         self.nano = kwargs.get("nano")
         self.stats = kwargs.get("stats")
         self.trans = kwargs.get("trans")
+        self.loop = kwargs.get("loop")
+
+        self.wiki = WikipediaParser(self.loop)
+        self.urban = UrbanDictionary(self.loop)
 
     async def on_message(self, message, **kwargs):
         assert isinstance(message, Message)
@@ -58,57 +141,42 @@ class Definitions:
 
         if startswith(prefix + "wiki", prefix + "define"):
             if startswith(prefix + "wiki"):
-                search = str(message.content)[len(prefix + "wiki "):]
-
+                search = str(message.content)[len(prefix + "wiki "):].strip(" ")
             elif startswith(prefix + "define"):
-                search = str(message.content)[len(prefix + "define "):]
-
+                search = str(message.content)[len(prefix + "define "):].strip(" ")
             else:
+                # Not possible, but k
                 return
 
-            if not search or search == " ":  # If empty args
+            if not search:
                 await client.send_message(message.channel, trans.get("MSG_WIKI_NO_QUERY", lang))
                 return
 
-            try:
-                answer = wikipedia.summary(search, sentences=parser.get("wiki", "sentences"), auto_suggest=True)
-                await client.send_message(message.channel, "**{} :** \n".format(search) + answer)
+            summary = await self.wiki.get_definition(search)
 
-            except wikipedia.exceptions.PageError:
-                await client.send_message(message.channel, trans.get("MSG_WIKI_NO_DEF", lang))
-
-            except wikipedia.exceptions.DisambiguationError:
-                await client.send_message(message.channel, trans.get("MSG_WIKI_MULTIPLE_DEF", lang).format(search))
-
-            except wikipedia.exceptions.WikipediaException as e:
-                if str(e).startswith(QUERY_TOO_LONG):
-                    await client.send_message(message.channel, trans.get("MSG_WIKI_QUERY_TOO_LONG", lang).format(len(search)))
-
-        elif startswith(prefix + "urban"):
-            search = str(message.content)[len(prefix + "urban "):]
-
-            async with aiohttp.ClientSession() as session:
-                async with session.get("http://www.urbandictionary.com/define.php?term={}".format(search)) as resp:
-                    define = await resp.text()
-
-            try:
-                answer = BeautifulSoup(define, "html.parser").find("div", attrs={"class": "meaning"}).text
-            except AttributeError:
+            if not summary:
                 await client.send_message(message.channel, trans.get("MSG_WIKI_NO_DEF", lang))
                 return
 
-            # Check if there are no definitions
-            if str(answer).startswith("\nThere aren't any"):
-                await client.send_message(message.channel, trans.get("MSG_WIKI_NO_DEF", lang))
+            await client.send_message(message.channel,
+                                      trans.get("MSG_WIKI_DEFINITION", lang).format(search,
+                                                                                    add_dots(summary, max_len=MAX_WIKI_LENGTH)))
 
-            else:
+        elif startswith(prefix + "urban"):
+            search = str(message.content)[len(prefix + "urban "):].strip(" ")
 
-                if (len(answer) + len(search)) > 1900:
-                    await client.send_message(message.channel, trans.get("MSG_URBAN_DEF_TOO_LONG", lang))
-                    return
+            if not search:
+                await client.send_message(message.channel, trans.get("MSG_URBAN_NO_QUERY", lang))
+                return
 
-                content = "**{}** *:* {}".format(search, answer)
-                await client.send_message(message.channel, content)
+            description = await self.urban.urban_dictionary(search)
+
+            if not description:
+                await client.send_message(message.channel, trans.get("MSG_URBAN_NO_DEF", lang))
+                return
+
+            await client.send_message(message.channel,
+                                      trans.get("MSG_URBAN_DEFINITION", lang).format(search, add_dots(description, max_len=MAX_URBAN_LENGTH)))
 
 
 class NanoPlugin:
