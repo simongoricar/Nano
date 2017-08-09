@@ -68,7 +68,9 @@ parser.read("settings.ini")
 
 # Loop, discord.py and Nano core modules initialization
 loop = asyncio.get_event_loop()
-client = discord.Client(loop=loop)
+# NOW USES AUTOSHARDING
+# client = discord.Client(loop=loop)
+client = discord.AutoShardedClient(loop=loop)
 
 log.info("Initializing ServerHandler and NanoStats...")
 
@@ -190,6 +192,7 @@ class Nano(metaclass=Singleton):
 
         log.debug("Registered plugins: {}".format([str(p).rstrip(".py") for p in self.plugin_names]))
 
+        # Display ignored / failed plugins
         if ignored:
             log.warning("Ignored/Disabled plugins: {}".format(", ".join(ignored)))
 
