@@ -555,6 +555,7 @@ Direct link: http://steamcommunity.com/id/{}/</string>
     <string name="MSG_VOTING_IN_PROGRESS">:warning: A vote is already in progress.</string>
     <string name="MSG_VOTING_I_USAGE">Incorrect usage. Check `{}help vote start` for more info.</string>
     <string name="MSG_VOTING_NO_TITLE">Please include a title.</string>
+    <string name="MSG_VOTING_EMPTY_ITEM">:x: One or more of your options are empty!</string>
     <string name="MSG_VOTING_STARTED">:scroll: Vote started:
 
 **{}**
@@ -577,14 +578,23 @@ Direct link: http://steamcommunity.com/id/{}/</string>
 ```{}```</string>
     <string name="MSG_VOTING_NOT_NUMBER">Vote argument must be a number.</string>
     <string name="MSG_VOTING_INVALID_NUMBER">Invalid choice.</string>
-    <string name="MSG_VOTING_CHEATER">Cheater :smiley:</string>
+    <string name="MSG_VOTING_CHEATER">Cheater :smiley: (you can't vote on multiple options)</string>
     <string name="MSG_VOTING_SOMETHING_WRONG">Something went wrong... :frowning2:</string>
 
-    <string name="MSG_WIKI_QUERY_TOO_LONG">Search query is too long: 300 is the maximum length (you searched with {})</string>
-    <string name="MSG_WIKI_NO_QUERY">Please include a word you want to define.</string>
-    <string name="MSG_WIKI_NO_DEF">No definition found.</string>
-    <string name="MSG_WIKI_MULTIPLE_DEF">Got multiple definitions of {}, please be more specific (somehow).</string>
+    <string name="MSG_WIKI_QUERY_TOO_LONG">:warning: Search query is too long (max. is {}, you searched with {})</string>
+    <string name="MSG_WIKI_DEFINITION">:newspaper: Definition:
+
+**{}**
+```{}```</string>
+    <string name="MSG_WIKI_NO_QUERY">:exclamation: Please include a word you want to search for.</string>
+    <string name="MSG_WIKI_NO_DEF">:open_file_folder: No definition found.</string>
     <string name="MSG_URBAN_DEF_TOO_LONG">Definition is too long!</string>
+    <string name="MSG_URBAN_NO_QUERY">:exclamation: Please include a word you want to search for.</string>
+    <string name="MSG_URBAN_NO_DEF">:open_file_folder: No definition found.</string>
+    <string name="MSG_URBAN_DEFINITION">:space_invader: Urban Dictionary definition:
+
+**{}**
+```{}```</string>
 
     <string name="EVENT_JOIN">joined</string>
     <string name="EVENT_LEAVE">left</string>
