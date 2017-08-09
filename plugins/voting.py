@@ -61,6 +61,7 @@ class RedisVoteHandler:
         return len(self.redis.scan_iter("*"))
 
     def start_vote(self, author_id: int, server_id: int, title: str, choices: list):
+        # Do not automatically overwrite
         if self.redis.exists(server_id):
             return False
 
@@ -202,6 +203,11 @@ class Vote:
                 await client.send_message(message.channel, trans.get("MSG_VOTING_OPTIONS_TL ", lang).format(VOTE_ITEM_MAX_LENGTH, sum([len(a) for a in items])))
                 return
 
+            # Check if any option is empty
+            if any(e == "" for e in items):
+                await client.send_message(message.channel, trans.get("MSG_VOTING_EMPTY_ITEM", lang))
+                return
+
             self.vote.start_vote(message.author.id, message.server.id, title, items)
 
             # Generates a list of options to show
@@ -230,7 +236,7 @@ class Vote:
 
             for name, val in votes.items():
                 # Zero-width space
-                dotted = add_dots(name, max_len=250) or "\u200B"
+                dotted = add_dots(name, max_len=240) or "\u200B"
                 embed.add_field(name=dotted, value=trans.get("MSG_VOTING_AMOUNT2", lang).format(val))
 
             # Actually end the voting
@@ -269,6 +275,7 @@ class Vote:
             # Get the choice, but tell the author if he/she didn't supply a number
             try:
                 choice = int(message.content[len(prefix + "vote "):]) - 1
+            # Cannot convert to int
             except ValueError:
                 await client.add_reaction(message, BLOCK_EMOJI)
 
