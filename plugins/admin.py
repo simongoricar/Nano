@@ -141,7 +141,10 @@ class RedisSoftBanScheduler:
     async def dispatch(self, reminder):
         try:
             logger.debug("Dispatching")
-            await self.client.unban(Object(id=reminder.get("server")), Object(id=reminder.get("member")))
+            # REWRITE test
+            guild = await self.client.get_guild(reminder.get("server"))
+            member = await guild.get_member(reminder.get("server"))
+            await member.unban()
         except DiscordException as e:
             logger.warning(e)
 
@@ -688,16 +691,18 @@ class Admin:
             confirm = trans.get("INFO_CONFIRM", lang)
             await client.send_message(message.channel, trans.get("MSG_BAN_USER", lang).format(user.name, confirm))
 
-            followup = await client.wait_for_message(author=message.author, channel=message.channel,
-                                                     timeout=15, content=confirm)
+            def is_author(m):
+                return m.author == message.author and m.channel == message.channel and m.content == confirm
 
-            if followup is None:
+            # REWRITE test
+            try:
+                followup = await client.wait_for("message", check=is_author, timeout=15)
+            except asyncio.TimeoutError:
                 await client.send_message(message.channel, trans.get("MSG_BAN_TIMEOUT", lang))
-                return
-
-            self.bans.append(user.id)
-            # TODO rewrite
-            await user.ban(delete_message_days=0)
+            else:
+                self.bans.append(user.id)
+                # REWRITE test
+                await user.ban(delete_message_days=0)
 
         # !unban
         elif startswith(prefix + "unban"):
@@ -721,7 +726,8 @@ class Admin:
                 await client.send_message(message.channel, trans.get("MSG_UNBAN_NO_BAN", lang))
                 return
 
-            await client.unban(message.guild, user)
+            # REWRITE test
+            await user.unban()
             await client.send_message(message.channel, trans.get("MSG_UNBAN_SUCCESS", lang).format(name))
 
         # !softban @mention/username | [time]
@@ -828,10 +834,14 @@ class Admin:
                 conf = trans.get("INFO_CONFIRM", lang)
 
                 await client.send_message(message.channel, trans.get("MSG_UNMUTE_ALL_CONFIRM", lang).format(conf))
-                followup = await client.wait_for_message(author=message.author, channel=message.channel,
-                                                         timeout=15, content=conf)
 
-                if followup is None:
+                def is_author(m):
+                    return m.author == message.author and m.channel == message.channel and m.content == confirm
+
+                # REWRITE test
+                try:
+                    followup = await client.wait_for("message", check=generic_msg_check, timeout=15)
+                except asyncio.TimeoutError:
                     await client.send_message(message.channel, trans.get("MSG_UNMUTE_TIMEOUT", lang))
                     return
 
@@ -1049,13 +1059,19 @@ class Admin:
 
                 await client.send_message(message.channel, trans.get("MSG_CMD_ALREADY_EXISTS", lang).format(conf))
 
+                def is_author(m):
+                    return m.author == message.author and m.channel == message.channel and m.content == confirm
+
                 # Wait for confirmation
-                followup = await client.wait_for_message(author=message.author, channel=message.channel, timeout=15, content=conf)
-                # No confirmation, exit
-                if followup is None:
+                # REWRITE test
+                try:
+                    followup = await client.wait_for("message", check=is_author, timeout=15)
+                except asyncio.TimeoutError:
                     await client.send_message(message.channel, trans.get("MSG_CMD_TIMEOUT", lang))
                     return
-                # Else, continue normally
+                # Else, continue normally - overwrites the command
+                else:
+                    pass
 
 
             if len(trigger) >= CMD_LIMIT_T:
@@ -1424,10 +1440,12 @@ class Admin:
             confirm = trans.get("INFO_CONFIRM", lang)
             await client.send_message(message.channel, trans.get("MSG_RESET_CONFIRM", lang).format(confirm))
 
-            followup = await client.wait_for_message(author=message.author, channel=message.channel,
-                                                     timeout=15, content=confirm)
-
-            if followup is None:
+            def is_author(m):
+                return m.author == message.author and m.channel == message.channel and m.content == confirm
+            # REWRITE test
+            try:
+                followup = await client.wait_for("message", check=is_author, timeout=15)
+            except asyncio.TimeoutError:
                 await client.send_message(message.channel, trans.get("MSG_RESET_CONFIRM_TIMEOUT", lang))
                 return
 
@@ -1453,6 +1471,7 @@ class Admin:
 
         # !setup, nano.setup
         elif startswith(prefix + "setup", "nano.setup"):
+            # REWRITE test
             auth = message.author
             MSG_TIMEOUT = 35
 
@@ -1465,6 +1484,9 @@ class Admin:
             async def timeout(a_msg):
                 await client.send_message(a_msg.channel, trans.get("MSG_SETUP_TIMEOUT", lang))
 
+            def must_be_author(m):
+                return m.author == message.author
+
             msg_intro = trans.get("MSG_SETUP_WELCOME", lang)
             await client.send_message(message.channel, msg_intro)
             await asyncio.sleep(2)
@@ -1476,10 +1498,12 @@ class Admin:
             one = await client.send_message(message.channel, msg_one)
 
             # Wait for first response
-            ch1 = await client.wait_for_message(timeout=MSG_TIMEOUT, author=auth)
-            if ch1 is None:
+            try:
+                ch1 = await client.wait_for("message", check=must_be_author, timeout=MSG_TIMEOUT)
+            except asyncio.TimeoutError:
                 await timeout(message)
                 return
+
             # User confirmed the action
             else:
                 if ch1.content.lower().strip(" ") == YES:
@@ -1503,8 +1527,9 @@ class Admin:
             two = await client.send_message(message.channel, msg_two)
 
             # Second check, does not need yes/no filter
-            ch2 = await client.wait_for_message(timeout=MSG_TIMEOUT, author=auth)
-            if ch2 is None:
+            try:
+                ch2 = await client.wait_for("message", check=must_be_author, timeout=MSG_TIMEOUT)
+            except asyncio.TimeoutError:
                 await timeout(message)
                 return
 
@@ -1527,8 +1552,9 @@ class Admin:
             msg_three = trans.get("MSG_SETUP_JOINMSG", lang)
             three = await client.send_message(message.channel, msg_three)
 
-            ch3 = await client.wait_for_message(timeout=MSG_TIMEOUT, author=auth)
-            if ch3 is None:
+            try:
+                ch3 = await client.wait_for("message", check=must_be_author, timeout=MSG_TIMEOUT)
+            except asyncio.TimeoutError:
                 await timeout(message)
                 return
 
@@ -1552,8 +1578,9 @@ class Admin:
             four = await client.send_message(message.channel, msg_four)
 
             # Fourth check
-            ch4 = await client.wait_for_message(timeout=MSG_TIMEOUT, author=auth)
-            if ch4 is None:
+            try:
+                ch4 = await client.wait_for("message", check=must_be_author, timeout=MSG_TIMEOUT)
+            except asyncio.TimeoutError:
                 await timeout(message)
                 return
 
@@ -1574,13 +1601,14 @@ class Admin:
             five = await client.send_message(message.channel, msg_five)
 
             # Wait for response
-            ch5 = await client.wait_for_message(timeout=MSG_TIMEOUT, author=auth)
-            if ch5 is None:
+            try:
+                ch5 = await client.wait_for("message", check=must_be_author, timeout=MSG_TIMEOUT)
+            except asyncio.TimeoutError:
                 await timeout(message)
                 return
 
             else:
-                if ch4.content.lower().strip(" ") == YES:
+                if ch5.content.lower().strip(" ") == YES:
                     handler.update_moderation_settings(message.guild.id, "filterwords", True)
                 else:
                     handler.update_moderation_settings(message.guild.id, "filterwords", False)
@@ -1596,14 +1624,15 @@ class Admin:
             msg_six = trans.get("MSG_SETUP_LOGCHANNEL", lang).format(NONE)
             six = await client.send_message(message.channel, msg_six)
 
-            ch6 = await client.wait_for_message(timeout=MSG_TIMEOUT, author=auth)
-            if ch6 is None:
+            try:
+                ch6 = await client.wait_for("message", check=must_be_author, timeout=MSG_TIMEOUT)
+            except asyncio.TimeoutError:
                 await timeout(message)
                 return
 
             else:
                 # Parses channel
-                channel = str(ch6.content).strip(" ")
+                channel = ch6.content.strip(" ")
 
                 # Disabling works in both languages
                 if channel.lower() == NONE or is_disabled(channel.lower()):
