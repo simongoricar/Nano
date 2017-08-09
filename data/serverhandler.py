@@ -127,11 +127,14 @@ class ServerHandler:
         return self.has_role(member, "Nano Admin")
 
     def is_mod(self, member: Member, server: Server):
+        # Changed in 3.7
+        # Having Nano Admin allows access to Nano Mod commands as well
         bo = self.is_bot_owner(member.id)
         so = self.is_server_owner(member.id, server)
-        ia = self.has_role(member, "Nano Mod")
+        im = self.has_role(member, "Nano Mod")
+        ia = self.has_role(member, "Nano Admin")
 
-        return bo or so or ia
+        return bo or so or ia or im
 
 
 # Everything regarding RedisServerHandler below

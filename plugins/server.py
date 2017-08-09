@@ -282,7 +282,8 @@ class ServerManagement:
         replacement_logic = {
             ":user": member.mention,
             ":username": member.name,
-            ":server": member.server.name}
+            ":server": member.server.name
+        }
 
         welcome_msg = str(self.handler.get_var(member.server.id, "welcomemsg"))
 
