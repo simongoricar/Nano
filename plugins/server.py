@@ -57,17 +57,29 @@ class ServerManagement:
 
         return discord.utils.find(lambda m: m.id == chan, guild.channels)
 
-    @staticmethod
-    async def handle_def_channel(guild, channel_id):
+    async def handle_def_channel(self, guild, channel_id):
         if is_disabled(channel_id):
-            return guild.default_channel
+            return await self.default_channel(guild)
         else:
             chan = discord.utils.find(lambda c: c.id == channel_id, guild.channels)
             if not chan:
                 log_to_file("Custom channel does not exist anymore: {} ({})".format(guild.name, guild.id))
-                return guild.default_channel
+                return await self.default_channel(guild)
             else:
                 return chan
+
+    @staticmethod
+    async def default_channel(guild):
+        # Try to find #general
+        chan = discord.utils.find(lambda c: c.name == "general", guild.channels)
+        if chan:
+            return chan
+
+        # Else, return the topmost one
+        top = sorted(guild.channels, key=lambda a: a.position)[0]
+        print("Top guild is {}".format(top.name))
+        return top
+
 
     async def send_message_failproof(self, channel, message=None, embed=None):
         try:
@@ -109,7 +121,7 @@ class ServerManagement:
             channels = 0
 
             # Iterate though servers and add up things
-            for guild in client.servers:
+            for guild in client.guilds:
 
                 server_count += 1
                 members += int(guild.member_count)
@@ -360,7 +372,7 @@ class ServerManagement:
         # Always 'en'
         lang = kwargs.get("lang")
         # Say hi to the server
-        await self.send_message_failproof(guild.default_channel, self.trans.get("EVENT_SERVER_JOIN", lang))
+        await self.send_message_failproof(await self.default_channel(guild), self.trans.get("EVENT_SERVER_JOIN", lang))
 
         # Create server settings
         self.handler.server_setup(guild)
@@ -379,7 +391,7 @@ class ServerManagement:
         await asyncio.sleep(10)
 
         log.info("Checking guild vars...")
-        for guild in self.client.servers:
+        for guild in self.client.guilds:
             if not self.handler.server_exists(guild.id):
                 self.handler.server_setup(guild)
 
@@ -387,7 +399,7 @@ class ServerManagement:
         log.info("Done.")
 
         log.info("Checking for non-used guild data...")
-        server_ids = [s.id for s in self.client.servers]
+        server_ids = [s.id for s in self.client.guilds]
         self.handler.check_old_servers(server_ids)
         log.info("Done.")
 

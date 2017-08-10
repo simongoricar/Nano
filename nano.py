@@ -39,8 +39,8 @@ ON_MEMBER_UPDATE = "on_member_update"
 ON_MEMBER_BAN = "on_member_ban"
 ON_MEMBER_UNBAN = "on_member_unban"
 
-ON_SERVER_JOIN = "on_server_join"
-ON_SERVER_REMOVE = "on_server_remove"
+ON_GUILD_JOIN = "on_guild_join"
+ON_GUILD_REMOVE = "on_guild_remove"
 
 ON_ERROR = "on_error"
 ON_SHUTDOWN = "on_shutdown"
@@ -425,18 +425,18 @@ async def on_member_ban(member):
 
 
 @client.event
-async def on_member_unban(server, member):
-    await nano.dispatch_event(ON_MEMBER_UNBAN, server, member)
+async def on_member_unban(guild, member):
+    await nano.dispatch_event(ON_MEMBER_UNBAN, guild, member)
 
 
 @client.event
-async def on_server_join(server):
-    await nano.dispatch_event(ON_SERVER_JOIN, server)
+async def on_guild_join(guild):
+    await nano.dispatch_event(ON_GUILD_JOIN, guild)
 
 
 @client.event
-async def on_server_remove(server):
-    await nano.dispatch_event(ON_SERVER_REMOVE, server)
+async def on_guild_remove(guild):
+    await nano.dispatch_event(ON_GUILD_REMOVE, guild)
 
 
 @client.event
