@@ -385,6 +385,7 @@ class Admin:
         self.handler = kwargs.get("handler")
         self.stats = kwargs.get("stats")
         self.trans = kwargs.get("trans")
+        self.nano = kwargs.get("nano")
 
         self.timer = RedisSoftBanScheduler(self.client, self.handler, self.loop)
         self.loop.create_task(self.timer.start_monitoring())
@@ -393,6 +394,12 @@ class Admin:
         self.loop.create_task(self.list.track.start_monitoring())
 
         self.bans = []
+        self.default_channel = None
+        self.handle_log_channel = None
+
+    async def on_plugins_loaded(self):
+        self.default_channel = self.nano.get_plugin("server").get("instance").default_channel
+        self.handle_log_channel = self.nano.get_plugin("server").get("instance").handle_log_channel
 
     async def resolve_role(self, name, message, lang, no_error=False):
         if len(message.role_mentions) > 0:
@@ -402,7 +409,8 @@ class Admin:
             if no_error:
                 return None
             else:
-                await self.client.send_message(message.channel, self.trans.get("ERROR_NO_SUCH_ROLE", lang))
+                # REWRITE test
+                await message.channel.send(self.trans.get("ERROR_NO_SUCH_ROLE", lang))
                 raise IgnoredException
 
         role = utils.find(lambda r: r.name == name, message.guild.roles)
@@ -411,7 +419,8 @@ class Admin:
             if no_error:
                 return None
             else:
-                await self.client.send_message(message.channel, self.trans.get("ERROR_NO_SUCH_ROLE", lang))
+                # REWRITE test
+                await message.channel.send(self.trans.get("ERROR_NO_SUCH_ROLE", lang))
                 raise IgnoredException
 
         return role
@@ -431,7 +440,8 @@ class Admin:
             if no_error:
                 return None
             else:
-                await self.client.send_message(message.channel, self.trans.get("ERROR_NO_MENTION", lang))
+                # REWRITE test
+                await message.channel.send(self.trans.get("ERROR_NO_MENTION", lang))
                 raise IgnoredException
 
         # No mentions, username is provided
@@ -440,7 +450,8 @@ class Admin:
             if no_error:
                 return None
             else:
-                await self.client.send_message(message.channel, self.trans.get("ERROR_NO_USER", lang))
+                # REWRITE test
+                await message.channel.send(self.trans.get("ERROR_NO_USER", lang))
                 raise IgnoredException
 
         return user
@@ -455,7 +466,7 @@ class Admin:
             if no_error:
                 return None
             else:
-                await self.client.send_message(message.channel, self.trans.get("ERROR_NO_CHMENTION", lang))
+                await message.channel.send(self.trans.get("ERROR_NO_CHMENTION", lang))
                 raise IgnoredException
 
         # Tries to find by name
@@ -464,18 +475,17 @@ class Admin:
             if no_error:
                 return None
             else:
-                await self.client.send_message(message.channel, self.trans.get("ERROR_NO_CHMENTION", lang))
+                await message.channel.send(self.trans.get("ERROR_NO_CHMENTION", lang))
                 raise IgnoredException
 
         return chan
 
-    @staticmethod
-    async def handle_def_channel(guild, channel_id):
+    async def handle_def_channel(self, guild, channel_id):
         """
         Returns the default channel of the server (can be customized)
         """
         if is_disabled(channel_id):
-            return guild.default_channel
+            return await self.default_channel(guild)
         else:
             return utils.find(lambda c: c.id == channel_id, guild.channels)
 
@@ -496,12 +506,12 @@ class Admin:
         # Notation without |
         if "|" not in message.content[cut_length:]:
             if len(message.mentions) == 0:
-                await self.client.send_message(message.channel, self.trans.get("MSG_ROLE_NEED_MENTION", lang))
+                await message.channel.send(self.trans.get("MSG_ROLE_NEED_MENTION", lang))
                 raise IgnoredException
 
             # Notation without | does not support multiple mentions
             if len(message.mentions) > 1:
-                await self.client.send_message(message.channel, self.trans.get("MSG_ROLE_TOO_MANY_MENTIONS", lang))
+                await message.channel.send(self.trans.get("MSG_ROLE_TOO_MANY_MENTIONS", lang))
                 raise IgnoredException
 
             a_role, usr = message.content[cut_length:].rsplit("<", maxsplit=1)
@@ -579,18 +589,18 @@ class Admin:
                 roles = self.handler.get_selfroles(message.guild.id)
 
                 if not roles:
-                    await client.send_message(message.channel, trans.get("MSG_SELFROLE_NONE", lang))
+                    await message.channel.send(trans.get("MSG_SELFROLE_NONE", lang))
                     return
 
                 r_list, r_page = make_pages_from_list(roles)
 
                 # If user wants a page that doesn't exist
                 if page > r_page:
-                    await client.send_message(message.channel, trans.get("MSG_SELFROLE_NO_PAGE", lang).format(r_page + 1))
+                    await message.channel.send(trans.get("MSG_SELFROLE_NO_PAGE", lang).format(r_page + 1))
                     return
 
                 msg = trans.get("MSG_SELFROLE_LIST", lang).format(page + 1, r_page + 1, "\n".join(r_list[page]))
-                msg_list = await client.send_message(message.channel, msg)
+                msg_list = await message.channel.send(msg)
 
                 await self.list.new_message(msg_list, page, r_list, trans.get("MSG_SELFROLE_LIST", lang))
 
@@ -598,13 +608,13 @@ class Admin:
                 # If a list is not requested, proceed like normal selfrole
 
                 if not role_n:
-                    await client.send_message(message.channel, trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
+                    await message.channel.send(trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
                     return
 
                 valid_role = self.handler.is_selfrole(message.guild.id, role_n)
 
                 if not valid_role:
-                    await client.send_message(message.channel, trans.get("MSG_SELFROLE_REMOVE_NOT_PRESENT", lang))
+                    await message.channel.send(trans.get("MSG_SELFROLE_REMOVE_NOT_PRESENT", lang))
                     return
 
                 # Find by name
@@ -612,24 +622,24 @@ class Admin:
                 # If role is not in server
                 if not role:
                     self.handler.remove_selfrole(message.guild.id, role_n)
-                    await client.send_message(message.channel, trans.get("MSG_SELFROLE_NOT_ANYMORE", lang))
+                    await message.channel.send(trans.get("MSG_SELFROLE_NOT_ANYMORE", lang))
                     return
 
                 # If user already has the role, remove it
                 if role in message.author.roles:
                     # REWRITE test
                     await message.author.remove_roles(role)
-                    await client.send_message(message.channel, trans.get("MSG_SELFROLE_REMOVED", lang).format(role_n))
+                    await message.channel.send(trans.get("MSG_SELFROLE_REMOVED", lang).format(role_n))
                 # Otherwise, add it
                 else:
                     # REWRITE test
                     await message.author.add_roles(role)
-                    await client.send_message(message.channel, trans.get("MSG_SELFROLE_ADDED", lang))
+                    await message.channel.send(trans.get("MSG_SELFROLE_ADDED", lang))
 
         # !nuke
         elif startswith(prefix + "nuke"):
             if not handler.is_mod(message.author, message.guild):
-                await client.send_message(message.channel, trans.get("PERM_MOD", lang))
+                await message.channel.send(trans.get("PERM_MOD", lang))
                 return "return"
 
             amount = str(message.content)[len(prefix + "nuke "):]
@@ -637,22 +647,22 @@ class Admin:
             try:
                 amount = int(amount) + 1  # Includes the sender's message
             except ValueError:
-                await client.send_message(message.channel, trans.get("ERROR_NOT_NUMBER", lang))
+                await message.channel.send(trans.get("ERROR_NOT_NUMBER", lang))
                 return
 
             # REWRITE test
             await message.delete()
-            await client.send_message(message.channel, trans.get("MSG_NUKE_PURGING", lang))
+            await message.channel.send(trans.get("MSG_NUKE_PURGING", lang))
 
             additional = ""
 
             try:
-                await client.purge_from(message.channel, limit=amount)
+                await message.channel.purge(limit=amount)
             except derrors.HTTPException:
                 additional = trans.get("MSG_NUKE_OLD", lang)
 
             # Show success
-            m = await client.send_message(message.channel, trans.get("MSG_NUKE_PURGED", lang).format(amount - 1) + additional)
+            m = await message.channel.send(trans.get("MSG_NUKE_PURGED", lang).format(amount - 1) + additional)
             # Wait 1.5 sec and delete the message
             await asyncio.sleep(1.5)
             # REWRITE test
@@ -661,44 +671,44 @@ class Admin:
         # !kick
         elif startswith(prefix + "kick") and not startswith(prefix + "kickmsg"):
             if not handler.is_mod(message.author, message.guild):
-                await client.send_message(message.channel, trans.get("PERM_MOD", lang))
+                await message.channel.send(trans.get("PERM_MOD", lang))
                 return
 
             name = message.content[len(prefix + "kick "):]
             user = await self.resolve_user(name, message, lang)
 
             if user.id == client.user.id:
-                await client.send_message(message.channel, trans.get("MSG_KICK_NANO", lang))
+                await message.channel.send(trans.get("MSG_KICK_NANO", lang))
                 return
 
             # REWRITE test
             await user.kick()
-            await client.send_message(message.channel, handler.get_var(message.guild.id, "kickmsg").replace(":user", user.name))
+            await message.channel.send(handler.get_var(message.guild.id, "kickmsg").replace(":user", user.name))
 
         # !ban
         elif startswith(prefix + "ban") and not startswith(prefix + "banmsg"):
             if not handler.is_mod(message.author, message.guild):
-                await client.send_message(message.channel, trans.get("PERM_MOD", lang))
+                await message.channel.send(trans.get("PERM_MOD", lang))
                 return "return"
 
             name = message.content[len(prefix + "ban "):]
             user = await self.resolve_user(name, message, lang)
 
             if user.id == client.user.id:
-                await client.send_message(message.channel, trans.get("MSG_BAN_NANO", lang))
+                await message.channel.send(trans.get("MSG_BAN_NANO", lang))
                 return
 
             confirm = trans.get("INFO_CONFIRM", lang)
-            await client.send_message(message.channel, trans.get("MSG_BAN_USER", lang).format(user.name, confirm))
+            await message.channel.send(trans.get("MSG_BAN_USER", lang).format(user.name, confirm))
 
             def is_author(m):
                 return m.author == message.author and m.channel == message.channel and m.content == confirm
 
             # REWRITE test
             try:
-                followup = await client.wait_for("message", check=is_author, timeout=15)
+                await client.wait_for("message", check=is_author, timeout=15)
             except asyncio.TimeoutError:
-                await client.send_message(message.channel, trans.get("MSG_BAN_TIMEOUT", lang))
+                await message.channel.send(trans.get("MSG_BAN_TIMEOUT", lang))
             else:
                 self.bans.append(user.id)
                 # REWRITE test
@@ -707,13 +717,13 @@ class Admin:
         # !unban
         elif startswith(prefix + "unban"):
             if not handler.is_mod(message.author, message.guild):
-                await client.send_message(message.channel, trans.get("PERM_MOD", lang))
+                await message.channel.send(trans.get("PERM_MOD", lang))
                 return "return"
 
             name = message.content[len(prefix + "unban "):]
 
             if not name:
-                await client.send_message(message.channel, trans.get("MSG_UNBAN_WRONG_USAGE", lang).format(prefix))
+                await message.channel.send(trans.get("MSG_UNBAN_WRONG_USAGE", lang).format(prefix))
                 return
 
             user = None
@@ -723,17 +733,17 @@ class Admin:
                     user = ban
 
             if not user:
-                await client.send_message(message.channel, trans.get("MSG_UNBAN_NO_BAN", lang))
+                await message.channel.send(trans.get("MSG_UNBAN_NO_BAN", lang))
                 return
 
             # REWRITE test
             await user.unban()
-            await client.send_message(message.channel, trans.get("MSG_UNBAN_SUCCESS", lang).format(name))
+            await message.channel.send(trans.get("MSG_UNBAN_SUCCESS", lang).format(name))
 
         # !softban @mention/username | [time]
         elif startswith(prefix + "softban"):
             if not handler.is_mod(message.author, message.guild):
-                await client.send_message(message.channel, trans.get("PERM_MOD", lang))
+                await message.channel.send(trans.get("PERM_MOD", lang))
                 return "return"
 
             cut = message.content[len(prefix + "softban "):]
@@ -744,7 +754,7 @@ class Admin:
             # In case the value can't be unpacked: no |
             except ValueError:
                 if len(message.mentions) == 0:
-                    await client.send_message(message.channel, trans.get("MSG_SOFTBAN_PLSMENTION", lang))
+                    await message.channel.send(trans.get("MSG_SOFTBAN_PLSMENTION", lang))
                     return
 
                 # Alternate method: @mention [time] (without |)
@@ -752,7 +762,7 @@ class Admin:
                 tim = cut.replace("<@{}>".format(message.mentions[0].id), "").strip(" ")
 
                 if tim == "":
-                    await client.send_message(message.channel, trans.get("MSG_SOFTBAN_NO_TIME", lang))
+                    await message.channel.send(trans.get("MSG_SOFTBAN_NO_TIME", lang))
                     return
 
             user = await self.resolve_user(name, message, lang)
@@ -763,12 +773,12 @@ class Admin:
             # REWRITE test
             await user.ban(delete_message_days=0)
 
-            await client.send_message(message.channel, trans.get("MSG_SOFTBAN_SUCCESS", lang).format(user.name, resolve_time(total_seconds, lang)))
+            await message.channel.send(trans.get("MSG_SOFTBAN_SUCCESS", lang).format(user.name, resolve_time(total_seconds, lang)))
 
         # !mute list
         elif startswith(prefix + "mute list"):
             if not handler.is_mod(message.author, message.guild):
-                await client.send_message(message.channel, trans.get("PERM_MOD", lang))
+                await message.channel.send(trans.get("PERM_MOD", lang))
                 return "return"
 
             mutes = handler.get_mute_list(message.guild)
@@ -777,7 +787,7 @@ class Admin:
                 try:
                     page -= 1
                 except ValueError:
-                    await client.send_message(message.channel, trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
+                    await message.channel.send(trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
                     return
 
             else:
@@ -795,36 +805,36 @@ class Admin:
 
                 final = trans.get("MSG_MUTE_LIST", lang).format(page + 1, m_page + 1, "\n".join(mute_list[page]))
 
-                msg = await client.send_message(message.channel, final)
+                msg = await message.channel.send(final)
                 await self.list.new_message(msg, page, mute_list, trans.get("MSG_MUTE_LIST", lang))
 
             else:
-                await client.send_message(message.channel, trans.get("MSG_MUTE_NONE", lang))
+                await message.channel.send(trans.get("MSG_MUTE_NONE", lang))
 
         # !mute
         elif startswith(prefix + "mute"):
             if not handler.is_mod(message.author, message.guild):
-                await client.send_message(message.channel, trans.get("PERM_MOD", lang))
+                await message.channel.send(trans.get("PERM_MOD", lang))
                 return "return"
 
             name = message.content[len(prefix + "mute "):]
             user = await self.resolve_user(name, message, lang)
 
             if message.guild.owner.id == user.id:
-                await client.send_message(message.channel, trans.get("MSG_MUTE_OWNER", lang))
+                await message.channel.send(trans.get("MSG_MUTE_OWNER", lang))
                 return
 
             if message.author.id == user.id:
-                await client.send_message(message.channel, trans.get("MSG_MUTE_SELF", lang))
+                await message.channel.send(trans.get("MSG_MUTE_SELF", lang))
                 return
 
             handler.mute(message.guild, user.id)
-            await client.send_message(message.channel, trans.get("MSG_MUTE_SUCCESS", lang).format(user.name))
+            await message.channel.send(trans.get("MSG_MUTE_SUCCESS", lang).format(user.name))
 
         # !unmute
         elif startswith(prefix + "unmute"):
             if not handler.is_mod(message.author, message.guild):
-                await client.send_message(message.channel, trans.get("PERM_MOD", lang))
+                await message.channel.send(trans.get("PERM_MOD", lang))
                 return "return"
 
             name = message.content[len(prefix + "unmute "):]
@@ -833,30 +843,30 @@ class Admin:
             if name == trans.get("INFO_ALL", lang):
                 conf = trans.get("INFO_CONFIRM", lang)
 
-                await client.send_message(message.channel, trans.get("MSG_UNMUTE_ALL_CONFIRM", lang).format(conf))
+                await message.channel.send(trans.get("MSG_UNMUTE_ALL_CONFIRM", lang).format(conf))
 
                 def is_author(m):
                     return m.author == message.author and m.channel == message.channel and m.content == confirm
 
                 # REWRITE test
                 try:
-                    followup = await client.wait_for("message", check=generic_msg_check, timeout=15)
+                    await client.wait_for("message", check=is_author, timeout=15)
                 except asyncio.TimeoutError:
-                    await client.send_message(message.channel, trans.get("MSG_UNMUTE_TIMEOUT", lang))
+                    await message.channel.send(trans.get("MSG_UNMUTE_TIMEOUT", lang))
                     return
 
                 mutes = handler.get_mute_list(message.guild)
                 for user_id in mutes:
                     handler.unmute(user_id, message.guild.id)
 
-                await client.send_message(message.channel, trans.get("MSG_UNMUTE_MASS_DONE", lang))
+                await message.channel.send(trans.get("MSG_UNMUTE_MASS_DONE", lang))
                 return
 
             # Normal unmuting
             user = await self.resolve_user(name, message, lang)
             handler.unmute(user.id, message.guild.id)
 
-            await client.send_message(message.channel,trans.get("MSG_UNMUTE_SUCCESS", lang).format(user.name))
+            await message.channel.send(trans.get("MSG_UNMUTE_SUCCESS", lang).format(user.name))
 
         # END of mod commands
 
@@ -1270,7 +1280,7 @@ class Admin:
                     # User wants to reset the channel
                     if is_disabled(arg):
                         handler.update_var(message.guild.id, "logchannel", None)
-                        await client.send_message(message.channel, trans.get("MSG_SETTINGS_DEFCHAN_RESET", lang).format(message.guild.default_channel.name))
+                        await client.send_message(message.channel, trans.get("MSG_SETTINGS_DEFCHAN_RESET", lang).format(self.default_channel(message.guild).name))
                         return
 
                     # No channel mention / parameter
@@ -1344,12 +1354,11 @@ class Admin:
             invite_filter = ON if settings.get(INVITEFILTER_SETTING) else OFF
 
             # Log channel
-            if settings.get("logchannel"):
-                l_id = settings.get("logchannel")
-                l_obj = utils.find(lambda a: a.id == l_id, message.guild.channels)
-                log_channel = "[{}]({})".format(l_obj.name, l_id)
-            else:
+            l_obj = await self.handle_log_channel(message.guild)
+            if l_obj is None:
                 log_channel = DISABLED
+            else:
+                log_channel = "[{}]({})".format(l_obj.name, l_obj.id)
 
             # Default channel
             d_channel = await self.handle_def_channel(message.guild, settings.get("dchan"))
@@ -1371,14 +1380,14 @@ class Admin:
             if (len(sett) + len(msgs)) > 2000:
                 # Send individually
                 try:
-                    await client.send_message(message.channel, sett)
-                    await client.send_message(message.channel, msgs)
+                    await message.channel.send(sett)
+                    await message.channel.send(msgs)
                 except derrors.HTTPException:
-                    await client.send_message(message.channel, trans.get("ERROR_MSG_TOO_LONG", lang))
+                    await message.channel.send(trans.get("ERROR_MSG_TOO_LONG", lang))
 
             else:
                 # Send in one piece
-                await client.send_message(message.channel, sett + "\n" + msgs)
+                await message.channel.send(sett + "\n" + msgs)
 
 
         # nano.blacklist
@@ -1682,5 +1691,6 @@ class NanoPlugin:
         "on_message": 10,
         "on_member_remove": 4,
         "on_reaction_add": 10,
+        "on_plugins_loaded": 5,
         # type : importance
     }
