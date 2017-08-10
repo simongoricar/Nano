@@ -236,11 +236,12 @@ class Commons:
 
         # !ping
         elif startswith(prefix + "ping"):
-            base_time = datetime.now() - message.timestamp
+            base_time = datetime.now() - message.created_at
             base_taken = int(divmod(base_time.total_seconds(), 60)[1] * 1000)
 
-            a = await client.send_message(message.channel, trans.get("MSG_PING_MEASURING", lang))
-            self.pings[a.id] = [time.monotonic(), message, base_taken]
+            # REWRITE test
+            a = await message.channel.send(trans.get("MSG_PING_MEASURING", lang))
+            self.pings[a.id] = [time.monotonic(), a, base_taken]
 
             # Thumbs up
             # REWRITE test
@@ -338,19 +339,16 @@ class Commons:
 
     async def on_reaction_add(self, reaction, _, **kwargs):
         # REWRITE test
-        if reaction.message in self.pings.keys():
+        if reaction.message.id in self.pings.keys():
             # Message data: list(initial_time, message, taken_time)
-            msg_data = self.pings.pop(reaction.message)
+            msg_data = self.pings.pop(reaction.message.id)
             lang = kwargs.get("lang")
 
             delta = round((time.monotonic() - int(msg_data[0])) * 100, 2)
             # Message object
             msg = msg_data[1]
 
-
-            # REWRITE test
-            await msg.edit(self.trans.get("MSG_PING_RESULT", lang).format(msg_data[2], delta))
-            # REWRITE test
+            await msg.edit(content=self.trans.get("MSG_PING_RESULT", lang).format(msg_data[2], delta))
             await msg.clear_reactions()
 
 

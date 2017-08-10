@@ -196,7 +196,7 @@ class Help:
                     self.last_times[message.author.id] = time.time()
 
 
-            dev_server = utils.get(client.servers, id=self.nano.dev_server)
+            dev_server = utils.get(client.guilds, id=self.nano.dev_server)
             # Timestamp
             ts = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
 

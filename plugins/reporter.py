@@ -3,7 +3,7 @@ import logging
 import sys
 import traceback
 
-from discord import errors, Message, Member, User, Server
+from discord import errors, Message, Member, User, Guild
 
 from data.utils import log_to_file, IgnoredException
 
@@ -54,7 +54,7 @@ class Reporter:
                 readable = "{}:{} (guild:{})".format(args[0].name, args[0].id, args[0].guild.id)
             elif isinstance(args[0], Message):
                 readable = "'{}' by {} (guild:{})".format(args[0].content, args[0].author.name, args[0].guild.id)
-            elif isinstance(args[0], Server):
+            elif isinstance(args[0], Guild):
                 readable = "{} (guild)({})".format(args[0].name, args[0].id)
             else:
                 try:

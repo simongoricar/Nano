@@ -3,7 +3,7 @@ import logging
 import re
 from pickle import load
 
-from discord import Message, Client, Embed
+from discord import Message, Embed, TextChannel
 
 from data.stats import SUPPRESS
 from data.utils import add_dots
@@ -238,12 +238,11 @@ class Moderator:
 
     async def on_message(self, message, **kwargs):
         handler = self.handler
-        client = self.client
 
         prefix = kwargs.get("prefix")
         lang = kwargs.get("lang")
 
-        if message.channel.is_private:
+        if not isinstance(message.channel, TextChannel):
             return "return"
 
         # Muting

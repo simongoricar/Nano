@@ -32,7 +32,7 @@ class POST:
         return self.session
 
     async def on_server_join(self, guild, **_):
-        srv_amount = len(self.client.servers)
+        srv_amount = len(self.client.guilds)
 
         resp = await self.upload(srv_amount)
 

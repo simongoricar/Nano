@@ -3,7 +3,7 @@ import configparser
 import redis
 import logging
 import os
-from discord import Member, Server
+from discord import Member, Guild
 from .utils import Singleton, decode, bin2bool
 
 __author__ = "DefaltSimon"
@@ -108,7 +108,7 @@ class ServerHandler:
 
         return False
 
-    def can_use_admin_commands(self, member: Member, server: Server):
+    def can_use_admin_commands(self, member: Member, server: Guild):
         bo = self.is_bot_owner(member.id)
         so = self.is_server_owner(member.id, server)
         ia = self.is_admin(member)
@@ -120,13 +120,13 @@ class ServerHandler:
         return uid == int(par.get("Settings", "ownerid"))
 
     @staticmethod
-    def is_server_owner(user_id: int, server: Server):
+    def is_server_owner(user_id: int, server: Guild):
         return user_id == server.owner.id
 
     def is_admin(self, member: Member):
         return self.has_role(member, "Nano Admin")
 
-    def is_mod(self, member: Member, server: Server):
+    def is_mod(self, member: Member, server: Guild):
         # Changed in 3.7
         # Having Nano Admin allows access to Nano Mod commands as well
         bo = self.is_bot_owner(member.id)
@@ -187,7 +187,7 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
     def bg_save(self):
         return bool(self.redis.bgsave() == b"OK")
 
-    def server_setup(self, server: Server):
+    def server_setup(self, server: Guild):
         # These are server defaults
         s_data = server_defaults.copy()
         s_data["owner"] = server.owner.id
@@ -200,17 +200,17 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
 
         log.info("New server: {}".format(server.name))
 
-    def reset_server(self, server: Server):
+    def reset_server(self, server: Guild):
         sid = "server:{}".format(server.id)
         self.redis.delete(sid)
         self.redis.hmset(sid, server_defaults.copy())
 
-        log.info("Server reset: {}".format(server.name))
+        log.info("Guild reset: {}".format(server.name))
 
     def server_exists(self, server_id: int) -> bool:
         return bool(decode(self.redis.exists("server:{}".format(server_id))))
 
-    def check_server(self, server: Server):
+    def check_server(self, server: Guild):
         # shortcut for checking sever existence
         if not self.server_exists(server.id):
             self.server_setup(server)
@@ -244,7 +244,7 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
 
         return bin2bool(self.redis.hset("server:{}".format(server_id), mod_settings_map.get(key), value))
 
-    def check_server_vars(self, server: Server):
+    def check_server_vars(self, server: Guild):
         try:
             serv_ns = "server:{}".format(server.id)
 
@@ -257,7 +257,7 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
             pass
 
     def check_old_servers(self, current_servers: list):
-        servers = ["server:" + s_id for s_id in current_servers]
+        servers = ["server:" + str(s_id) for s_id in current_servers]
         redis_servers = [decode(a) for a in self.redis.scan_iter(match="server:*")]
 
         # Filter only removed servers
@@ -279,13 +279,13 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
         log.info("Deleted server: {}".format(server_id))
 
     @validate_input
-    def set_command(self, server: Server, trigger: str, response: str) -> bool:
+    def set_command(self, server: Guild, trigger: str, response: str) -> bool:
         if len(trigger) > 80:
             return False
 
         return self.redis.hset("commands:{}".format(server.id), trigger, response)
 
-    def remove_command(self, server: Server, trigger: str) -> bool:
+    def remove_command(self, server: Guild, trigger: str) -> bool:
         serv = "commands:{}".format(server.id)
 
         return bin2bool(self.redis.hdel(serv, trigger))
@@ -317,7 +317,7 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
         serv = "blacklist:{}".format(server_id)
         return list(decode(self.redis.smembers(serv)) or [])
 
-    def get_prefix(self, server: Server):
+    def get_prefix(self, server: Guild):
         return decode(self.redis.hget("server:{}".format(server.id), "prefix"))
 
     @validate_input

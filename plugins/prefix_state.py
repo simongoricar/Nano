@@ -2,7 +2,7 @@
 import configparser
 import logging
 
-from discord import Message, Member
+from discord import Message, TextChannel
 
 from data.stats import SLEPT
 
@@ -41,7 +41,7 @@ class PrefixState:
             return "return"
 
         # Ignore private messages
-        if message.channel.is_private:
+        if not isinstance(message.channel, TextChannel):
             return "return"
 
         # Ignore bot messages
@@ -101,15 +101,15 @@ class PrefixState:
         if self.handler.is_sleeping(message.guild.id):
             return "return"
 
-        # TODO not needed in rewrite
-        if not isinstance(message.author, Member):
-            user = message.guild.get_member(message.author.id)
-
-            if user:
-                # Sometimes monkeypatching is needed
-                message.author = user
-                return [("add_var", dict(prefix=pref, lang=lang)),
-                        ("set_arg", {0: message})]
+        # # TODO not needed in rewrite
+        # if not isinstance(message.author, Member):
+        #     user = message.guild.get_member(message.author.id)
+        #
+        #     if user:
+        #         # Sometimes monkeypatching is needed
+        #         message.author = user
+        #         return [("add_var", dict(prefix=pref, lang=lang)),
+        #                 ("set_arg", {0: message})]
 
         return "add_var", dict(prefix=pref, lang=lang)
 
@@ -153,7 +153,7 @@ class PrefixState:
 
     async def on_reaction_add(self, reaction, user, **__):
         # Ignore private messages
-        if reaction.message.channel.is_private:
+        if not isinstance(reaction.message.channel, TextChannel):
             return "return"
 
         lang = self.handler.get_lang(user.guild.id)

@@ -165,6 +165,11 @@ class DevFeatures:
 
         self.shutdown_mode = None
 
+        self.default_channel = None
+
+    async def on_plugins_loaded(self):
+        self.default_channel = self.nano.get_plugin("server").get("instance").default_channel
+
     async def on_message(self, message, **kwargs):
         client = self.client
 
@@ -196,7 +201,7 @@ class DevFeatures:
         # nano.dev.get_servers
         if startswith("nano.dev.get_servers"):
             # fixme message is still too long
-            servers = ["{} ({} u) - `{}`".format(srv.name, srv.member_count, srv.id) for srv in client.servers]
+            servers = ["{} ({} u) - `{}`".format(srv.name, srv.member_count, srv.id) for srv in client.guilds]
 
             final = ["\n".join(a) for a in [servers[i:i+1000] for i in range(0, len(servers), 1000)]]
 
@@ -207,7 +212,7 @@ class DevFeatures:
         elif startswith("nano.dev.server_info"):
             s_id = message.content[len("nano.dev.server_info "):]
 
-            srv = utils.find(lambda s: s.id == s_id, client.servers)
+            srv = utils.find(lambda s: s.id == s_id, client.guilds)
 
             if not srv:
                 await client.send_message(message.channel, "No such guild. " + StandardEmoji.CROSS)
@@ -270,7 +275,7 @@ class DevFeatures:
 
         # nano.dev.servers.clean
         elif startswith("nano.dev.servers.tidy"):
-            self.handler.delete_server_by_list([s.id for s in self.client.servers])
+            self.handler.delete_server_by_list([s.id for s in self.client.guilds])
 
         # nano.restart
         elif startswith("nano.restart"):
@@ -309,9 +314,9 @@ class DevFeatures:
             ann = message.content[len("nano.dev.announce "):]
 
             s = []
-            for g in self.client.servers:
+            for g in self.client.guilds:
                 try:
-                    await client.send_message(g.default_channel, ann)
+                    await client.send_message(self.default_channel(g), ann)
                     log_to_file("Sending announcement for {}".format(g.name))
                     s.append(g.name)
                 except:
@@ -345,5 +350,6 @@ class NanoPlugin:
         "on_message": 10,
         "on_ready": 5,
         "on_shutdown": 15,
+        "on_plugins_loaded": 5,
         # type : importance
     }
