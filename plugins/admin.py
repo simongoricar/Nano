@@ -96,16 +96,14 @@ class RedisSoftBanScheduler:
         self.loop = loop
         self.redis = handler.get_plugin_data_manager(namespace="softban")
 
-    def get_ban(self, user_id):
-        return self.redis.hgetall(user_id)
+    def get_guild_bans(self, guild_id) -> dict:
+        return self.redis.hgetall(guild_id)
 
-    def get_all_bans(self):
-        return [self.get_ban(decode(a).strip("softban:")) for a in self.redis.scan_iter("*")]
+    def is_guild_ban(self, guild_id, user_id):
+        return self.redis.hexists(guild_id, user_id)
 
-    def remove_ban(self, user):
-        if self.redis.exists(user.id):
-            self.loop.create_task(self.dispatch(self.get_ban(user.id)))
-            self.redis.remove(user.id)
+    def get_all_bans(self) -> dict:
+        return {b: self.get_guild_bans(b) for b in [decode(a).strip("softban:") for a in self.redis.scan_iter("*")]}
 
     def set_softban(self, guild, user, tim):
         t = time.time()
@@ -118,10 +116,7 @@ class RedisSoftBanScheduler:
         if not (REMINDER_MIN <= tim <= REMINDER_MAX):
             return False
 
-        # Add the reminder to the list
-        payload = {"member": user.id, "server": guild.id, "time_target": int(t + tim)}
-
-        return self.redis.hmset(user.id, payload)
+        return self.redis.hset(guild.id, user.id, int(t + tim))
 
     @staticmethod
     async def tick(last_time):
@@ -138,26 +133,32 @@ class RedisSoftBanScheduler:
         await asyncio.sleep(delta)
         return time.time()
 
-    async def dispatch(self, reminder):
+    async def dispatch(self, guild_id: int, user_id: int):
         try:
             logger.debug("Dispatching")
-            # REWRITE test
-            guild = await self.client.get_guild(reminder.get("server"))
-            member = await guild.get_member(reminder.get("server"))
-            await member.unban()
+
+            guild = self.client.get_guild(guild_id)
+            await guild.unban(Object(id=user_id))
         except DiscordException as e:
             logger.warning(e)
 
     async def start_monitoring(self):
+        await self.client.wait_until_ready()
+        await asyncio.sleep(1)
+
         last_time = time.time()
 
         while True:
             # Iterate through users and their reminders
-            for ban in self.get_all_bans():
-                # If time is up, send the reminder
-                if int(ban.get("time_target", 0)) <= last_time:
-                    await self.dispatch(ban)
-                    self.redis.delete(ban.get("member"))
+            for guild_id, ban in self.get_all_bans().items():
+                # If time is up, unban the user
+                for user, tm in ban.items():
+                    if int(tm) <= last_time:
+                        guild_id = int(guild_id)
+                        user_id = int(user)
+
+                        await self.dispatch(guild_id, user_id)
+                        self.redis.hdel(guild_id, user_id)
 
             # And tick.
             last_time = await self.tick(last_time)
@@ -296,7 +297,6 @@ class ObjectListReactions:
             return
 
         # Adds reactions for navigation
-        # REWRITE test
         await message.add_reaction(ObjectListReactions.UP)
         await message.add_reaction(ObjectListReactions.DOWN)
 
@@ -362,14 +362,11 @@ class ObjectListReactions:
             c_page += 1
 
         # Reset reactions and edit message
-        # REWRITE test
         await msg.clear_reactions()
 
         new_msg = data.get("trans_string").format(c_page + 1, page_amount, "\n".join(page))
-        # REWRITE test
-        await msg.edit(new_msg)
+        await msg.edit(content=new_msg)
 
-        # REWRITE test
         await msg.add_reaction(ObjectListReactions.UP)
         await msg.add_reaction(ObjectListReactions.DOWN)
 
@@ -409,7 +406,6 @@ class Admin:
             if no_error:
                 return None
             else:
-                # REWRITE test
                 await message.channel.send(self.trans.get("ERROR_NO_SUCH_ROLE", lang))
                 raise IgnoredException
 
@@ -419,7 +415,6 @@ class Admin:
             if no_error:
                 return None
             else:
-                # REWRITE test
                 await message.channel.send(self.trans.get("ERROR_NO_SUCH_ROLE", lang))
                 raise IgnoredException
 
@@ -440,7 +435,6 @@ class Admin:
             if no_error:
                 return None
             else:
-                # REWRITE test
                 await message.channel.send(self.trans.get("ERROR_NO_MENTION", lang))
                 raise IgnoredException
 
@@ -450,7 +444,6 @@ class Admin:
             if no_error:
                 return None
             else:
-                # REWRITE test
                 await message.channel.send(self.trans.get("ERROR_NO_USER", lang))
                 raise IgnoredException
 
@@ -627,12 +620,10 @@ class Admin:
 
                 # If user already has the role, remove it
                 if role in message.author.roles:
-                    # REWRITE test
                     await message.author.remove_roles(role)
                     await message.channel.send(trans.get("MSG_SELFROLE_REMOVED", lang).format(role_n))
                 # Otherwise, add it
                 else:
-                    # REWRITE test
                     await message.author.add_roles(role)
                     await message.channel.send(trans.get("MSG_SELFROLE_ADDED", lang))
 
@@ -650,7 +641,6 @@ class Admin:
                 await message.channel.send(trans.get("ERROR_NOT_NUMBER", lang))
                 return
 
-            # REWRITE test
             await message.delete()
             await message.channel.send(trans.get("MSG_NUKE_PURGING", lang))
 
@@ -665,7 +655,6 @@ class Admin:
             m = await message.channel.send(trans.get("MSG_NUKE_PURGED", lang).format(amount - 1) + additional)
             # Wait 1.5 sec and delete the message
             await asyncio.sleep(1.5)
-            # REWRITE test
             await m.delete()
 
         # !kick
@@ -681,7 +670,6 @@ class Admin:
                 await message.channel.send(trans.get("MSG_KICK_NANO", lang))
                 return
 
-            # REWRITE test
             await user.kick()
             await message.channel.send(handler.get_var(message.guild.id, "kickmsg").replace(":user", user.name))
 
@@ -704,14 +692,12 @@ class Admin:
             def is_author(m):
                 return m.author == message.author and m.channel == message.channel and m.content == confirm
 
-            # REWRITE test
             try:
                 await client.wait_for("message", check=is_author, timeout=15)
             except asyncio.TimeoutError:
                 await message.channel.send(trans.get("MSG_BAN_TIMEOUT", lang))
             else:
                 self.bans.append(user.id)
-                # REWRITE test
                 await user.ban(delete_message_days=0)
 
         # !unban
@@ -727,7 +713,6 @@ class Admin:
                 return
 
             user = None
-            # REWRITE test
             for ban in await message.guild.bans():
                 if ban.name == name:
                     user = ban
@@ -736,7 +721,6 @@ class Admin:
                 await message.channel.send(trans.get("MSG_UNBAN_NO_BAN", lang))
                 return
 
-            # REWRITE test
             await user.unban()
             await message.channel.send(trans.get("MSG_UNBAN_SUCCESS", lang).format(name))
 
@@ -770,7 +754,6 @@ class Admin:
             total_seconds = convert_to_seconds(tim)
 
             self.timer.set_softban(message.guild, user, total_seconds)
-            # REWRITE test
             await user.ban(delete_message_days=0)
 
             await message.channel.send(trans.get("MSG_SOFTBAN_SUCCESS", lang).format(user.name, resolve_time(total_seconds, lang)))
@@ -848,7 +831,6 @@ class Admin:
                 def is_author(m):
                     return m.author == message.author and m.channel == message.channel and m.content == confirm
 
-                # REWRITE test
                 try:
                     await client.wait_for("message", check=is_author, timeout=15)
                 except asyncio.TimeoutError:
@@ -1024,7 +1006,6 @@ class Admin:
 
                 # Adds role to each user
                 for user in users:
-                    # REWRITE test
                     await user.add_roles(role)
 
                 if len(users) == 1:
@@ -1042,7 +1023,6 @@ class Admin:
 
                 # Removes role from each user
                 for user in users:
-                    # REWRITE tets
                     await user.remove_roles(role)
 
                 if len(users) == 1:
@@ -1073,9 +1053,8 @@ class Admin:
                     return m.author == message.author and m.channel == message.channel and m.content == confirm
 
                 # Wait for confirmation
-                # REWRITE test
                 try:
-                    followup = await client.wait_for("message", check=is_author, timeout=15)
+                    await client.wait_for("message", check=is_author, timeout=15)
                 except asyncio.TimeoutError:
                     await message.channel.send(trans.get("MSG_CMD_TIMEOUT", lang))
                     return
@@ -1452,9 +1431,8 @@ class Admin:
 
             def is_author(m):
                 return m.author == message.author and m.channel == message.channel and m.content == confirm
-            # REWRITE test
             try:
-                followup = await client.wait_for("message", check=is_author, timeout=15)
+                await client.wait_for("message", check=is_author, timeout=15)
             except asyncio.TimeoutError:
                 await message.channel.send(trans.get("MSG_RESET_CONFIRM_TIMEOUT", lang))
                 return
@@ -1481,11 +1459,10 @@ class Admin:
 
         # !setup, nano.setup
         elif startswith(prefix + "setup", "nano.setup"):
-            # REWRITE test
-            auth = message.author
             MSG_TIMEOUT = 35
 
             YES = trans.get("INFO_YES", lang)
+            YES_L = YES.lower()
             NO = trans.get("INFO_NO", lang)
             OK = trans.get("INFO_OK", lang)
             NONE = trans.get("INFO_NONE", lang)
@@ -1516,19 +1493,17 @@ class Admin:
 
             # User confirmed the action
             else:
-                if ch1.content.lower().strip(" ") == YES:
+                if ch1.content.lower().strip(" ") == YES_L:
                     handler.server_setup(message.guild)
 
                     # Edit message to confirm action
                     edit = msg_one + "\n\n{} ".format(DONE) + StandardEmoji.OK
-                    # REWRITE test
-                    await one.edit(edit)
+                    await one.edit(content=edit)
 
                 else:
                     # Edit message to confirm action
                     edit = msg_one + "\n\n{} ".format(OK) + StandardEmoji.OK
-                    # REWRITE test
-                    await one.edit(edit)
+                    await one.edit(content=edit)
 
 
             # SECOND MESSAGE
@@ -1553,8 +1528,7 @@ class Admin:
 
                 # Edit to show that the prefix has been changed
                 edit = msg_two + "\n\n{} {} ({})".format(DONE, StandardEmoji.OK, pref)
-                # REWRITE test
-                await two.edit(edit)
+                await two.edit(content=edit)
 
 
             # THIRD MESSAGE
@@ -1579,8 +1553,7 @@ class Admin:
 
                 # Again: edit to show that the welcome msg has been changed
                 edit = msg_three + "\n\n{} ".format(DONE) + StandardEmoji.OK
-                # REWRITE test
-                await three.edit(edit)
+                await three.edit(content=edit)
 
 
             # FOURTH MESSAGE
@@ -1595,15 +1568,14 @@ class Admin:
                 return
 
             else:
-                if ch4.content.lower().strip(" ") == YES:
+                if ch4.content.lower().strip(" ") == YES_L:
                     handler.update_moderation_settings(message.guild.id, "filterspam", True)
                 else:
                     handler.update_moderation_settings(message.guild.id, "filterspam", False)
 
                 # Edit to show that filtering is changed
                 edit = msg_four + "\n\n{} ".format(DONE) + StandardEmoji.OK
-                # REWRITE test
-                await four.edit(edit)
+                await four.edit(content=edit)
 
 
             # FIFTH MESSAGE
@@ -1618,15 +1590,14 @@ class Admin:
                 return
 
             else:
-                if ch5.content.lower().strip(" ") == YES:
+                if ch5.content.lower().strip(" ") == YES_L:
                     handler.update_moderation_settings(message.guild.id, "filterwords", True)
                 else:
                     handler.update_moderation_settings(message.guild.id, "filterwords", False)
 
                 # Edit to show that filtering is changed
                 edit = msg_five + "\n\n{} ".format(DONE) + StandardEmoji.OK
-                # REWRITE test
-                await five.edit(edit)
+                await five.edit(content=edit)
 
 
 
@@ -1650,8 +1621,7 @@ class Admin:
 
                     # Edit to show that filtering is changed
                     edit = msg_five + "\n\n{} {}".format(StandardEmoji.OK_BLUE, trans.get("MSG_SETUP_LOGCHANNEL_DISABLED", lang))
-                    # REWRITE test
-                    await six.edit(edit)
+                    await six.edit(content=edit)
 
                 else:
                     if len(ch6.channel_mentions) > 0:
@@ -1662,8 +1632,7 @@ class Admin:
 
                     # Edit to show that filtering is changed
                     edit = msg_six + "\n\n{} {}".format(StandardEmoji.OK_BLUE, trans.get("MSG_SETUP_LOGCHANNEL_SET", lang).format(ch6.channel_mentions[0].name))
-                    # REWRITE test
-                    await three.edit(edit)
+                    await six.edit(content=edit)
 
             # FINAL MESSAGE, formats with new prefix
             msg_final = trans.get("MSG_SETUP_COMPLETE", lang).replace("_", str(ch2.content))
@@ -1671,7 +1640,7 @@ class Admin:
 
     async def on_member_remove(self, member, **_):
         # check for softban
-        if self.timer.get_ban(member.id):
+        if self.timer.is_guild_ban(member.guild.id, member.id):
             return "return"
 
         # check for normal ban
