@@ -420,8 +420,8 @@ async def on_member_update(before, after):
 
 
 @client.event
-async def on_member_ban(member):
-    await nano.dispatch_event(ON_MEMBER_BAN, member)
+async def on_member_ban(guild, user):
+    await nano.dispatch_event(ON_MEMBER_BAN, guild, user)
 
 
 @client.event

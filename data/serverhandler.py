@@ -146,11 +146,13 @@ INVITEFILTER_SETTING = "invitefilter"
 mod_settings_map = {
     "word filter": WORDFILTER_SETTING,
     "filter words": WORDFILTER_SETTING,
+    "filterwords": WORDFILTER_SETTING,
     "wordfilter": WORDFILTER_SETTING,
 
     "spam filter": SPAMFILTER_SETTING,
     "filter spam": SPAMFILTER_SETTING,
     "spamfilter": SPAMFILTER_SETTING,
+    "filterspam": SPAMFILTER_SETTING,
 
     "invite filter": INVITEFILTER_SETTING,
     "filterinvite": INVITEFILTER_SETTING,
@@ -428,6 +430,9 @@ class RedisPluginDataManager:
 
     def hset(self, name, field, value):
         return decode(self.redis.hset(self._make_key(name), field, value))
+
+    def hexists(self, name, field):
+        return self.redis.hexists(name, field)
 
     def exists(self, name):
         return bool(decode(self.redis.exists(self._make_key(name))))

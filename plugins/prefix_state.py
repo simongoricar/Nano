@@ -124,12 +124,12 @@ class PrefixState:
 
         return [("add_var", dict(lang=lang))]
 
-    async def on_member_ban(self, member, **_):
+    async def on_member_ban(self, guild, _, **__):
         # Quit if the bot is sleeping
-        if self.handler.is_sleeping(member.guild.id):
+        if self.handler.is_sleeping(guild.id):
             return "return"
 
-        lang = self.handler.get_lang(member.guild.id)
+        lang = self.handler.get_lang(guild.id)
         if not lang:
             lang = str(self.trans.default_lang)
 

@@ -312,7 +312,7 @@ class ServerManagement:
         if not is_disabled(welcome_msg):
             await self.send_message_failproof(def_c, welcome_msg)
 
-    async def on_member_ban(self, member, **kwargs):
+    async def on_member_ban(self, guild, member, **kwargs):
         self.bans[member.id] = time.time()
 
         lang = kwargs.get("lang")
@@ -320,15 +320,15 @@ class ServerManagement:
         replacement_logic = {
             ":user": member.mention,
             ":username": member.name,
-            ":server": member.guild.name}
+            ":server": guild.name}
 
-        ban_msg = str(self.handler.get_var(member.guild.id, "banmsg"))
+        ban_msg = str(self.handler.get_var(guild.id, "banmsg"))
 
         for trigg, repl in replacement_logic.items():
             ban_msg = ban_msg.replace(trigg, repl)
 
-        log_c = await self.handle_log_channel(member.guild)
-        def_c = await self.handle_def_channel(member.guild, self.handler.get_defaultchannel(member.guild))
+        log_c = await self.handle_log_channel(guild)
+        def_c = await self.handle_def_channel(guild, self.handler.get_defaultchannel(guild))
 
         # Ignore if disabled
         if log_c:

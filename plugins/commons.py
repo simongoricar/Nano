@@ -239,12 +239,10 @@ class Commons:
             base_time = datetime.now() - message.created_at
             base_taken = int(divmod(base_time.total_seconds(), 60)[1] * 1000)
 
-            # REWRITE test
             a = await message.channel.send(trans.get("MSG_PING_MEASURING", lang))
             self.pings[a.id] = [time.monotonic(), a, base_taken]
 
             # Thumbs up
-            # REWRITE test
             await a.add_reaction("\U0001F44D")
             self.stats.add(PING)
 
@@ -338,7 +336,6 @@ class Commons:
                 await message.channel.send(trans.get("MSG_SAY_NOPERM", lang).format(channel.id))
 
     async def on_reaction_add(self, reaction, _, **kwargs):
-        # REWRITE test
         if reaction.message.id in self.pings.keys():
             # Message data: list(initial_time, message, taken_time)
             msg_data = self.pings.pop(reaction.message.id)
