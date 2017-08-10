@@ -149,13 +149,13 @@ class Definitions:
                 return
 
             if not search:
-                await client.send_message(message.channel, trans.get("MSG_WIKI_NO_QUERY", lang))
+                await message.channel.send(trans.get("MSG_WIKI_NO_QUERY", lang))
                 return
 
             summary = await self.wiki.get_definition(search)
 
             if not summary:
-                await client.send_message(message.channel, trans.get("MSG_WIKI_NO_DEF", lang))
+                await message.channel.send(trans.get("MSG_WIKI_NO_DEF", lang))
                 return
 
             await client.send_message(message.channel,
@@ -166,13 +166,13 @@ class Definitions:
             search = str(message.content)[len(prefix + "urban "):].strip(" ")
 
             if not search:
-                await client.send_message(message.channel, trans.get("MSG_URBAN_NO_QUERY", lang))
+                await message.channel.send(trans.get("MSG_URBAN_NO_QUERY", lang))
                 return
 
             description = await self.urban.urban_dictionary(search)
 
             if not description:
-                await client.send_message(message.channel, trans.get("MSG_URBAN_NO_DEF", lang))
+                await message.channel.send(trans.get("MSG_URBAN_NO_DEF", lang))
                 return
 
             await client.send_message(message.channel,

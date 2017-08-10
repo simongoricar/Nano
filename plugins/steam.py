@@ -111,25 +111,25 @@ class Steam:
                 try:
                     username, friends = await self.steam.get_friends(uid)
                 except ValueError:
-                    await client.send_message(message.channel, trans.get("MSG_STEAM_INVALID_URL", lang))
+                    await message.channel.send(trans.get("MSG_STEAM_INVALID_URL", lang))
                     return
                 except (steamapi.errors.APIFailure, steamapi.errors.APIException):
-                    await client.send_message(message.channel, trans.get("MSG_STEAM_PRIVATE", lang))
+                    await message.channel.send(trans.get("MSG_STEAM_PRIVATE", lang))
                     raise
 
                 if not username:
-                    await client.send_message(message.channel, trans.get("ERROR_NO_USER2", lang))
+                    await message.channel.send(trans.get("ERROR_NO_USER2", lang))
                     self.stats.add(WRONG_ARG)
                     return
 
                 if not friends:
-                    await client.send_message(message.channel, trans.get("MSG_STEAM_PRIVATE_FRIENDS", lang))
+                    await message.channel.send(trans.get("MSG_STEAM_PRIVATE_FRIENDS", lang))
                     self.stats.add(WRONG_ARG)
                     return
 
                 friends = ["`" + friend + "`" for friend in friends]
 
-                await client.send_message(message.channel, trans.get("MSG_STEAM_FRIENDS", lang).format(username, ", ".join(friends)))
+                await message.channel.send(trans.get("MSG_STEAM_FRIENDS", lang).format(username, ", ".join(friends)))
 
             elif startswith(prefix + "steam games"):
                 uid = str(message.content)[len(prefix + "steam games "):]
@@ -140,28 +140,28 @@ class Steam:
                 try:
                     username, games = await self.steam.get_owned_games(uid)
                 except ValueError:
-                    await client.send_message(message.channel, trans.get("MSG_STEAM_INVALID_URL", lang))
+                    await message.channel.send(trans.get("MSG_STEAM_INVALID_URL", lang))
                     return
                 except (steamapi.errors.APIFailure, steamapi.errors.APIException):
-                    await client.send_message(message.channel, trans.get("MSG_STEAM_PRIVATE", lang))
+                    await message.channel.send(trans.get("MSG_STEAM_PRIVATE", lang))
                     raise
 
                 if not username:
-                    await client.send_message(message.channel, trans.get("ERROR_NO_USER2", lang))
+                    await message.channel.send(trans.get("ERROR_NO_USER2", lang))
                     self.stats.add(WRONG_ARG)
                     return
 
                 if not games:
-                    await client.send_message(message.channel, trans.get("MSG_STEAM_PRIVATE_GAMES", lang))
+                    await message.channel.send(trans.get("MSG_STEAM_PRIVATE_GAMES", lang))
                     self.stats.add(WRONG_ARG)
                     return
 
                 games = ["`{}`".format(game) for game in games]
 
                 try:
-                    await client.send_message(message.channel, trans.get("MSG_STEAM_GAMES", lang).format(username, ", ".join(games)))
+                    await message.channel.send(trans.get("MSG_STEAM_GAMES", lang).format(username, ", ".join(games)))
                 except HTTPException:
-                    await client.send_message(message.channel, trans.get("MSG_STEAM_GAMES_TOO_MANY", lang))
+                    await message.channel.send(trans.get("MSG_STEAM_GAMES_TOO_MANY", lang))
 
             elif startswith(prefix + "steam user "):
                 uid = str(message.content)[len(prefix + "steam user "):]
@@ -172,14 +172,14 @@ class Steam:
                 try:
                     steam_user = await self.steam.get_user(uid)
                 except ValueError:
-                    await client.send_message(message.channel, trans.get("MSG_STEAM_INVALID_URL", lang))
+                    await message.channel.send(trans.get("MSG_STEAM_INVALID_URL", lang))
                     return
                 except (steamapi.errors.APIFailure, steamapi.errors.APIException):
-                    await client.send_message(message.channel, trans.get("MSG_STEAM_PRIVATE", lang))
+                    await message.channel.send(trans.get("MSG_STEAM_PRIVATE", lang))
                     raise
 
                 if not steam_user:
-                    await client.send_message(message.channel, trans.get("ERROR_NO_USER2", lang))
+                    await message.channel.send(trans.get("ERROR_NO_USER2", lang))
                     self.stats.add(WRONG_ARG)
                     return
 
@@ -188,17 +188,17 @@ class Steam:
                 try:
                     info = trans.get("MSG_STEAM_USER_INFO", lang).format(steam_user.name, state, steam_user.level, len(steam_user.games), len(steam_user.friends), uid)
                 except AttributeError:
-                    await client.send_message(message.channel, trans.get("MSG_STEAM_PRIVATE", lang))
+                    await message.channel.send(trans.get("MSG_STEAM_PRIVATE", lang))
                     return
 
                 if len(info) > 2000:
-                    await client.send_message(message.channel, trans.get("MSG_STEAM_FRIENDS_TOO_MANY", lang))
+                    await message.channel.send(trans.get("MSG_STEAM_FRIENDS_TOO_MANY", lang))
 
                 else:
-                    await client.send_message(message.channel, info)
+                    await message.channel.send(info)
 
             elif startswith(prefix + "steam") or startswith(prefix + "steam help"):
-                await client.send_message(message.channel, trans.get("MSG_STEAM_HELP", lang).replace("_", prefix))
+                await message.channel.send(trans.get("MSG_STEAM_HELP", lang).replace("_", prefix))
 
 
 class NanoPlugin:

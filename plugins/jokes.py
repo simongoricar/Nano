@@ -311,9 +311,9 @@ class Joke:
             pic = await self.cats.random_cat(type_)
 
             if pic:
-                await client.send_message(message.channel, pic)
+                await message.channel.send(pic)
             else:
-                await client.send_message(message.channel, trans.get("MSG_CAT_FAILED", lang))
+                await message.channel.send(trans.get("MSG_CAT_FAILED", lang))
 
             self.stats.add(IMAGE_SENT)
 
@@ -327,7 +327,7 @@ class Joke:
                 if is_number(fmt):
                     # Check if number is valid
                     if int(fmt) > self.xkcd.last_num:
-                        await client.send_message(message.channel, trans.get("MSG_XKCD_NO_SUCH", lang))
+                        await message.channel.send(trans.get("MSG_XKCD_NO_SUCH", lang))
                         return
                     else:
                         fetch = "number"
@@ -350,7 +350,7 @@ class Joke:
 
             # In case something went wrong
             if not xkcd:
-                await client.send_message(message.channel, trans.get("MSG_XKCD_FAILED", lang))
+                await message.channel.send(trans.get("MSG_XKCD_FAILED", lang))
                 log_to_file("XKCD: string {}, fetch: {}, got None".format(fmt, fetch))
 
             xkcd_link = trans.get("MSG_XKCD_FULL_LINK", lang).format(self.xkcd.make_link(xkcd.num))
@@ -358,7 +358,7 @@ class Joke:
             embed = Embed(title=trans.get("MSG_XKCD", lang).format(xkcd.num), description=xkcd_link)
             embed.set_image(url=xkcd.img)
 
-            await client.send_message(message.channel, embed=embed)
+            await message.channel.send(embed=embed)
 
         # !joke (yo mama/chuck norris)
         elif startswith(prefix + "joke"):
@@ -373,10 +373,10 @@ class Joke:
                 joke = await self.joke.get_joke()
 
             if not joke:
-                await client.send_message(message.channel, trans.get("MSG_JOKE_FAILED", lang))
+                await message.channel.send(trans.get("MSG_JOKE_FAILED", lang))
                 return
 
-            await client.send_message(message.channel, str(joke))
+            await message.channel.send(str(joke))
 
 
 class NanoPlugin:

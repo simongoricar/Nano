@@ -133,19 +133,19 @@ class Help:
 
         # Bare !help
         if message.content.strip(" ") == (prefix + "help"):
-            await client.send_message(message.channel, trans.get("MSG_HELP", lang).replace("_", prefix))
+            await message.channel.send(trans.get("MSG_HELP", lang).replace("_", prefix))
 
             self.stats.add(HELP)
 
         # !cmds or !commands
         elif startswith(prefix + "cmds", prefix + "commands"):
-            await client.send_message(message.channel, trans.get("MSG_HELP_CMDWEB", lang))
+            await message.channel.send(trans.get("MSG_HELP_CMDWEB", lang))
 
             self.stats.add(HELP)
 
         # !help simple
         elif startswith(prefix + "help simple"):
-            await client.send_message(message.channel, trans.get("MSG_HELP_SIMPLE", lang).replace("_", prefix))
+            await message.channel.send(trans.get("MSG_HELP_SIMPLE", lang).replace("_", prefix))
 
             self.stats.add(HELP)
 
@@ -158,17 +158,17 @@ class Help:
                 name, embed = self.get_command_info(search, prefix, lang)
 
                 if name:
-                    await client.send_message(message.channel, name, embed=embed)
+                    await message.channel.send(name, embed=embed)
                 else:
-                    await client.send_message(message.channel, trans.get("MSG_HELP_CMDNOTFOUND", lang).replace("_", prefix))
+                    await message.channel.send(trans.get("MSG_HELP_CMDNOTFOUND", lang).replace("_", prefix))
 
             else:
                 name, embed = self.get_command_info(prefix + search, prefix, lang)
 
                 if name:
-                    await client.send_message(message.channel, name, embed=embed)
+                    await message.channel.send(name, embed=embed)
                 else:
-                    await client.send_message(message.channel, trans.get("MSG_HELP_CMDNOTFOUND", lang).replace("_", prefix))
+                    await message.channel.send(trans.get("MSG_HELP_CMDNOTFOUND", lang).replace("_", prefix))
 
                 self.stats.add(HELP)
 
@@ -180,7 +180,7 @@ class Help:
 
             # Disallow empty reports
             if not report:
-                await client.send_message(message.channel, trans.get("MSG_REPORT_EMPTY", lang))
+                await message.channel.send(trans.get("MSG_REPORT_EMPTY", lang))
                 return
 
             # Cooldown implementation
@@ -189,7 +189,7 @@ class Help:
             else:
                 # 300 seconds --> 5 minute cooldown
                 if (time.time() - self.last_times[message.author.id]) < 300:
-                    await client.send_message(message.channel, trans.get("MSG_REPORT_RATELIMIT", lang))
+                    await message.channel.send(trans.get("MSG_REPORT_RATELIMIT", lang))
                     return
 
                 else:
@@ -211,11 +211,11 @@ class Help:
             await save_submission(comp.replace(message.author.mention, "{} ({})\n".format(message.author.name, message.author.id)))
 
             await client.send_message(dev_server.owner, comp)
-            await client.send_message(message.channel, trans.get("MSG_REPORT_THANKS", lang))
+            await message.channel.send(trans.get("MSG_REPORT_THANKS", lang))
 
         # !bug
         elif startswith(prefix + "bug"):
-            await client.send_message(message.channel, trans.get("MSG_BUG", lang))
+            await message.channel.send(trans.get("MSG_BUG", lang))
 
 
 class NanoPlugin:

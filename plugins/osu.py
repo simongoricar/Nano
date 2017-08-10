@@ -73,7 +73,7 @@ class Osu:
             user = await self.osu.get_user(username)
 
             if not user:
-                await client.send_message(message.channel, trans.get("ERROR_NO_USER2", lang))
+                await message.channel.send(trans.get("ERROR_NO_USER2", lang))
                 return
 
             global_rank = prepare(user.world_rank)
@@ -123,9 +123,9 @@ class Osu:
             embed.set_footer(text=trans.get("MSG_OSU_TIME", lang).format(delta))
 
             try:
-                await client.send_message(message.channel, embed=embed)
+                await message.channel.send(embed=embed)
             except errors.HTTPException:
-                await client.send_message(message.channel, trans.get("MSG_OSU_ERROR", lang))
+                await message.channel.send(trans.get("MSG_OSU_ERROR", lang))
 
 
 class NanoPlugin:

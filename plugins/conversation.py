@@ -84,7 +84,7 @@ class Conversation:
             return False
 
         async def reply(msg: str):
-            await client.send_message(message.channel, msg)
+            await message.channel.send(msg)
 
         extracted = message.content.replace("<@{}>".format(self.client.user.id), "").strip(" ")
 
@@ -92,10 +92,10 @@ class Conversation:
 
         # If it is just a raw mention, send the help message
         if extracted == "":
-            await client.send_message(message.channel, trans.get("MSG_HELP", lang).replace("_", prefix))
+            await message.channel.send(trans.get("MSG_HELP", lang).replace("_", prefix))
 
         elif has(trans.get("INFO_PREFIX_LITERAL", lang)):
-            await client.send_message(message.channel, trans.get("INFO_PREFIX", lang).format(prefix))
+            await message.channel.send(trans.get("INFO_PREFIX", lang).format(prefix))
 
         elif self.matches(extracted, *self._safe_get(lang, "conv_q_how")):
             lst = self.lists[lang].get("conv_mood_list")

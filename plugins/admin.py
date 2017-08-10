@@ -874,7 +874,7 @@ class Admin:
         # PERMISSION CHECK (only admins)
         ################################
         if not handler.can_use_admin_commands(message.author, message.guild):
-            await client.send_message(message.channel, trans.get("PERM_ADMIN", lang))
+            await message.channel.send(trans.get("PERM_ADMIN", lang))
             return
 
         # Users from here forth must be admins
@@ -885,75 +885,75 @@ class Admin:
 
             if is_disabled(change):
                 handler.update_var(message.guild.id, "welcomemsg", None)
-                await client.send_message(message.channel, trans.get("MSG_JOIN_DISABLED", lang))
+                await message.channel.send(trans.get("MSG_JOIN_DISABLED", lang))
 
             else:
                 handler.update_var(message.guild.id, "welcomemsg", change)
-                await client.send_message(message.channel, trans.get("MSG_JOIN", lang))
+                await message.channel.send(trans.get("MSG_JOIN", lang))
 
         # !welcomemsg
         elif startswith(prefix + "welcomemsg"):
             change = message.content[len(prefix + "welcomemsg "):]
 
             if not change:
-                await client.send_message(message.channel, trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
+                await message.channel.send(trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
                 return
 
             if is_disabled(change):
                 handler.update_var(message.guild.id, "welcomemsg", None)
-                await client.send_message(message.channel, trans.get("MSG_JOIN_DISABLED", lang))
+                await message.channel.send(trans.get("MSG_JOIN_DISABLED", lang))
 
             else:
                 handler.update_var(message.guild.id, "welcomemsg", change)
-                await client.send_message(message.channel, trans.get("MSG_JOIN", lang))
+                await message.channel.send(trans.get("MSG_JOIN", lang))
 
         # !banmsg
         elif startswith(prefix + "banmsg"):
             change = message.content[len(prefix + "banmsg "):]
 
             if not change:
-                await client.send_message(message.channel, trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
+                await message.channel.send(trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
                 return
 
             if is_disabled(change):
                 handler.update_var(message.guild.id, "banmsg", None)
-                await client.send_message(message.channel, trans.get("MSG_BAN_DISABLED", lang))
+                await message.channel.send(trans.get("MSG_BAN_DISABLED", lang))
 
             else:
                 handler.update_var(message.guild.id, "banmsg", change)
-                await client.send_message(message.channel, trans.get("MSG_BAN", lang))
+                await message.channel.send(trans.get("MSG_BAN", lang))
 
         # !kickmsg
         elif startswith(prefix + "kickmsg"):
             change = message.content[len(prefix + "kickmsg "):]
 
             if not change:
-                await client.send_message(message.channel, trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
+                await message.channel.send(trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
                 return
 
             if is_disabled(change):
                 handler.update_var(message.guild.id, "kickmsg", None)
-                await client.send_message(message.channel, trans.get("MSG_KICK_DISABLED", lang))
+                await message.channel.send(trans.get("MSG_KICK_DISABLED", lang))
 
             else:
                 handler.update_var(message.guild.id, "kickmsg", change)
-                await client.send_message(message.channel, trans.get("MSG_KICK", lang))
+                await message.channel.send(trans.get("MSG_KICK", lang))
 
         # !leavemsg
         elif startswith(prefix + "leavemsg"):
             change = message.content[len(prefix + "leavemsg "):]
 
             if not change:
-                await client.send_message(message.channel, trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
+                await message.channel.send(trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
                 return
 
             if is_disabled(change):
                 handler.update_var(message.guild.id, "leavemsg", None)
-                await client.send_message(message.channel, trans.get("MSG_LEAVE_DISABLED", lang))
+                await message.channel.send(trans.get("MSG_LEAVE_DISABLED", lang))
 
             else:
                 handler.update_var(message.guild.id, "leavemsg", change)
-                await client.send_message(message.channel, trans.get("MSG_LEAVE", lang))
+                await message.channel.send(trans.get("MSG_LEAVE", lang))
 
         # !user
         elif startswith(prefix + "user"):
@@ -967,7 +967,7 @@ class Admin:
 
             # If the member does not exist / none was mentioned
             if not member:
-                await client.send_message(message.channel, trans.get("ERROR_NO_USER", lang))
+                await message.channel.send(trans.get("ERROR_NO_USER", lang))
                 return
 
             # Gets info
@@ -1005,12 +1005,12 @@ class Admin:
             c_time = datetime.datetime.now(datetime.timezone.utc).strftime("%a, %d %B %Y")
             embed.set_footer(text=trans.get("MSG_USERINFO_DATEGOT", lang).format(c_time))
 
-            await client.send_message(message.channel, trans.get("MSG_USERINFO_USER", lang), embed=embed)
+            await message.channel.send(trans.get("MSG_USERINFO_USER", lang), embed=embed)
 
         # !role
         elif startswith(prefix + "role"):
             if len(message.role_mentions) > 2:
-                await client.send_message(message.channel, trans.get("ERROR_MENTION_ONE_ROLE", lang))
+                await message.channel.send(trans.get("ERROR_MENTION_ONE_ROLE", lang))
                 return
 
             # !role add [role name] | [@mention @mention ...] OR !role add [role name] @mention
@@ -1019,7 +1019,7 @@ class Admin:
 
                 # Checks permissions
                 if not self.can_access_role(message.author, role):
-                    await client.send_message(message.channel, trans.get("PERM_HIERARCHY", lang))
+                    await message.channel.send(trans.get("PERM_HIERARCHY", lang))
                     return
 
                 # Adds role to each user
@@ -1028,16 +1028,16 @@ class Admin:
                     await user.add_roles(role)
 
                 if len(users) == 1:
-                    await client.send_message(message.channel, trans.get("INFO_DONE", lang) + " " + StandardEmoji.OK)
+                    await message.channel.send(trans.get("INFO_DONE", lang) + " " + StandardEmoji.OK)
                 else:
-                    await client.send_message(message.channel, trans.get("MSG_ROLE_ADDED_MP", lang).format(role.name, len(users)))
+                    await message.channel.send(trans.get("MSG_ROLE_ADDED_MP", lang).format(role.name, len(users)))
 
             # !role remove [role name] | [@mention @mention ...] OR !role add [role name] @mention
             elif startswith(prefix + "role remove "):
                 role, users = await self._role_command_parameters(message, lang, len(prefix + "role remove "))
 
                 if not self.can_access_role(message.author, role):
-                    await client.send_message(message.channel, trans.get("PERM_HIERARCHY", lang))
+                    await message.channel.send(trans.get("PERM_HIERARCHY", lang))
                     return
 
                 # Removes role from each user
@@ -1046,20 +1046,20 @@ class Admin:
                     await user.remove_roles(role)
 
                 if len(users) == 1:
-                    await client.send_message(message.channel, trans.get("INFO_DONE", lang) + " " + StandardEmoji.OK)
+                    await message.channel.send(trans.get("INFO_DONE", lang) + " " + StandardEmoji.OK)
                 else:
-                    await client.send_message(message.channel, trans.get("MSG_ROLE_REMOVED_MP", lang).format(role.name, len(users)))
+                    await message.channel.send(trans.get("MSG_ROLE_REMOVED_MP", lang).format(role.name, len(users)))
 
         # !cmd add
         elif startswith(prefix + "cmd add"):
             cut = message.content[len(prefix + "cmd add "):].split("|", maxsplit=1)
 
             if len(cut) < 2:
-                await client.send_message(message.channel, trans.get("MSG_CMD_WRONG_PARAMS", lang).format(prefix))
+                await message.channel.send(trans.get("MSG_CMD_WRONG_PARAMS", lang).format(prefix))
                 return
 
             if handler.get_command_amount(message.guild.id) >= CMD_LIMIT:
-                await client.send_message(message.channel, trans.get("MSG_CMD_LIMIT_EXCEEDED", lang).format(CMD_LIMIT))
+                await message.channel.send(trans.get("MSG_CMD_LIMIT_EXCEEDED", lang).format(CMD_LIMIT))
                 return
 
             trigger, resp = cut[0].strip(" "), cut[1].strip(" ")
@@ -1067,7 +1067,7 @@ class Admin:
             if handler.custom_command_exists(message.guild.id, trigger):
                 conf = trans.get("INFO_CONFIRM", lang)
 
-                await client.send_message(message.channel, trans.get("MSG_CMD_ALREADY_EXISTS", lang).format(conf))
+                await message.channel.send(trans.get("MSG_CMD_ALREADY_EXISTS", lang).format(conf))
 
                 def is_author(m):
                     return m.author == message.author and m.channel == message.channel and m.content == confirm
@@ -1077,7 +1077,7 @@ class Admin:
                 try:
                     followup = await client.wait_for("message", check=is_author, timeout=15)
                 except asyncio.TimeoutError:
-                    await client.send_message(message.channel, trans.get("MSG_CMD_TIMEOUT", lang))
+                    await message.channel.send(trans.get("MSG_CMD_TIMEOUT", lang))
                     return
                 # Else, continue normally - overwrites the command
                 else:
@@ -1085,14 +1085,14 @@ class Admin:
 
 
             if len(trigger) >= CMD_LIMIT_T:
-                await client.send_message(message.channel, trans.get("MSG_CMD_NAME_TOO_LONG", lang).format(CMD_LIMIT_T, len(trigger)))
+                await message.channel.send(trans.get("MSG_CMD_NAME_TOO_LONG", lang).format(CMD_LIMIT_T, len(trigger)))
                 return
             if len(resp) >= CMD_LIMIT_A:
-                await client.send_message(message.channel, trans.get("MSG_CMD_RESPONSE_TOO_LONG", lang).format(CMD_LIMIT_A, len(resp)))
+                await message.channel.send(trans.get("MSG_CMD_RESPONSE_TOO_LONG", lang).format(CMD_LIMIT_A, len(resp)))
                 return
 
             handler.set_command(message.guild, trigger, resp)
-            await client.send_message(message.channel, trans.get("MSG_CMD_ADDED", lang).format(cut[0].strip(" ")))
+            await message.channel.send(trans.get("MSG_CMD_ADDED", lang).format(cut[0].strip(" ")))
 
         # !cmd remove
         elif startswith(prefix + "cmd remove"):
@@ -1100,9 +1100,9 @@ class Admin:
 
             success = handler.remove_command(message.guild, cut)
             if success:
-                await client.send_message(message.channel, trans.get("INFO_OK", lang) + " " + StandardEmoji.OK)
+                await message.channel.send(trans.get("INFO_OK", lang) + " " + StandardEmoji.OK)
             else:
-                await client.send_message(message.channel, trans.get("MSG_CMD_REMOVE_FAIL", lang))
+                await message.channel.send(trans.get("MSG_CMD_REMOVE_FAIL", lang))
 
         # !cmd list
         elif startswith(prefix + "cmd list"):
@@ -1120,20 +1120,20 @@ class Admin:
             custom_cmds = handler.get_custom_commands(message.guild.id)
 
             if not custom_cmds:
-                await client.send_message(message.channel, trans.get("MSG_CMD_NO_CUSTOM", lang).format(prefix))
+                await message.channel.send(trans.get("MSG_CMD_NO_CUSTOM", lang).format(prefix))
                 return
 
             cmd_list, c_page = make_pages_from_dict(custom_cmds)
 
             # If user requests a page that does not exist
             if page > c_page:
-                await client.send_message(message.channel, trans.get("MSG_CMD_LIST_NO_PAGE", lang).format(c_page + 1))
+                await message.channel.send(trans.get("MSG_CMD_LIST_NO_PAGE", lang).format(c_page + 1))
                 return
 
             final = trans.get("MSG_CMD_LIST", lang).format(page + 1, c_page + 1, "\n".join(cmd_list[page]))
 
             # Mark for reaction monitoring
-            msg_list = await client.send_message(message.channel, final)
+            msg_list = await message.channel.send(final)
             await self.list.new_message(msg_list, page, cmd_list, trans.get("MSG_CMD_LIST", lang))
 
         # !cmd status
@@ -1141,7 +1141,7 @@ class Admin:
             cc = handler.get_custom_commands(message.guild.id)
             percent = int((len(cc) / CMD_LIMIT) * 100)
 
-            await client.send_message(message.channel, trans.get("MSG_CMD_STATUS", lang).format(len(cc), CMD_LIMIT, percent))
+            await message.channel.send(trans.get("MSG_CMD_STATUS", lang).format(len(cc), CMD_LIMIT, percent))
 
         # !language
         elif startswith(prefix + "language"):
@@ -1161,7 +1161,7 @@ class Admin:
                         entry = "`{}` - **{}** {}".format(l_code, l_details.get("name"), trans.get("MSG_LANG_TRANS", lang).format(contribs))
                         lang_list.append(entry)
 
-                await client.send_message(message.channel, trans.get("MSG_LANG_LIST", lang).format("\n".join(lang_list)))
+                await message.channel.send(trans.get("MSG_LANG_LIST", lang).format("\n".join(lang_list)))
 
             # !language set [lang]
             elif cut.startswith("set"):
@@ -1171,19 +1171,19 @@ class Admin:
                     # Try to find the language by name
                     lang_code = self.trans.find_language_code(lang_code)
                     if not lang_code:
-                        await client.send_message(message.channel, trans.get("MSG_LANG_NOT_AVAILABLE", lang))
+                        await message.channel.send(trans.get("MSG_LANG_NOT_AVAILABLE", lang))
                         return
 
                 self.handler.set_lang(message.guild.id, lang_code)
 
-                await client.send_message(message.channel, trans.get("MSG_LANG_SET", lang).format(
+                await message.channel.send(trans.get("MSG_LANG_SET", lang).format(
                                                                      lang_code, trans.get("INFO_HELLO", lang_code)))
 
             # !language
             # Displays current language
             else:
                 resp = trans.get("MSG_LANG_CURRENT", lang).format(lang, self.trans.meta.get(lang).get("name"), prefix)
-                await client.send_message(message.channel, resp)
+                await message.channel.send(resp)
 
         # nano.settings
         elif startswith("nano.settings"):
@@ -1191,7 +1191,7 @@ class Admin:
             cut = raw.split(" ", 1)
 
             if len(cut) < 2:
-                await client.send_message(message.channel, trans.get("MSG_SETTINGS_WRONG_USAGE", lang).format(prefix))
+                await message.channel.send(trans.get("MSG_SETTINGS_WRONG_USAGE", lang).format(prefix))
                 return
 
             setting, arg = cut[0].strip(" "), cut[1].strip(" ")
@@ -1202,24 +1202,24 @@ class Admin:
                     # User wants to disable the logchannel
                     if is_disabled(arg):
                         handler.update_var(message.guild.id, "logchannel", None)
-                        await client.send_message(message.channel, trans.get("MSG_SETTINGS_LOGCHANNEL_DISABLED", lang))
+                        await message.channel.send(trans.get("MSG_SETTINGS_LOGCHANNEL_DISABLED", lang))
                         return
 
                     # No channel mention / parameter
                     else:
-                        await client.send_message(message.channel, trans.get("ERROR_NO_CHMENTION", lang))
+                        await message.channel.send(trans.get("ERROR_NO_CHMENTION", lang))
                         return
 
                 chan = message.channel_mentions[0]
 
                 # Can't set to voice channel
                 if chan.type == chan.type.voice:
-                    await client.send_message(message.channel, trans.get("MSG_SETTINGS_NOT_TEXT", lang))
+                    await message.channel.send(trans.get("MSG_SETTINGS_NOT_TEXT", lang))
                     return
 
                 # At this point, the channel should be valid
                 handler.update_var(message.guild.id, "logchannel", chan.id)
-                await client.send_message(message.channel, trans.get("MSG_SETTINGS_LOGCHANNEL_SET", lang).format(chan.name))
+                await message.channel.send(trans.get("MSG_SETTINGS_LOGCHANNEL_SET", lang).format(chan.name))
 
             # nano.settings selfrole
             elif setting == "selfrole":
@@ -1228,7 +1228,7 @@ class Admin:
                     setting, arg = arg.split(" ", 1)
                     setting, arg = setting.strip(" "), arg.strip(" ")
                 except ValueError:
-                    await client.send_message(message.channel, trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
+                    await message.channel.send(trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
                     return
 
                 # nano.settings selfrole add
@@ -1236,7 +1236,7 @@ class Admin:
                     # Checks if role amount is passed
                     amount = len(handler.get_selfroles(message.guild.id))
                     if amount >= SELFROLE_MAX:
-                        await client.send_message(message.channel, trans.get("MSG_SELFROLE_TOO_MANY", lang).format(SELFROLE_MAX))
+                        await message.channel.send(trans.get("MSG_SELFROLE_TOO_MANY", lang).format(SELFROLE_MAX))
                         return
 
                     role = await self.resolve_role(arg, message, lang)
@@ -1249,18 +1249,18 @@ class Admin:
                     # Checks role position
                     perms = self.can_access_role(nano_user, role)
                     if not perms:
-                        await client.send_message(message.channel, trans.get("MSG_SELFROLE_INACCESSIBLE", lang).format(role.name))
+                        await message.channel.send(trans.get("MSG_SELFROLE_INACCESSIBLE", lang).format(role.name))
                         return
 
                     r_name = role.name
 
                     # Check if this role is already a selfrole
                     if self.handler.is_selfrole(message.guild.id, r_name):
-                        await client.send_message(message.channel, trans.get("MSG_SELFROLE_ALR_EX", lang))
+                        await message.channel.send(trans.get("MSG_SELFROLE_ALR_EX", lang))
                         return
 
                     self.handler.add_selfrole(message.guild.id, r_name)
-                    await client.send_message(message.channel, trans.get("MSG_SELFROLE_ADMIN_ADDED", lang))
+                    await message.channel.send(trans.get("MSG_SELFROLE_ADMIN_ADDED", lang))
 
                 # nano.settings selfrole remove
                 elif setting == "remove":
@@ -1268,11 +1268,11 @@ class Admin:
                     r_name = role.name
 
                     if not self.handler.is_selfrole(message.guild.id, r_name):
-                        await client.send_message(message.channel, trans.get("MSG_SELFROLE_REMOVE_NOT_PRESENT", lang))
+                        await message.channel.send(trans.get("MSG_SELFROLE_REMOVE_NOT_PRESENT", lang))
                         return
 
                     self.handler.remove_selfrole(message.guild.id, r_name)
-                    await client.send_message(message.channel, trans.get("MSG_SELFROLE_ADMIN_REMOVED", lang).format(r_name))
+                    await message.channel.send(trans.get("MSG_SELFROLE_ADMIN_REMOVED", lang).format(r_name))
 
             # nano.settings defaultchannel
             elif setting == "defaultchannel":
@@ -1280,18 +1280,18 @@ class Admin:
                     # User wants to reset the channel
                     if is_disabled(arg):
                         handler.update_var(message.guild.id, "logchannel", None)
-                        await client.send_message(message.channel, trans.get("MSG_SETTINGS_DEFCHAN_RESET", lang).format(self.default_channel(message.guild).name))
+                        await message.channel.send(trans.get("MSG_SETTINGS_DEFCHAN_RESET", lang).format(self.default_channel(message.guild).name))
                         return
 
                     # No channel mention / parameter
                     else:
-                        await client.send_message(message.channel, trans.get("ERROR_NO_CHMENTION", lang))
+                        await message.channel.send(trans.get("ERROR_NO_CHMENTION", lang))
                         return
 
                 chan = message.channel_mentions[0]
 
                 self.handler.set_defaultchannel(message.guild, chan.id)
-                await client.send_message(message.channel, trans.get("MSG_SETTINGS_DEFCHAN_SET", lang).format(chan.name))
+                await message.channel.send(trans.get("MSG_SETTINGS_DEFCHAN_SET", lang).format(chan.name))
 
             else:
                 # Requires special preparation
@@ -1303,22 +1303,22 @@ class Admin:
                     decision = matches_list(arg)
                     handler.update_moderation_settings(message.guild.id, setting, decision)
 
-                    await client.send_message(message.channel, trans.get("MSG_SETTINGS_WORD", lang).format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
+                    await message.channel.send(trans.get("MSG_SETTINGS_WORD", lang).format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
 
                 elif matches_list(setting, "spam filter", "spamfilter", "filter spam"):
                     decision = matches_list(arg)
                     handler.update_moderation_settings(message.guild.id, setting, decision)
 
-                    await client.send_message(message.channel, trans.get("MSG_SETTINGS_SPAM", lang).format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
+                    await message.channel.send(trans.get("MSG_SETTINGS_SPAM", lang).format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
 
                 elif matches_list(setting, "filterinvite", "invitefilter", "invite filter"):
                     decision = matches_list(arg)
                     handler.update_moderation_settings(message.guild.id, setting, decision)
 
-                    await client.send_message(message.channel, trans.get("MSG_SETTINGS_INVITE", lang).format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
+                    await message.channel.send(trans.get("MSG_SETTINGS_INVITE", lang).format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
 
                 else:
-                    await client.send_message(message.channel, trans.get("MSG_SETTINGS_NOT_A_SETTING", lang).format(setting))
+                    await message.channel.send(trans.get("MSG_SETTINGS_NOT_A_SETTING", lang).format(setting))
 
         # nano.displaysettings
         elif startswith("nano.displaysettings"):
@@ -1397,39 +1397,39 @@ class Admin:
             # nano.blacklist add
             if setting == "add":
                 if len(handler.get_blacklists(message.guild.id)) >= BLACKLIST_MAX:
-                    await client.send_message(message.channel, trans.get("MSG_BLACKLIST_TOO_MANY", lang))
+                    await message.channel.send(trans.get("MSG_BLACKLIST_TOO_MANY", lang))
                     return
 
                 if len(message.channel_mentions) == 0:
-                    await client.send_message(message.channel, trans.get("ERROR_NO_CHMENTION", lang))
+                    await message.channel.send(trans.get("ERROR_NO_CHMENTION", lang))
                     return
 
                 chan_id = message.channel_mentions[0].id
 
                 self.handler.add_channel_blacklist(message.guild.id, chan_id)
-                await client.send_message(message.channel, trans.get("MSG_BLACKLIST_ADDED", lang).format(chan_id))
+                await message.channel.send(trans.get("MSG_BLACKLIST_ADDED", lang).format(chan_id))
 
             # nano.blacklist remove
             elif setting == "remove":
                 if len(message.channel_mentions) == 0:
-                    await client.send_message(message.channel, trans.get("ERROR_NO_CHMENTION", lang))
+                    await message.channel.send(trans.get("ERROR_NO_CHMENTION", lang))
                     return
 
                 chan_id = message.channel_mentions[0].id
 
                 if not handler.is_blacklisted(message.guild.id, chan_id):
-                    await client.send_message(message.channel, trans.get("MSG_BLACKLIST_DOESNT_EXIST", lang))
+                    await message.channel.send(trans.get("MSG_BLACKLIST_DOESNT_EXIST", lang))
                     return
 
                 handler.remove_channel_blacklist(message.guild.id, chan_id)
-                await client.send_message(message.channel, trans.get("MSG_BLACKLIST_REMOVED", lang).format(chan_id))
+                await message.channel.send(trans.get("MSG_BLACKLIST_REMOVED", lang).format(chan_id))
 
             # nano.blacklist list
             elif setting == "list":
                 lst = self.handler.get_blacklists(message.guild.id)
 
                 if not lst:
-                    await client.send_message(message.channel, trans.get("MSG_BLACKLIST_NONE", lang))
+                    await message.channel.send(trans.get("MSG_BLACKLIST_NONE", lang))
                     return
 
                 # Verifies channels
@@ -1442,12 +1442,12 @@ class Admin:
                     else:
                         names.append("`{}`".format(channel.name))
 
-                await client.send_message(message.channel, trans.get("MSG_BLACKLIST_LIST", lang).format(" ".join(names)))
+                await message.channel.send(trans.get("MSG_BLACKLIST_LIST", lang).format(" ".join(names)))
 
         # nano.serverreset
         elif startswith("nano.serverreset"):
             confirm = trans.get("INFO_CONFIRM", lang)
-            await client.send_message(message.channel, trans.get("MSG_RESET_CONFIRM", lang).format(confirm))
+            await message.channel.send(trans.get("MSG_RESET_CONFIRM", lang).format(confirm))
 
             def is_author(m):
                 return m.author == message.author and m.channel == message.channel and m.content == confirm
@@ -1455,28 +1455,28 @@ class Admin:
             try:
                 followup = await client.wait_for("message", check=is_author, timeout=15)
             except asyncio.TimeoutError:
-                await client.send_message(message.channel, trans.get("MSG_RESET_CONFIRM_TIMEOUT", lang))
+                await message.channel.send(trans.get("MSG_RESET_CONFIRM_TIMEOUT", lang))
                 return
 
             handler.reset_server(message.guild)
-            await client.send_message(message.channel, trans.get("MSG_RESET_DONE", lang))
+            await message.channel.send(trans.get("MSG_RESET_DONE", lang))
 
         # nano.changeprefix
         elif startswith("nano.changeprefix"):
             pref = message.content[len("nano.changeprefix "):]
 
             if not pref:
-                await client.send_message(message.channel, trans.get("MSG_PREFIX_PLS_ARGUMENTS", lang))
+                await message.channel.send(trans.get("MSG_PREFIX_PLS_ARGUMENTS", lang))
                 return
 
             # Max prefix length
             if len(pref) > PREFIX_MAX:
-                await client.send_message(message.channel, trans.get("ERROR_PREFIX_TOO_LONG", lang).format(PREFIX_MAX))
+                await message.channel.send(trans.get("ERROR_PREFIX_TOO_LONG", lang).format(PREFIX_MAX))
                 return
 
             self.handler.change_prefix(message.guild, pref)
 
-            await client.send_message(message.channel, trans.get("MSG_PREFIX_CHANGED", lang).format(pref))
+            await message.channel.send(trans.get("MSG_PREFIX_CHANGED", lang).format(pref))
 
         # !setup, nano.setup
         elif startswith(prefix + "setup", "nano.setup"):
@@ -1497,14 +1497,14 @@ class Admin:
                 return m.author == message.author
 
             msg_intro = trans.get("MSG_SETUP_WELCOME", lang)
-            await client.send_message(message.channel, msg_intro)
+            await message.channel.send(msg_intro)
             await asyncio.sleep(2)
 
 
             # FIRST MESSAGE
             # Q: Do you want to reset all current settings?
             msg_one = trans.get("MSG_SETUP_RESET", lang).format(YES, NO)
-            one = await client.send_message(message.channel, msg_one)
+            one = await message.channel.send(msg_one)
 
             # Wait for first response
             try:
@@ -1533,7 +1533,7 @@ class Admin:
             # SECOND MESSAGE
             # Q: What prefix do you want?
             msg_two = trans.get("MSG_SETUP_PREFIX", lang)
-            two = await client.send_message(message.channel, msg_two)
+            two = await message.channel.send(msg_two)
 
             # Second check, does not need yes/no filter
             try:
@@ -1544,7 +1544,7 @@ class Admin:
 
             else:
                 if len(ch2.content) > 50:
-                    await client.send_message(message.channel, trans.get("ERROR_PREFIX_TOO_LONG", lang))
+                    await message.channel.send(trans.get("ERROR_PREFIX_TOO_LONG", lang))
                     return
 
                 pref = str(ch2.content).strip(" ")
@@ -1559,7 +1559,7 @@ class Admin:
             # THIRD MESSAGE
             # Q: What message would you like to see when a person joins your server?
             msg_three = trans.get("MSG_SETUP_JOINMSG", lang)
-            three = await client.send_message(message.channel, msg_three)
+            three = await message.channel.send(msg_three)
 
             try:
                 ch3 = await client.wait_for("message", check=must_be_author, timeout=MSG_TIMEOUT)
@@ -1584,7 +1584,7 @@ class Admin:
 
             # FOURTH MESSAGE
             msg_four = trans.get("MSG_SETUP_SPAM", lang).format(YES, NO)
-            four = await client.send_message(message.channel, msg_four)
+            four = await message.channel.send(msg_four)
 
             # Fourth check
             try:
@@ -1607,7 +1607,7 @@ class Admin:
 
             # FIFTH MESSAGE
             msg_five = trans.get("MSG_SETUP_SWEARING", lang).format(YES, NO)
-            five = await client.send_message(message.channel, msg_five)
+            five = await message.channel.send(msg_five)
 
             # Wait for response
             try:
@@ -1631,7 +1631,7 @@ class Admin:
 
             # SIXTH (LAST) MESSAGE
             msg_six = trans.get("MSG_SETUP_LOGCHANNEL", lang).format(NONE)
-            six = await client.send_message(message.channel, msg_six)
+            six = await message.channel.send(msg_six)
 
             try:
                 ch6 = await client.wait_for("message", check=must_be_author, timeout=MSG_TIMEOUT)
@@ -1656,7 +1656,7 @@ class Admin:
                     if len(ch6.channel_mentions) > 0:
                         handler.update_var(message.guild.id, "logchannel", ch6.channel_mentions[0].id)
                     else:
-                        await client.send_message(message.channel, trans.get("MSG_SETUP_LOGCHANNEL_INVALID", lang))
+                        await message.channel.send(trans.get("MSG_SETUP_LOGCHANNEL_INVALID", lang))
                         return
 
                     # Edit to show that filtering is changed
@@ -1666,7 +1666,7 @@ class Admin:
 
             # FINAL MESSAGE, formats with new prefix
             msg_final = trans.get("MSG_SETUP_COMPLETE", lang).replace("_", str(ch2.content))
-            await client.send_message(message.channel, msg_final)
+            await message.channel.send(msg_final)
 
     async def on_member_remove(self, member, **_):
         # check for softban

@@ -289,7 +289,7 @@ class Reminder:
                                                            lang, prefix, trans.get("MSG_REMINDER_WU_ME", lang).format(prefix))
             # Raised when reminder content is too long
             except ValueError:
-                await client.send_message(message.channel, trans.get("MSG_REMINDER_TOO_LONG_CONTENT", lang).format(REM_MAX_CONTENT))
+                await message.channel.send(trans.get("MSG_REMINDER_TOO_LONG_CONTENT", lang).format(REM_MAX_CONTENT))
                 return
 
 
@@ -297,15 +297,15 @@ class Reminder:
 
             # Too many reminders going on
             if resp == -1:
-                await client.send_message(message.channel, trans.get("MSG_REMIDNER_LIMIT_EXCEEDED", lang).format(DEFAULT_REMINDER_LIMIT))
+                await message.channel.send(trans.get("MSG_REMIDNER_LIMIT_EXCEEDED", lang).format(DEFAULT_REMINDER_LIMIT))
 
             # Invalid range
             elif resp is False:
-                await client.send_message(message.channel, trans.get("MSG_REMINDER_INVALID_RANGE", lang).format(REM_MIN_DURATION, REM_MAX_DAYS))
+                await message.channel.send(trans.get("MSG_REMINDER_INVALID_RANGE", lang).format(REM_MIN_DURATION, REM_MAX_DAYS))
 
             # Everything valid
             else:
-                await client.send_message(message.channel, trans.get("MSG_REMINDER_SET", lang))
+                await message.channel.send(trans.get("MSG_REMINDER_SET", lang))
 
         # !remind here in [time]:[reminder]
         elif startswith(prefix + "remind here in"):
@@ -314,26 +314,26 @@ class Reminder:
                                                            lang, prefix, trans.get("MSG_REMINDER_WU_HERE", lang).format(prefix))
             # Raised when reminder content is too long
             except ValueError:
-                await client.send_message(message.channel, trans.get("MSG_REMINDER_TOO_LONG_CONTENT", lang).format(REM_MAX_CONTENT))
+                await message.channel.send(trans.get("MSG_REMINDER_TOO_LONG_CONTENT", lang).format(REM_MAX_CONTENT))
                 return
 
             resp = self.reminder.set_reminder(message.channel, message.author, text, r_time, lang, reminder_type=REMINDER_CHANNEL)
 
             if resp == -1:
-                await client.send_message(message.channel, trans.get("MSG_REMIDNER_LIMIT_EXCEEDED", lang).format(DEFAULT_REMINDER_LIMIT))
+                await message.channel.send(trans.get("MSG_REMIDNER_LIMIT_EXCEEDED", lang).format(DEFAULT_REMINDER_LIMIT))
 
             elif resp is False:
-                await client.send_message(message.channel, trans.get("MSG_REMINDER_INVALID_RANGE", lang).format(REM_MIN_DURATION, REM_MAX_DAYS))
+                await message.channel.send(trans.get("MSG_REMINDER_INVALID_RANGE", lang).format(REM_MIN_DURATION, REM_MAX_DAYS))
 
             else:
-                await client.send_message(message.channel, trans.get("MSG_REMINDER_SET", lang))
+                await message.channel.send(trans.get("MSG_REMINDER_SET", lang))
 
         # !remind list
         elif startswith(prefix + "remind list", prefix + "reminder list"):
             reminders = self.reminder.get_reminders(message.author.id)
 
             if not reminders:
-                await client.send_message(message.channel, trans.get("MSG_REMINDER_LIST_NONE", lang))
+                await message.channel.send(trans.get("MSG_REMINDER_LIST_NONE", lang))
                 return
 
             rem = []
@@ -353,33 +353,33 @@ class Reminder:
 
                 rem.append(rem_literal.format(cont, when))
 
-            await client.send_message(message.channel, trans.get("MSG_REMINDER_LIST", lang).format("\n\n".join(rem)))
+            await message.channel.send(trans.get("MSG_REMINDER_LIST", lang).format("\n\n".join(rem)))
 
         # !remind remove
         elif startswith(prefix + "remind remove"):
             r_name = message.content[len(prefix + "remind remove "):]
 
             if not r_name:
-                await client.send_message(message.channel, trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
+                await message.channel.send(trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
                 return
 
             if r_name == "all":
                 self.reminder.remove_all_reminders(message.author)
-                await client.send_message(message.channel, trans.get("MSG_REMINDER_DELETE_ALL", lang))
+                await message.channel.send(trans.get("MSG_REMINDER_DELETE_ALL", lang))
 
             else:
                 r_id = self.reminder.find_id_from_content(message.author.id, r_name)
 
                 # No reminder with such content
                 if not r_id:
-                    await client.send_message(message.channel, trans.get("MSG_REMINDER_DELETE_NONE", lang))
+                    await message.channel.send(trans.get("MSG_REMINDER_DELETE_NONE", lang))
                 else:
                     self.reminder.remove_reminder(message.author.id, r_id)
-                    await client.send_message(message.channel, trans.get("MSG_REMINDER_DELETE_SUCCESS", lang))
+                    await message.channel.send(trans.get("MSG_REMINDER_DELETE_SUCCESS", lang))
 
         # !remind help
         elif startswith(prefix + "remind", prefix + "remind help"):
-            await client.send_message(message.channel, trans.get("MSG_REMINDER_HELP", lang).replace("_", prefix))
+            await message.channel.send(trans.get("MSG_REMINDER_HELP", lang).replace("_", prefix))
 
 
 class NanoPlugin:

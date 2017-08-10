@@ -184,12 +184,12 @@ class Minecraft:
             argument = message.content[len(prefix + "mc "):].strip(" ")
 
             if not argument:
-                await client.send_message(message.channel, trans.get("MSG_MC_PLSARUGMENTS", lang))
+                await message.channel.send(trans.get("MSG_MC_PLSARUGMENTS", lang))
                 return
 
             # !mc help
             if argument == "help":
-                await client.send_message(message.channel, trans.get("MSG_MC_HELP", lang).replace("_", prefix))
+                await message.channel.send(trans.get("MSG_MC_HELP", lang).replace("_", prefix))
                 return
 
             # Argument is name
@@ -212,7 +212,7 @@ class Minecraft:
                 data = mc.find_by_id_meta(i_type, i_meta)
 
             if not data:
-                await client.send_message(message.channel, trans.get("MSG_MC_NO_ITEMS", lang))
+                await message.channel.send(trans.get("MSG_MC_NO_ITEMS", lang))
                 self.stats.add(WRONG_ARG)
                 return
 
@@ -225,7 +225,7 @@ class Minecraft:
                 # No image
                 path = mc.get_picture_path_by_item(data)
                 if not path:
-                    await client.send_message(message.channel, details)
+                    await message.channel.send(details)
                     self.stats.add(IMAGE_SENT)
                 else:
                     with open(mc.get_picture_path_by_item(data), "rb") as pic:
@@ -240,7 +240,7 @@ class Minecraft:
                     details = trans.get("MSG_MC_DETAILS", lang).format(item.get("name"), item.get("type"), item.get("meta"))
                     combined.append(details)
 
-                await client.send_message(message.channel, "".join(combined))
+                await message.channel.send("".join(combined))
 
 
 class NanoPlugin:

@@ -133,7 +133,7 @@ class ServerManagement:
             embed.add_field(name=trans.get("MSG_STATUS_USERS", lang), value=trans.get("MSG_STATUS_USERS_L", lang).format(members), inline=True)
             embed.add_field(name=trans.get("MSG_STATUS_CHANNELS", lang), value=trans.get("MSG_STATUS_CHANNELS_L", lang).format(channels), inline=True)
 
-            await client.send_message(message.channel, "**Stats**", embed=embed)
+            await message.channel.send("**Stats**", embed=embed)
 
         # !debug
         elif startswith(prefix + "debug", prefix + "stats more"):
@@ -188,7 +188,7 @@ class ServerManagement:
 
             embed.add_field(name=trans.get("MSG_DEBUG_UPTIME", lang), value=uptime)
 
-            await client.send_message(message.channel, trans.get("MSG_DEBUG_INFO", lang), embed=embed)
+            await message.channel.send(trans.get("MSG_DEBUG_INFO", lang), embed=embed)
 
         # !stats
         elif startswith(prefix + "stats"):
@@ -215,15 +215,15 @@ class ServerManagement:
             embed.add_field(name=trans.get("MSG_STATS_PONG", lang), value=pings)
             embed.add_field(name=trans.get("MSG_STATS_IMG", lang), value=imgs)
 
-            await client.send_message(message.channel, trans.get("MSG_STATS_INFO", lang), embed=embed)
+            await message.channel.send(trans.get("MSG_STATS_INFO", lang), embed=embed)
 
         # !prefix
         elif startswith(prefix + "prefix"):
-            await client.send_message(message.channel, trans.get("MSG_PREFIX_OHYEAH", lang))
+            await message.channel.send(trans.get("MSG_PREFIX_OHYEAH", lang))
 
         # nano.prefix
         elif startswith("nano.prefix"):
-            await client.send_message(message.channel, trans.get("MSG_PREFIX", lang).format(prefix))
+            await message.channel.send(trans.get("MSG_PREFIX", lang).format(prefix))
 
         # !members
         elif startswith(prefix + "members"):
@@ -235,10 +235,10 @@ class ServerManagement:
 
             if len(members) > 2000:
                 # Only send the number if the message is too long.
-                await client.send_message(message.channel, trans.get("MSG_MEMBERS_AMOUNT", lang).format(amount))
+                await message.channel.send(trans.get("MSG_MEMBERS_AMOUNT", lang).format(amount))
 
             else:
-                await client.send_message(message.channel, members)
+                await message.channel.send(members)
 
         # !server
         elif startswith(prefix + "server"):
@@ -285,7 +285,7 @@ class ServerManagement:
                                                                                message.guild.owner.discriminator,
                                                                                message.guild.owner.id))
 
-            await client.send_message(message.channel, trans.get("MSG_SERVER_INFO", lang), embed=embed)
+            await message.channel.send(trans.get("MSG_SERVER_INFO", lang), embed=embed)
 
     async def on_member_join(self, member, **kwargs):
         lang = kwargs.get("lang")

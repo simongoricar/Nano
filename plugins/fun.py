@@ -141,7 +141,7 @@ class Fun:
         # Loop over simple commands
         for k, v in simple_commands.items():
             if message.content.startswith(k):
-                await client.send_message(message.channel, v)
+                await message.channel.send(v)
                 self.stats.add(MESSAGE)
                 return
 
@@ -167,7 +167,7 @@ class Fun:
 
         elif startswith(prefix + "randomgif"):
             random_gif = self.gif.screensaver().media_url
-            await client.send_message(message.channel, str(random_gif))
+            await message.channel.send(str(random_gif))
 
             self.stats.add(IMAGE_SENT)
 
@@ -176,7 +176,7 @@ class Fun:
             query = message.content[len(prefix + "meme "):]
 
             if not query:
-                await client.send_message(message.channel, trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
+                await message.channel.send(trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
                 return
 
             middle = [a.strip(" ") for a in query.split("|")]
@@ -189,7 +189,7 @@ class Fun:
 
             # 0, 1 or more than 3 arguments - error
             elif len(middle) < 2 or len(middle) > 3:
-                await client.send_message(message.channel, trans.get("MSG_MEME_USAGE", lang).replace("_", prefix))
+                await message.channel.send(trans.get("MSG_MEME_USAGE", lang).replace("_", prefix))
                 return
 
             # Normal
@@ -201,13 +201,13 @@ class Fun:
             meme = await self.generator.caption_meme(name, top, bottom)
 
             if not meme:
-                await client.send_message(message.channel, trans.get("MSG_MEME_NONEXISTENT", lang))
+                await message.channel.send(trans.get("MSG_MEME_NONEXISTENT", lang))
             else:
                 embed = Embed(colour=Colour(0x607D8B))
                 embed.set_image(url=meme)
                 embed.set_footer(text=trans.get("MSG_MEME_FOOTER", lang))
 
-                await client.send_message(message.channel, embed=embed)
+                await message.channel.send(embed=embed)
 
         elif startswith(prefix + "rip"):
             if len(message.mentions) == 1:
@@ -222,7 +222,7 @@ class Fun:
             ripperoni = self.everyone_filter(ripperoni, message.author, message.guild)
 
             prays = self.stats.get_amount(PRAYER)
-            await client.send_message(message.channel, trans.get("MSG_RIP", lang).format(ripperoni, prays))
+            await message.channel.send(trans.get("MSG_RIP", lang).format(ripperoni, prays))
 
             self.stats.add(PRAYER)
 

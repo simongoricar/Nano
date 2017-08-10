@@ -357,17 +357,17 @@ class TeamFortress:
         # !tf [item name]
         if startswith(prefix + "tf"):
             if not self.tf.success:
-                await client.send_message(message.channel, trans.get("MSG_TF_UNAVAILABLE", lang))
+                await message.channel.send(trans.get("MSG_TF_UNAVAILABLE", lang))
                 return
 
             item_name = message.content[len(prefix + "tf "):]
             if not item_name:
-                await client.send_message(message.channel, trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
+                await message.channel.send(trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
                 return
 
             item = await self.tf.get_item_by_name(str(item_name))
             if not item:
-                await client.send_message(message.channel, trans.get("MSG_TF_NO_SUCH_ITEM", lang).format(item_name))
+                await message.channel.send(trans.get("MSG_TF_NO_SUCH_ITEM", lang).format(item_name))
                 self.stats.add(WRONG_ARG)
                 return
 
@@ -379,7 +379,7 @@ class TeamFortress:
                 ls.append(dt)
 
             det = trans.get("MSG_TF_LIST", lang).format(item.name, "\n".join(ls))
-            await client.send_message(message.channel, det)
+            await message.channel.send(det)
 
 
 class NanoPlugin:

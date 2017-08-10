@@ -98,7 +98,7 @@ class TMDb:
                 # Check if no subcommand - valid
                 # If there's a subcommand, but no argument, fail
                 if not cut.strip(" "):
-                    await client.send_message(message.channel, trans.get("MSG_IMDB_INVALID_USAGE", lang).format(prefix))
+                    await message.channel.send(trans.get("MSG_IMDB_INVALID_USAGE", lang).format(prefix))
                     return
 
                 else:
@@ -110,16 +110,16 @@ class TMDb:
 
                 # Check type
                 if data.media_type not in ["tv", "movie"]:
-                    await client.send_message(message.channel, trans.get("MSG_IMDB_CANTPERSON", lang))
+                    await message.channel.send(trans.get("MSG_IMDB_CANTPERSON", lang))
                     return
 
                 # Try to send
                 try:
                     info = trans.get("MSG_IMDB_PLOT", lang).format(data.title, data.overview)
 
-                    await client.send_message(message.channel, info)
+                    await message.channel.send(info)
                 except AttributeError:
-                    await client.send_message(message.channel, trans.get("MSG_IMDB_PLOT_MISSING", lang))
+                    await message.channel.send(trans.get("MSG_IMDB_PLOT_MISSING", lang))
 
             # !imdb search
             elif subcommand == "search":
@@ -169,23 +169,23 @@ class TMDb:
                     media_info = "\n".join(info)
 
                 else:
-                    await client.send_message(message.channel, trans.get("MSG_IMDB_PERSON_NOT_SUPPORTED", lang))
+                    await message.channel.send(trans.get("MSG_IMDB_PERSON_NOT_SUPPORTED", lang))
                     return
 
                 # Send the details
                 try:
-                    await client.send_message(message.channel, media_info)
+                    await message.channel.send(media_info)
                 except errors.HTTPException:
-                    await client.send_message(message.channel, trans.get("MSG_IMDB_ERROR", lang))
+                    await message.channel.send(trans.get("MSG_IMDB_ERROR", lang))
 
             # !imdb trailer
             elif subcommand == "trailer":
                 data = await self._imdb_search(argument, message, lang)
 
                 try:
-                    await client.send_message(message.channel, trans.get("MSG_IMDB_TRAILER", lang).format(data.title, data.trailer))
+                    await message.channel.send(trans.get("MSG_IMDB_TRAILER", lang).format(data.title, data.trailer))
                 except AttributeError:
-                    await client.send_message(message.channel, trans.get("MSG_IMDB_TRAILER_MISSING", lang))
+                    await message.channel.send(trans.get("MSG_IMDB_TRAILER_MISSING", lang))
 
             # !imdb rating
             elif subcommand == "rating":
@@ -193,17 +193,17 @@ class TMDb:
 
                 try:
                     content = trans.get("MSG_IMDB_RATINGS", lang).format(data.title, data.vote_average)
-                    await client.send_message(message.channel, content)
+                    await message.channel.send(content)
                 except AttributeError:
-                    await client.send_message(message.channel, trans.get("MSG_IMDB_RATINGS_MISSING", lang))
+                    await message.channel.send(trans.get("MSG_IMDB_RATINGS_MISSING", lang))
 
             # !imdb help
             elif subcommand == "help":
-                await client.send_message(message.channel, trans.get("MSG_IMDB_HELP", lang).replace("_", prefix))
+                await message.channel.send(trans.get("MSG_IMDB_HELP", lang).replace("_", prefix))
 
             # If no argument is passed
             else:
-                await client.send_message(message.channel, trans.get("MSG_IMDB_INVALID_USAGE", lang).format(prefix))
+                await message.channel.send(trans.get("MSG_IMDB_INVALID_USAGE", lang).format(prefix))
 
 
 class NanoPlugin:

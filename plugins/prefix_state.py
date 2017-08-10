@@ -74,21 +74,21 @@ class PrefixState:
         # nano.sleep
         if startswith("nano.sleep"):
             if not self.handler.can_use_admin_commands(message.author, message.guild):
-                await client.send_message(message.channel, trans.get("PERM_ADMIN", lang))
+                await message.channel.send(trans.get("PERM_ADMIN", lang))
                 return
 
             self.handler.set_sleeping(message.guild, True)
-            await client.send_message(message.channel, self.trans.get("MSG_NANO_SLEEP", lang))
+            await message.channel.send(self.trans.get("MSG_NANO_SLEEP", lang))
             return "return"
 
         # nano.wake
         elif startswith("nano.wake"):
             if not self.handler.can_use_admin_commands(message.author, message.guild):
-                await client.send_message(message.channel, trans.get("PERM_ADMIN", lang))
+                await message.channel.send(trans.get("PERM_ADMIN", lang))
                 return
 
             if not self.handler.is_sleeping(message.guild.id):
-                await client.send_message(message.channel, trans.get("MSG_NANO_WASNT_SLEEPING", lang))
+                await message.channel.send(trans.get("MSG_NANO_WASNT_SLEEPING", lang))
                 return
 
             self.handler.set_sleeping(message.guild, False)

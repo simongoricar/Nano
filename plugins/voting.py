@@ -171,41 +171,41 @@ class Vote:
         # !vote start [title]|[option1]|(option2)|...
         if startswith(prefix + "vote start"):
             if not self.handler.can_use_admin_commands(message.author, message.guild):
-                await client.send_message(message.channel, trans.get("PERM_ADMIN", lang))
+                await message.channel.send(trans.get("PERM_ADMIN", lang))
                 self.stats.add(WRONG_PERMS)
                 return
 
             if self.vote.in_progress(message.guild.id):
-                await client.send_message(message.channel, trans.get("MSG_VOTING_IN_PROGRESS", lang))
+                await message.channel.send(trans.get("MSG_VOTING_IN_PROGRESS", lang))
                 return
 
             arguments = message.content[len(prefix + "vote start "):].strip(" ")
             if not arguments:
-                await client.send_message(message.channel, trans.get("MSG_VOTING_I_USAGE", lang).format(prefix))
+                await message.channel.send(trans.get("MSG_VOTING_I_USAGE", lang).format(prefix))
                 return
 
             s = arguments.split("|")
 
             # Minimal is the title and one choice
             if len(s) < 2:
-                await client.send_message(message.channel, trans.get("MSG_VOTING_I_USAGE", lang).format(prefix))
+                await message.channel.send(trans.get("MSG_VOTING_I_USAGE", lang).format(prefix))
                 return
 
             title, *items = [a.strip(" ") for a in s]
 
             # Check item amount
             if len(items) > VOTE_ITEM_LIMIT:
-                await client.send_message(message.channel, trans.get("MSG_VOTING_OPTIONS_TM", lang).format(VOTE_ITEM_LIMIT, len(items)))
+                await message.channel.send(trans.get("MSG_VOTING_OPTIONS_TM", lang).format(VOTE_ITEM_LIMIT, len(items)))
                 return
 
             # Check total length
             if (len(title) + sum([len(a) for a in items])) > VOTE_ITEM_MAX_LENGTH:
-                await client.send_message(message.channel, trans.get("MSG_VOTING_OPTIONS_TL ", lang).format(VOTE_ITEM_MAX_LENGTH, sum([len(a) for a in items])))
+                await message.channel.send(trans.get("MSG_VOTING_OPTIONS_TL ", lang).format(VOTE_ITEM_MAX_LENGTH, sum([len(a) for a in items])))
                 return
 
             # Check if any option is empty
             if any(e == "" for e in items):
-                await client.send_message(message.channel, trans.get("MSG_VOTING_EMPTY_ITEM", lang))
+                await message.channel.send(trans.get("MSG_VOTING_EMPTY_ITEM", lang))
                 return
 
             self.vote.start_vote(message.author.id, message.guild.id, title, items)
@@ -214,17 +214,17 @@ class Vote:
             choices = "\n\n".join(["[{}]\n{}".format(en + 1, ch) for en, ch in
                             enumerate(self.vote.get_choices(message.guild.id))])
 
-            await client.send_message(message.channel, trans.get("MSG_VOTING_STARTED", lang).format(title, choices))
+            await message.channel.send(trans.get("MSG_VOTING_STARTED", lang).format(title, choices))
 
         # !vote end
         elif startswith(prefix + "vote end"):
             if not self.handler.can_use_admin_commands(message.author, message.guild):
-                await client.send_message(message.channel, trans.get("PERM_ADMIN", lang))
+                await message.channel.send(trans.get("PERM_ADMIN", lang))
                 self.stats.add(WRONG_PERMS)
                 return
 
             if not self.vote.in_progress(message.guild.id):
-                await client.send_message(message.channel, trans.get("MSG_VOTING_NO_PROGRESS", lang))
+                await message.channel.send(trans.get("MSG_VOTING_NO_PROGRESS", lang))
                 return
 
             votes = self.vote.get_votes(message.guild.id)
@@ -243,15 +243,15 @@ class Vote:
             self.vote.end_voting(message.guild.id)
 
             try:
-                await client.send_message(message.channel, trans.get("MSG_VOTING_ENDED", lang) + "\n", embed=embed)
+                await message.channel.send(trans.get("MSG_VOTING_ENDED", lang) + "\n", embed=embed)
             except errors.HTTPException as e:
-                await client.send_message(message.channel, trans.get("MSG_VOTING_ERROR", lang))
+                await message.channel.send(trans.get("MSG_VOTING_ERROR", lang))
                 log_to_file("VOTING ({}): {}".format(e, embed.to_dict()), "bug")
 
         # !vote status
         elif startswith(prefix + "vote status"):
             if not self.vote.in_progress(message.guild.id):
-                await client.send_message(message.channel, trans.get("MSG_VOTING_NO_PROGRESS", lang))
+                await message.channel.send(trans.get("MSG_VOTING_NO_PROGRESS", lang))
                 return
 
             header = self.vote.get_title(message.guild.id)
@@ -264,7 +264,7 @@ class Vote:
             else:
                 vote_disp = trans.get("MSG_VOTING_S_MULTI", lang).format(votes)
 
-            await client.send_message(message.channel, trans.get("MSG_VOTING_STATUS", lang).format(header, vote_disp))
+            await message.channel.send(trans.get("MSG_VOTING_STATUS", lang).format(header, vote_disp))
 
         # !vote
         elif startswith(prefix + "vote"):
@@ -280,7 +280,7 @@ class Vote:
                 # REWRITE test
                 await message.add_reaction(BLOCK_EMOJI)
 
-                m = await client.send_message(message.channel, trans.get("MSG_VOTING_NOT_NUMBER", lang))
+                m = await message.channel.send(trans.get("MSG_VOTING_NOT_NUMBER", lang))
                 await asyncio.sleep(2)
                 # REWRITE test
                 await m.delete()
@@ -293,7 +293,7 @@ class Vote:
                 # REWRITE test
                 await message.add_reaction(BLOCK_EMOJI)
 
-                msg = await client.send_message(message.channel, trans.get("MSG_VOTING_CHEATER", lang))
+                msg = await message.channel.send(trans.get("MSG_VOTING_CHEATER", lang))
                 await asyncio.sleep(2)
                 # REWRITE test
                 await msg.delete()
@@ -303,7 +303,7 @@ class Vote:
                 # REWRITE test
                 await message.add_reaction(X_EMOJI)
 
-                msg = await client.send_message(message.channel, trans.get("MSG_VOTING_INVALID_NUMBER", lang))
+                msg = await message.channel.send(trans.get("MSG_VOTING_INVALID_NUMBER", lang))
                 await asyncio.sleep(2)
                 # REWRITE test
                 await msg.delete()

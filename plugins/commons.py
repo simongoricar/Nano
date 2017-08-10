@@ -136,7 +136,7 @@ class Commons:
                 if str(message.content) == command:
                     # Maybe same replacement logic in the future update?
                     # TODO implement advanced replacement logic
-                    await client.send_message(message.channel, server_commands.get(command))
+                    await message.channel.send(server_commands.get(command))
                     self.stats.add(MESSAGE)
 
                     return
@@ -169,24 +169,24 @@ class Commons:
         # !hello
         if startswith(prefix + "hello"):
             if len(message.mentions) >= 1:
-                await client.send_message(message.channel, trans.get("INFO_HI", lang).format(message.mentions[0].mention))
+                await message.channel.send(trans.get("INFO_HI", lang).format(message.mentions[0].mention))
             elif len(message.mentions) == 0:
-                await client.send_message(message.channel, trans.get("INFO_HI", lang).format(message.author.mention))
+                await message.channel.send(trans.get("INFO_HI", lang).format(message.author.mention))
 
         # !uptime
         elif startswith(prefix + "uptime"):
             d = datetime(1, 1, 1) + timedelta(seconds=time.time() - self.nano.boot_time)
             uptime = trans.get("MSG_UPTIME", lang).format(d.day - 1, d.hour, d.minute, d.second)
 
-            await client.send_message(message.channel, uptime)
+            await message.channel.send(uptime)
 
         # !nano, nano.info
         elif startswith((prefix + "nano", "nano.info")):
-            await client.send_message(message.channel, trans.get("INFO_GENERAL", lang).replace("<version>", self.nano.version))
+            await message.channel.send(trans.get("INFO_GENERAL", lang).replace("<version>", self.nano.version))
 
         # !github
         elif startswith(prefix + "github"):
-            await client.send_message(message.channel, trans.get("INFO_GITHUB", lang))
+            await message.channel.send(trans.get("INFO_GITHUB", lang))
 
         # !roll [number]
         elif startswith(prefix + "roll", prefix + "rng "):
@@ -196,13 +196,13 @@ class Commons:
                 num = message.content[len(prefix + "rng "):]
 
             if not num.isnumeric():
-                await client.send_message(message.channel, trans.get("ERROR_NOT_NUMBER", lang))
+                await message.channel.send(trans.get("ERROR_NOT_NUMBER", lang))
                 return
 
             rn = randint(0, int(num))
             result = "**{}**. {}".format(rn, "**GG**" if rn == int(num) else "")
 
-            await client.send_message(message.channel, trans.get("MSG_ROLL", lang).format(message.author.mention, result))
+            await message.channel.send(trans.get("MSG_ROLL", lang).format(message.author.mention, result))
 
         # !dice [dice expression: 5d6 + 1d8]
         elif startswith(prefix + "dice"):
@@ -221,7 +221,7 @@ class Commons:
                     times, sides = dice.split("d")
                     times, sides = int(times), int(sides)
                 except ValueError:
-                    await client.send_message(message.channel, trans.get("MSG_DICE_INVALID", lang))
+                    await message.channel.send(trans.get("MSG_DICE_INVALID", lang))
                     return
 
                 total = 0
@@ -232,7 +232,7 @@ class Commons:
 
                 results.append(trans.get("MSG_DICE_ENTRY", lang).format(dice, total))
 
-            await client.send_message(message.channel, trans.get("MSG_DICE_RESULTS", lang).format(message.author.mention, "\n".join(results), tt))
+            await message.channel.send(trans.get("MSG_DICE_RESULTS", lang).format(message.author.mention, "\n".join(results), tt))
 
         # !ping
         elif startswith(prefix + "ping"):
@@ -253,23 +253,23 @@ class Commons:
             cut = str(message.content)[len(prefix + "decide "):].strip(" ")
 
             if not cut:
-                await client.send_message(message.channel, trans.get("MSG_DECIDE_NO_ARGS", lang))
+                await message.channel.send(trans.get("MSG_DECIDE_NO_ARGS", lang))
                 return
 
             if len(cut.split("|")) == 1:
-                await client.send_message(message.channel, trans.get("MSG_DECIDE_SPECIAL", lang).format(cut))
+                await message.channel.send(trans.get("MSG_DECIDE_SPECIAL", lang).format(cut))
 
             else:
                 split = cut.split("|")
                 rn = randint(0, len(split) - 1)
-                await client.send_message(message.channel, trans.get("MSG_DECIDE_NORMAL", lang).format(split[rn]))
+                await message.channel.send(trans.get("MSG_DECIDE_NORMAL", lang).format(split[rn]))
 
         # !8ball
         elif startswith(prefix + "8ball"):
             eight_ball = [a.strip(" ") for a in trans.get("MSG_8BALL_STRINGS", lang).split("|")]
             answer = eight_ball[randint(0, len(eight_ball) - 1)]
 
-            await client.send_message(message.channel, trans.get("MSG_8BALL", lang).format(answer))
+            await message.channel.send(trans.get("MSG_8BALL", lang).format(answer))
 
         # !quote
         elif startswith(prefix + "quote"):
@@ -277,7 +277,7 @@ class Commons:
 
             # Find the part where the author is mentioned
             place = chosen.rfind("–")
-            await client.send_message(message.channel, "{}\n- __{}__".format(chosen[:place], chosen[place+1:]))
+            await message.channel.send("{}\n- __{}__".format(chosen[:place], chosen[place+1:]))
 
         # !invite
         elif startswith(prefix + "invite", "nano.invite"):
@@ -290,10 +290,10 @@ class Commons:
                 url = "<https://discordapp.com/oauth2/" \
                       "authorize?client_id={}&scope=bot&permissions={}>".format(application.id, perms)
 
-                await client.send_message(message.channel, trans.get("INFO_INVITE", lang).replace("<link>", url))
+                await message.channel.send(trans.get("INFO_INVITE", lang).replace("<link>", url))
                 return
 
-            await client.send_message(message.channel, trans.get("INFO_INVITE", lang).replace("<link>", "<http://invite.nanobot.pw>"))
+            await message.channel.send(trans.get("INFO_INVITE", lang).replace("<link>", "<http://invite.nanobot.pw>"))
 
         # !avatar
         elif startswith(prefix + "avatar"):
@@ -307,20 +307,20 @@ class Commons:
             url = member.avatar_url
 
             if url:
-                await client.send_message(message.channel, trans.get("MSG_AVATAR_OWNERSHIP", lang).format(member.name, url))
+                await message.channel.send(trans.get("MSG_AVATAR_OWNERSHIP", lang).format(member.name, url))
             else:
-                await client.send_message(message.channel, trans.get("MSG_AVATAR_NONE", lang).format(member.name))
+                await message.channel.send(trans.get("MSG_AVATAR_NONE", lang).format(member.name))
 
         # !say (#channel) [message]
         elif startswith(prefix + "say"):
             if not self.handler.is_mod(message.author, message.guild):
-                await client.send_message(message.channel, trans.get("PERM_MOD", lang))
+                await message.channel.send(trans.get("PERM_MOD", lang))
                 return "return"
 
             content = str(message.content[len(prefix + "say "):]).strip(" ")
 
             if not content:
-                await client.send_message(message.channel, trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
+                await message.channel.send(trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
                 return
 
             if len(message.channel_mentions) != 0:
@@ -335,7 +335,7 @@ class Commons:
                 await client.send_message(channel, content)
                 await self.log_say_command(message, content, prefix, lang)
             except Forbidden:
-                await client.send_message(message.channel, trans.get("MSG_SAY_NOPERM", lang).format(channel.id))
+                await message.channel.send(trans.get("MSG_SAY_NOPERM", lang).format(channel.id))
 
     async def on_reaction_add(self, reaction, _, **kwargs):
         # REWRITE test

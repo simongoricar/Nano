@@ -194,7 +194,7 @@ class DevFeatures:
         # Global owner filter
 
         if not self.handler.is_bot_owner(message.author.id):
-            await client.send_message(message.channel, self.trans.get("PERM_OWNER", lang))
+            await message.channel.send(self.trans.get("PERM_OWNER", lang))
             return
 
 
@@ -206,7 +206,7 @@ class DevFeatures:
             final = ["\n".join(a) for a in [servers[i:i+1000] for i in range(0, len(servers), 1000)]]
 
             for chunk in final:
-                await client.send_message(message.channel, chunk)
+                await message.channel.send(chunk)
 
         # nano.dev.server_info [id]
         elif startswith("nano.dev.server_info"):
@@ -215,14 +215,14 @@ class DevFeatures:
             srv = utils.find(lambda s: s.id == s_id, client.guilds)
 
             if not srv:
-                await client.send_message(message.channel, "No such guild. " + StandardEmoji.CROSS)
+                await message.channel.send("No such guild. " + StandardEmoji.CROSS)
                 return
 
             nano_data = self.handler.get_server_data(srv)
             to_send = "{}\n```css\nMember count: {}\nChannels: {}\nOwner: {}```\n" \
                       "*Settings*: ```{}```".format(srv.name, srv.member_count, ",".join([ch.name for ch in srv.channels]), srv.owner.name, nano_data)
 
-            await client.send_message(message.channel, to_send)
+            await message.channel.send(to_send)
 
         # nano.dev.test_exception
         elif startswith("nano.dev.test_exception"):
@@ -233,31 +233,31 @@ class DevFeatures:
             emb = Embed(title="Stats", colour=Colour.darker_grey())
             emb.add_field(name="Messages Sent", value="sample messages")
 
-            await client.send_message(message.channel, "Stats", embed=emb)
+            await message.channel.send("Stats", embed=emb)
 
         # nano.dev.backup
         elif startswith("nano.dev.backup"):
             self.backup.manual_backup()
-            await client.send_message(message.channel, "Backup completed " + StandardEmoji.PERFECT)
+            await message.channel.send("Backup completed " + StandardEmoji.PERFECT)
 
         # nano.dev.leave_server
         elif startswith("nano.dev.leave_server"):
             try:
                 sid = int(message.content[len("nano.dev.leave_server "):])
             except ValueError:
-                await client.send_message(message.channel, "Not a number.")
+                await message.channel.send("Not a number.")
                 return
 
             # REWRITE test
             srv = await self.client.get_guild(sid)
             await srv.leave()
-            await client.send_message(message.channel, "Left {}".format(srv.id))
+            await message.channel.send("Left {}".format(srv.id))
 
         # nano.dev.tf.reload
         elif startswith("nano.dev.tf.clean"):
             self.nano.get_plugin("tf2").get("instance").tf.request()
 
-            await client.send_message(message.channel, "Re-downloaded data...")
+            await message.channel.send("Re-downloaded data...")
 
         # nano.dev.plugin.reload
         elif startswith("nano.dev.plugin.reload"):
@@ -268,10 +268,10 @@ class DevFeatures:
             v_new = self.nano.get_plugin(name).get("plugin").NanoPlugin.version
 
             if s:
-                await client.send_message(message.channel, "Successfully reloaded **{}**\n"
+                await message.channel.send("Successfully reloaded **{}**\n"
                                                            "From version *{}* to *{}*.".format(name, v_old, v_new))
             else:
-                await client.send_message(message.channel, "Something went wrong, check the logs.")
+                await message.channel.send("Something went wrong, check the logs.")
 
         # nano.dev.servers.clean
         elif startswith("nano.dev.servers.tidy"):
@@ -279,7 +279,7 @@ class DevFeatures:
 
         # nano.restart
         elif startswith("nano.restart"):
-            await client.send_message(message.channel, "**DED, but gonna come back**")
+            await message.channel.send("**DED, but gonna come back**")
 
             await client.logout()
 
@@ -288,7 +288,7 @@ class DevFeatures:
 
         # nano.kill
         elif startswith("nano.kill"):
-            await client.send_message(message.channel, "**DED**")
+            await message.channel.send("**DED**")
 
             await client.logout()
 
@@ -300,17 +300,17 @@ class DevFeatures:
             status = message.content[len("nano.playing "):]
 
             await client.change_presence(game=Game(name=str(status)))
-            await client.send_message(message.channel, "Status changed " + StandardEmoji.THUMBS_UP)
+            await message.channel.send("Status changed " + StandardEmoji.THUMBS_UP)
 
         # nano.dev.translations.reload
         elif startswith("nano.dev.translations.reload"):
             self.trans.reload_translations()
 
-            await client.send_message(message.channel, StandardEmoji.PERFECT)
+            await message.channel.send(StandardEmoji.PERFECT)
 
         # nano.dev.announce
         elif startswith("nano.dev.announce"):
-            await client.send_message(message.channel, "Sending... ")
+            await message.channel.send("Sending... ")
             ann = message.content[len("nano.dev.announce "):]
 
             s = []
@@ -322,7 +322,7 @@ class DevFeatures:
                 except:
                     pass
 
-            await client.send_message(message.channel, "Sent to {} servers".format(len(s)))
+            await message.channel.send("Sent to {} servers".format(len(s)))
 
 
     async def on_ready(self):
