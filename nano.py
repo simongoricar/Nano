@@ -97,9 +97,9 @@ class Nano(metaclass=Singleton):
         # Variables
         self.boot_time = time.time()
         self.version = __version__
-        self.owner_id = parser.get("Settings", "ownerid")
 
-        self.dev_server = parser.get("Dev", "server")
+        self.owner_id = parser.getint("Settings", "ownerid")
+        self.dev_server = parser.getint("Dev", "server")
 
         # Plugin-related
         self.plugin_names = []

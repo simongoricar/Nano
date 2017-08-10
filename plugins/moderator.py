@@ -184,9 +184,6 @@ class LogManager:
     async def get_plugin(self):
         self.getter = self.nano.get_plugin("server").get("instance")
 
-    async def send_message(self, channel, embed):
-        await self.client.send_message(channel, embed=embed)
-
     async def send_log(self, message: Message, lang, reason=""):
         if not self.getter:
             self.loop.call_later(5, self.send_log(message, lang, reason))
@@ -207,7 +204,7 @@ class LogManager:
         embed.add_field(name=self.trans.get("INFO_CHANNEL", lang), value=message.channel.mention)
 
         logger.debug("Sending logs for {}".format(message.guild.name))
-        await self.send_message(log_channel, embed=embed)
+        await log_channel.send(embed=embed)
 
 
 class Moderator:

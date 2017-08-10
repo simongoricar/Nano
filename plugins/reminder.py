@@ -123,7 +123,7 @@ class RedisReminderHandler:
         else:
             return True
 
-    def set_reminder(self, channel, author, content, tim, lang, reminder_type=REMINDER_PERSONAL):
+    def set_reminder(self, channel, author, content: str, tim: int, lang: str, reminder_type=REMINDER_PERSONAL):
         """
         Sets a reminder
         :param channel: Where to send this
@@ -152,7 +152,7 @@ class RedisReminderHandler:
 
         # Add the reminder to the list
         rm_id = gen_id(length=12)
-        tree = {"full_time": tim, "content": content, "receiver": channel.id, "time_created": int(t),
+        tree = {"full_time": tim, "content": content, "receiver": channel.id, "server": channel.server.id, "time_created": int(t),
                 "time_target": int(tim + t), "author": author.id, "raw": raw, "type": reminder_type}
         field = self.json.dumps(tree)
 
@@ -181,12 +181,10 @@ class RedisReminderHandler:
         try:
             log.debug("Dispatching")
 
-            if rem.get("type") == REMINDER_PERSONAL:
-                receiver = User(id=rem.get("receiver"))
-            else:
-                receiver = Object(id=rem.get("receiver"))
+            guild = self.client.get_guild(rem.get("server"))
+            channel = guild.get_channel(rem.get("receiver"))
 
-            await self.client.send_message(receiver, rem.get("content"))
+            await channel.send(rem.get("content"))
         except DiscordException as e:
             log.warning(e)
 
@@ -232,7 +230,7 @@ class Reminder:
             args = message.content[cut_length:].split(self.trans.get("MSG_REMINDER_TO_LITERAL", lang), maxsplit=1)
             # Still not valid
             if len(args) < 2:
-                await self.client.send_message(message.channel, fail_msg)
+                await message.channel.send(fail_msg)
                 self.stats.add(WRONG_ARG)
                 raise IgnoredException
 
@@ -242,13 +240,13 @@ class Reminder:
         if not r_time.isnumeric():
             if "[" in r_time or "]" in r_time:
                 # When people actually do !remind here in [1h 32min]: something
-                await self.client.send_message(message.channel, self.trans.get("MSG_REMINDER_NO_BRACKETS", lang))
+                await message.channel.send(self.trans.get("MSG_REMINDER_NO_BRACKETS", lang))
                 raise IgnoredException
 
             try:
                 r_time = convert_to_seconds(r_time)
             except ValueError:
-                await self.client.send_message(message.channel, self.trans.get("MSG_REMINDER_INVALID_FORMAT", lang))
+                await message.channel.send(self.trans.get("MSG_REMINDER_INVALID_FORMAT", lang))
                 raise IgnoredException
 
         else:

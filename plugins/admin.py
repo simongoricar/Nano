@@ -1280,7 +1280,8 @@ class Admin:
                     # User wants to reset the channel
                     if is_disabled(arg):
                         handler.update_var(message.guild.id, "logchannel", None)
-                        await message.channel.send(trans.get("MSG_SETTINGS_DEFCHAN_RESET", lang).format(self.default_channel(message.guild).name))
+                        def_chan = await self.default_channel(message.guild)
+                        await message.channel.send(trans.get("MSG_SETTINGS_DEFCHAN_RESET", lang).format(def_chan.name))
                         return
 
                     # No channel mention / parameter
@@ -1490,8 +1491,8 @@ class Admin:
             NONE = trans.get("INFO_NONE", lang)
             DONE = trans.get("INFO_DONE", lang)
 
-            async def timeout(a_msg):
-                await client.send_message(a_msg.channel, trans.get("MSG_SETUP_TIMEOUT", lang))
+            async def timeout():
+                await message.channel.send(trans.get("MSG_SETUP_TIMEOUT", lang))
 
             def must_be_author(m):
                 return m.author == message.author
@@ -1510,7 +1511,7 @@ class Admin:
             try:
                 ch1 = await client.wait_for("message", check=must_be_author, timeout=MSG_TIMEOUT)
             except asyncio.TimeoutError:
-                await timeout(message)
+                await timeout()
                 return
 
             # User confirmed the action
@@ -1539,7 +1540,7 @@ class Admin:
             try:
                 ch2 = await client.wait_for("message", check=must_be_author, timeout=MSG_TIMEOUT)
             except asyncio.TimeoutError:
-                await timeout(message)
+                await timeout()
                 return
 
             else:
@@ -1564,7 +1565,7 @@ class Admin:
             try:
                 ch3 = await client.wait_for("message", check=must_be_author, timeout=MSG_TIMEOUT)
             except asyncio.TimeoutError:
-                await timeout(message)
+                await timeout()
                 return
 
             else:
@@ -1590,7 +1591,7 @@ class Admin:
             try:
                 ch4 = await client.wait_for("message", check=must_be_author, timeout=MSG_TIMEOUT)
             except asyncio.TimeoutError:
-                await timeout(message)
+                await timeout()
                 return
 
             else:
@@ -1613,7 +1614,7 @@ class Admin:
             try:
                 ch5 = await client.wait_for("message", check=must_be_author, timeout=MSG_TIMEOUT)
             except asyncio.TimeoutError:
-                await timeout(message)
+                await timeout()
                 return
 
             else:
@@ -1636,7 +1637,7 @@ class Admin:
             try:
                 ch6 = await client.wait_for("message", check=must_be_author, timeout=MSG_TIMEOUT)
             except asyncio.TimeoutError:
-                await timeout(message)
+                await timeout()
                 return
 
             else:

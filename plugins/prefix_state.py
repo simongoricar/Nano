@@ -92,7 +92,7 @@ class PrefixState:
                 return
 
             self.handler.set_sleeping(message.guild, False)
-            await self.client.send_message(message.channel, self.trans.get("MSG_NANO_WAKE", lang))
+            await message.channel.send(self.trans.get("MSG_NANO_WAKE", lang))
 
             self.stats.add(SLEPT)
             return "return"

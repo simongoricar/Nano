@@ -99,7 +99,7 @@ class Commons:
         embed.set_author(name="{} ({})".format(message.author.name, message.author.id), icon_url=message.author.avatar_url)
         embed.add_field(name=self.trans.get("INFO_CHANNEL", lang), value=message.channel.mention)
 
-        await self.client.send_message(log_channel, embed=embed)
+        await log_channel.send(embed=embed)
 
     @staticmethod
     def at_everyone_filter(content, author, guild):
@@ -332,7 +332,7 @@ class Commons:
             content = self.at_everyone_filter(content, message.author, message.guild)
 
             try:
-                await client.send_message(channel, content)
+                await channel.send(content)
                 await self.log_say_command(message, content, prefix, lang)
             except Forbidden:
                 await message.channel.send(trans.get("MSG_SAY_NOPERM", lang).format(channel.id))

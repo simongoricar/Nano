@@ -196,7 +196,9 @@ class Help:
                     self.last_times[message.author.id] = time.time()
 
 
-            dev_server = utils.get(client.guilds, id=self.nano.dev_server)
+            # REWRITE test
+            dev_server = self.client.get_guild(self.nano.dev_server)
+            owner = dev_server.get_member(self.nano.owner_id)
             # Timestamp
             ts = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
 
@@ -210,7 +212,7 @@ class Help:
             # Saves the submission
             await save_submission(comp.replace(message.author.mention, "{} ({})\n".format(message.author.name, message.author.id)))
 
-            await client.send_message(dev_server.owner, comp)
+            await owner.send(comp)
             await message.channel.send(trans.get("MSG_REPORT_THANKS", lang))
 
         # !bug

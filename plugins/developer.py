@@ -316,7 +316,8 @@ class DevFeatures:
             s = []
             for g in self.client.guilds:
                 try:
-                    await client.send_message(self.default_channel(g), ann)
+                    d_chan = await self.default_channel(g)
+                    await d_chan.send(ann)
                     log_to_file("Sending announcement for {}".format(g.name))
                     s.append(g.name)
                 except:

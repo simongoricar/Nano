@@ -158,9 +158,8 @@ class Definitions:
                 await message.channel.send(trans.get("MSG_WIKI_NO_DEF", lang))
                 return
 
-            await client.send_message(message.channel,
-                                      trans.get("MSG_WIKI_DEFINITION", lang).format(search,
-                                                                                    add_dots(summary, max_len=MAX_WIKI_LENGTH)))
+            await message.channel.send(trans.get("MSG_WIKI_DEFINITION", lang).format(search,
+                                                                                     add_dots(summary, max_len=MAX_WIKI_LENGTH)))
 
         elif startswith(prefix + "urban"):
             search = str(message.content)[len(prefix + "urban "):].strip(" ")
@@ -175,8 +174,8 @@ class Definitions:
                 await message.channel.send(trans.get("MSG_URBAN_NO_DEF", lang))
                 return
 
-            await client.send_message(message.channel,
-                                      trans.get("MSG_URBAN_DEFINITION", lang).format(search, add_dots(description, max_len=MAX_URBAN_LENGTH)))
+            await message.channel.send(trans.get("MSG_URBAN_DEFINITION", lang).format(search,
+                                                                                      add_dots(description, max_len=MAX_URBAN_LENGTH)))
 
 
 class NanoPlugin:

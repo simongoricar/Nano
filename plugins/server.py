@@ -70,23 +70,21 @@ class ServerManagement:
 
     @staticmethod
     async def default_channel(guild):
-        # Try to find #general
-        chan = discord.utils.find(lambda c: c.name == "general", guild.channels)
+        # Try to find #general or one that starts with general
+        chan = discord.utils.find(lambda c: c.name == "general", guild.text_channels)
         if chan:
             return chan
 
         # Else, return the topmost one
-        top = sorted(guild.channels, key=lambda a: a.position)[0]
-        print("Top guild is {}".format(top.name))
+        top = sorted(guild.text_channels, key=lambda a: a.position)[0]
         return top
-
 
     async def send_message_failproof(self, channel, message=None, embed=None):
         try:
-            await self.client.send_message(channel, content=message, embed=embed)
+            await channel.send(content=message, embed=embed)
         except discord.HTTPException:
             await asyncio.sleep(FAILPROOF_TIME_WAIT)
-            await self.client.send_message(channel, content=message, embed=embed)
+            await channel.send(content=message, embed=embed)
             raise
 
     @staticmethod

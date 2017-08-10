@@ -44,18 +44,18 @@ class TMDb:
 
     async def _imdb_search(self, name, message, lang):
         if not name:
-            await self.client.send_message(message.channel, self.trans.get("MSG_IMDB_NEED_TITLE", lang))
+            await message.channel.send(self.trans.get("MSG_IMDB_NEED_TITLE", lang))
             raise IgnoredException
 
         try:
             data = await self.tmdb.search_multi(name)
         except tmdbie.TMDbException:
-            await self.client.send_message(message.channel, self.trans.get("MSG_IMDB_ERROR2", lang))
+            await message.channel.send(self.trans.get("MSG_IMDB_ERROR2", lang))
             raise
 
         # Check validity
         if not data:
-            await self.client.send_message(message.channel, self.trans.get("MSG_IMDB_NORESULTS", lang))
+            await message.channel.send(self.trans.get("MSG_IMDB_NORESULTS", lang))
             raise IgnoredException
 
         return data
