@@ -40,12 +40,15 @@ REMINDER_MAX = 5 * 24 * 60 * 60
 # Maximum age (in seconds) of a message that should be kept in cache
 MAX_MSG_AGE = 60 * 3
 
+# Maximum join/leave/kick/ban message length
+MAX_NOTIF_LENGTH = 800
+
 commands = {
-    "_ban": {"desc": "Bans a member.", "use": "[command] [mention]", "alias": "nano.ban"},
+    "_ban": {"desc": "Bans a member.", "use": "[command] [mention/user id]", "alias": "nano.ban"},
     "nano.ban": {"desc": "Bans a member.", "use": "User: [command] [mention]", "alias": "_ban"},
-    "_kick": {"desc": "Kicks a member.", "use": "[command] [mention]", "alias": "nano.kick"},
+    "_kick": {"desc": "Kicks a member.", "use": "[command] [mention/user id]", "alias": "nano.kick"},
     "nano.kick": {"desc": "Kicks a member", "use": "[command] [mention]", "alias": "_kick"},
-    "_unban": {"desc": "Unbans a member.", "use": "[command] [mention]", "alias": "nano.unban"},
+    "_unban": {"desc": "Unbans a member.", "use": "[command] [mention/user id]", "alias": "nano.unban"},
     "nano.unban": {"desc": "Unbans a member.", "use": "[command] [mention]", "alias": "_unban"},
     "_softban": {"desc": "Temporarily bans a member (for time formatting see reminders)", "use": "[command] @mention/username | [time] or [command] @mention [time]", "alias": None},
     "_cmd": {"desc": "Subcommands:\n`add` `remove` `status` `list`", "use": "[command]", "alias": None},
@@ -421,7 +424,7 @@ class Admin:
 
         return role
 
-    async def resolve_user(self, name, message, lang, no_error=False):
+    async def resolve_user(self, name: str, message, lang: str, no_error=False):
         """
         Searches for an user from the provided name and mentions
         Mentions take precedence, after that the name. If no user is found and no_error is False, ERROR_NO_MENTION/NO_USER will be sent.
@@ -438,6 +441,12 @@ class Admin:
             else:
                 await message.channel.send(self.trans.get("ERROR_NO_MENTION", lang))
                 raise IgnoredException
+
+        # If ID is passed, check its existence
+        if name.isnumeric():
+            user = message.guild.get_member(int(name))
+            if user:
+                return user
 
         # No mentions, username is provided
         user = utils.find(lambda u: u.name == name, message.guild.members)
@@ -643,7 +652,7 @@ class Admin:
                 return
 
             await message.delete()
-            await message.channel.send(trans.get("MSG_NUKE_PURGING", lang))
+            await message.channel.send(trans.get("MSG_NUKE_PURGING", lang).format(amount))
 
             additional = ""
 
@@ -664,7 +673,7 @@ class Admin:
                 await message.channel.send(trans.get("PERM_MOD", lang))
                 return
 
-            name = message.content[len(prefix + "kick "):]
+            name = message.content[len(prefix + "kick "):].strip(" ")
             user = await self.resolve_user(name, message, lang)
 
             if user.id == client.user.id:
@@ -680,7 +689,7 @@ class Admin:
                 await message.channel.send(trans.get("PERM_MOD", lang))
                 return "return"
 
-            name = message.content[len(prefix + "ban "):]
+            name = message.content[len(prefix + "ban "):].strip(" ")
             user = await self.resolve_user(name, message, lang)
 
             if user.id == client.user.id:
@@ -707,23 +716,31 @@ class Admin:
                 await message.channel.send(trans.get("PERM_MOD", lang))
                 return "return"
 
-            name = message.content[len(prefix + "unban "):]
+            name = message.content[len(prefix + "unban "):].strip(" ")
 
             if not name:
                 await message.channel.send(trans.get("MSG_UNBAN_WRONG_USAGE", lang).format(prefix))
                 return
 
             user = None
-            for ban in await message.guild.bans():
-                if ban.name == name:
-                    user = ban
+            if name.isnumeric():
+                name = int(name)
+                # Search by id
+                for ban in await message.guild.bans():
+                    if ban.user.id == name:
+                        user = ban.user
+
+            else:
+                for ban in await message.guild.bans():
+                    if ban.user.name == name:
+                        user = ban.user
 
             if not user:
                 await message.channel.send(trans.get("MSG_UNBAN_NO_BAN", lang))
                 return
 
-            await user.unban()
-            await message.channel.send(trans.get("MSG_UNBAN_SUCCESS", lang).format(name))
+            await message.guild.unban(user)
+            await message.channel.send(trans.get("MSG_UNBAN_SUCCESS", lang).format(user.name))
 
         # !softban @mention/username | [time]
         elif startswith(prefix + "softban"):
@@ -830,7 +847,7 @@ class Admin:
                 await message.channel.send(trans.get("MSG_UNMUTE_ALL_CONFIRM", lang).format(conf))
 
                 def is_author(c):
-                    return c.author == message.author and c.channel == message.channel and c.content == confirm
+                    return c.author == message.author and c.channel == message.channel and c.content == conf
 
                 try:
                     await client.wait_for("message", check=is_author, timeout=15)
@@ -879,6 +896,10 @@ class Admin:
                 await message.channel.send(trans.get("MSG_JOIN_DISABLED", lang))
 
             else:
+                if len(change) > MAX_NOTIF_LENGTH:
+                    await message.channel.send(trans.get("MSG_NOTIF_TOO_LONG", lang).format(MAX_NOTIF_LENGTH, len(change)))
+                    return
+
                 handler.update_var(message.guild.id, "welcomemsg", change)
                 await message.channel.send(trans.get("MSG_JOIN", lang))
 
@@ -899,6 +920,10 @@ class Admin:
                 await message.channel.send(trans.get("MSG_JOIN_DISABLED", lang))
 
             else:
+                if len(change) > MAX_NOTIF_LENGTH:
+                    await message.channel.send(trans.get("MSG_NOTIF_TOO_LONG", lang).format(MAX_NOTIF_LENGTH, len(change)))
+                    return
+
                 handler.update_var(message.guild.id, "welcomemsg", change)
                 await message.channel.send(trans.get("MSG_JOIN", lang))
 
@@ -919,6 +944,10 @@ class Admin:
                 await message.channel.send(trans.get("MSG_BAN_DISABLED", lang))
 
             else:
+                if len(change) > MAX_NOTIF_LENGTH:
+                    await message.channel.send(trans.get("MSG_NOTIF_TOO_LONG", lang).format(MAX_NOTIF_LENGTH, len(change)))
+                    return
+
                 handler.update_var(message.guild.id, "banmsg", change)
                 await message.channel.send(trans.get("MSG_BAN", lang))
 
@@ -939,6 +968,10 @@ class Admin:
                 await message.channel.send(trans.get("MSG_KICK_DISABLED", lang))
 
             else:
+                if len(change) > MAX_NOTIF_LENGTH:
+                    await message.channel.send(trans.get("MSG_NOTIF_TOO_LONG", lang).format(MAX_NOTIF_LENGTH, len(change)))
+                    return
+
                 handler.update_var(message.guild.id, "kickmsg", change)
                 await message.channel.send(trans.get("MSG_KICK", lang))
 
@@ -959,6 +992,10 @@ class Admin:
                 await message.channel.send(trans.get("MSG_LEAVE_DISABLED", lang))
 
             else:
+                if len(change) > MAX_NOTIF_LENGTH:
+                    await message.channel.send(trans.get("MSG_NOTIF_TOO_LONG", lang).format(MAX_NOTIF_LENGTH, len(change)))
+                    return
+
                 handler.update_var(message.guild.id, "leavemsg", change)
                 await message.channel.send(trans.get("MSG_LEAVE", lang))
 
@@ -1029,14 +1066,21 @@ class Admin:
                     await message.channel.send(trans.get("PERM_HIERARCHY", lang))
                     return
 
+                already_had = False
                 # Adds role to each user
                 for user in users:
+                    if role in user.roles:
+                        already_had = True
+
                     await user.add_roles(role)
 
-                if len(users) == 1:
-                    await message.channel.send(trans.get("INFO_DONE", lang) + " " + StandardEmoji.OK)
+                if already_had:
+                    await message.channel.send(trans.get("MSG_ROLE_ALREADY_HAD", lang))
                 else:
-                    await message.channel.send(trans.get("MSG_ROLE_ADDED_MP", lang).format(role.name, len(users)))
+                    if len(users) == 1:
+                        await message.channel.send(trans.get("INFO_DONE", lang) + " " + StandardEmoji.OK)
+                    else:
+                        await message.channel.send(trans.get("MSG_ROLE_ADDED_MP", lang).format(role.name, len(users)))
 
             # !role remove [role name] | [@mention @mention ...] OR !role add [role name] @mention
             elif startswith(prefix + "role remove "):
@@ -1046,14 +1090,26 @@ class Admin:
                     await message.channel.send(trans.get("PERM_HIERARCHY", lang))
                     return
 
+                didnt_have = False
                 # Removes role from each user
                 for user in users:
+                    if role not in user.roles:
+                        didnt_have = True
+
                     await user.remove_roles(role)
 
-                if len(users) == 1:
-                    await message.channel.send(trans.get("INFO_DONE", lang) + " " + StandardEmoji.OK)
+                if didnt_have:
+                    await message.channel.send(trans.get("MSG_ROLE_REMOVE_SOME_DIDNT", lang))
+
                 else:
-                    await message.channel.send(trans.get("MSG_ROLE_REMOVED_MP", lang).format(role.name, len(users)))
+                    if len(users) == 1:
+                        await message.channel.send(trans.get("INFO_DONE", lang) + " " + StandardEmoji.OK)
+                    else:
+                        await message.channel.send(trans.get("MSG_ROLE_REMOVED_MP", lang).format(role.name, len(users)))
+
+            # !role / !role help
+            else:
+                await message.channel.send(trans.get("MSG_ROLE_HELP", lang))
 
         # !cmd add
         elif startswith(prefix + "cmd add"):
@@ -1104,7 +1160,11 @@ class Admin:
 
         # !cmd remove
         elif startswith(prefix + "cmd remove"):
-            cut = message.content[len(prefix + "cmd remove "):]
+            cut = message.content[len(prefix + "cmd remove "):].strip(" ")
+
+            if not cut:
+                await message.channel.send(trans.get("MSG_CMD_REMOVE_PARAMS", lang))
+                return
 
             success = handler.remove_command(message.guild, cut)
             if success:
@@ -1147,9 +1207,7 @@ class Admin:
         # !cmd status
         elif startswith(prefix + "cmd status"):
             cc = handler.get_custom_commands(message.guild.id)
-            percent = int((len(cc) / CMD_LIMIT) * 100)
-
-            await message.channel.send(trans.get("MSG_CMD_STATUS", lang).format(len(cc), CMD_LIMIT, percent))
+            await message.channel.send(trans.get("MSG_CMD_STATUS", lang).format(len(cc), CMD_LIMIT))
 
         # !language
         elif startswith(prefix + "language"):
@@ -1308,19 +1366,19 @@ class Admin:
                 setting, arg = spl[0], spl[1]
 
                 # Set word/spam/invite filter
-                if matches_list(setting, "word filter", "wordfilter", "filter words"):
+                if matches_list(setting, "word filter", "wordfilter", "filter words", "filterwords"):
                     decision = matches_list(arg)
                     handler.update_moderation_settings(message.guild.id, setting, decision)
 
                     await message.channel.send(trans.get("MSG_SETTINGS_WORD", lang).format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
 
-                elif matches_list(setting, "spam filter", "spamfilter", "filter spam"):
+                elif matches_list(setting, "spam filter", "spamfilter", "filter spam", "filterspam"):
                     decision = matches_list(arg)
                     handler.update_moderation_settings(message.guild.id, setting, decision)
 
                     await message.channel.send(trans.get("MSG_SETTINGS_SPAM", lang).format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
 
-                elif matches_list(setting, "filterinvite", "invitefilter", "invite filter"):
+                elif matches_list(setting, "filterinvite", "filterinvites", "invitefilter", "invite filter"):
                     decision = matches_list(arg)
                     handler.update_moderation_settings(message.guild.id, setting, decision)
 
@@ -1376,10 +1434,18 @@ class Admin:
             else:
                 d_channel = "[{}]({})".format(d_channel.name, d_channel.id)
 
-            msg_join = settings.get("welcomemsg") or DISABLED
-            msg_leave = settings.get("leavemsg") or DISABLED
-            msg_ban = settings.get("banmsg") or DISABLED
-            msg_kick = settings.get("kickmsg") or DISABLED
+            msg_join = settings.get("welcomemsg")
+            if is_disabled(msg_join):
+                msg_join = DISABLED
+            msg_leave = settings.get("leavemsg")
+            if is_disabled(msg_leave):
+                msg_leave = DISABLED
+            msg_ban = settings.get("banmsg")
+            if is_disabled(msg_ban):
+                msg_ban = DISABLED
+            msg_kick = settings.get("kickmsg")
+            if is_disabled(msg_kick):
+                msg_kick = DISABLED
 
             sett = trans.get("MSG_SETTINGS_DISPLAY", lang).format(prefix, blacklisted_c, spam_filter,
                                                                   word_filter, invite_filter, log_channel, d_channel)

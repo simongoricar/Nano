@@ -47,6 +47,7 @@
     <string name="INFO_ALIASES">Aliases</string>
     <string name="INFO_DESCRIPTION">Description</string>
     <string name="INFO_DISABLED">Disabled</string>
+    <string name="INFO_DISABLED_A">Disable</string>
     <string name="INFO_GENERAL">**Hey! My name is Nano!**
 I have a GitHub repo! `!github`
 My current version is **&lt;version&gt;**.
@@ -137,6 +138,7 @@ Gif command powered by **Giphy**</string>
     <string name="MSG_LEAVE">Leave message has been updated :smile:</string>
     <string name="MSG_LEAVE_DISABLED">Leave message has been disabled :white_check_mark:</string>
     <string name="MSG_LEAVE_IS_DISABLED">:information_source: Leave message is currently disabled.</string>
+    <string name="MSG_NOTIF_TOO_LONG">:exclamation: Your message is **too long!** (maximum is {}, yours was {})</string>
 
     <string name="MSG_JOIN_CURRENT">:gear: Current welcome message:
 
@@ -157,14 +159,18 @@ Gif command powered by **Giphy**</string>
     <string name="MSG_USERINFO_TYPE">Account Type</string>
     <string name="MSG_USERINFO_TOPROLE">Top Role</string>
     <string name="MSG_USERINFO_CREATION">Account Creation Date</string>
-    <string name="MSG_USERINFO_DATEGOT">Data got at {} UTC</string>
+    <string name="MSG_USERINFO_DATEGOT">Data fetched at {} UTC</string>
     <string name="MSG_USERINFO_USER">**User info:**</string>
 
     <string name="MSG_USERINFO_PERSON">Person :cowboy:</string>
     <string name="MSG_USERINFO_BOT">Bot :robot:</string>
 
     <string name="MSG_ROLE_TOO_MANY_MENTIONS">Too many mentions! This notation (without separator **|**) does not support more than one mention). Please use the notation with **|**.</string>
+    <string name="MSG_ROLE_HELP">This command allows admins to manage user roles.
+Subcommands: `add` `remove`</string>
     <string name="MSG_ROLE_NEED_MENTION">Need a mention! This notation (without separator **|**) does not support searching by name). Please use the notation with **|** or a @mention.</string>
+    <string name="MSG_ROLE_ALREADY_HAD">:information_source: One or more users already had the role you specified, but roles were still added to those who didn't have them.</string>
+    <string name="MSG_ROLE_REMOVE_SOME_DIDNT">:information_source: One or more users already didn't have the role you specified, but roles were still removed from those who had them.</string>
     <string name="MSG_ROLE_ADDED_MP">Added **{}** to {} users.</string>
     <string name="MSG_ROLE_REMOVED_MP">Removed **{}** from {} users.</string>
 
@@ -184,8 +190,9 @@ Gif command powered by **Giphy**</string>
 ```{}```</string>
     <string name="MSG_CMD_LIST_NO_PAGE">No such page! There are currently only **{}** command pages.</string>
     <string name="MSG_CMD_REMOVE_FAIL">:warning: Failed to remove command (does not exist)</string>
+    <string name="MSG_CMD_REMOVE_PARAMS">:warning: Please specify a command to remove.</string>
     <string name="MSG_CMD_LIST_TOO_LONG">Your commands are too long to display. Consider cleaning some of them or ask the bot owner to do it for you if you don't remember the commands.</string>
-    <string name="MSG_CMD_STATUS">You have **{}** out of *{}* custom commands (*{}%*)</string>
+    <string name="MSG_CMD_STATUS">:information_source:  You have **{}** / {} custom commands</string>
 
     <string name="MSG_LANG_LIST">Available languages:
 {}
