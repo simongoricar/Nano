@@ -159,7 +159,6 @@ class Fun:
 
         # Other commands
         if startswith(prefix + "kappa"):
-            # REWRITE test
             await message.channel.send(file=File("data/images/kappasmall.png", "kappa.png"))
 
             self.stats.add(IMAGE_SENT)

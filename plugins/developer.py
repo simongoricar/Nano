@@ -26,7 +26,6 @@ parser.read("settings.ini")
 
 game_list = [
     "Hi there!"
-    "(formerly AyyBot)",
     "HI MOM!",
     "@Nano",
     "fun games",
@@ -35,7 +34,6 @@ game_list = [
     "with Discord",
     "with python",
     "nano.invite",
-    "with you all",
     "party hard (▀̿Ĺ̯▀̿ ̿)",
     "nanobot.pw",
     "nanobot.pw/commands.html",

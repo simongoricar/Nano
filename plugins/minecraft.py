@@ -180,7 +180,7 @@ class Minecraft:
 
         # !mc
         if startswith(prefix + "mc"):
-            argument = message.content[len(prefix + "mc "):].strip(" ")
+            argument = message.content[len(prefix + "mc "):].strip(" ").lower()
 
             if not argument:
                 await message.channel.send(trans.get("MSG_MC_PLSARUGMENTS", lang))
@@ -228,7 +228,6 @@ class Minecraft:
                     self.stats.add(IMAGE_SENT)
                 else:
                     with open(mc.get_picture_path_by_item(data), "rb") as pic:
-                        # REWRITE test
                         await message.channel.send(details, file=File(pic))
                         self.stats.add(IMAGE_SENT)
 

@@ -48,6 +48,7 @@ commands = {
     "_unban": {"desc": "Unbans a member.", "use": "[command] [mention]", "alias": "nano.unban"},
     "nano.unban": {"desc": "Unbans a member.", "use": "[command] [mention]", "alias": "_unban"},
     "_softban": {"desc": "Temporarily bans a member (for time formatting see reminders)", "use": "[command] @mention/username | [time] or [command] @mention [time]", "alias": None},
+    "_cmd": {"desc": "Subcommands:\n`add` `remove` `status` `list`", "use": "[command]", "alias": None},
     "_cmd add": {"desc": "Adds a command to the server.", "use": "[command] command|response", "alias": None},
     "_cmd remove": {"desc": "Removes a command from the server.", "use": "[command] command", "alias": None},
     "_cmd status": {"desc": "Displays how many commands you have and how many more you can add.", "use": "[command] command", "alias": None},

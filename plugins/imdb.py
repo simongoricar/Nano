@@ -5,6 +5,7 @@ import logging
 # External library available here: https://github.com/DefaltSimon/TMDbie
 import tmdbie
 from discord import Message, errors
+from typing import Union
 
 from data.stats import MESSAGE
 from data.utils import is_valid_command, IgnoredException
@@ -42,7 +43,7 @@ class TMDb:
             log.critical("Missing api key for tmdb, disabling plugin...")
             raise RuntimeError
 
-    async def _imdb_search(self, name, message, lang):
+    async def _imdb_search(self, name, message, lang) -> Union[tmdbie.Movie, tmdbie.TVShow, tmdbie.Person]:
         if not name:
             await message.channel.send(self.trans.get("MSG_IMDB_NEED_TITLE", lang))
             raise IgnoredException
@@ -83,9 +84,8 @@ class TMDb:
             return False
 
         # !imdb
-        if startswith((prefix + "imdb"), (prefix + "tmdb")):
+        if startswith(prefix + "imdb", prefix + "tmdb"):
             # The process can take some time so we show that something is happening
-            # REWRITE test
             await message.channel.trigger_typing()
 
             cut = message.content[len(prefix + "imdb "):]
