@@ -272,7 +272,7 @@ none_ux = [
 
 
 def is_disabled(ct):
-    if ct is None:
+    if ct is None or ct == "":
         return True
 
     for a in none_ux:
@@ -327,9 +327,17 @@ def boolify(s):
 
 def decode_auto(some):
     if isinstance(some, bytes):
-        return boolify(some.decode())
-    if isinstance(some, (str, int)):
+        return decode_auto(some.decode())
+
+    if isinstance(some, str):
+        # Autoconvert ID's to int
+        if some.isnumeric():
+            return int(some)
+
         return boolify(some)
+
+    if isinstance(some, int):
+        return some
 
     if isinstance(some, dict):
         return dict(map(decode_auto, some.items()))
@@ -369,3 +377,15 @@ def is_number(string):
         return True
     except ValueError:
         return False
+
+
+specials = {
+    "%20": " ",
+}
+
+def parse_special_chars(text: str):
+    for t, rep in specials.items():
+        text = text.replace(t, rep)
+
+    return text
+

@@ -5,10 +5,10 @@ import logging
 import time
 
 from typing import Union
-from discord import Message, utils, Client, Embed, Colour, DiscordException, Object, errors as derrors
+from discord import utils, Client, Embed, Colour, DiscordException, Object, HTTPException
 
 from data.serverhandler import INVITEFILTER_SETTING, SPAMFILTER_SETTING, WORDFILTER_SETTING
-from data.utils import convert_to_seconds, matches_list, is_valid_command, StandardEmoji, decode, resolve_time, log_to_file, is_disabled, IgnoredException
+from data.utils import convert_to_seconds, matches_list, is_valid_command, StandardEmoji, decode, resolve_time, log_to_file, is_disabled, IgnoredException, parse_special_chars
 from data.stats import MESSAGE
 
 
@@ -648,7 +648,7 @@ class Admin:
 
             try:
                 await message.channel.purge(limit=amount)
-            except derrors.HTTPException:
+            except HTTPException:
                 additional = trans.get("MSG_NUKE_OLD", lang)
 
             # Show success
@@ -689,8 +689,8 @@ class Admin:
             confirm = trans.get("INFO_CONFIRM", lang)
             await message.channel.send(trans.get("MSG_BAN_USER", lang).format(user.name, confirm))
 
-            def is_author(m):
-                return m.author == message.author and m.channel == message.channel and m.content == confirm
+            def is_author(c):
+                return c.author == message.author and c.channel == message.channel and c.content == confirm
 
             try:
                 await client.wait_for("message", check=is_author, timeout=15)
@@ -828,8 +828,8 @@ class Admin:
 
                 await message.channel.send(trans.get("MSG_UNMUTE_ALL_CONFIRM", lang).format(conf))
 
-                def is_author(m):
-                    return m.author == message.author and m.channel == message.channel and m.content == confirm
+                def is_author(c):
+                    return c.author == message.author and c.channel == message.channel and c.content == confirm
 
                 try:
                     await client.wait_for("message", check=is_author, timeout=15)
@@ -863,9 +863,17 @@ class Admin:
 
         # !joinmsg
         if startswith(prefix + "joinmsg"):
-            change = message.content[len(prefix + "joinmsg "):]
+            change = message.content[len(prefix + "joinmsg "):].strip(" ")
 
-            if is_disabled(change):
+            if not change:
+                joinmsg = handler.get_var(message.guild.id, "welcomemsg")
+
+                if is_disabled(joinmsg):
+                    await message.channel.send(trans.get("MSG_JOIN_IS_DISABLED", lang))
+                else:
+                    await message.channel.send(trans.get("MSG_JOIN_CURRENT", lang).format(joinmsg))
+
+            elif is_disabled(change):
                 handler.update_var(message.guild.id, "welcomemsg", None)
                 await message.channel.send(trans.get("MSG_JOIN_DISABLED", lang))
 
@@ -875,13 +883,17 @@ class Admin:
 
         # !welcomemsg
         elif startswith(prefix + "welcomemsg"):
-            change = message.content[len(prefix + "welcomemsg "):]
+            change = message.content[len(prefix + "welcomemsg "):].strip(" ")
 
             if not change:
-                await message.channel.send(trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
-                return
+                joinmsg = handler.get_var(message.guild.id, "welcomemsg")
 
-            if is_disabled(change):
+                if is_disabled(joinmsg):
+                    await message.channel.send(trans.get("MSG_JOIN_IS_DISABLED", lang))
+                else:
+                    await message.channel.send(trans.get("MSG_JOIN_CURRENT", lang).format(joinmsg))
+
+            elif is_disabled(change):
                 handler.update_var(message.guild.id, "welcomemsg", None)
                 await message.channel.send(trans.get("MSG_JOIN_DISABLED", lang))
 
@@ -891,13 +903,17 @@ class Admin:
 
         # !banmsg
         elif startswith(prefix + "banmsg"):
-            change = message.content[len(prefix + "banmsg "):]
+            change = message.content[len(prefix + "banmsg "):].strip(" ")
 
             if not change:
-                await message.channel.send(trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
-                return
+                banmsg = handler.get_var(message.guild.id, "banmsg")
 
-            if is_disabled(change):
+                if is_disabled(banmsg):
+                    await message.channel.send(trans.get("MSG_BAN_IS_DISABLED", lang))
+                else:
+                    await message.channel.send(trans.get("MSG_BAN_CURRENT", lang).format(banmsg))
+
+            elif is_disabled(change):
                 handler.update_var(message.guild.id, "banmsg", None)
                 await message.channel.send(trans.get("MSG_BAN_DISABLED", lang))
 
@@ -907,13 +923,17 @@ class Admin:
 
         # !kickmsg
         elif startswith(prefix + "kickmsg"):
-            change = message.content[len(prefix + "kickmsg "):]
+            change = message.content[len(prefix + "kickmsg "):].strip(" ")
 
             if not change:
-                await message.channel.send(trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
-                return
+                kickmsg = handler.get_var(message.guild.id, "kickmsg")
 
-            if is_disabled(change):
+                if is_disabled(kickmsg):
+                    await message.channel.send(trans.get("MSG_KICK_IS_DISABLED", lang))
+                else:
+                    await message.channel.send(trans.get("MSG_KICK_CURRENT", lang).format(kickmsg))
+
+            elif is_disabled(change):
                 handler.update_var(message.guild.id, "kickmsg", None)
                 await message.channel.send(trans.get("MSG_KICK_DISABLED", lang))
 
@@ -923,13 +943,17 @@ class Admin:
 
         # !leavemsg
         elif startswith(prefix + "leavemsg"):
-            change = message.content[len(prefix + "leavemsg "):]
+            change = message.content[len(prefix + "leavemsg "):].strip(" ")
 
             if not change:
-                await message.channel.send(trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
-                return
+                leavemsg = handler.get_var(message.guild.id, "kickmsg")
 
-            if is_disabled(change):
+                if is_disabled(leavemsg):
+                    await message.channel.send(trans.get("MSG_LEAVE_IS_DISABLED", lang))
+                else:
+                    await message.channel.send(trans.get("MSG_LEAVE_CURRENT", lang).format(leavemsg))
+
+            elif is_disabled(change):
                 handler.update_var(message.guild.id, "leavemsg", None)
                 await message.channel.send(trans.get("MSG_LEAVE_DISABLED", lang))
 
@@ -940,7 +964,7 @@ class Admin:
         # !user
         elif startswith(prefix + "user"):
             # Selects the proper user
-            name = message.content[len(prefix + "user "):]
+            name = message.content[len(prefix + "user "):].strip(" ")
 
             if name == "":
                 member = message.author
@@ -955,7 +979,7 @@ class Admin:
             # Gets info
             name = member.name
             mid = member.id
-            bot = "Bot :robot:" if member.bot else "Person :cowboy:"
+            bot = trans.get("MSG_USERINFO_BOT", lang) if member.bot else trans.get("MSG_USERINFO_PERSON", lang)
 
             # @everyone in embeds doesn't mention
             role = "**" + str(member.top_role) + "**"
@@ -1044,13 +1068,17 @@ class Admin:
 
             trigger, resp = cut[0].strip(" "), cut[1].strip(" ")
 
+            if not trigger or not resp:
+                await message.channel.send(trans.get("MSG_CMD_EMPTY", lang))
+                return
+
             if handler.custom_command_exists(message.guild.id, trigger):
                 conf = trans.get("INFO_CONFIRM", lang)
 
                 await message.channel.send(trans.get("MSG_CMD_ALREADY_EXISTS", lang).format(conf))
 
-                def is_author(m):
-                    return m.author == message.author and m.channel == message.channel and m.content == confirm
+                def is_author(c):
+                    return c.author == message.author and c.channel == message.channel and c.content == confirm
 
                 # Wait for confirmation
                 try:
@@ -1362,7 +1390,7 @@ class Admin:
                 try:
                     await message.channel.send(sett)
                     await message.channel.send(msgs)
-                except derrors.HTTPException:
+                except HTTPException:
                     await message.channel.send(trans.get("ERROR_MSG_TOO_LONG", lang))
 
             else:
@@ -1415,7 +1443,7 @@ class Admin:
                 # Verifies channels
                 names = []
                 for ch_id in lst:
-                    channel = utils.find(lambda c: c.id == ch_id, message.guild.channels)
+                    channel = message.guild.get_channel(ch_id)
                     # If channel was deleted, remove it from the list
                     if not channel:
                         self.handler.remove_channel_blacklist(message.guild.id, ch_id)
@@ -1429,8 +1457,8 @@ class Admin:
             confirm = trans.get("INFO_CONFIRM", lang)
             await message.channel.send(trans.get("MSG_RESET_CONFIRM", lang).format(confirm))
 
-            def is_author(m):
-                return m.author == message.author and m.channel == message.channel and m.content == confirm
+            def is_author(c):
+                return c.author == message.author and c.channel == message.channel and c.content == confirm
             try:
                 await client.wait_for("message", check=is_author, timeout=15)
             except asyncio.TimeoutError:
@@ -1443,6 +1471,9 @@ class Admin:
         # nano.changeprefix
         elif startswith("nano.changeprefix"):
             pref = message.content[len("nano.changeprefix "):]
+
+            # Replaces special characters!
+            pref = parse_special_chars(pref)
 
             if not pref:
                 await message.channel.send(trans.get("MSG_PREFIX_PLS_ARGUMENTS", lang))
@@ -1471,8 +1502,8 @@ class Admin:
             async def timeout():
                 await message.channel.send(trans.get("MSG_SETUP_TIMEOUT", lang))
 
-            def must_be_author(m):
-                return m.author == message.author
+            def must_be_author(c):
+                return c.author == message.author
 
             msg_intro = trans.get("MSG_SETUP_WELCOME", lang)
             await message.channel.send(msg_intro)
