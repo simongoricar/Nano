@@ -25,7 +25,7 @@ parser = configparser.ConfigParser()
 parser.read("settings.ini")
 
 game_list = [
-    "Hi there!"
+    "Hi there!",
     "HI MOM!",
     "@Nano",
     "fun games",

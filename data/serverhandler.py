@@ -31,8 +31,8 @@ server_defaults = {
     "filterinvite": False,
     "sleeping": False,
     "welcomemsg": "Welcome to :server, :user!",
-    "kickmsg": "**:user** has been kicked.",
-    "banmsg": "**:user** has been banned.",
+    "kickmsg": None,
+    "banmsg": None,
     "leavemsg": "**:user** has left the server :cry:",
     "logchannel": None,
     "prefix": str(parser.get("Servers", "defaultprefix")),
@@ -153,6 +153,7 @@ mod_settings_map = {
 
     "invite filter": INVITEFILTER_SETTING,
     "filterinvite": INVITEFILTER_SETTING,
+    "filterinvites": INVITEFILTER_SETTING,
     "invitefilter": INVITEFILTER_SETTING,
 }
 
@@ -290,7 +291,7 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
         return bin2bool(self.redis.hdel(serv, trigger))
 
     def get_custom_commands(self, server_id: int) -> dict:
-        return decode(self.redis.hgetall("commands:{}".format(server_id)))
+        return decode(self.redis.hgetall("commands:{}".format(server_id))) or {}
 
     def get_command_amount(self, server_id: int) -> int:
         return decode(self.redis.hlen("commands:{}".format(server_id)))

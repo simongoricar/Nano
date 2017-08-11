@@ -267,13 +267,19 @@ def is_empty(path):
         return False
 
 none_ux = [
-    "none", "false", "off", "disabled", "default"
+    "none", "false", "off", "disabled", "default", "disable"
 ]
 
 
-def is_disabled(ct):
+def is_disabled(ct, lang=None):
     if ct is None or ct == "":
         return True
+
+    # Language-sensitive disabling
+    disables = list(none_ux)
+    if lang:
+        disables.append(tr.get("INFO_DISABLED"))
+        disables.append(tr.get("INFO_DISABLED_A"))
 
     for a in none_ux:
         if str(ct).lower().startswith(a):

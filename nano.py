@@ -108,7 +108,7 @@ class Nano(metaclass=Singleton):
                                   on_member_join=[], on_member_remove=[], on_member_update=[], on_member_ban=[],
                                   on_member_unban=[], on_server_remove=[], on_error=[], on_shutdown=[],
                                   on_plugins_loaded=[], on_reaction_add=[])
-        self.plugin_events_ = dict(self.plugin_events)
+        self._plugin_events = dict(self.plugin_events)
 
         # Updates the plugin list
         self.update_plugins()
@@ -186,7 +186,7 @@ class Nano(metaclass=Singleton):
             }
 
             for event, importance in events.items():
-                self.plugin_events_[event].append({"plugin": plugin, "importance": importance})
+                self._plugin_events[event].append({"plugin": plugin, "importance": importance})
 
         log.debug("Registered plugins: {}".format([str(p).rstrip(".py") for p in self.plugin_names]))
 
@@ -216,7 +216,7 @@ class Nano(metaclass=Singleton):
             await getattr(c_plug.get("instance"), ON_SHUTDOWN)()
 
         for event, imp in c_plug.get("events").items():
-            self.plugin_events_[event].remove({"plugin": plugin, "importance": imp})
+            self._plugin_events[event].remove({"plugin": plugin, "importance": imp})
 
         try:
             c_plug = importlib.reload(c_plug.get("plugin"))
@@ -264,7 +264,7 @@ class Nano(metaclass=Singleton):
         }
 
         for event, importance in events.items():
-            self.plugin_events_[event].append({"plugin": plugin, "importance": importance})
+            self._plugin_events[event].append({"plugin": plugin, "importance": importance})
 
         self._parse_priorities()
         # Call ON_PLUGINS_LOADED if the plugin requires it
@@ -276,7 +276,7 @@ class Nano(metaclass=Singleton):
     def _parse_priorities(self):
         log.info("Parsing priorities...")
 
-        pe_copy = copy.deepcopy(self.plugin_events_)
+        pe_copy = copy.deepcopy(self._plugin_events)
         for element, thing in pe_copy.items():
             # Skip if empty
             if not element or not thing:
