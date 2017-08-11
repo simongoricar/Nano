@@ -72,7 +72,7 @@ class Reporter:
 
 class NanoPlugin:
     name = "Bug Reporter"
-    version = "5"
+    version = "6"
 
     handler = Reporter
     events = {

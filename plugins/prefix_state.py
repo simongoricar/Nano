@@ -155,7 +155,7 @@ class PrefixState:
 
 class NanoPlugin:
     name = "Prefix and state handler"
-    version = "20"
+    version = "21"
 
     handler = PrefixState
     events = {

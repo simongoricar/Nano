@@ -139,7 +139,7 @@ class Conversation:
 
 class NanoPlugin:
     name = "Conversation Commands"
-    version = "7"
+    version = "8"
 
     handler = Conversation
     events = {

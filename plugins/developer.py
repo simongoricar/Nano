@@ -342,7 +342,7 @@ class DevFeatures:
 
 class NanoPlugin:
     name = "Developer Commands"
-    version = "24"
+    version = "25"
 
     handler = DevFeatures
     events = {

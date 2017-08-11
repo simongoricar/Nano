@@ -207,7 +207,7 @@ class TMDb:
 
 class NanoPlugin:
     name = "TMDb Commands"
-    version = "15"
+    version = "16"
 
     handler = TMDb
     events = {

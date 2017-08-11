@@ -342,7 +342,7 @@ class Commons:
 
 class NanoPlugin:
     name = "Common Commands"
-    version = "23"
+    version = "24"
 
     handler = Commons
     events = {

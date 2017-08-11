@@ -406,7 +406,7 @@ class ServerManagement:
 
 class NanoPlugin:
     name = "Moderator"
-    version = "26"
+    version = "27"
 
     handler = ServerManagement
     events = {

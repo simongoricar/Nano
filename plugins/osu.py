@@ -135,7 +135,7 @@ class Osu:
 
 class NanoPlugin:
     name = "osu!"
-    version = "6"
+    version = "7"
 
     handler = Osu
     events = {

@@ -179,7 +179,7 @@ class Definitions:
 
 class NanoPlugin:
     name = "Wiki/Urban Commands"
-    version = "7"
+    version = "8"
 
     handler = Definitions
     events = {

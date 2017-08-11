@@ -310,7 +310,7 @@ class Vote:
 
 class NanoPlugin:
     name = "Voting"
-    version = "25"
+    version = "26"
 
     handler = Vote
     events = {
