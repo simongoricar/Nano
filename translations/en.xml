@@ -127,12 +127,29 @@ Gif command powered by **Giphy**</string>
 
     <string name="MSG_JOIN">Join message has been updated :smile:</string>
     <string name="MSG_JOIN_DISABLED">Join message has been disabled :white_check_mark:</string>
+    <string name="MSG_JOIN_IS_DISABLED">:information_source: Join message is currently disabled.</string>
     <string name="MSG_BAN">Ban message has been updated :smile:</string>
     <string name="MSG_BAN_DISABLED">Ban message has been disabled :white_check_mark:</string>
+    <string name="MSG_BAN_IS_DISABLED">:information_source: Ban message is currently disabled.</string>
     <string name="MSG_KICK">Kick message has been updated :smile:</string>
     <string name="MSG_KICK_DISABLED">Kick message has been disabled :white_check_mark:</string>
+    <string name="MSG_KICK_IS_DISABLED">:information_source: Kick message is currently disabled.</string>
     <string name="MSG_LEAVE">Leave message has been updated :smile:</string>
     <string name="MSG_LEAVE_DISABLED">Leave message has been disabled :white_check_mark:</string>
+    <string name="MSG_LEAVE_IS_DISABLED">:information_source: Leave message is currently disabled.</string>
+
+    <string name="MSG_JOIN_CURRENT">:gear: Current welcome message:
+
+```{}```</string>
+    <string name="MSG_BAN_CURRENT">:gear: Current ban message:
+
+```{}```</string>
+    <string name="MSG_LEAVE_CURRENT">:gear: Current leave message:
+
+```{}```</string>
+    <string name="MSG_KICK_CURRENT">:gear: Current kick message:
+
+```{}```</string>
 
     <string name="MSG_USERINFO_STATUS">Status</string>
     <string name="MSG_USERINFO_MENTION">Mention</string>
@@ -143,6 +160,9 @@ Gif command powered by **Giphy**</string>
     <string name="MSG_USERINFO_DATEGOT">Data got at {} UTC</string>
     <string name="MSG_USERINFO_USER">**User info:**</string>
 
+    <string name="MSG_USERINFO_PERSON">Person :cowboy:</string>
+    <string name="MSG_USERINFO_BOT">Bot :robot:</string>
+
     <string name="MSG_ROLE_TOO_MANY_MENTIONS">Too many mentions! This notation (without separator **|**) does not support more than one mention). Please use the notation with **|**.</string>
     <string name="MSG_ROLE_NEED_MENTION">Need a mention! This notation (without separator **|**) does not support searching by name). Please use the notation with **|** or a @mention.</string>
     <string name="MSG_ROLE_ADDED_MP">Added **{}** to {} users.</string>
@@ -151,6 +171,7 @@ Gif command powered by **Giphy**</string>
     <string name="MSG_CMD_WRONG_PARAMS">Incorrect parameters.
 `{}cmd add trigger|response`</string>
     <string name="MSG_CMD_LIMIT_EXCEEDED">:warning: You have reached the maximum limit of custom commands ({}).</string>
+    <string name="MSG_CMD_EMPTY">:warning: Both trigger and response must have text.</string>
     <string name="MSG_CMD_NAME_TOO_LONG">:warning: Your command name is too long (max. {}, you got {})</string>
     <string name="MSG_CMD_RESPONSE_TOO_LONG">:warning: Your command response is too long (max. {}, you got {})</string>
     <string name="MSG_CMD_ALREADY_EXISTS">This command already exists! Do you want to overwrite it? Type '{}' to confirm.</string>
