@@ -4,7 +4,7 @@ import time
 from datetime import timedelta, datetime
 from random import randint
 
-from discord import Embed, Forbidden
+from discord import Embed, Forbidden, utils
 
 from data.stats import MESSAGE, PING
 from data.utils import is_valid_command, add_dots
@@ -102,10 +102,10 @@ class Commons:
         await log_channel.send(embed=embed)
 
     @staticmethod
-    def at_everyone_filter(content, author):
+    def at_everyone_filter(content, author, force_remove=False):
         # See if the user is allowed to do @everyone
         # Removes mentions if user doesn't have the permission to mention
-        if not author.guild_permissions.mention_everyone:
+        if not author.guild_permissions.mention_everyone or force_remove is True:
             content = str(content).replace("@everyone", "").replace("@here", "")
 
         return content
@@ -159,10 +159,26 @@ class Commons:
 
         # !hello
         if startswith(prefix + "hello"):
+            argument = message.content[len(prefix + "hello "):]
+
+            # Parse mentions or name
+            if argument:
+                if len(message.mentions) > 0:
+                    mention = message.mentions[0].mention
+                else:
+                    # Find user
+                    usr = utils.find(lambda a: a.name == argument, message.guild.members)
+                    if not usr:
+                        mention = message.author.mention
+                    else:
+                        mention = usr.mention
+            else:
+                mention = message.author.mention
+
             if len(message.mentions) >= 1:
-                await message.channel.send(trans.get("INFO_HI", lang).format(message.mentions[0].mention))
+                await message.channel.send(trans.get("INFO_HI", lang).format(mention))
             elif len(message.mentions) == 0:
-                await message.channel.send(trans.get("INFO_HI", lang).format(message.author.mention))
+                await message.channel.send(trans.get("INFO_HI", lang).format(mention))
 
         # !uptime
         elif startswith(prefix + "uptime"):
@@ -173,7 +189,7 @@ class Commons:
 
         # !nano, nano.info
         elif startswith((prefix + "nano", "nano.info")):
-            await message.channel.send(trans.get("INFO_GENERAL", lang).replace("<version>", self.nano.version))
+            await message.channel.send(trans.get("INFO_GENERAL", lang).format(p=prefix, ver=self.nano.version))
 
         # !github
         elif startswith(prefix + "github"):
@@ -245,13 +261,17 @@ class Commons:
                 await message.channel.send(trans.get("MSG_DECIDE_NO_ARGS", lang))
                 return
 
-            if len(cut.split("|")) == 1:
+            # If | is not used, try spaces
+            options = cut.split("|")
+            if len(options) == 1:
+                options = cut.split(" ")
+
+            if len(options) == 1:
                 await message.channel.send(trans.get("MSG_DECIDE_SPECIAL", lang).format(cut))
 
             else:
-                split = cut.split("|")
-                rn = randint(0, len(split) - 1)
-                await message.channel.send(trans.get("MSG_DECIDE_NORMAL", lang).format(split[rn]))
+                rn = randint(0, len(options) - 1)
+                await message.channel.send(trans.get("MSG_DECIDE_NORMAL", lang).format(options[rn]))
 
         # !8ball
         elif startswith(prefix + "8ball"):
@@ -342,7 +362,7 @@ class Commons:
 
 class NanoPlugin:
     name = "Common Commands"
-    version = "24"
+    version = "25"
 
     handler = Commons
     events = {

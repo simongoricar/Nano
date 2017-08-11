@@ -49,11 +49,14 @@
     <string name="INFO_DISABLED">Disabled</string>
     <string name="INFO_DISABLED_A">Disable</string>
     <string name="INFO_GENERAL">**Hey! My name is Nano!**
-I have a GitHub repo! `!github`
-My current version is **&lt;version&gt;**.
-I have been coded by *DefaltSimon*.
 
-Gif command powered by **Giphy**</string>
+I have a GitHub repo, if you want to look at my code: `{p}github`
+
+:inbox_tray: The current version is **{ver}**.
+
+:spy: I have been coded by **DefaltSimon**.
+
+Also: `{p}gif` command powered by **Giphy**</string>
     <string name="INFO_GITHUB">Nano's code is available on **GitHub**: https://github.com/DefaltSimon/Nano</string>
     <string name="INFO_INVITE">You wanna invite Nano to your server? Great!
 **Just follow the link:** &lt;link&gt;</string>
@@ -326,8 +329,8 @@ Admin and mod commands can only be used by people with a role named "Nano Admin"
 You and all admins can also add/remove/list custom commands with `>cmd add/remove/list command|response`.
 For a list of all commands and their explanations, use `>cmds`.</string>
 
-    <string name="MSG_PING_MEASURING">Measuring...</string>
-    <string name="MSG_PING_RESULT">**Pong!** (lag: {} ms, reaction: {} ms)</string>
+    <string name="MSG_PING_MEASURING">:ping_pong: Measuring...</string>
+    <string name="MSG_PING_RESULT">:ping_pong: **Pong!** (lag: {} ms, reaction: {} ms)</string>
     <string name="MSG_LOGPOST_SAY">Executed {}say</string>
     <string name="MSG_UPTIME">I have been tirelessly answering people for **{} days, {} hours, {} minutes and {} seconds!** :open_mouth:</string>
     <string name="MSG_ROLL">{}, you rolled {}</string>

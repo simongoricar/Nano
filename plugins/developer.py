@@ -9,7 +9,7 @@ from datetime import datetime
 from random import shuffle
 from shutil import copy2
 
-from discord import Message, Game, utils, Embed, Colour
+from discord import Game, utils, Embed, Colour
 
 from data.stats import MESSAGE
 from data.utils import is_valid_command, log_to_file, StandardEmoji
@@ -62,7 +62,10 @@ class StatusRoller:
         log.debug("Changing status to {}".format(name))
         log_to_file("Changing status to {}".format(name))
 
-        await self.client.change_presence(game=Game(name=str(name)))
+        shards = list(self.client.shards.keys())
+        for shard_id in shards:
+            customized = name + " | shard {}".format(shard_id + 1)
+            await self.client.change_presence(game=Game(name=customized), shard_id=shard_id)
 
     async def run(self):
         await self.client.wait_until_ready()
@@ -174,8 +177,6 @@ class DevFeatures:
         prefix = kwargs.get("prefix")
         lang = kwargs.get("lang")
 
-        assert isinstance(message, Message)
-
         # Check if this is a valid command
         if not is_valid_command(message.content, commands, prefix=prefix):
             return
@@ -194,17 +195,6 @@ class DevFeatures:
         if not self.handler.is_bot_owner(message.author.id):
             await message.channel.send(self.trans.get("PERM_OWNER", lang))
             return
-
-
-        # nano.dev.get_servers
-        if startswith("nano.dev.get_servers"):
-            # fixme message is still too long
-            servers = ["{} ({} u) - `{}`".format(srv.name, srv.member_count, srv.id) for srv in client.guilds]
-
-            final = ["\n".join(a) for a in [servers[i:i+1000] for i in range(0, len(servers), 1000)]]
-
-            for chunk in final:
-                await message.channel.send(chunk)
 
         # nano.dev.server_info [id]
         elif startswith("nano.dev.server_info"):
@@ -341,7 +331,7 @@ class DevFeatures:
 
 class NanoPlugin:
     name = "Developer Commands"
-    version = "25"
+    version = "26"
 
     handler = DevFeatures
     events = {

@@ -3,7 +3,7 @@ import time
 import configparser
 from datetime import datetime
 
-from discord import Message, Embed, Colour
+from discord import Embed, Colour
 
 from data.stats import MESSAGE, HELP, WRONG_ARG
 from data.utils import is_valid_command
@@ -114,8 +114,6 @@ class Help:
 
         prefix = kwargs.get("prefix")
         lang = kwargs.get("lang")
-
-        assert isinstance(message, Message)
 
         # Check if this is a valid command
         if not is_valid_command(message.content, commands, prefix=prefix):
