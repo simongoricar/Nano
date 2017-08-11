@@ -4,7 +4,7 @@ import importlib
 import logging
 import time
 
-from discord import Client, DiscordException
+from discord import DiscordException
 
 from data.stats import MESSAGE, WRONG_ARG
 from data.utils import resolve_time, convert_to_seconds, is_valid_command, decode, gen_id, IgnoredException
@@ -152,11 +152,11 @@ class RedisReminderHandler:
 
         # Add the reminder to the list
         rm_id = gen_id(length=12)
-        tree = {"full_time": tim, "content": content, "receiver": channel.id, "server": channel.server.id, "time_created": int(t),
+        tree = {"full_time": tim, "content": content, "receiver": channel.id, "server": channel.guild.id, "time_created": int(t),
                 "time_target": int(tim + t), "author": author.id, "raw": raw, "type": reminder_type}
         field = self.json.dumps(tree)
 
-        log.info("New reminder: {} to {}".format(raw, channel.id))
+        log.info("New reminder by {}".format(author.id))
 
         return self.redis.hset(author.id, rm_id, field)
 
@@ -259,13 +259,10 @@ class Reminder:
         return r_time, text
 
     async def on_message(self, message, **kwargs):
-        client = self.client
         trans = self.trans
 
         prefix = kwargs.get("prefix")
         lang = kwargs.get("lang")
-
-        assert isinstance(client, Client)
 
         # Check if this is a valid command
         if not is_valid_command(message.content, commands, prefix=prefix):
@@ -291,7 +288,8 @@ class Reminder:
                 return
 
 
-            resp = self.reminder.set_reminder(message.author, message.author, text, r_time, lang, reminder_type=REMINDER_PERSONAL)
+            resp = self.reminder.set_reminder(message.author, message.author, text,
+                                              r_time, lang, reminder_type=REMINDER_PERSONAL)
 
             # Too many reminders going on
             if resp == -1:

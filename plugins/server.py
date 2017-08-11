@@ -279,17 +279,18 @@ class ServerManagement:
             embed.add_field(name=trans.get("MSG_SERVER_ROLES", lang),
                             value=trans.get("MSG_SERVER_ROLES_L", lang).format(len(message.guild.roles) - 1))
 
+            owner = message.guild.owner
+
             embed.add_field(name=trans.get("MSG_SERVER_OWNER", lang),
-                            value=trans.get("MSG_SERVER_OWNER_L", lang).format(message.guild.owner.name,
-                                                                               message.guild.owner.discriminator,
-                                                                               message.guild.owner.id))
+                            value=trans.get("MSG_SERVER_OWNER_L", lang).format(owner.name,
+                                                                               owner.discriminator,
+                                                                               owner.id))
 
             await message.channel.send(trans.get("MSG_SERVER_INFO", lang), embed=embed)
 
     async def on_member_join(self, member, **kwargs):
         lang = kwargs.get("lang")
 
-        # TODO make more dynamic
         replacement_logic = {
             ":user": member.mention,
             ":username": member.name,

@@ -276,12 +276,10 @@ class Vote:
                 choice = int(message.content[len(prefix + "vote "):]) - 1
             # Cannot convert to int
             except ValueError:
-                # REWRITE test
                 await message.add_reaction(BLOCK_EMOJI)
 
                 m = await message.channel.send(trans.get("MSG_VOTING_NOT_NUMBER", lang))
                 await asyncio.sleep(2)
-                # REWRITE test
                 await m.delete()
                 return
 
@@ -289,27 +287,22 @@ class Vote:
 
             # User already voted
             if res == -1:
-                # REWRITE test
                 await message.add_reaction(BLOCK_EMOJI)
 
                 msg = await message.channel.send(trans.get("MSG_VOTING_CHEATER", lang))
                 await asyncio.sleep(2)
-                # REWRITE test
                 await msg.delete()
 
             # No such option
             elif not res:
-                # REWRITE test
                 await message.add_reaction(X_EMOJI)
 
                 msg = await message.channel.send(trans.get("MSG_VOTING_INVALID_NUMBER", lang))
                 await asyncio.sleep(2)
-                # REWRITE test
                 await msg.delete()
 
             # Everything ok, was added
             else:
-                # REWRITE test
                 await message.add_reaction(OK_EMOJI)
 
             self.stats.add(VOTE)

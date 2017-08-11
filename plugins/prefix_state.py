@@ -2,7 +2,7 @@
 import configparser
 import logging
 
-from discord import Message, TextChannel
+from discord import TextChannel
 
 from data.stats import SLEPT
 
@@ -33,7 +33,6 @@ class PrefixState:
 
     async def on_message(self, message, **_):
         trans = self.trans
-        assert isinstance(message, Message)
 
         # Ignore your own messages
         if message.author == self.client.user:
@@ -99,16 +98,6 @@ class PrefixState:
         # Quit if the bot is sleeping
         if self.handler.is_sleeping(message.guild.id):
             return "return"
-
-        # # TODO not needed in rewrite
-        # if not isinstance(message.author, Member):
-        #     user = message.guild.get_member(message.author.id)
-        #
-        #     if user:
-        #         # Sometimes monkeypatching is needed
-        #         message.author = user
-        #         return [("add_var", dict(prefix=pref, lang=lang)),
-        #                 ("set_arg", {0: message})]
 
         return "add_var", dict(prefix=pref, lang=lang)
 

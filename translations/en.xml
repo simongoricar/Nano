@@ -439,6 +439,7 @@ Id: {}:{}```</string>
     <string name="MSG_MOD_SWEARING">swearing</string>
     <string name="MSG_MOD_INVITE">invite link</string>
     <string name="MSG_OSU_ERROR">Something went wrong... :thinking:</string>
+    <string name="MSG_OSU_NO_NAME">Please specify a username to search for.</string>
     <string name="MSG_OSU_TITLE">{} (level {})</string>
     <string name="MSG_OSU_DESC">**Rank**:
     **Global**:            #{}
@@ -530,7 +531,7 @@ PP: **{}** (played {} songs)</string>
     <string name="MSG_SERVER_VL_LOW">Low</string>
     <string name="MSG_SERVER_VL_MEDIUM">Medium</string>
     <string name="MSG_SERVER_VL_HIGH">High (╯°□°）╯︵ ┻━┻</string>
-    <string name="MSG_SERVER_ID">"ID: *{}*"</string>
+    <string name="MSG_SERVER_ID">ID: *{}*</string>
     <string name="MSG_SERVER_DATE_CREATED">Server created at {}</string>
     <string name="MSG_SERVER_MEMBERS">Members [{} total]</string>
     <string name="MSG_SERVER_MEMBERS_L">{} online</string>
@@ -540,21 +541,23 @@ PP: **{}** (played {} songs)</string>
     <string name="MSG_SERVER_ROLES_L">{} custom</string>
     <string name="MSG_SERVER_OWNER">Server Owner</string>
     <string name="MSG_SERVER_OWNER_L">{}#{} ID:{}</string>
-    <string name="MSG_SERVER_INFO">**Server info:**</string>
+    <string name="MSG_SERVER_INFO">:book: **Server info:**</string>
 
     <string name="MSG_STEAM_INVALID_URL">Please put in the **ending** of a ("vanity") URL, not the *entire* URL!</string>
+    <string name="MSG_STEAM_INVALID_PARAMS">Invalid commands usage, check `{}help steam`</string>
+    <string name="MSG_STEAM_NEED_URL">Please provide an url/name.</string>
     <string name="MSG_STEAM_PRIVATE">Something went wrong. User could have a private profile.</string>
     <string name="MSG_STEAM_PRIVATE_FRIENDS">Could not fetch friends (user probably has a private profile)</string>
     <string name="MSG_STEAM_PRIVATE_GAMES">Could not fetch games (user probably has a private profile)</string>
-    <string name="MSG_STEAM_FRIENDS">*User:* **{}**
+    <string name="MSG_STEAM_FRIENDS">:video_game: **{}**
 
 *Friends:* {}</string>
-    <string name="MSG_STEAM_GAMES">*User:* **{}**:
+    <string name="MSG_STEAM_GAMES">:video_game: **{}**:
 
 *Owned games:* {}</string>
     <string name="MSG_STEAM_GAMES_TOO_MANY">This message can not fit onto Discord: **user has too many games to display (lol)**</string>
     <string name="MSG_STEAM_FRIENDS_TOO_MANY">This message can not fit onto Discord: **user has too many friends to display (lol)**</string>
-    <string name="MSG_STEAM_USER_INFO">User: **{}**
+    <string name="MSG_STEAM_USER_INFO">:video_game: **{}**
 ```css
 Status: {}
 Level: {}
@@ -568,7 +571,7 @@ Direct link: http://steamcommunity.com/id/{}/</string>
 
     <string name="MSG_TF_UNAVAILABLE">This command is currently unavailable. Apologies.</string>
     <string name="MSG_TF_NO_SUCH_ITEM">**No item** with that name could be found.</string>
-    <string name="MSG_TF_LIST">**{}** *(on bp.tf)*
+    <string name="MSG_TF_LIST">:scales: **{}** *(on bp.tf)*
 
 {}</string>
 

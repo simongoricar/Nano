@@ -103,13 +103,30 @@ class Steam:
             return False
 
         if startswith(prefix + "steam"):
-            if startswith(prefix + "steam friends "):
-                uid = str(message.content)[len(prefix + "steam friends "):]
+            await message.channel.trigger_typing()
 
-                # Friend search
-                await client.send_typing(message.channel)
+            cut = message.content[len(prefix + "steam "):].strip(" ")
+
+            try:
+                subcommand, argument = cut.split(" ", maxsplit=1)
+            # In case there are no parameters
+            except ValueError:
+                # Check if no subcommand - valid
+                # If there's a subcommand, but no argument, fail
+                if not cut.strip(" "):
+                    await message.channel.send(trans.get("MSG_STEAM_INVALID_PARAMS", lang).format(prefix))
+                    return
+
+                subcommand, argument = cut, ""
+
+            # !steam friends
+            if subcommand == "friends":
+                if not argument:
+                    await message.channel.send(trans.get("MSG_STEAM_NEED_URL", lang))
+                    return
+
                 try:
-                    username, friends = await self.steam.get_friends(uid)
+                    username, friends = await self.steam.get_friends(argument)
                 except ValueError:
                     await message.channel.send(trans.get("MSG_STEAM_INVALID_URL", lang))
                     return
@@ -131,14 +148,15 @@ class Steam:
 
                 await message.channel.send(trans.get("MSG_STEAM_FRIENDS", lang).format(username, ", ".join(friends)))
 
-            elif startswith(prefix + "steam games"):
-                uid = str(message.content)[len(prefix + "steam games "):]
+            # !steam games
+            elif subcommand == "games":
+                if not argument:
+                    await message.channel.send(trans.get("MSG_STEAM_NEED_URL", lang))
+                    return
 
                 # Game search
-                await client.send_typing(message.channel)
-
                 try:
-                    username, games = await self.steam.get_owned_games(uid)
+                    username, games = await self.steam.get_owned_games(argument)
                 except ValueError:
                     await message.channel.send(trans.get("MSG_STEAM_INVALID_URL", lang))
                     return
@@ -163,14 +181,14 @@ class Steam:
                 except HTTPException:
                     await message.channel.send(trans.get("MSG_STEAM_GAMES_TOO_MANY", lang))
 
-            elif startswith(prefix + "steam user "):
-                uid = str(message.content)[len(prefix + "steam user "):]
+            elif subcommand == "user":
+                if not argument:
+                    await message.channel.send(trans.get("MSG_STEAM_NEED_URL", lang))
+                    return
 
                 # Basic search
-                await client.send_typing(message.channel)
-
                 try:
-                    steam_user = await self.steam.get_user(uid)
+                    steam_user = await self.steam.get_user(argument)
                 except ValueError:
                     await message.channel.send(trans.get("MSG_STEAM_INVALID_URL", lang))
                     return
@@ -186,7 +204,7 @@ class Steam:
                 state = trans.get("MSG_STEAM_ONLINE", lang) if steam_user.state else trans.get("MSG_STEAM_OFFLINE", lang)
 
                 try:
-                    info = trans.get("MSG_STEAM_USER_INFO", lang).format(steam_user.name, state, steam_user.level, len(steam_user.games), len(steam_user.friends), uid)
+                    info = trans.get("MSG_STEAM_USER_INFO", lang).format(steam_user.name, state, steam_user.level, len(steam_user.games), len(steam_user.friends), argument)
                 except AttributeError:
                     await message.channel.send(trans.get("MSG_STEAM_PRIVATE", lang))
                     return
@@ -197,7 +215,7 @@ class Steam:
                 else:
                     await message.channel.send(info)
 
-            elif startswith(prefix + "steam") or startswith(prefix + "steam help"):
+            elif subcommand == "help":
                 await message.channel.send(trans.get("MSG_STEAM_HELP", lang).replace("_", prefix))
 
 

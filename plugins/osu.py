@@ -67,8 +67,14 @@ class Osu:
 
         if startswith(prefix + "osu"):
             username = message.content[len(prefix + "osu "):]
+
+            if not username:
+                await message.channel.send(trans.get("MSG_OSU_NO_NAME", lang))
+                return
+
             t_start = time.time()
 
+            await message.channel.trigger_typing()
             user = await self.osu.get_user(username)
 
             if not user:

@@ -371,10 +371,11 @@ class TeamFortress:
 
             ls = []
             for qu in item.get_all_qualities():
-                down = qu.get(list(qu.keys())[0])
-                dt = "__**{}**__: `{} {}`".format(get_quality_name(list(qu.keys())[0]), down.get("price").get("value"),
-                                                  "ref" if down.get("price").get("currency") == "metal" else down.get( "price").get("currency"))
-                ls.append(dt)
+                v_data = qu.get(list(qu.keys())[0])
+                quality = get_quality_name(list(qu.keys())[0])
+                currency = "ref" if v_data.get("price").get("currency") == "metal" else v_data.get("price").get("currency")
+
+                ls.append("__**{}**__: `{} {}`".format(quality, v_data.get("price").get("value"), currency))
 
             det = trans.get("MSG_TF_LIST", lang).format(item.name, "\n".join(ls))
             await message.channel.send(det)
