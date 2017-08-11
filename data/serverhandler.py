@@ -88,13 +88,10 @@ class ServerHandler:
         return redis_ip, redis_port, redis_pass
 
     @classmethod
-    def get_handler(cls, legacy: bool = False) -> "RedisServerHandler":
+    def get_handler(cls) -> "RedisServerHandler":
         # Factory method
-        if legacy:
-            raise NotImplementedError
-        else:
-            redis_ip, redis_port, redis_pass = cls.get_redis_credentials()
-            return RedisServerHandler(redis_ip, redis_port, redis_pass)
+        redis_ip, redis_port, redis_pass = cls.get_redis_credentials()
+        return RedisServerHandler(redis_ip, redis_port, redis_pass)
 
     # Permission checker
     @staticmethod

@@ -1,9 +1,8 @@
 # coding=utf-8
 import os
-import importlib
 import configparser
 import logging
-# yaml is a conditional import
+import redis
 from .utils import decode
 
 __author__ = "DefaltSimon"
@@ -33,10 +32,36 @@ PRAYER = "prayerssaid"
 stat_types = [MESSAGE, WRONG_ARG, SERVER_LEFT, SLEPT, WRONG_PERMS, HELP, IMAGE_SENT, VOTE, PING, SUPPRESS, DOWNLOAD, PRAYER]
 
 
-def get_NanoStats(legacy=False):
-    if legacy:
-        raise NotImplementedError
-    else:
+# Regarding RedisNanoStats
+# Stats are saved in a hash => stats
+
+
+class RedisNanoStats:
+    __slots__ = (
+        "_redis", "redis"
+    )
+
+    def __init__(self, redis_ip, redis_port, redis_pass):
+        self.redis = redis.StrictRedis(host=redis_ip, port=redis_port, password=redis_pass)
+
+        try:
+            self.redis.ping()
+        except self._redis.ConnectionError:
+            log.critical("Could not connect to Redis db!")
+            return
+
+        # Set up the hash if it does not exist
+        if not decode(self.redis.exists("stats")):
+            types = {typ: 0 for typ in stat_types}
+            self.redis.hmset("stats", types)
+
+            log.info("Enabled: hash 'stats' created")
+
+        else:
+            log.info("Enabled: hash found")
+
+    @classmethod
+    def instantiate(cls) -> "RedisNanoStats":
         setup_type = 1 if par.get("Redis", "setup") == "openshift" else 2
 
         if setup_type == 1:
@@ -58,36 +83,6 @@ def get_NanoStats(legacy=False):
                 redis_pass = None
 
         return RedisNanoStats(redis_ip, redis_port, redis_pass)
-
-
-# Regarding RedisNanoStats
-# Stats are saved in a hash => stats
-
-
-class RedisNanoStats:
-    __slots__ = (
-        "_redis", "redis"
-    )
-
-    def __init__(self, redis_ip, redis_port, redis_pass):
-        self._redis = importlib.import_module("redis")
-        self.redis = self._redis.StrictRedis(host=redis_ip, port=redis_port, password=redis_pass)
-
-        try:
-            self.redis.ping()
-        except self._redis.ConnectionError:
-            log.critical("Could not connect to Redis db!")
-            return
-
-        # Set up the hash if it does not exist
-        if not decode(self.redis.exists("stats")):
-            types = {typ: 0 for typ in stat_types}
-            self.redis.hmset("stats", types)
-
-            log.info("Enabled: hash 'stats' created")
-
-        else:
-            log.info("Enabled: hash found")
 
     def add(self, stat_type):
         if stat_type in stat_types:

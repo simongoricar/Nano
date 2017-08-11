@@ -246,7 +246,6 @@ class DevFeatures:
                 await message.channel.send("Not a number.")
                 return
 
-            # REWRITE test
             srv = await self.client.get_guild(sid)
             await srv.leave()
             await message.channel.send("Left {}".format(srv.id))

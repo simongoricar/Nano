@@ -75,9 +75,8 @@ client = discord.AutoShardedClient(loop=loop)
 log.info("Initializing ServerHandler and NanoStats...")
 
 # Setup the server data and stats
-use_legacy = not parser.get("Storage", "type") == "redis"
-handler = serverhandler.ServerHandler.get_handler(legacy=use_legacy)
-stats = bot_stats.get_NanoStats(legacy=use_legacy)
+handler = serverhandler.ServerHandler.get_handler()
+stats = bot_stats.RedisNanoStats.instantiate()
 trans = TranslationManager()
 
 # Singleton metaclass
@@ -165,7 +164,6 @@ class Nano(metaclass=Singleton):
                                handler=handler,
                                nano=self,
                                stats=stats,
-                               legacy=use_legacy,
                                trans=trans)
 
             except RuntimeError:

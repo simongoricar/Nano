@@ -32,7 +32,7 @@ if not parser.get("Storage", "type") == "redis":
 init = time.monotonic()
 
 print("Verifying server data...")
-red = ServerHandler.get_handler(legacy=False)
+red = ServerHandler.get_handler()
 
 config_keys = server_defaults.keys()
 
