@@ -4,7 +4,7 @@ import importlib
 import logging
 import time
 
-from discord import Client, DiscordException, Object, User
+from discord import Client, DiscordException
 
 from data.stats import MESSAGE, WRONG_ARG
 from data.utils import resolve_time, convert_to_seconds, is_valid_command, decode, gen_id, IgnoredException
@@ -223,7 +223,7 @@ class Reminder:
     async def on_plugins_loaded(self):
         self.filter = self.nano.get_plugin("commons").get("instance").at_everyone_filter
 
-    async def parse_parameters(self, message, cut_length, lang, prefix, fail_msg):
+    async def parse_parameters(self, message, cut_length, lang, fail_msg):
         args = message.content[cut_length:].split(":")
         if len(args) < 2:
             # Try notation with "to" or equivalent in current language
@@ -284,7 +284,7 @@ class Reminder:
         if startswith(prefix + "remind me in"):
             try:
                 r_time, text = await self.parse_parameters(message, len(prefix) + 13,
-                                                           lang, prefix, trans.get("MSG_REMINDER_WU_ME", lang).format(prefix))
+                                                           lang, trans.get("MSG_REMINDER_WU_ME", lang).format(prefix))
             # Raised when reminder content is too long
             except ValueError:
                 await message.channel.send(trans.get("MSG_REMINDER_TOO_LONG_CONTENT", lang).format(REM_MAX_CONTENT))
@@ -309,7 +309,7 @@ class Reminder:
         elif startswith(prefix + "remind here in"):
             try:
                 r_time, text = await self.parse_parameters(message, len(prefix) + 13,
-                                                           lang, prefix, trans.get("MSG_REMINDER_WU_HERE", lang).format(prefix))
+                                                           lang, trans.get("MSG_REMINDER_WU_HERE", lang).format(prefix))
             # Raised when reminder content is too long
             except ValueError:
                 await message.channel.send(trans.get("MSG_REMINDER_TOO_LONG_CONTENT", lang).format(REM_MAX_CONTENT))

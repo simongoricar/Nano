@@ -3,7 +3,7 @@ import time
 import configparser
 from datetime import datetime
 
-from discord import Message, Embed, Colour, utils
+from discord import Message, Embed, Colour
 
 from data.stats import MESSAGE, HELP, WRONG_ARG
 from data.utils import is_valid_command
@@ -110,7 +110,6 @@ class Help:
                     self.commands[command] = info
 
     async def on_message(self, message, *_, **kwargs):
-        client = self.client
         trans = self.trans
 
         prefix = kwargs.get("prefix")

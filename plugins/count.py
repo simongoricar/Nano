@@ -24,6 +24,7 @@ class POST:
             raise RuntimeError
 
         self.session = None
+        self.bot_id = self.client.user.id
 
     async def handle_session(self) -> aiohttp.ClientSession:
         if not self.session:
@@ -45,7 +46,7 @@ class POST:
         if not token:
             token = self.token
 
-        url = "https://bots.discord.pw/api/bots/:user_id/stats/".replace(":user_id", self.client.user.id)
+        url = "https://bots.discord.pw/api/bots/{}/stats/".format(self.bot_id)
         payload = {"server_count": num}
         head = {
             "Content-Type": "application/json",

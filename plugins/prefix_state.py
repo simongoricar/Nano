@@ -33,7 +33,6 @@ class PrefixState:
 
     async def on_message(self, message, **_):
         trans = self.trans
-        client = self.client
         assert isinstance(message, Message)
 
         # Ignore your own messages

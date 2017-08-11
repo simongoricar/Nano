@@ -79,7 +79,8 @@ class ServerManagement:
         top = sorted(guild.text_channels, key=lambda a: a.position)[0]
         return top
 
-    async def send_message_failproof(self, channel, message=None, embed=None):
+    @staticmethod
+    async def send_message_failproof(channel, message=None, embed=None):
         try:
             await channel.send(content=message, embed=embed)
         except discord.HTTPException:
@@ -253,9 +254,9 @@ class ServerManagement:
             else:
                 v_level = trans.get("MSG_SERVER_VL_HIGH", lang)
 
-            channels = len(message.guild.channels)
-            text_chan = len([chan.id for chan in message.guild.channels if chan.type == chan.type.text])
-            voice_chan = len([chan.id for chan in message.guild.channels if chan.type == chan.type.voice])
+            text_chan = len(message.guild.text_channels)
+            voice_chan = len(message.guild.voice_channels)
+            channels = text_chan + voice_chan
 
             # Teal Blue
             embed = discord.Embed(colour=discord.Colour(0x3F51B5), description=trans.get("MSG_SERVER_ID", lang).format(message.guild.id))

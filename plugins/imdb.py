@@ -62,7 +62,6 @@ class TMDb:
 
     # noinspection PyUnresolvedReferences
     async def on_message(self, message, **kwargs):
-        client = self.client
         trans = self.trans
 
         prefix = kwargs.get("prefix")

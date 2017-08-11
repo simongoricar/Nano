@@ -8,7 +8,6 @@ import time
 from ujson import load, dump, loads
 
 import aiohttp
-from discord import Message
 
 from data.stats import MESSAGE, WRONG_ARG
 from data.utils import is_valid_command
@@ -199,7 +198,7 @@ class CommunityPrices:
     async def _download_data(self, cache_read=True, cache_write=True):
         # Read from cache if permitted and it exists
         if cache_read and os.path.isfile("cache/bptf_cache.temp"):
-            with open("cache/bptf_cache.temp", "r") as cache:
+            with open("cache/bptf_cache.temp") as cache:
                 try:
                     data = load(cache)
 
@@ -335,7 +334,6 @@ class TeamFortress:
             raise RuntimeError
 
     async def on_message(self, message, **kwargs):
-        client = self.client
         trans = self.trans
 
         prefix = kwargs.get("prefix")

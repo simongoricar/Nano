@@ -4,7 +4,7 @@ import time
 from datetime import timedelta, datetime
 from random import randint
 
-from discord import Message, Embed, Forbidden
+from discord import Embed, Forbidden
 
 from data.stats import MESSAGE, PING
 from data.utils import is_valid_command, add_dots
@@ -104,14 +104,8 @@ class Commons:
     @staticmethod
     def at_everyone_filter(content, author):
         # See if the user is allowed to do @everyone
-        ok = False
-        for role in author.roles:
-            if role.guild_permissions.mention_everyone:
-                ok = True
-                break
-
         # Removes mentions if user doesn't have the permission to mention
-        if not ok:
+        if not author.guild_permissions.mention_everyone:
             content = str(content).replace("@everyone", "").replace("@here", "")
 
         return content

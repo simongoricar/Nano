@@ -125,7 +125,6 @@ class Fun:
         self.everyone_filter = self.nano.get_plugin("commons").get("instance").at_everyone_filter
 
     async def on_message(self, message, **kwargs):
-        client = self.client
         trans = self.trans
 
         prefix = kwargs.get("prefix")

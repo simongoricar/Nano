@@ -157,7 +157,6 @@ class Minecraft:
         self.mc = McItems(self.loop)
 
     async def on_message(self, message, **kwargs):
-        client = self.client
         trans = self.trans
         mc = self.mc
 

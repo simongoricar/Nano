@@ -9,7 +9,7 @@ from datetime import datetime
 from random import shuffle
 from shutil import copy2
 
-from discord import Message, Game, utils, Embed, Colour, Object, HTTPException
+from discord import Message, Game, utils, Embed, Colour
 
 from data.stats import MESSAGE
 from data.utils import is_valid_command, log_to_file, StandardEmoji

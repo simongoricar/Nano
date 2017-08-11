@@ -5,7 +5,7 @@ import logging
 import time
 
 from typing import Union
-from discord import utils, Client, Embed, Colour, DiscordException, Object, HTTPException
+from discord import utils, Client, Embed, TextChannel, Colour, DiscordException, Object, HTTPException
 
 from data.serverhandler import INVITEFILTER_SETTING, SPAMFILTER_SETTING, WORDFILTER_SETTING
 from data.utils import convert_to_seconds, matches_list, is_valid_command, StandardEmoji, decode, resolve_time, log_to_file, is_disabled, IgnoredException, parse_special_chars
@@ -1220,7 +1220,7 @@ class Admin:
                 chan = message.channel_mentions[0]
 
                 # Can't set to voice channel
-                if chan.type == chan.type.voice:
+                if not isinstance(chan, TextChannel):
                     await message.channel.send(trans.get("MSG_SETTINGS_NOT_TEXT", lang))
                     return
 

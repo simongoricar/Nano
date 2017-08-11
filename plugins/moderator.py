@@ -47,7 +47,7 @@ class NanoModerator:
             dict(a="@"),
         ]
 
-        with open("plugins/banned_words.txt", "r") as banned:
+        with open("plugins/banned_words.txt") as banned:
             self.word_list = [line.strip("\n") for line in banned.readlines()]
 
         # Builds a more sophisticated list

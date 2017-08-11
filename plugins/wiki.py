@@ -122,7 +122,6 @@ class Definitions:
         assert isinstance(message, Message)
 
         prefix = kwargs.get("prefix")
-        client = self.client
 
         trans = self.trans
         lang = kwargs.get("lang")

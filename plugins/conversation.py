@@ -1,10 +1,8 @@
 # coding=utf-8
-import time
 import logging
 from random import randint
 from fuzzywuzzy import fuzz, process
 
-from discord import Message
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -65,9 +63,6 @@ class Conversation:
             return False
 
     async def on_message(self, message, **kwargs):
-        assert isinstance(message, Message)
-
-        client = self.client
         prefix = kwargs.get("prefix")
 
         trans = self.trans
