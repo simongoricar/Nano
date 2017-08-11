@@ -102,16 +102,13 @@ class Commons:
         await log_channel.send(embed=embed)
 
     @staticmethod
-    def at_everyone_filter(content, author, guild):
+    def at_everyone_filter(content, author):
         # See if the user is allowed to do @everyone
         ok = False
         for role in author.roles:
-            if role.permissions.mention_everyone:
+            if role.guild_permissions.mention_everyone:
                 ok = True
                 break
-
-        if guild.owner == author:
-            ok = True
 
         # Removes mentions if user doesn't have the permission to mention
         if not ok:
@@ -327,7 +324,7 @@ class Commons:
             else:
                 channel = message.channel
 
-            content = self.at_everyone_filter(content, message.author, message.guild)
+            content = self.at_everyone_filter(content, message.author)
 
             try:
                 await channel.send(content)

@@ -219,7 +219,7 @@ class Fun:
             else:
                 ripperoni = ""
 
-            ripperoni = self.everyone_filter(ripperoni, message.author, message.guild)
+            ripperoni = self.everyone_filter(ripperoni, message.author)
 
             prays = self.stats.get_amount(PRAYER)
             await message.channel.send(trans.get("MSG_RIP", lang).format(ripperoni, prays))

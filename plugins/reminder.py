@@ -341,7 +341,7 @@ class Reminder:
                 # Gets the remaining time
                 ttl = reminder.get("time_target") - time.time()
 
-                cont = self.filter(reminder.get("raw"), message.author, message.guild)
+                cont = self.filter(reminder.get("raw"), message.author)
 
                 # Zero or negative number
                 if ttl <= 0:
