@@ -370,8 +370,8 @@ It is highly recommended that you join the "official" Nano server for announceme
 `_wiki term` - gives you a description of a term from Wikipedia
 `_urban term` - gives you a description of a term from Urban Dictionary
 `_decide option|option...` - decides between your options so you don't have to
-`_tf item_name` - item prices from backpack.tf
-`_steam user_id` - search users on Steam
+`_tf item-name` - item prices from backpack.tf
+`_steam user-id` - search users on Steam
 
 These are just a few of some of the simpler commands. For more info about each command, use `_help command` or type `_cmds` to look at the wiki page with all the commands.</string>
     <string name="MSG_HELP_CMDWEB">Commands and their explanations can be found here: http://nanobot.pw/commands.html</string>

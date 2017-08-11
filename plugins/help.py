@@ -194,8 +194,6 @@ class Help:
                 else:
                     self.last_times[message.author.id] = time.time()
 
-
-            # REWRITE test
             dev_server = self.client.get_guild(self.nano.dev_server)
             owner = dev_server.get_member(self.nano.owner_id)
             # Timestamp
