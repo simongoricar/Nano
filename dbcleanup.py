@@ -3,6 +3,7 @@ import time
 import logging
 import sys
 import configparser
+
 from data.serverhandler import ServerHandler, server_defaults
 from data.utils import decode
 
@@ -12,7 +13,6 @@ from data.utils import decode
 #########################################
 
 log = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
 
 parser = configparser.ConfigParser()
 parser.read("settings.ini")
@@ -21,12 +21,14 @@ print("-------------------------")
 print("REDIS DB CLEANUP UTILITY")
 print("-------------------------")
 
-if input("This script will remove unwanted keys from the database (obsolete / deprecated ones).\nDo you want to proceed? (y/n) ").lower() == "n":
+if input("This script will remove unwanted keys from the database "
+         "(obsolete / deprecated ones).\nDo you want to proceed? (y/n) ").lower() == "n":
     sys.exit(4)
 
-if not parser.get("Storage", "type") == "redis":
-    print("Storage type is not set to redis, please change to continue (settings.ini)")
-    sys.exit(2)
+if input("Do you want to display every removed key? (y/n) ").lower() == "y":
+    logging.basicConfig(level=logging.DEBUG)
+else:
+    logging.basicConfig(level=logging.INFO)
 
 
 init = time.monotonic()
@@ -34,7 +36,7 @@ init = time.monotonic()
 print("Verifying server data...")
 red = ServerHandler.get_handler()
 
-config_keys = server_defaults.keys()
+config_keys = list(server_defaults.keys())
 
 c = 0
 
