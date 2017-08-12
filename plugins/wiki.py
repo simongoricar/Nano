@@ -126,7 +126,7 @@ class Definitions:
         trans = self.trans
         lang = kwargs.get("lang")
 
-        if not is_valid_command(message.content, valid_commands, prefix=prefix):
+        if not is_valid_command(message.content, commands, prefix=prefix):
             return
         else:
             self.stats.add(MESSAGE)
@@ -179,7 +179,7 @@ class Definitions:
 
 class NanoPlugin:
     name = "Wiki/Urban Commands"
-    version = "8"
+    version = "9"
 
     handler = Definitions
     events = {

@@ -48,7 +48,6 @@ class RedisVoteHandler:
     Layout:
 
         voters: list(voter_ids)
-        inprogress: bool
         title: string
         votes: json-encoded dict(index: amount)
         choices: json-encoded list(choices)
@@ -269,6 +268,12 @@ class Vote:
         elif startswith(prefix + "vote"):
             # Ignore if there is no vote going on instead of getting an exception
             if not self.vote.in_progress(message.guild.id):
+                await message.add_reaction(X_EMOJI)
+
+                msg = await message.channel.send(trans.get("MSG_VOTING_NO_PROGRESS", lang))
+                await asyncio.sleep(2)
+                await msg.delete()
+
                 return
 
             # Get the choice, but tell the author if he/she didn't supply a number
@@ -310,7 +315,7 @@ class Vote:
 
 class NanoPlugin:
     name = "Voting"
-    version = "26"
+    version = "27"
 
     handler = Vote
     events = {

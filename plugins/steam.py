@@ -3,7 +3,7 @@ import configparser
 import logging
 
 import steamapi
-from discord import Message, HTTPException
+from discord import HTTPException
 
 from data.stats import MESSAGE, WRONG_ARG
 from data.utils import is_valid_command
@@ -37,8 +37,6 @@ class SteamSearch:
             return user
         except steamapi.errors.UserNotFoundError:
             return None
-        except ValueError:
-            raise ValueError
 
     @staticmethod
     async def get_friends(uid):
@@ -47,8 +45,6 @@ class SteamSearch:
             return user.name, [friend.name for friend in user.friends]
         except steamapi.errors.UserNotFoundError:
             return None, None
-        except ValueError:
-            raise ValueError
 
     @staticmethod
     async def get_games(uid):
@@ -57,8 +53,6 @@ class SteamSearch:
             return user.name, [game.name for game in user.games]
         except steamapi.errors.UserNotFoundError:
             return None, None
-        except ValueError:
-            raise ValueError
 
     @staticmethod
     async def get_owned_games(uid):
@@ -67,8 +61,6 @@ class SteamSearch:
             return user.name, [game.name for game in user.owned_games]
         except steamapi.errors.UserNotFoundError:
             return None, None
-        except ValueError:
-            raise ValueError
 
 
 class Steam:
@@ -82,15 +74,12 @@ class Steam:
         self.steam = SteamSearch(key)
 
     async def on_message(self, message, **kwargs):
-        assert isinstance(message, Message)
-
-        client = self.client
         prefix = kwargs.get("prefix")
 
         trans = self.trans
         lang = kwargs.get("lang")
 
-        if not is_valid_command(message.content, valid_commands, prefix=prefix):
+        if not is_valid_command(message.content, commands, prefix=prefix):
             return
         else:
             self.stats.add(MESSAGE)
@@ -119,37 +108,8 @@ class Steam:
 
                 subcommand, argument = cut, ""
 
-            # !steam friends
-            if subcommand == "friends":
-                if not argument:
-                    await message.channel.send(trans.get("MSG_STEAM_NEED_URL", lang))
-                    return
-
-                try:
-                    username, friends = await self.steam.get_friends(argument)
-                except ValueError:
-                    await message.channel.send(trans.get("MSG_STEAM_INVALID_URL", lang))
-                    return
-                except (steamapi.errors.APIFailure, steamapi.errors.APIException):
-                    await message.channel.send(trans.get("MSG_STEAM_PRIVATE", lang))
-                    raise
-
-                if not username:
-                    await message.channel.send(trans.get("ERROR_NO_USER2", lang))
-                    self.stats.add(WRONG_ARG)
-                    return
-
-                if not friends:
-                    await message.channel.send(trans.get("MSG_STEAM_PRIVATE_FRIENDS", lang))
-                    self.stats.add(WRONG_ARG)
-                    return
-
-                friends = ["`" + friend + "`" for friend in friends]
-
-                await message.channel.send(trans.get("MSG_STEAM_FRIENDS", lang).format(username, ", ".join(friends)))
-
             # !steam games
-            elif subcommand == "games":
+            if subcommand == "games":
                 if not argument:
                     await message.channel.send(trans.get("MSG_STEAM_NEED_URL", lang))
                     return
@@ -221,7 +181,7 @@ class Steam:
 
 class NanoPlugin:
     name = "Steam Commands"
-    version = "16"
+    version = "17"
 
     handler = Steam
     events = {

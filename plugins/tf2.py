@@ -182,7 +182,6 @@ class CommunityPrices:
 
         self.cached_items = None
 
-        # One for read, one for write
         loop.create_task(self.download_data(allow_cache, allow_cache))
 
     async def download_data(self, cache_read=True, cache_write=True):
@@ -256,23 +255,22 @@ class CommunityPrices:
         if not params:
             params = self.parameters
 
-        async with aiohttp.ClientSession(json_serialize=loads) as session:
+        async with aiohttp.ClientSession() as session:
             async with session.get(address, params=params) as resp:
                 if resp.status != 200:
                     if resp.status == 504:
                         logger.warning("Got 504: Gateway Timeout, retrying in 5 min")
                         await asyncio.sleep(60*5)
-                        await self._download_data()
+                        return await self._request(address, params)
 
                     elif resp.status == 429:
                         logger.warning("Got 429: Too Many Requests - retrying in 120 s")
                         await asyncio.sleep(60*2)
-                        await self._download_data()
+                        return await self._request(address, params)
 
                     else:
                         logger.warning("Got {} in response".format(resp.status))
 
-                    return None
                 else:
                     return (await resp.json()).get("response")
 
@@ -360,7 +358,7 @@ class TeamFortress:
 
             item_name = message.content[len(prefix + "tf "):]
             if not item_name:
-                await message.channel.send(trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
+                await message.channel.send(trans.get("MSG_TF_NO_PARAMS", lang))
                 return
 
             item = await self.tf.get_item_by_name(str(item_name))
@@ -383,7 +381,7 @@ class TeamFortress:
 
 class NanoPlugin:
     name = "Team Fortress 2"
-    version = "19"
+    version = "20"
 
     handler = TeamFortress
     events = {
