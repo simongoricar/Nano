@@ -136,13 +136,14 @@ def resolve_time(tm, lang):
     if days:
         fields.append("{} {}".format(days, tr.get("TIME_DAYS", lang)))
     if hours:
-        fields.append("{} {}".format(days, tr.get("TIME_HOURS", lang)))
+        fields.append("{} {}".format(hours, tr.get("TIME_HOURS", lang)))
     if minutes:
-        fields.append("{} {}".format(days, tr.get("TIME_MINUTES", lang)))
+        fields.append("{} {}".format(minutes, tr.get("TIME_MINUTES", lang)))
 
     last = "{} {}".format(int(tm), tr.get("TIME_SECONDS", lang))
+    and_lit = " and " if fields else ""
 
-    return ", ".join(fields) + " and " if fields else "" + last
+    return ", ".join(fields) + and_lit + last
 
 
 possibilities = [
