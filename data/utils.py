@@ -3,6 +3,7 @@ import threading
 import os
 import uuid
 from datetime import datetime
+from typing import Iterable
 
 from .translations import TranslationManager
 
@@ -230,7 +231,7 @@ def matches_list(content, *lst):
     return str(content).lower().startswith(lst)
 
 
-def is_valid_command(msg: str, commands: dict, prefix: str):
+def is_valid_command(msg: str, commands: Iterable, prefix: str):
     for command in commands:
         command = command.replace("_", prefix)
 
@@ -360,7 +361,7 @@ def chunks(item, n):
         yield item[i:i + n]
 
 
-def add_dots(content, max_len=55, ending=" [...]"):
+def add_dots(content, max_len=55, ending="[...]"):
     if not len(content) > max_len:
         return content
     else:
