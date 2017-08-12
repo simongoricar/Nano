@@ -450,6 +450,8 @@ Id: {}:{}```</string>
     <string name="MSG_MOD_SWEARING">swearing</string>
     <string name="MSG_MOD_INVITE">invite link</string>
     <string name="MSG_OSU_ERROR">Something went wrong... :thinking:</string>
+    <string name="MSG_OSU_MISSING_PARAM">Missing</string>
+    <string name="MSG_OSU_NOT_ENOUGH_PLAYS">:expressionless: User doesn't have enough info to display.</string>
     <string name="MSG_OSU_NO_NAME">Please specify a username to search for.</string>
     <string name="MSG_OSU_TITLE">{} (level {})</string>
     <string name="MSG_OSU_DESC">**Rank**:
@@ -517,6 +519,43 @@ PP: **{}** (played {} songs)</string>
     <string name="MSG_DEBUG_UPTIME">Uptime</string>
     <string name="MSG_DEBUG_UPTIME_L">{} days, {}:{}:{}</string>
     <string name="MSG_DEBUG_INFO">**Debug stuff:**</string>
+    <string name="MSG_DEBUG_MULTI">```md
+[1.]: Versions
+
+## Nano
+{}
+
+## discord.py
+{}
+
+[2.]: Resources
+
+## RAM usage
+{} (GC collected {} MB)
+
+## CPU usage
+{}
+
+[3.]: State
+
+## Active reminders
+{}
+
+## Active polls
+{}
+
+[4.]: Redis
+
+## Memory
+{}
+
+## Keys
+{}```
+</string>
+    <string name="MSG_DEBUG_MULTI_2">**Shard info:**
+
+:diamond_shape_with_a_dot_inside: Shards: **{}**
+:map: Shard id of this instance: **{}**</string>
 
     <string name="MSG_STATS_MSGS">Messages sent</string>
     <string name="MSG_STATS_ARGS">Wrong arguments got</string>
