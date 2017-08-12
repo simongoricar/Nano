@@ -620,6 +620,7 @@ Direct link: http://steamcommunity.com/id/{}/</string>
 `_steam user community_url`, `_steam friends community_url`, `_steam games community_url`</string>
 
     <string name="MSG_TF_UNAVAILABLE">This command is currently unavailable. Apologies.</string>
+    <string name="MSG_TF_NO_PARAMS">:warning: Please specify an item to search for.</string>
     <string name="MSG_TF_NO_SUCH_ITEM">**No item** with that name could be found.</string>
     <string name="MSG_TF_LIST">:scales: **{}** *(on bp.tf)*
 
