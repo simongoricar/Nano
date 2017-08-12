@@ -4,7 +4,7 @@ import logging
 
 # External library available here: https://github.com/DefaltSimon/TMDbie
 import tmdbie
-from discord import Message, errors
+from discord import errors
 from typing import Union
 
 from data.stats import MESSAGE
@@ -68,10 +68,8 @@ class TMDb:
         prefix = kwargs.get("prefix")
         lang = kwargs.get("lang")
 
-        assert isinstance(message, Message)
-
         # Check if this is a valid command
-        if not is_valid_command(message.content, commands, prefix=prefix):
+        if not is_valid_command(message.content, commands, prefix):
             return
         else:
             self.stats.add(MESSAGE)
@@ -207,7 +205,7 @@ class TMDb:
 
 class NanoPlugin:
     name = "TMDb Commands"
-    version = "16"
+    version = "17"
 
     handler = TMDb
     events = {

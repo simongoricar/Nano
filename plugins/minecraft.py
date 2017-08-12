@@ -4,7 +4,7 @@ import os
 from json import loads, JSONDecodeError
 
 import aiohttp
-from discord import Message, File
+from discord import File
 
 from data.stats import MESSAGE, WRONG_ARG, IMAGE_SENT
 from data.utils import is_valid_command, is_number
@@ -163,10 +163,8 @@ class Minecraft:
         prefix = kwargs.get("prefix")
         lang = kwargs.get("lang")
 
-        assert isinstance(message, Message)
-
         # Check if this is a valid command
-        if not is_valid_command(message.content, commands, prefix=prefix):
+        if not is_valid_command(message.content, commands, prefix):
             return
         else:
             self.stats.add(MESSAGE)

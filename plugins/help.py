@@ -42,9 +42,10 @@ OWNER_ID = parser.get("Settings", "ownerid")
 DEVSERVER_ID = parser.get("Dev", "server")
 
 
-async def save_submission(sub):
+def save_submission(sub):
     with open("data/submissions.txt", "a") as subs:
         subs.write(str(sub) + "\n" + ("-" * 20))
+        subs.write("\n\n")
 
 
 def get_valid_commands(plugin):
@@ -116,7 +117,7 @@ class Help:
         lang = kwargs.get("lang")
 
         # Check if this is a valid command
-        if not is_valid_command(message.content, commands, prefix=prefix):
+        if not is_valid_command(message.content, commands, prefix):
             return
         else:
             self.stats.add(MESSAGE)
@@ -173,7 +174,6 @@ class Help:
         # Not translated
         elif startswith(prefix + "suggest"):
             report = message.content[len(prefix + "suggest "):].strip(" ")
-            typ = "Suggestion"
 
             # Disallow empty reports
             if not report:
@@ -197,17 +197,29 @@ class Help:
             # Timestamp
             ts = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
 
+            # Reused stuff
+            name = message.author.name
+            u_id = message.author.id
+            guild_name = message.guild.name
+            guild_id = message.guild.id
+            guild_owner = message.guild.owner
+            guild_members = message.guild.member_count
+            owner_info = "Yes" if message.author == guild_owner else "{}:{}".format(guild_owner.id, guild_owner.id)
+
             # 'Compiled' report
             # NOT TRANSLATED!!
-            comp = "{} from {} ({}):\n```{}```\n**__Timestamp__**: `{}`\n**__Server__**: `{}` ({} members)\n" \
-                   "**__Server Owner__**: {}\n**Language used:** `{}`".format(typ, message.author.name, message.author.id, report, ts,
-                                                     message.guild.name, message.guild.member_count,
-                                                     "Yes" if message.author.id == message.guild.owner.id else message.guild.owner.id, lang)
+            comp = "Suggestion from {} ({}):\n```{}```\n**__Timestamp__**: `{}`" \
+                   "\n**__Server__**: `{}` ID:{} ({} members)\n**__Server Owner__**: {}" \
+                   "\n**Language used:** `{}`".format(name, u_id, report, ts, guild_name, guild_id, guild_members, owner_info, lang)
 
             # Saves the submission
-            await save_submission(comp.replace(message.author.mention, "{} ({})\n".format(message.author.name, message.author.id)))
+            to_file = "{0}\nSuggestion from {1}:{2}\nMessage: {3}\n" \
+                      "Server: {4}:{5} with {6} members\nServer owner: {7}\n" \
+                      "Language used: {}\n{0}".format("-" * 10, name, u_id, report, guild_name, guild_id, guild_members, owner_info, lang)
 
+            save_submission(to_file)
             await owner.send(comp)
+
             await message.channel.send(trans.get("MSG_REPORT_THANKS", lang))
 
         # !bug

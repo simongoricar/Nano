@@ -2,12 +2,14 @@
 import asyncio
 import configparser
 import logging
+import aiohttp
+
 from random import randint
 from ujson import loads
-
-import aiohttp
 from bs4 import BeautifulSoup
-from discord import Message, Embed
+from typing import Union
+
+from discord import Embed, Colour
 
 from data.stats import MESSAGE, IMAGE_SENT
 from data.utils import is_valid_command, is_number, log_to_file
@@ -30,7 +32,7 @@ class APIFailure(Exception):
     pass
 
 
-class Requester:
+class Connector:
     def __init__(self):
         self.session = None
 
@@ -81,7 +83,7 @@ class CatGenerator:
         self.url = "http://thecatapi.com/api/images/get"
         self.format = "html"
         self.size = "med"
-        self.req = Requester()
+        self.req = Connector()
 
     async def random_cat(self, type_="gif"):
         # structure:
@@ -97,18 +99,24 @@ class CatGenerator:
 
 
 class ComicImage:
-    __slots__ = ("img", "num", "link")
+    __slots__ = ("img", "num", "link", "safe_title")
 
     def __init__(self, **kwargs):
-        for name, value in kwargs.items():
-            try:
-                self.__setattr__(name, value)
-            except AttributeError:
-                pass
+        # for name, value in kwargs.items():
+        #     try:
+        #         self.__setattr__(name, value)
+        #     except AttributeError:
+        #         pass
+
+        # Performance ftw
+        self.img = kwargs.get("img")
+        self.num = kwargs.get("num")
+        self.link = kwargs.get("link")
+        self.safe_title = kwargs.get("safe_title")
 
 
 class XKCD:
-    def __init__(self, loop=None):
+    def __init__(self, loop=asyncio.get_event_loop()):
         self.url_latest = "http://xkcd.com/info.0.json"
         self.url_number = "http://xkcd.com/{}/info.0.json"
         self.link_base = "https://xkcd.com/{}"
@@ -116,26 +124,23 @@ class XKCD:
         self.last_num = None
         self.cache = {}
 
-        self.req = Requester()
-
-        if not loop:
-            loop = asyncio.get_event_loop()
+        self.req = Connector()
         self.loop = loop
 
         self.running = True
 
         self.loop.create_task(self.updater())
 
-    def exists_in_cache(self, number):
+    def exists_in_cache(self, number) -> bool:
         return bool(self.cache.get(number))
 
-    def get_from_cache(self, number):
+    def get_from_cache(self, number) -> Union[None, ComicImage]:
         return self.cache.get(number)
 
-    def make_link(self, number):
+    def make_link(self, number) -> str:
         return self.link_base.format(number)
 
-    async def add_to_cache(self, number, data):
+    async def add_to_cache(self, number, data) -> bool:
         if not is_number(number):
             return False
 
@@ -163,7 +168,7 @@ class XKCD:
             await asyncio.sleep(60 * 5 * time_falloff)
             await self._set_last_num(time_falloff=5)
 
-    async def get_latest_xkcd(self):
+    async def get_latest_xkcd(self) -> Union[None, ComicImage]:
         # Checks cache
         if self.exists_in_cache(self.last_num):
             return self.get_from_cache(self.last_num)
@@ -177,7 +182,7 @@ class XKCD:
         await self.add_to_cache(data.get("num"), comic)
         return comic
 
-    async def get_xkcd_by_number(self, num):
+    async def get_xkcd_by_number(self, num) -> Union[None, ComicImage]:
         # Checks cache
         if self.exists_in_cache(num):
             return self.get_from_cache(num)
@@ -191,7 +196,7 @@ class XKCD:
         await self.add_to_cache(data.get("num"), comic)
         return comic
 
-    async def get_random_xkcd(self):
+    async def get_random_xkcd(self) -> Union[None, ComicImage]:
         if not self.last_num:
             return await self.get_latest_xkcd()
 
@@ -205,7 +210,7 @@ class JokeGenerator:
         self.yo_mama = "http://api.yomomma.info/"
         self.chuck = "https://api.chucknorris.io/jokes/random"
 
-        self.req = Requester()
+        self.req = Connector()
 
         # More are added as time goes on
         # Hardcoded because why not
@@ -216,7 +221,7 @@ class JokeGenerator:
             "Yo mama so fat that she fell over and rocked herself to sleep trying to get up"
         ]
 
-    async def get_random_cache(self):
+    async def get_random_cache(self) -> str:
         if len(self.cache) > 8:
             rand = randint(0, len(self.cache) - 1)
             return self.cache[rand]
@@ -229,7 +234,7 @@ class JokeGenerator:
         if joke not in self.cache:
             self.cache.append(joke)
 
-    async def yomama_joke(self):
+    async def yomama_joke(self) -> Union[str, None]:
         joke = await self.req.get_json(self.yo_mama)
 
         if not joke:
@@ -238,7 +243,7 @@ class JokeGenerator:
         self.add_to_cache(joke.get("joke"))
         return joke.get("joke")
 
-    async def chuck_joke(self):
+    async def chuck_joke(self) -> Union[str, None]:
         joke = await self.req.get_json(self.chuck)
 
         if not joke:
@@ -247,7 +252,7 @@ class JokeGenerator:
         self.add_to_cache(joke.get("value"))
         return joke.get("value")
 
-    async def get_joke(self, type_=None):
+    async def get_joke(self, type_=None) -> Union[str, None]:
         # Defaults to a random joke type
         if type_ is None:
             type_ = randint(0, 2)
@@ -280,10 +285,8 @@ class Joke:
         prefix = kwargs.get("prefix")
         lang = kwargs.get("lang")
 
-        assert isinstance(message, Message)
-
         # Check if this is a valid command
-        if not is_valid_command(message.content, commands, prefix=prefix):
+        if not is_valid_command(message.content, commands, prefix):
             return
         else:
             self.stats.add(MESSAGE)
@@ -310,7 +313,12 @@ class Joke:
             pic = await self.cats.random_cat(type_)
 
             if pic:
-                await message.channel.send(pic)
+                # Teal (blue-ish)
+                embed = Embed(colour=Colour(0x00796b))
+                embed.set_image(url=pic)
+                embed.set_footer(text=trans.get("MSG_CAT_FOOTER", lang))
+
+                await message.channel.send(embed=embed)
             else:
                 await message.channel.send(trans.get("MSG_CAT_FAILED", lang))
 
@@ -352,10 +360,11 @@ class Joke:
                 await message.channel.send(trans.get("MSG_XKCD_FAILED", lang))
                 log_to_file("XKCD: string {}, fetch: {}, got None".format(fmt, fetch))
 
-            xkcd_link = trans.get("MSG_XKCD_FULL_LINK", lang).format(self.xkcd.make_link(xkcd.num))
+            xkcd_link = self.xkcd.make_link(xkcd.num)
 
-            embed = Embed(title=trans.get("MSG_XKCD", lang).format(xkcd.num), description=xkcd_link)
+            embed = Embed(title=trans.get("MSG_XKCD", lang).format(xkcd.num), description=xkcd.safe_title)
             embed.set_image(url=xkcd.img)
+            embed.set_footer(text=trans.get("MSG_XKCD_SOURCe", lang).format(xkcd_link))
 
             await message.channel.send(embed=embed)
 
@@ -380,7 +389,7 @@ class Joke:
 
 class NanoPlugin:
     name = "Joke-telling module"
-    version = "7"
+    version = "8"
 
     handler = Joke
     events = {

@@ -78,28 +78,22 @@ class NanoModerator:
 
         self.invite_regex = re.compile(r'(http(s)?://)?discord.gg/\w+')
 
-    def check_swearing(self, message):
+    def check_swearing(self, message: str) -> bool:
         """Returns True if there is a banned word
         :param message: Discord Message content
         """
-        if isinstance(message, Message):
-            message = str(message.content)
-
-        message = str(message).lower()
+        message = message.lower()
 
         # Massive speed improvement in 0.3
         res = [a for a in self.word_list if a in message]
         return bool(res)
 
-    def check_spam(self, message):
+    def check_spam(self, message: str) -> bool:
         """
         Does a set of checks.
         :param message: string to check
         :return: bool
         """
-        if isinstance(message, Message):
-            message = str(message.content)
-
         # 1. Should exclude links
         message = " ".join([word for word in message.split(" ") if
                             (not word.startswith("https://")) and (not word.startswith("http://"))])
@@ -156,18 +150,15 @@ class NanoModerator:
 
         return False
 
-    def check_invite(self, message):
+    def check_invite(self, message: str) -> bool:
         """
         Checks for invites
         :param message: string
         :return: bool
         """
-        if isinstance(message, Message):
-            message = str(message.content)
+        res = self.invite_regex.search(message)
 
-        res = self.invite_regex.search(str(message))
-
-        return res if res else None
+        return bool(res) if res else False
 
 
 class LogManager:
@@ -264,19 +255,19 @@ class Moderator:
         needs_invite_filter = handler.has_invite_filter(message.guild)
 
         if needs_spam_filter:
-            spam = self.checker.check_spam(message)
+            spam = self.checker.check_spam(message.content)
         else:
             spam = False
 
         if needs_swearing_filter:
-            swearing = self.checker.check_swearing(message)
+            swearing = self.checker.check_swearing(message.content)
         else:
             swearing = False
 
         if needs_invite_filter:
             # Ignore invites from admins
             if not handler.can_use_admin_commands(message.author, message.guild):
-                invite = self.checker.check_invite(message)
+                invite = self.checker.check_invite(message.content)
 
             else:
                 invite = False
@@ -314,7 +305,7 @@ class Moderator:
 
 class NanoPlugin:
     name = "Moderator"
-    version = "30"
+    version = "31"
 
     handler = Moderator
     events = {
