@@ -29,6 +29,9 @@ valid_commands = commands.keys()
 # Makes the number formatted
 # 1000 -> 1,000
 def prepare(this):
+    if this is None:
+        return None
+
     return invert_str(",".join(split_every(str(invert_num(this)), 3)))
 
 
@@ -81,10 +84,20 @@ class Osu:
                 await message.channel.send(trans.get("ERROR_NO_USER2", lang))
                 return
 
+            MISSING = trans.get("MSG_OSU_MISSING_PARAM", lang)
+
             global_rank = prepare(user.world_rank)
+            if not global_rank:
+                global_rank = MISSING
             country_rank = prepare(user.country_rank)
+            if not country_rank:
+                country_rank = MISSING
 
             total_score = prepare(user.total_score)
+            if not total_score:
+                await message.channel.send(trans.get("MSG_OSU_NOT_ENOUGH_PLAYS", lang))
+                return
+
             ranked_score = prepare(user.ranked_score)
 
             try:
@@ -135,7 +148,7 @@ class Osu:
 
 class NanoPlugin:
     name = "osu!"
-    version = "7"
+    version = "8"
 
     handler = Osu
     events = {

@@ -67,7 +67,7 @@ class Reporter:
             exc = traceback.format_exc()
             log_to_file(exc, "bug")
 
-            log.warning("New exception, see bugs.txt")
+            log.warning("Something went wrong, see bugs.txt")
 
 
 class NanoPlugin:

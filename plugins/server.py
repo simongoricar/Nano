@@ -4,10 +4,10 @@ import gc
 import logging
 import os
 import time
-from datetime import datetime, timedelta
-
-import discord
 import psutil
+
+from datetime import datetime, timedelta
+from discord import utils, Embed, Colour, __version__ as d_version, HTTPException
 
 from data.stats import MESSAGE
 from data.utils import is_valid_command, log_to_file, is_disabled
@@ -55,13 +55,13 @@ class ServerManagement:
         if is_disabled(chan):
             return None
 
-        return discord.utils.find(lambda m: m.id == chan, guild.channels)
+        return utils.find(lambda m: m.id == chan, guild.channels)
 
     async def handle_def_channel(self, guild, channel_id):
         if is_disabled(channel_id):
             return await self.default_channel(guild)
         else:
-            chan = discord.utils.find(lambda c: c.id == channel_id, guild.channels)
+            chan = utils.find(lambda c: c.id == channel_id, guild.channels)
             if not chan:
                 log_to_file("Custom channel does not exist anymore: {} ({})".format(guild.name, guild.id))
                 return await self.default_channel(guild)
@@ -71,7 +71,7 @@ class ServerManagement:
     @staticmethod
     async def default_channel(guild):
         # Try to find #general or one that starts with general
-        chan = discord.utils.find(lambda c: c.name == "general", guild.text_channels)
+        chan = utils.find(lambda c: c.name == "general", guild.text_channels)
         if chan:
             return chan
 
@@ -83,15 +83,15 @@ class ServerManagement:
     async def send_message_failproof(channel, message=None, embed=None):
         try:
             await channel.send(content=message, embed=embed)
-        except discord.HTTPException:
+        except HTTPException:
             await asyncio.sleep(FAILPROOF_TIME_WAIT)
             await channel.send(content=message, embed=embed)
             raise
 
     @staticmethod
-    def make_logchannel_embed(user, action, color=discord.Color(0x2e75cc)):
+    def make_logchannel_embed(user, action, color=Colour(0x2e75cc)):
         # Color: Nano's dark blue color
-        return discord.Embed(description="ID: {}".format(user.id), color=color).set_author(name="{} {}".format(user.name, action), icon_url=user.avatar_url)
+        return Embed(description="ID: {}".format(user.id), color=color).set_author(name="{} {}".format(user.name, action), icon_url=user.avatar_url)
 
     async def on_message(self, message, **kwargs):
         client = self.client
@@ -126,7 +126,7 @@ class ServerManagement:
                 members += int(guild.member_count)
                 channels += len(guild.channels)
 
-            embed = discord.Embed(name=trans.get("MSG_STATUS_STATS", lang), colour=discord.Colour.dark_blue())
+            embed = Embed(name=trans.get("MSG_STATUS_STATS", lang), colour=Colour.dark_blue())
 
             embed.add_field(name=trans.get("MSG_STATUS_SERVERS", lang), value=trans.get("MSG_STATUS_SERVERS_L", lang).format(server_count), inline=True)
             embed.add_field(name=trans.get("MSG_STATUS_USERS", lang), value=trans.get("MSG_STATUS_USERS_L", lang).format(members), inline=True)
@@ -161,33 +161,26 @@ class ServerManagement:
 
             # OTHER
             d = datetime(1, 1, 1) + timedelta(seconds=time.time() - self.nano.boot_time)
-            uptime = trans.get("MSG_DEBUG_UPTIME_L", lang).format(d.day - 1, d.hour, d.minute, d.second)
 
             nano_version = self.nano.version
-            discord_version = discord.__version__
+            discord_version = d_version
 
             reminders = self.nano.get_plugin("reminder").get("instance").reminder.get_reminder_amount()
             polls = self.nano.get_plugin("voting").get("instance").vote.get_vote_amount()
 
-            embed = discord.Embed(colour=discord.Colour.green())
-
-            embed.add_field(name=trans.get("MSG_DEBUG_VERSION", lang), value=nano_version)
-            embed.add_field(name=trans.get("MSG_DEBUG_DPY", lang), value=discord_version)
-            embed.add_field(name=trans.get("MSG_DEBUG_RAM", lang), value=trans.get("MSG_DEBUG_GC", lang).format(mem_after, abs(garbage)))
-            embed.add_field(name=trans.get("MSG_DEBUG_CPU", lang), value=trans.get("MSG_DEBUG_CPU_L", lang).format(cpu))
-            embed.add_field(name=trans.get("MSG_DEBUG_REMINDERS", lang), value=str(reminders))
-            embed.add_field(name=trans.get("MSG_DEBUG_VOTES", lang), value=str(polls))
-
             # Redis db stats
             redis_mem = self.handler.db_info("memory").get("used_memory_human")
-            embed.add_field(name=trans.get("MSG_DEBUG_R_MEM", lang), value=redis_mem)
-
             redis_size = self.handler.db_size()
-            embed.add_field(name=trans.get("MSG_DEBUG_R_KEYS", lang), value=redis_size)
 
-            embed.add_field(name=trans.get("MSG_DEBUG_UPTIME", lang), value=uptime)
+            fields = trans.get("MSG_DEBUG_MULTI", lang).format(nano_version, discord_version, mem_after, abs(garbage),
+                                                               cpu, reminders, polls, redis_mem, redis_size)
 
-            await message.channel.send(trans.get("MSG_DEBUG_INFO", lang), embed=embed)
+            total_shards = len(self.client.shards.keys())
+            current_shard = message.guild.shard_id
+
+            additional = trans.get("MSG_DEBUG_MULTI_2", lang).format(total_shards, current_shard)
+
+            await message.channel.send(fields + "\n" + additional)
 
         # !stats
         elif startswith(prefix + "stats"):
@@ -202,7 +195,7 @@ class ServerManagement:
             pings = file.get("timespinged")
             imgs = file.get("imagessent")
 
-            embed = discord.Embed(colour=discord.Colour.gold())
+            embed = Embed(colour=Colour.gold())
 
             embed.add_field(name=trans.get("MSG_STATS_MSGS", lang), value=messages)
             embed.add_field(name=trans.get("MSG_STATS_ARGS", lang), value=wrong_args)
@@ -259,7 +252,7 @@ class ServerManagement:
             channels = text_chan + voice_chan
 
             # Teal Blue
-            embed = discord.Embed(colour=discord.Colour(0x3F51B5), description=trans.get("MSG_SERVER_ID", lang).format(message.guild.id))
+            embed = Embed(colour=Colour(0x3F51B5), description=trans.get("MSG_SERVER_ID", lang).format(message.guild.id))
 
             if message.guild.icon:
                 embed.set_author(name=message.guild.name, icon_url=message.guild.icon_url)

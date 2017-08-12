@@ -374,13 +374,13 @@ class Reminder:
                     await message.channel.send(trans.get("MSG_REMINDER_DELETE_SUCCESS", lang))
 
         # !remind help
-        elif startswith(prefix + "remind", prefix + "remind help"):
+        elif startswith(prefix + "remind"):
             await message.channel.send(trans.get("MSG_REMINDER_HELP", lang).replace("_", prefix))
 
 
 class NanoPlugin:
     name = "Reminder Commands"
-    version = "20"
+    version = "21"
 
     handler = Reminder
     events = {
