@@ -229,22 +229,14 @@ def matches_list(content, *lst):
     return str(content).lower().startswith(lst)
 
 
-def is_valid_command(msg, commands, **kwargs):
-    if not kwargs.get("prefix"):
-        prefix = "!"
-    else:
-        prefix = kwargs.get("prefix")
+def is_valid_command(msg: str, commands: dict, prefix: str):
+    for command in commands:
+        command = command.replace("_", prefix)
 
-    def has(message):
-        for command in commands:
-            command = command.replace("_", prefix)
+        if msg.startswith(command):
+            return True
 
-            if str(message).startswith(command):
-                return True
-
-        return False
-
-    return has(msg)
+    return False
 
 
 def log_to_file(content, type_="log"):

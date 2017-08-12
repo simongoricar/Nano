@@ -143,7 +143,7 @@ class Commons:
 
 
         # Check if this is a valid command
-        if not is_valid_command(message.content, commands, prefix=prefix):
+        if not is_valid_command(message.content, commands, prefix):
             return
         else:
             self.stats.add(MESSAGE)
