@@ -748,24 +748,34 @@ class Admin:
                 await message.channel.send(trans.get("PERM_MOD", lang))
                 return "return"
 
-            cut = message.content[len(prefix + "softban "):]
+            cut = message.content[len(prefix + "softban "):].strip(" ")
 
             try:
-                name, tim = cut.split("|")
+                name, tim = cut.rsplit("|", maxsplit=1)
                 name, tim = name.strip(" "), tim.strip(" ")
             # In case the value can't be unpacked: no |
             except ValueError:
                 if len(message.mentions) == 0:
-                    await message.channel.send(trans.get("MSG_SOFTBAN_PLSMENTION", lang))
-                    return
+                    # Try notation with for
+                    try:
+                        name, tim = cut.rsplit("for", maxsplit=1)
+                        name, tim = name.strip(" "), tim.strip(" ")
+                    except ValueError:
+                        if cut == "":
+                            await message.channel.send(trans.get("MSG_SOFTBAN_PLSMENTION", lang))
+                        else:
+                            await message.channel.send(trans.get("MSG_SOFTBAN_NO_TIME", lang))
 
-                # Alternate method: @mention [time] (without |)
-                name = message.mentions[0].name
-                tim = cut.replace("<@{}>".format(message.mentions[0].id), "").strip(" ")
+                        return
 
-                if tim == "":
-                    await message.channel.send(trans.get("MSG_SOFTBAN_NO_TIME", lang))
-                    return
+                else:
+                    # Alternate method: @mention [time] (without |)
+                    name = message.mentions[0].name
+                    tim = cut.replace("<@{}>".format(message.mentions[0].id), "").strip(" ")
+
+                    if tim == "":
+                        await message.channel.send(trans.get("MSG_SOFTBAN_NO_TIME", lang))
+                        return
 
             user = await self.resolve_user(name, message, lang)
 
