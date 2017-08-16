@@ -164,6 +164,6 @@ class NanoPlugin:
         "on_member_ban": 5,
         "on_member_remove": 5,
         "on_reaction_add": 5,
-        "on_server_join": 5,
+        "on_guild_join": 5,
         # type : importance
     }

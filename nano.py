@@ -103,10 +103,10 @@ class Nano(metaclass=Singleton):
         # Plugin-related
         self.plugin_names = []
         self.plugins = {}
-        self.plugin_events = dict(on_message=[], on_server_join=[], on_channel_create=[], on_channel_delete=[],
+        self.plugin_events = dict(on_message=[], on_guild_join=[], on_channel_create=[], on_channel_delete=[],
                                   on_channel_update=[], on_message_delete=[], on_message_edit=[], on_ready=[],
                                   on_member_join=[], on_member_remove=[], on_member_update=[], on_member_ban=[],
-                                  on_member_unban=[], on_server_remove=[], on_error=[], on_shutdown=[],
+                                  on_member_unban=[], on_guild_remove=[], on_error=[], on_shutdown=[],
                                   on_plugins_loaded=[], on_reaction_add=[])
         self._plugin_events = dict(self.plugin_events)
 

@@ -408,7 +408,7 @@ class NanoPlugin:
         "on_member_join": 10,
         "on_member_ban": 10,
         "on_member_remove": 10,
-        "on_server_join": 9,
-        "on_server_remove": 9,
+        "on_guild_join": 9,
+        "on_guild_remove": 9,
         # type : importance
     }
