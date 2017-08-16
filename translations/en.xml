@@ -313,7 +313,7 @@ Reply with that message or with None if you want to disable welcome messages.
 (:user translates to a mention of the joined user; for example -> :user, welcome to this server!)</string>
     <string name="MSG_SETUP_SPAM">Would you like me to filter spam? **{} / {}**</string>
     <string name="MSG_SETUP_SWEARING">Would you like me to filter swearing? **{} / {}**</string>
-    <string name="MSG_SETUP_LOGCHANNEL">What channel would you like to use for logging? **channel name/{}**</string>
+    <string name="MSG_SETUP_LOGCHANNEL">What channel would you like to use for logging? **#channel mention/{}**</string>
     <string name="MSG_SETUP_LOGCHANNEL_DISABLED">Logging disabled.</string>
     <string name="MSG_SETUP_LOGCHANNEL_SET">Log channel set to **{}**</string>
     <string name="MSG_SETUP_LOGCHANNEL_INVALID">:x: Invalid log channel.</string>

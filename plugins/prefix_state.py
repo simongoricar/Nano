@@ -134,7 +134,7 @@ class PrefixState:
 
         return [("add_var", dict(lang=lang))]
 
-    async def on_server_join(self, _, **__):
+    async def on_guild_join(self, _, **__):
         lang = str(self.trans.default_lang)
 
         return [("add_var", dict(lang=lang))]

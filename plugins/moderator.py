@@ -288,13 +288,13 @@ class Moderator:
 
             # Make correct messages
             if spam:
-                await self.log.send_log(message, self.trans.get("MSG_MOD_SPAM", lang))
+                await self.log.send_log(message, lang, self.trans.get("MSG_MOD_SPAM", lang))
 
             elif swearing:
-                await self.log.send_log(message, self.trans.get("MSG_MOD_SWEARING", lang))
+                await self.log.send_log(message, lang, self.trans.get("MSG_MOD_SWEARING", lang))
 
             elif invite:
-                await self.log.send_log(message, self.trans.get("MSG_MOD_INVITE", lang))
+                await self.log.send_log(message, lang, self.trans.get("MSG_MOD_INVITE", lang))
 
             else:
                 # Lol wat

@@ -201,13 +201,13 @@ class Nano(metaclass=Singleton):
 
         asyncio.ensure_future(self.dispatch_event(ON_PLUGINS_LOADED))
 
-    async def reload_plugin(self, plugin):
-        if not str(plugin).endswith(".py"):
-            plugin = str(plugin) + ".py"
+    async def reload_plugin(self, plug_name: str):
+        if not str(plug_name).endswith(".py"):
+            plug_name = str(plug_name) + ".py"
         else:
-            plugin = str(plugin)
+            plug_name = str(plug_name)
 
-        c_plug = self.get_plugin(plugin)
+        c_plug = self.get_plugin(plug_name)
         if not c_plug:
             return False
 
@@ -216,7 +216,7 @@ class Nano(metaclass=Singleton):
             await getattr(c_plug.get("instance"), ON_SHUTDOWN)()
 
         for event, imp in c_plug.get("events").items():
-            self._plugin_events[event].remove({"plugin": plugin, "importance": imp})
+            self._plugin_events[event].remove({"plugin": plug_name, "importance": imp})
 
         try:
             c_plug = importlib.reload(c_plug.get("plugin"))
@@ -231,7 +231,7 @@ class Nano(metaclass=Singleton):
 
         except (AttributeError, AssertionError):
             # remove it from the plugin list and delete it
-            self.plugin_names.pop(self.plugin_names.index(plugin))
+            self.plugin_names.pop(self.plugin_names.index(plug_name))
             del c_plug
 
         cls = c_plug.NanoPlugin.handler
@@ -247,16 +247,16 @@ class Nano(metaclass=Singleton):
                            trans=trans)
 
         except RuntimeError:
-            self.plugin_names.pop(self.plugin_names.index(plugin))
+            self.plugin_names.pop(self.plugin_names.index(plug_name))
             del c_plug
             return False
         except Exception as e:
-            log.warning("Unexpected error in {}: {}".format(plugin, e))
-            self.plugin_names.pop(self.plugin_names.index(plugin))
+            log.warning("Unexpected error in {}: {}".format(plug_name, e))
+            self.plugin_names.pop(self.plugin_names.index(plug_name))
             del c_plug
             return False
 
-        self.plugins[plugin] = {
+        self.plugins[plug_name] = {
             "plugin": c_plug,
             "handler": cls,
             "instance": instance,
@@ -264,7 +264,7 @@ class Nano(metaclass=Singleton):
         }
 
         for event, importance in events.items():
-            self._plugin_events[event].append({"plugin": plugin, "importance": importance})
+            self._plugin_events[event].append({"plugin": plug_name, "importance": importance})
 
         self._parse_priorities()
         # Call ON_PLUGINS_LOADED if the plugin requires it
@@ -303,7 +303,7 @@ class Nano(metaclass=Singleton):
 
         # Plugins have already been ordered from most important to least important
         for plugin in self.plugin_events[event_type]:
-            log.debug("Executing {}".format(getattr(self.plugins[plugin].get("instance"), event_type)))
+            log.debug("Executing plugin {}:{}".format(plugin.strip(".py"), event_type))
 
             # Execute the corresponding method in the plugin
             resp = await getattr(self.plugins[plugin].get("instance"), event_type)(*args, **kwargs)

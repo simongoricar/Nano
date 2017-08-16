@@ -361,16 +361,20 @@ class ServerManagement:
         if not is_disabled(leave_msg):
             await self.send_message_failproof(def_c, leave_msg)
 
-    async def on_server_join(self, guild, **kwargs):
+    async def on_guild_join(self, guild, **kwargs):
         # Always 'en'
         lang = kwargs.get("lang")
+
+        d_chan = await self.default_channel(guild)
+        print("default is {}".format(d_chan))
+
         # Say hi to the server
-        await self.send_message_failproof(await self.default_channel(guild), self.trans.get("EVENT_SERVER_JOIN", lang))
+        await self.send_message_failproof(d_chan, self.trans.get("EVENT_SERVER_JOIN", lang))
 
         # Create server settings
         self.handler.server_setup(guild)
 
-    async def on_server_remove(self, guild, **_):
+    async def on_guild_remove(self, guild, **_):
         # Deletes server data
         self.handler.delete_server(guild.id)
 
