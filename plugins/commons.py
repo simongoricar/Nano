@@ -1,6 +1,7 @@
 # coding=utf-8
 import logging
 import time
+import re
 from datetime import timedelta, datetime
 from random import randint
 
@@ -71,6 +72,106 @@ commands = {
 valid_commands = commands.keys()
 
 
+# Utility for non-failable get operator
+def l_get(lst, index, fallback=None):
+    return lst[index] if len(lst) > index else fallback
+
+
+class Parser:
+    def __init__(self):
+        # Used to capture parsing groups
+        self.pt = re.compile(r"({(?:[0-9a-z]+[|]?)+})")
+
+    def _split_groups(self, text):
+        text_list = []
+
+        # Splits the text on every group in the match
+        c_ind = 0
+        gr = self.pt.finditer(text)
+        for m in gr:
+            st = m.start()
+            en = m.end()
+
+            text_list.append(text[c_ind:st])
+            text_list.append(text[st:en])
+            c_ind = en
+
+        return text_list
+
+    def _verify_groups(self, groups):
+        # TODO implement
+        raise NotImplementedError
+
+    @staticmethod
+    def _parse_group(group, ctx):
+        name, *tokens = group.split("|")
+        first = tokens[0]
+
+        # Actually gets the result
+        # whole system in this function because of performance
+        # Assumes groups have been verified with _verify_groups
+
+        # 1. Author stuff
+        if name == "author":
+            if first == "name":
+                return ctx.author.display_name
+            if first == "id":
+                return ctx.author.id
+            if first == "mention":
+                return ctx.author.mention
+            if first == "discrim":
+                return ctx.author.discriminator
+            if first == "avatar":
+                return ctx.author.avatar_url or ctx.author.default_avatar_url
+            else:
+                return ctx.author.name
+
+        # 2. Mention stuff
+        elif name == "mention":
+            # first == index
+            typ = tokens[2]
+
+            if typ == "name":
+                return ctx.mentions[first].display_name
+            if typ == "id":
+                return ctx.mentions[first].id
+            if typ == "mention":
+                return ctx.mentions[first].mention
+            if typ == "discrim":
+                return ctx.mentions[first].discriminator
+            if typ == "avatar":
+                return ctx.mentions[first].avatar_url or ctx.mentions[first].default_avatar_url
+            else:
+                return ctx.mentions[first].name
+
+        # 3. Random numbers
+        elif name == "rnd":
+            # from is first
+            # to is the second item (index 1)
+            to = l_get(tokens, 1)
+
+            # Two arguments
+            if to:
+                # Assumes both arguments can be ints
+                return randint(int(first), int(to))
+            # Only one
+            else:
+                # Assumes argument is int
+                return randint(0, int(first))
+
+
+    def parse(self, text, ctx):
+        ls = self._split_groups(text)
+
+        for ind, t in enumerate(ls):
+            if t:
+                if (t[0] == "{") and (t[-1] == "}"):
+                    # valid group, parse
+                    # Cut out { and }
+                    ls[ind] = str(self._parse_group(t[1:-1], ctx))
+
+        return "".join(ls)
+
 
 class Commons:
     def __init__(self, **kwargs):
@@ -84,6 +185,8 @@ class Commons:
         self.pings = {}
         self.getter = None
         self.resolve_user = None
+
+        self.parser = Parser()
 
     async def on_plugins_loaded(self):
         self.getter = self.nano.get_plugin("server").get("instance")
@@ -124,22 +227,28 @@ class Commons:
             # Checks for server specific commands
             for command in server_commands.keys():
                 # UPDATE 2.1.4: not .startswith anymore!
-                if str(message.content) == command:
-                    # Maybe same replacement logic in the future update?
-                    # TODO implement advanced replacement logic
+                if message.content == command:
                     await message.channel.send(server_commands.get(command))
                     self.stats.add(MESSAGE)
 
                     return
 
+        # TODO test this thoroughly
         # if server_commands:
         #     # According to tests, .startswith is faster than slicing, wtf
         #     pass
         #
         #     for k in server_commands.keys():
         #         if message.content.startswith(k):
-        #             # TODO parse logic
-        #             pass
+        #             raw_resp = server_commands[k]
+        #             response = self.parser.parse(raw_resp, message)
+        #
+        #             print("response")
+        #             print(response)
+        #
+        #             await message.channel.send(response)
+        #
+        #             return
 
 
         # Check if this is a valid command

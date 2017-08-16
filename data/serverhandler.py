@@ -451,5 +451,5 @@ class RedisPluginDataManager:
     def lrem(self, key, value, count=1):
         return decode(self.redis.lrem(key, count, value))
 
-    def lpop(self, key, index):
-        return decode(self.redis.lpop(key, index))
+    def lpop(self, key):
+        return decode(self.redis.lpop(key))

@@ -330,7 +330,7 @@ def decode_auto(some):
         return decode_auto(some.decode())
 
     if isinstance(some, str):
-        # Autoconvert ID's to int
+        # Autoconvert IDs to int
         if some.isnumeric():
             return int(some)
 
