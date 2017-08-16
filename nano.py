@@ -17,7 +17,7 @@ from data.utils import log_to_file
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '3.7beta.1'
+__version__ = '3.7.1'
 
 
 # EVENTS
