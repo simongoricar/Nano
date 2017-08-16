@@ -274,6 +274,7 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
         self.redis.delete("blacklist:{}".format(server_id))
         self.redis.delete("mutes:{}".format(server_id))
         self.redis.delete("server:{}".format(server_id))
+        self.redis.delete("voting:{}".format(server_id))
         self.redis.delete("sr:{}".format(server_id))
 
         log.info("Deleted server: {}".format(server_id))

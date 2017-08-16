@@ -253,6 +253,16 @@ def log_to_file(content, type_="log"):
             file.write("Error while writing to file, UnicodeEncodeError: {}".format(ev))
 
 
+def alternate_log(content, filename):
+    with open(filename, "a") as file:
+        cn = datetime.now().strftime("%d-%m-%Y %H:%M:%S") + " - " + str(content)
+
+        try:
+            file.write(cn + "\n")
+        except UnicodeEncodeError as ev:
+            file.write("Error while writing to file, UnicodeEncodeError: {}".format(ev))
+
+
 def is_empty(path):
     if os.path.isfile(path):
         return os.stat(path).st_size == 0

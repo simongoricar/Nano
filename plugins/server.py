@@ -366,8 +366,6 @@ class ServerManagement:
         lang = kwargs.get("lang")
 
         d_chan = await self.default_channel(guild)
-        print("default is {}".format(d_chan))
-
         # Say hi to the server
         await self.send_message_failproof(d_chan, self.trans.get("EVENT_SERVER_JOIN", lang))
 
