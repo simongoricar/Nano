@@ -65,7 +65,7 @@ class StatusRoller:
         shards = list(self.client.shards.keys())
         for shard_id in shards:
             customized = name + " | shard {}".format(shard_id + 1)
-            await self.client.change_presence(game=Game(name=customized), shard_id=shard_id)
+            await self.client.change_presence(game=Game(name=customized, type=0), shard_id=shard_id)
 
     async def run(self):
         await self.client.wait_until_ready()

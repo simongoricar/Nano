@@ -1145,7 +1145,7 @@ class Admin:
                 await message.channel.send(trans.get("MSG_CMD_ALREADY_EXISTS", lang).format(conf))
 
                 def is_author(c):
-                    return c.author == message.author and c.channel == message.channel and c.content == confirm
+                    return c.author == message.author and c.channel == message.channel and c.content == conf
 
                 # Wait for confirmation
                 try:
