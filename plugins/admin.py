@@ -990,7 +990,7 @@ class Admin:
             change = message.content[len(prefix + "leavemsg "):].strip(" ")
 
             if not change:
-                leavemsg = handler.get_var(message.guild.id, "kickmsg")
+                leavemsg = handler.get_var(message.guild.id, "leavemsg")
 
                 if is_disabled(leavemsg):
                     await message.channel.send(trans.get("MSG_LEAVE_IS_DISABLED", lang))

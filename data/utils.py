@@ -341,7 +341,7 @@ def decode_auto(some):
 
     if isinstance(some, str):
         # Autoconvert IDs to int
-        if some.isnumeric():
+        if some.isnumeric() and len(some) == 17:
             return int(some)
 
         return boolify(some)
