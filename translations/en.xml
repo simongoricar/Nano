@@ -355,7 +355,7 @@ For a list of all commands and their explanations, use `>cmds`.</string>
     <string name="MSG_8BALL_STRINGS">It is certain | It is surely so | Without a doubt | You may rely on it | Most likely | Yes | Ask again later | Cannot predict now | Concentrate and ask again | I would say yes | JUST DO IT | My reply is no | My sources say no | Signs point to yes</string>
     <string name="MSG_AVATAR_OWNERSHIP">**{}**'s avatar: {}</string>
     <string name="MSG_AVATAR_NONE">**{}** does not have an avatar. :expressionless:</string>
-    <string name="MSG_SAY_NOPERM">Can't send messages to **&lt;#{}}>**: missing permission!</string>
+    <string name="MSG_SAY_NOPERM">Can't send messages to **&lt;#{}>**: missing permission!</string>
 
     <string name="MSG_AYYLMAO">My inspiration in the world of memes.</string>
     <string name="MSG_WHOKNOWS">¯\_(ツ)_/¯</string>
