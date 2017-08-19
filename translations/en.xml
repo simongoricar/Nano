@@ -373,7 +373,16 @@ If you want specific info about a command, do `_help [command here]`.
 
 Or you could just simply take a look at the wiki page: http://nanobot.pw/commands.html
 If you are an admin/server owner and want to set up your server for Nano, type `_setup`.
-It is highly recommended that you join the "official" Nano server for announcements and help : https://discord.gg/FZJB6UJ</string>
+It is highly recommended that you join the "official" Nano server for announcements and help : https://discord.gg/FZJB6UJ
+
+By using Nano you agree that we may store some user data such as names of users, servers and channels to aid functionality. For more info, see `_tos`.</string>
+    <string name="MSG_TOS">:shield: **Terms of Service**
+
+On August 20th, 2017 Discord updated their Terms of Service. Bot owners must now notify their users what kind of user data they store.
+
+By using Nano you agree that we may store some user data, such as **names of users, servers and channels**.
+
+For more information, read &lt;http://nanobot.pw/tos.html></string>
     <string name="MSG_HELP_SIMPLE">`_hello` - Welcomes you or the mentioned person.
 `_randomgif` - Posts a random gif from Giphy
 `_roll number` - rolls a random number
@@ -678,8 +687,10 @@ Direct link: http://steamcommunity.com/id/{}/</string>
 Now that you have invited me to your server, you might want to set up some things. Right now only the server owner can use my restricted commands. But no worries, you can add admin permissions to others by assigning them a role named **Nano Admin**!
 
 To begin a basic setup, type `!setup` as the server owner. It will help you set up some simple things.
-After that, you might want to see `!cmds` to get familiar with my commands.
+After that, you might want to see `!commands` to get familiar with my commands.
 
 
-Also, I recommend that you join the "official" Nano server for announcements and help : https://discord.gg/FZJB6UJ</string>
+Also, I recommend that you join the "official" Nano server for announcements and help : https://discord.gg/FZJB6UJ
+
+By using Nano you agree that we may store some user data such as names of users, servers and channels to aid functionality. For more info, see `!tos`.</string>
 </resources>

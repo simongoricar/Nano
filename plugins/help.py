@@ -30,6 +30,7 @@ commands = {
     "_suggest": {"desc": "Sends a message to the developer", "use": "[command] [message]", "alias": None},
     "_bug": {"desc": "Place where you can report bugs.", "use": None, "alias": "nano.bug"},
     "nano.bug": {"desc": "Place where you can report bugs.", "use": None, "alias": "_bug"},
+    "_tos": {"desc": "Displays more info about the Terms of Service", "use": None, "alias": None},
 }
 
 valid_commands = commands.keys()
@@ -225,6 +226,10 @@ class Help:
         # !bug
         elif startswith(prefix + "bug"):
             await message.channel.send(trans.get("MSG_BUG", lang))
+
+        # !tos
+        elif startswith(prefix + "tos"):
+            await message.channel.send(trans.get("MSG_TOS", lang))
 
 
 class NanoPlugin:
