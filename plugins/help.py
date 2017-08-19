@@ -234,7 +234,7 @@ class Help:
 
 class NanoPlugin:
     name = "Help Commands"
-    version = "28"
+    version = "29"
 
     handler = Help
     events = {

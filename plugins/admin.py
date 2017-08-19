@@ -1762,7 +1762,7 @@ class Admin:
 
 class NanoPlugin:
     name = "Admin Commands"
-    version = "31"
+    version = "32"
 
     handler = Admin
     events = {
