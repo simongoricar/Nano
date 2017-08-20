@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 from discord import utils, Embed, Colour, __version__ as d_version, HTTPException
 
 from data.stats import MESSAGE
-from data.utils import is_valid_command, log_to_file, is_disabled
+from data.utils import is_valid_command, log_to_file, is_disabled, IgnoredException
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -76,6 +76,9 @@ class ServerManagement:
             return chan
 
         # Else, return the topmost one
+        if not guild.text_channels:
+            raise IgnoredException
+
         top = sorted(guild.text_channels, key=lambda a: a.position)[0]
         return top
 
@@ -401,7 +404,7 @@ class ServerManagement:
 
 class NanoPlugin:
     name = "Moderator"
-    version = "27"
+    version = "28"
 
     handler = ServerManagement
     events = {

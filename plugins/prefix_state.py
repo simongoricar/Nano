@@ -73,7 +73,7 @@ class PrefixState:
         if startswith("nano.sleep"):
             if not self.handler.can_use_admin_commands(message.author, message.guild):
                 await message.channel.send(trans.get("PERM_ADMIN", lang))
-                return
+                return "return"
 
             self.handler.set_sleeping(message.guild, True)
             await message.channel.send(self.trans.get("MSG_NANO_SLEEP", lang))
@@ -83,11 +83,11 @@ class PrefixState:
         elif startswith("nano.wake"):
             if not self.handler.can_use_admin_commands(message.author, message.guild):
                 await message.channel.send(trans.get("PERM_ADMIN", lang))
-                return
+                return "return"
 
             if not self.handler.is_sleeping(message.guild.id):
                 await message.channel.send(trans.get("MSG_NANO_WASNT_SLEEPING", lang))
-                return
+                return "return"
 
             self.handler.set_sleeping(message.guild, False)
             await message.channel.send(self.trans.get("MSG_NANO_WAKE", lang))
@@ -155,7 +155,7 @@ class PrefixState:
 
 class NanoPlugin:
     name = "Prefix and state handler"
-    version = "21"
+    version = "22"
 
     handler = PrefixState
     events = {
