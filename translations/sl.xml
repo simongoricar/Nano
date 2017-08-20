@@ -18,7 +18,7 @@
   <string name="CONV_NAH">Ne bo šlo :wink:</string>
   <string name="CONV_NOPE">Nope.avi</string>
   <string name="CONV_AYYLMAO">Ayy lmaooo</string>
-  <string name="CONV_RIP">Rest in pepperoni **in se pokloni**</string>
+  <string name="CONV_RIP">Rest in pepperoni **se pokloni**</string>
   <string name="CONV_MASTER">Trapets nima gospodarja.</string>
   <string name="CONV_SPARTA">TO JE ŠPARTA!</string>
   <string name="CONV_BEGINDATE">Poznega oktobra 2015 sem nastal kot zasebni bot, vendar sem bil že konec decembra istega leta postavljen na GitHub vsem v uporabo.</string>
@@ -78,12 +78,12 @@ Pa še to: komando `{p}gif` omogoča **Giphy**</string>
   <string name="ERROR_NOT_MEMBER">Argument mora biti član</string>
   <string name="ERROR_NO_USER">:warning: Član ne obstaja (kličem izganjalce duhov?).</string>
   <string name="ERROR_NO_USER2">:warning: Ne najdem uporabnika.</string>
-  <string name="ERROR_MENTION_ONE">Prosim, kliči samo eno osebo naenkrat.</string>
-  <string name="ERROR_MENTION_ONE_ROLE">Prosim, kliči samo eno vlogo naenkrat.</string>
-  <string name="ERROR_MENTION_ONE_CH">Prosim, kliči samo en kanal naenkrat.</string>
-  <string name="ERROR_NO_MENTION">Prosim, kliči (@mention) člana.</string>
-  <string name="ERROR_NO_CHMENTION">Prosim, #kliči kanal.</string>
-  <string name="ERROR_NO_CHANNEL_MENTION">Prosim, kliči kanal.</string>
+  <string name="ERROR_MENTION_ONE">Prosim, omenjaj samo eno osebo naenkrat.</string>
+  <string name="ERROR_MENTION_ONE_ROLE">Prosim, omeni samo eno vlogo naenkrat.</string>
+  <string name="ERROR_MENTION_ONE_CH">Prosim, omeni samo en kanal naenkrat.</string>
+  <string name="ERROR_NO_MENTION">Prosim, omeni (@mention) člana.</string>
+  <string name="ERROR_NO_CHMENTION">Prosim, #omeni kanal.</string>
+  <string name="ERROR_NO_CHANNEL_MENTION">Prosim, omeni kanal.</string>
   <string name="ERROR_NOT_CHANNEL">Ni kanal.</string>
   <string name="ERROR_INVALID_ROLE_NAME">:warning: Neveljavno ime vloge!</string>
   <string name="ERROR_NOT_NUMBER">Ni številka.</string>
@@ -101,9 +101,9 @@ Pa še to: komando `{p}gif` omogoča **Giphy**</string>
   <string name="MSG_UNBAN_SUCCESS">**{}** je bil/a izključen/a.</string>
   <string name="MSG_UNBAN_NO_BAN">:x: Ni izključene osebe z takim imenom.</string>
   <string name="MSG_UNBAN_WRONG_USAGE">Nepravilna uporaba. Poglej si `{}help unban`</string>
-  <string name="MSG_SOFTBAN_SUCCESS">{} je bil/a začasno izključen/a zaradi: {}</string>
-  <string name="MSG_SOFTBAN_PLSMENTION">Prosim, kliči (@mention) člana, ki ga hočeš začasno izključiti. (samo enega)</string>
-  <string name="MSG_SOFTBAN_DELIMIT">:no_entry_sign: Prosim, loči **čas** in **@mention** z |</string>
+  <string name="MSG_SOFTBAN_SUCCESS">{} je bil/a začasno izključen/a za: {}</string>
+  <string name="MSG_SOFTBAN_PLSMENTION">Prosim, omeni (@mention) člana, ki ga hočeš začasno izključiti. (samo enega)</string>
+  <string name="MSG_SOFTBAN_DELIMIT">:no_entry_sign: Prosim, loči **čas** in **@mention** z `|`</string>
   <string name="MSG_SOFTBAN_NO_TIME">:warning: Prosim, navedi, za koliko časa izključim.</string>
   <string name="MSG_MUTE_LIST">**Utišani člani:** (stran **{}**/{}) 
 
@@ -143,7 +143,7 @@ Pa še to: komando `{p}gif` omogoča **Giphy**</string>
 
 ```{}```</string>
   <string name="MSG_USERINFO_STATUS">Status</string>
-  <string name="MSG_USERINFO_MENTION">Klic</string>
+  <string name="MSG_USERINFO_MENTION">Omemba</string>
   <string name="MSG_USERINFO_ID">Id</string>
   <string name="MSG_USERINFO_TYPE">Vrsta računa</string>
   <string name="MSG_USERINFO_TOPROLE">Najvišja vloga</string>
@@ -152,10 +152,10 @@ Pa še to: komando `{p}gif` omogoča **Giphy**</string>
   <string name="MSG_USERINFO_USER">**Podatki o uporabniku:**</string>
   <string name="MSG_USERINFO_PERSON">Človek :cowboy:</string>
   <string name="MSG_USERINFO_BOT">Bot :robot:</string>
-  <string name="MSG_ROLE_TOO_MANY_MENTIONS">Preveč klicev! Ta zaznamek (brez ločevalnika **|**) ne podpira več kot en klic. Prosim, zaznamek zapiši z **|**.</string>
+  <string name="MSG_ROLE_TOO_MANY_MENTIONS">Preveč omenitev! Ta zaznamek (brez ločevalnika **|**) ne podpira več kot ene omembe. Prosim, zaznamek zapiši z **|**.</string>
   <string name="MSG_ROLE_HELP">Ta ukaz omogoča adminom, da urejajo uporabniške vloge.
 Podukazi: `add` `remove`</string>
-  <string name="MSG_ROLE_NEED_MENTION">Potrebujem klic! Ta zaznamek (brez ločevalnika **|**) ne podpira iskanja z imenom. Prosim, zaznamek zapiši z **|** ali @mention.</string>
+  <string name="MSG_ROLE_NEED_MENTION">Potrebujem omembo! Ta zaznamek (brez ločevalnika **|**) ne podpira iskanja z imenom. Prosim, zaznamek zapiši z **|** ali @omembo.</string>
   <string name="MSG_ROLE_ALREADY_HAD">:information_source: Eden ali več uporabnikov je že imelo to vlogo, zato sem jo dodal samo tistim, ki je še niso imeli.</string>
   <string name="MSG_ROLE_REMOVE_SOME_DIDNT">:information_source: Eden ali več uporabnikov že ni imelo te vloge, zato sem vlogo odstranil samo tistim, ki so jo imeli.</string>
   <string name="MSG_ROLE_ADDED_MP">Dodan **{}** {} uporabnikom.</string>
@@ -306,7 +306,7 @@ Za seznam ukazov in njihove razlage uporabi `&gt;cmds`.</string>
   <string name="MSG_PING_RESULT">:ping_pong: **Pong!** (ribanje: {} ms, reakcija: {} ms)</string>
   <string name="MSG_LOGPOST_SAY">Izveden ukaz {}say</string>
   <string name="MSG_UPTIME">Neutrudno odgovarjam na vprašanja ljudi že **{} dni, {} ur, {} minut in {} sekund!** :open_mouth:</string>
-  <string name="MSG_ROLL">{}, zavrtel/a si {}</string>
+  <string name="MSG_ROLL">{}, vrgel/la si {}</string>
   <string name="MSG_DICE">:game_die: {}, kocka kaže... **{}**</string>
   <string name="MSG_DICE_RESULTS">:game_die: **{}**, tvoj rezultat je:
 
@@ -341,10 +341,21 @@ Za seznam ukazov in njihove razlage uporabi `&gt;cmds`.</string>
 
 Za seznam najbolj preprostih ukazov napiši `_help simple`.
 Če hočeš bolj podrobno informacijo o ukazu, napiši `_help [ime ukaza]`.
+
 Če si admin/lastnik/lastnica serverja in hočeš namestiti server za Nana, napiši `_setup`.
 Priporočljivo je, da se pridružiš \"uradnemu\" Nano serverju, kjer dobiš novice in pomoč: https://discord.gg/FZJB6UJ
-P.S.: Eni helperji so tudi Slovenci :wink:</string>
-  <string name="MSG_HELP_SIMPLE">`_hello` - Pozdravi tebe ali klicano osebo
+P.S.: Eni helperji so tudi Slovenci :wink:
+
+S tem, ko uporabljaš Nana, dovoliš, da lahko shranjujemo nekatere uporabniške informacije, recimo imena uporabnikov, serverjev in kanalov, s čimer izboljšamo funkcionalnost. Za več informacij si preberi `_tos`.</string>
+  <string name="MSG_TOS">:shield: **Pogoji uporabe**
+
+20. avgusta 2017 je Discord posodobil pogoje uporabe. Lastniki botov morajo zdaj uporabnike obvestiti, katere podatke shranjujejo.
+
+S tem, ko uporabljate Nana, dovolite, da shranjujemo določene podatke, kot so ** imena uporabnikov, serverjev in kanalov**.
+
+Za več informacij si preberite
+&lt;http://nanobot.pw/tos.html&gt;</string>
+  <string name="MSG_HELP_SIMPLE">`_hello` - Pozdravi tebe ali omenjeno osebo
 `_randomgif` - Objavi naključen gif s strani Giphy
 `_roll number` - Zarola naključno številko
 `_wiki term` - Ti poda opis besede z Wikipedije
@@ -375,7 +386,7 @@ Najdeš me tukaj: https://discord.gg/FZJB6UJ</string>
   <string name="MSG_IMDB_PLOT">Zgodba za **{}**
 ```{}```</string>
   <string name="MSG_IMDB_SERIES">serija</string>
-  <string name="MSG_IMDB_PLOT_MISSING">Ta film pa nima opisa zgodbe.</string>
+  <string name="MSG_IMDB_PLOT_MISSING">Ta film nima opisa zgodbe.</string>
   <string name="MSG_IMDB_GENRES">Žanri: {}</string>
   <string name="MSG_IMDB_AVGRATING">Povprečna ocena: **{}/10**</string>
   <string name="MSG_IMDB_SEASONS">Sezone: **{}**</string>
@@ -425,7 +436,7 @@ Id: {}:{}```</string>
 
 PP: **{}** (predvajanih {} skladb)</string>
   <string name="MSG_OSU_TOTAL_SC">Skupne točke</string>
-  <string name="MSG_OSU_RANKED_SC">Položajne točke</string>
+  <string name="MSG_OSU_RANKED_SC">Rangirana uvrstitev</string>
   <string name="MSG_OSU_AVG_ACC">Povprečna natančnost</string>
   <string name="MSG_OSU_TIME">Iskanje je trajalo {} ms</string>
   <string name="MSG_NANO_SLEEP">Nočko! :sleeping:</string>
@@ -469,14 +480,14 @@ PP: **{}** (predvajanih {} skladb)</string>
   <string name="MSG_STATUS_CHANNELS_L">{} kanalov</string>
   <string name="MSG_DEBUG_VERSION">Različica Nana</string>
   <string name="MSG_DEBUG_DPY">discord.py</string>
-  <string name="MSG_DEBUG_RAM">Poraba RAM</string>
+  <string name="MSG_DEBUG_RAM">Poraba RAM-a</string>
   <string name="MSG_DEBUG_GC">{} MB (počiščenih {} MB spomina)</string>
   <string name="MSG_DEBUG_CPU">Poraba CPU</string>
   <string name="MSG_DEBUG_CPU_L">{} %</string>
   <string name="MSG_DEBUG_REMINDERS">Opomniki v teku</string>
   <string name="MSG_DEBUG_VOTES">Ankete v teku</string>
   <string name="MSG_DEBUG_R_MEM">Spomin na Redisu</string>
-  <string name="MSG_DEBUG_R_KEYS">Ključi na Redisu</string>
+  <string name="MSG_DEBUG_R_KEYS">Število ključev v redisu</string>
   <string name="MSG_DEBUG_UPTIME">Čas delovanja</string>
   <string name="MSG_DEBUG_UPTIME_L">{} dni, {}:{}:{}</string>
   <string name="MSG_DEBUG_INFO">**Tehnično čudo:**</string>
@@ -517,10 +528,10 @@ PP: **{}** (predvajanih {} skladb)</string>
 
 :diamond_shape_with_a_dot_inside: Shardov: **{}**
 :map: ID sharda od te instance: **{}**</string>
-  <string name="MSG_STATS_MSGS">Sporočila poslana</string>
-  <string name="MSG_STATS_ARGS">Dobljeni napačni argumenti</string>
+  <string name="MSG_STATS_MSGS">Sporočil poslanih</string>
+  <string name="MSG_STATS_ARGS">Napačnih argumentov</string>
   <string name="MSG_STATS_PERM">Št. poskusov zlorabe ukazov</string>
-  <string name="MSG_STATS_HELP">Št. pomočnikov</string>
+  <string name="MSG_STATS_HELP">Pomaganih ljudi</string>
   <string name="MSG_STATS_IMG">Št. poslanih slik</string>
   <string name="MSG_STATS_VOTES">Št. dobljenih glasov</string>
   <string name="MSG_STATS_SLEPT">Čas počitka</string>
@@ -535,7 +546,7 @@ PP: **{}** (predvajanih {} skladb)</string>
   <string name="MSG_MEMBERS_TOTAL">Skupaj: **{}** članov</string>
   <string name="MSG_MEMBERS_AMOUNT">Ta ceh ima skupaj **{}** članov</string>
   <string name="MSG_SERVER_VL">Potrditvena stopnja</string>
-  <string name="MSG_SERVER_VL_NONE">Ni je</string>
+  <string name="MSG_SERVER_VL_NONE">Brez</string>
   <string name="MSG_SERVER_VL_LOW">Nizka</string>
   <string name="MSG_SERVER_VL_MEDIUM">Srednja</string>
   <string name="MSG_SERVER_VL_HIGH">Visoka (╯°□°）╯︵ ┻━┻</string>
@@ -628,11 +639,13 @@ Neposredna povezava: http://steamcommunity.com/id/{}/</string>
   <string name="EVENT_LEAVE">je odšel</string>
   <string name="EVENT_BAN">je bil izključen</string>
   <string name="EVENT_SERVER_JOIN">**Živjo!** Jaz sem Nano!
-Zdaj, ko me imaš na serverju, bi mogoče rad/a nastavil/a stvar ali dve. Trenutno lahko omejene ukaze uporablja samo lastnik serverja. Ampak brez panike, tudi drugim lahko omogočiš njihovo uporabo - samo dodaj jim vlogo \"Nano Admin\"!
+Zdaj, ko me imaš na serverju, bi mogoče rad/a nastavil/a stvar ali dve. Trenutno lahko omejene ukaze uporablja samo lastnik serverja. Ampak brez panike, tudi drugim lahko omogočiš njihovo uporabo - samo dodaj jim vlogo **Nano Admin**!
 
 Za najbolj osnovno namestitev napiši `!setup` (če si lastnik/ca serverja). Tako boš lahko nastavil/a nekaj lažjih reči.
-Ko si končal/a s tem, lahko napišeš `!cmds` in si ogledaš vse moje ukaze.
+Ko si končal/a s tem, lahko napišeš `!commands` in si ogledaš vse moje ukaze.
 
 
-Priporočam še, da prideš na \"uraden\" Nanov server, kjer dobiš novice in pomoč: https://discord.gg/FZJB6UJ (Ne grizemo)</string>
+Priporočam še, da prideš na \"uraden\" Nanov server, kjer dobiš novice in pomoč: https://discord.gg/FZJB6UJ (Ne grizemo)
+
+S tem, ko uporabljaš Nana, dovoliš, da pobiramo nekatere podatke, kot so imena uporabnikov, serverjev in kanalov, kar pomaga pri funkcionalnosti. Za več informacij si preberi `!tos`.</string>
 </resources>
