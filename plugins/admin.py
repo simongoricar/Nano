@@ -569,7 +569,7 @@ class Admin:
 
 
         # Moved from commons.py
-        # !selfrole[role name]
+        # !selfrole [role name]/list
         if startswith(prefix + "selfrole"):
             if len(message.role_mentions) > 0:
                 role_n = message.role_mentions[0].name
@@ -637,6 +637,8 @@ class Admin:
                     await message.author.add_roles(role)
                     await message.channel.send(trans.get("MSG_SELFROLE_ADDED", lang))
 
+            return
+
         # !nuke
         elif startswith(prefix + "nuke"):
             if not handler.is_mod(message.author, message.guild):
@@ -667,6 +669,8 @@ class Admin:
             await asyncio.sleep(1.5)
             await m.delete()
 
+            return
+
         # !kick
         elif startswith(prefix + "kick") and not startswith(prefix + "kickmsg"):
             if not handler.is_mod(message.author, message.guild):
@@ -682,6 +686,8 @@ class Admin:
 
             await user.kick()
             await message.channel.send(handler.get_var(message.guild.id, "kickmsg").replace(":user", user.name))
+
+            return
 
         # !ban
         elif startswith(prefix + "ban") and not startswith(prefix + "banmsg"):
@@ -709,6 +715,8 @@ class Admin:
             else:
                 self.bans.append(user.id)
                 await user.ban(delete_message_days=0)
+
+            return
 
         # !unban
         elif startswith(prefix + "unban"):
@@ -741,6 +749,8 @@ class Admin:
 
             await message.guild.unban(user)
             await message.channel.send(trans.get("MSG_UNBAN_SUCCESS", lang).format(user.name))
+
+            return
 
         # !softban @mention/username | [time]
         elif startswith(prefix + "softban"):
@@ -786,6 +796,8 @@ class Admin:
 
             await message.channel.send(trans.get("MSG_SOFTBAN_SUCCESS", lang).format(user.name, resolve_time(total_seconds, lang)))
 
+            return
+
         # !mute list
         elif startswith(prefix + "mute list"):
             if not handler.is_mod(message.author, message.guild):
@@ -822,6 +834,8 @@ class Admin:
             else:
                 await message.channel.send(trans.get("MSG_MUTE_NONE", lang))
 
+            return
+
         # !mute
         elif startswith(prefix + "mute"):
             if not handler.is_mod(message.author, message.guild):
@@ -841,6 +855,8 @@ class Admin:
 
             handler.mute(message.guild, user.id)
             await message.channel.send(trans.get("MSG_MUTE_SUCCESS", lang).format(user.name))
+
+            return
 
         # !unmute
         elif startswith(prefix + "unmute"):
@@ -877,6 +893,8 @@ class Admin:
             handler.unmute(user.id, message.guild.id)
 
             await message.channel.send(trans.get("MSG_UNMUTE_SUCCESS", lang).format(user.name))
+
+            return
 
         # END of mod commands
 
