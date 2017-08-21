@@ -103,7 +103,7 @@ Also: `{p}gif` command powered by **Giphy**</string>
     <string name="MSG_NUKE_PURGING">Purging last {} messages... :boom:</string>
     <string name="MSG_NUKE_AUDIT_REASON">**{}** nuked {} messages.</string>
     <string name="MSG_NUKE_AMOUNT">Nuked {} messages.</string>
-    <string name="MSG_NUKE_PURGED">Purged {} messages :ok_hand:.</string>
+    <string name="MSG_NUKE_PURGED">Purged {} messages :ok_hand:</string>
     <string name="MSG_NUKE_OLD">(some messages were older than 2 weeks, so they were not deleted)</string>
 
     <string name="MSG_KICK_NANO">Nice try :smiley:</string>

@@ -285,7 +285,7 @@ def is_disabled(ct, lang=None):
         disables.append(tr.get("INFO_DISABLED"))
         disables.append(tr.get("INFO_DISABLED_A"))
 
-    for a in none_ux:
+    for a in disables:
         if str(ct).lower().startswith(a):
             return True
 
