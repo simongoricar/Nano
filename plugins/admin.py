@@ -687,7 +687,7 @@ class Admin:
             reason = trans.get("MSG_NUKE_AUDIT_REASON", lang).format(message.author.name, amount)
 
             try:
-                await message.channel.purge(limit=amount, reason=reason)
+                await message.channel.purge(limit=amount)
             except HTTPException:
                 additional = trans.get("MSG_NUKE_OLD", lang)
 
