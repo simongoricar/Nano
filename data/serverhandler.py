@@ -123,9 +123,9 @@ class ServerHandler:
 
         return bo or so or ia or im
 
-    def is_mod(self, member: Member, server: Guild):
+    def is_mod(self, member: Member, guild: Guild):
         bo = self.is_bot_owner(member.id)
-        so = self.is_server_owner(member.id, server)
+        so = self.is_server_owner(member.id, guild)
         im = self.has_role(member, "Nano Mod")
 
         return bo or so or im

@@ -9,7 +9,6 @@ import sys
 import time
 import discord
 
-# ServerHandler and NanoStats import
 from data import serverhandler
 from data import stats as bot_stats
 from data.translations import TranslationManager
@@ -17,7 +16,7 @@ from data.utils import log_to_file
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '3.7.2'
+__version__ = '3.7.3'
 
 
 # EVENTS
@@ -49,7 +48,6 @@ ON_PLUGINS_LOADED = "on_plugins_loaded"
 # Other constants
 
 IS_RESUME = False
-IS_FIRST = True
 
 # LOGGING
 
@@ -68,8 +66,8 @@ parser.read("settings.ini")
 
 # Loop, discord.py and Nano core modules initialization
 loop = asyncio.get_event_loop()
+
 # NOW USES AUTOSHARDING
-# client = discord.Client(loop=loop)
 client = discord.AutoShardedClient(loop=loop)
 
 log.info("Initializing ServerHandler and NanoStats...")
