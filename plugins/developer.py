@@ -322,9 +322,10 @@ class DevFeatures:
         self.handler.bg_save()
 
         if self.shutdown_mode == "restart":
+            log.critical("Restarting Nano!")
             # Launches a new instance of Nano...
-            if sys.platform == "win32":
-                subprocess.Popen("startbot.bat")
+            if os.name == "nt":
+                subprocess.Popen(os.path.abspath("startbot.bat"))
             else:
                 subprocess.Popen(os.path.abspath("startbot.sh"), shell=True)
 
