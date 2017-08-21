@@ -235,7 +235,10 @@ class JokeGenerator:
             self.cache.append(joke)
 
     async def yomama_joke(self) -> Union[str, None]:
-        joke = await self.req.get_json(self.yo_mama)
+        try:
+            joke = await self.req.get_json(self.yo_mama)
+        except APIFailure:
+            return None
 
         if not joke:
             return None
@@ -244,7 +247,10 @@ class JokeGenerator:
         return joke.get("joke")
 
     async def chuck_joke(self) -> Union[str, None]:
-        joke = await self.req.get_json(self.chuck)
+        try:
+            joke = await self.req.get_json(self.chuck)
+        except APIFailure:
+            return None
 
         if not joke:
             return None

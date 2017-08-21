@@ -418,8 +418,8 @@ class RedisPluginDataManager:
     def hget(self, name, field):
         return decode(self.redis.hget(self._make_key(name), field))
 
-    def hgetall(self, name):
-        return decode(self.redis.hgetall(self._make_key(name)))
+    def hgetall(self, name, use_namespace=True):
+        return decode(self.redis.hgetall(self._make_key(name) if use_namespace else name))
 
     def hdel(self, name, field):
         return decode(self.redis.hdel(self._make_key(name), field))
@@ -433,15 +433,15 @@ class RedisPluginDataManager:
     def hexists(self, name, field):
         return self.redis.hexists(name, field)
 
-    def exists(self, name):
-        return bool(decode(self.redis.exists(self._make_key(name))))
+    def exists(self, name, use_namespace=True):
+        return bool(self.redis.exists(self._make_key(name) if use_namespace else name))
 
-    def delete(self, name):
-        return bool(decode(self.redis.delete(self._make_key(name))))
+    def delete(self, name, use_namespace=True):
+        return bool(self.redis.delete(self._make_key(name) if use_namespace else name))
 
     def scan_iter(self, match, use_namespace=True):
         match = self._make_key(match) if use_namespace else match
-        return [a for a in self.redis.scan_iter(match)]
+        return [a.decode() for a in self.redis.scan_iter(match)]
 
     def lpush(self, key, value):
         return decode(self.redis.lpush(self._make_key(key), value))
