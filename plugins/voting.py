@@ -16,10 +16,10 @@ __author__ = "DefaltSimon"
 # Voting plugin
 
 commands = {
-    "_vote start": {"desc": "Starts a vote on the server.", "use": "[command] \"question\" choice1|choice2|...", "alias": None},
-    "_vote end": {"desc": "Simply ends the current vote on the server.", "use": None, "alias": None},
-    "_vote status": {"desc": "Shows info about the current voting.", "use": None, "alias": None},
-    "_vote": {"desc": "Votes for an option if there is voting going on.", "use": "[command] [1,2,3,...]", "alias": None},
+    "_vote start": {"desc": "Starts a vote on the server.", "use": "[command] \"question\" choice1|choice2|..."},
+    "_vote end": {"desc": "Simply ends the current vote on the server."},
+    "_vote status": {"desc": "Shows info about the current voting."},
+    "_vote": {"desc": "Votes for an option if there is voting going on.", "use": "[command] [1,2,3,...]"},
 }
 
 valid_commands = commands.keys()
@@ -315,7 +315,7 @@ class Vote:
 
 class NanoPlugin:
     name = "Voting"
-    version = "27"
+    version = "28"
 
     handler = Vote
     events = {

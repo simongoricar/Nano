@@ -15,9 +15,9 @@ from data.stats import MESSAGE, IMAGE_SENT
 from data.utils import is_valid_command, is_number, log_to_file
 
 commands = {
-    "_xkcd": {"desc": "Fetches XKCD comics for you (defaults to random).", "use": "[command] (random/number/latest)", "alias": None},
-    "_joke": {"desc": "Tries to make you laugh (defaults to random joke)", "use": "[command] (yo mama/chuck norris)", "alias": None},
-    "_cat": {"desc": "Gives you a random cat pic", "use": "[command] (gif/jpg/png)", "alias": None},
+    "_xkcd": {"desc": "Fetches XKCD comics for you (defaults to random).", "use": "[command] (random/number/latest)"},
+    "_joke": {"desc": "Tries to make you laugh (defaults to random joke)", "use": "[command] (yo mama/chuck norris)"},
+    "_cat": {"desc": "Gives you a random cat pic", "use": "[command] (gif/jpg/png)"},
 }
 
 valid_commands = commands.keys()
@@ -395,7 +395,7 @@ class Joke:
 
 class NanoPlugin:
     name = "Joke-telling module"
-    version = "8"
+    version = "9"
 
     handler = Joke
     events = {

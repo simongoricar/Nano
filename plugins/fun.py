@@ -17,12 +17,11 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
 commands = {
-    "_kappa": {"desc": "I couldn't resist it.", "use": None, "alias": None},
-    "_rip": {"desc": "Rest in peperoni, man.", "use": "[command] [mention]", "alias": None},
-    "ayy lmao": {"desc": "Yes, it's the ayy lmao meme.", "use": None, "alias": None},
+    "_kappa": {"desc": "I couldn't resist it."},
+    "_rip": {"desc": "Rest in peperoni, man.", "use": "[command] [mention]"},
     "_meme": {"desc": "Captions a meme with your text. Take a look at <https://imgflip.com/memegenerator>'s list of memes if you want.", "use": "[command] [meme name]|[top text]|[bottom text]", "alias": "_caption"},
     "_caption": {"desc": "Captions a meme with your text. Take a look at <https://imgflip.com/memegenerator>'s list of memes if you want.", "use": "[command] [meme name]|[top text]|[bottom text]", "alias": "_meme"},
-    "_randomgif": {"desc": "Sends a random gif from Giphy.", "use": None, "alias": None},
+    "_randomgif": {"desc": "Sends a random gif from Giphy."},
 }
 
 valid_commands = commands.keys()
@@ -133,7 +132,6 @@ class Fun:
         assert isinstance(message, Message)
 
         simple_commands = {
-            "ayy lmao": trans.get("MSG_AYYLMAO", lang),
             "( ͡° ͜ʖ ͡°)": trans.get("MSG_WHOKNOWS", lang)
         }
 
@@ -227,7 +225,7 @@ class Fun:
 
 class NanoPlugin:
     name = "Admin Commands"
-    version = "12"
+    version = "13"
 
     handler = Fun
     events = {

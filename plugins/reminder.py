@@ -30,13 +30,13 @@ REMINDER_PERSONAL = "personal"
 REMINDER_CHANNEL = "channel"
 
 commands = {
-    "_remind": {"desc": "General module for timers\nSubcommands: remind me in, remind here in, remind list, remind remove", "use": None, "alias": None},
-    "_remind me in": {"desc": "Adds a reminder (reminds you in dm)", "use": "[command] [time (ex: 3h 5min)] : [message] OR  [command] [time] to [message]", "alias": None},
-    "_remind here in": {"desc": "Adds a reminder (reminds everybody in current channel)", "use": "[command] [time (ex: 3h 5min)] : [message] OR  [command] [time] to [message]", "alias": None},
-    "_remind list": {"desc": "Displays all ongoing timers.", "use": None, "alias": "_reminder list"},
-    "_reminder list": {"desc": "Displays all ongoing timers.", "use": None, "alias": "_remind list"},
-    "_remind help": {"desc": "Displays help for reminders.", "use": None, "alias": None},
-    "_remind remove": {"desc": "Removes a timer with supplied description or time (or all timers with 'all')", "use": "[command] [timer description or time in sec]", "alias": None},
+    "_remind": {"desc": "General module for timers\nSubcommands: remind me in, remind here in, remind list, remind remove"},
+    "_remind me in": {"desc": "Adds a reminder (reminds you in dm)", "use": "[command] [time (ex: 3h 5min)] : [message] OR  [command] [time] to [message]"},
+    "_remind here in": {"desc": "Adds a reminder (reminds everybody in current channel)", "use": "[command] [time (ex: 3h 5min)] : [message] OR  [command] [time] to [message]"},
+    "_remind list": {"desc": "Displays all ongoing timers.", "alias": "_reminder list"},
+    "_reminder list": {"desc": "Displays all ongoing timers.", "alias": "_remind list"},
+    "_remind help": {"desc": "Displays help for reminders."},
+    "_remind remove": {"desc": "Removes a timer with supplied description or time (or all timers with 'all')", "use": "[command] [timer description or time in sec]"},
 }
 
 valid_commands = commands.keys()
@@ -426,7 +426,7 @@ class Reminder:
 
 class NanoPlugin:
     name = "Reminder Commands"
-    version = "21"
+    version = "22"
 
     handler = Reminder
     events = {

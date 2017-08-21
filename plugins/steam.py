@@ -16,11 +16,11 @@ parser.read("plugins/config.ini")
 
 
 commands = {
-    "_steam": {"desc": "Searches for the specified steam id.\nSubcommands: 'steam user', 'steam games', 'steam friends'", "use": "[command] [end of user url/id]", "alias": None},
-    "_steam user": {"desc": "Searches for general info about the user.", "use": "[command] [end of user url/id]", "alias": None},
-    "_steam games": {"desc": "Searches for all owned games in user's account.", "use": "[command] [end of user url/id]", "alias": None},
-    "_steam friends": {"desc": "Searches for all friends that the user has.", "use": "[command] [end of user url/id]", "alias": None},
-    "_steam help": {"desc": "Displays help for all steam commands.", "use": "[command]", "alias": None},
+    "_steam": {"desc": "Searches for the specified steam id.\nSubcommands: 'steam user', 'steam games', 'steam friends'", "use": "[command] [end of user url/id]"},
+    "_steam user": {"desc": "Searches for general info about the user.", "use": "[command] [end of user url/id]"},
+    "_steam games": {"desc": "Searches for all owned games in user's account.", "use": "[command] [end of user url/id]"},
+    "_steam friends": {"desc": "Searches for all friends that the user has.", "use": "[command] [end of user url/id]"},
+    "_steam help": {"desc": "Displays help for all steam commands.", "use": "[command]"},
 }
 
 valid_commands = commands.keys()
@@ -181,7 +181,7 @@ class Steam:
 
 class NanoPlugin:
     name = "Steam Commands"
-    version = "17"
+    version = "18"
 
     handler = Steam
     events = {

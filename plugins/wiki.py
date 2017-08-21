@@ -27,7 +27,7 @@ MAX_URBAN_LENGTH = parser.getint("urban", "max-length")
 commands = {
     "_wiki": {"desc": "Gives you the definition of a word from Wikipedia.", "use": "[command] [word]", "alias": "_define"},
     "_define": {"desc": "Gives you the definition of a word from Wikipedia.", "use": "[command] [word]", "alias": "_wiki"},
-    "_urban": {"desc": "Gives you the definition of a word from Urban Dictionary.", "use": "[command] [word]", "alias": None},
+    "_urban": {"desc": "Gives you the definition of a word from Urban Dictionary.", "use": "[command] [word]"},
 }
 
 valid_commands = commands.keys()
@@ -179,7 +179,7 @@ class Definitions:
 
 class NanoPlugin:
     name = "Wiki/Urban Commands"
-    version = "9"
+    version = "10"
 
     handler = Definitions
     events = {

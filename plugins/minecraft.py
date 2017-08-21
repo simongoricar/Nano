@@ -18,7 +18,7 @@ ITEM_ID = 2
 ITEM_NAME = 3
 
 commands = {
-    "_mc": {"desc": "Searches for items and displays their details", "use": "[command] [item name or id:meta]", "alias": None},
+    "_mc": {"desc": "Searches for items and displays their details", "use": "[command] [item name or id:meta]"},
 }
 
 valid_commands = commands.keys()
@@ -241,7 +241,7 @@ class Minecraft:
 
 class NanoPlugin:
     name = "Minecraft Commands"
-    version = "13"
+    version = "14"
 
     handler = Minecraft
     events = {

@@ -17,8 +17,8 @@ DEFAULT_PREFIX = parser.get("Servers", "defaultprefix")
 # Prefix getter plugin
 
 commands = {
-    "nano.sleep": {"desc": "Puts Nano to sleep. (per-server basis)", "use": None, "alias": None},
-    "nano.wake": {"desc": "Wakes Nano up. (per-server basis)", "use": None, "alias": None},
+    "nano.sleep": {"desc": "Puts Nano to sleep. (per-server basis)"},
+    "nano.wake": {"desc": "Wakes Nano up. (per-server basis)"},
 }
 
 valid_commands = commands.keys()
@@ -155,7 +155,7 @@ class PrefixState:
 
 class NanoPlugin:
     name = "Prefix and state handler"
-    version = "22"
+    version = "23"
 
     handler = PrefixState
     events = {

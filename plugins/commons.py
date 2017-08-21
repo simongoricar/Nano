@@ -51,22 +51,22 @@ quotes = [
     "The secret of happiness is something to do. –John Burroughs"]
 
 commands = {
-    "_hello": {"desc": "Welcomes a **mentioned** person, or if no mentions are present, you.", "use": "[command] [mention]", "alias": None},
-    "_uptime": {"desc": "Tells you for how long I have been running.", "use": None, "alias": None},
-    "_github": {"desc": "Link to my project on GitHub.", "use": None, "alias": None},
-    "_ping": {"desc": "Just to check if I'm alive. fyi: I love ping-pong.", "use": None, "alias": None},
+    "_hello": {"desc": "Welcomes a **mentioned** person, or if no mentions are present, you.", "use": "[command] [mention]"},
+    "_uptime": {"desc": "Tells you for how long I have been running."},
+    "_github": {"desc": "Link to my project on GitHub."},
+    "_ping": {"desc": "Just to check if I'm alive. fyi: I love ping-pong."},
     "_roll": {"desc": "Replies with a random number in range from 0 to your number.", "use": "[command] [number]", "alias": "_rng"},
     "_rng": {"desc": "Replies with a random number in range from 0 to your number.", "use": "[command] [number]", "alias": "_roll"},
-    "_dice": {"desc": "Rolls the dice\nDice expression example: `5d6` - rolls five dices with six sides, `1d9` - rolls one dice with nine sides", "use": "[command] [dice expression]", "alias": None},
-    "_decide": {"desc": "Decides between different choices so you don't have to.", "use": "[command] word1|word2|word3|...", "alias": None},
-    "_8ball": {"desc": "Answers your questions. 8ball style.", "use": "[command] [question]", "alias": None},
-    "_quote": {"desc": "Brightens your day with a random quote.", "use": None, "alias": None},
-    "_invite": {"desc": "Gives you a link to invite Nano to another (your) server.", "use": None, "alias": "nano.invite"},
-    "nano.invite": {"desc": "Gives you a link to invite Nano to another (your) server.", "use": None, "alias": "_invite"},
-    "_avatar": {"desc": "Gives you the avatar url of a mentioned person", "use": "[command] [mention or name]", "alias": None},
-    "_say": {"desc": "Says something (#channel is optional)", "use": "[command] (#channel) [message]", "alias": None},
-    "nano.info": {"desc": "A little info about me.", "use": None, "alias": "_ayybot"},
-    "_nano": {"desc": "A little info about me.", "use": None, "alias": "nano.info"},
+    "_dice": {"desc": "Rolls the dice\nDice expression example: `5d6` - rolls five dices with six sides, `1d9` - rolls one dice with nine sides", "use": "[command] [dice expression]"},
+    "_decide": {"desc": "Decides between different choices so you don't have to.", "use": "[command] word1|word2|word3|..."},
+    "_8ball": {"desc": "Answers your questions. 8ball style.", "use": "[command] [question]"},
+    "_quote": {"desc": "Brightens your day with a random quote."},
+    "_invite": {"desc": "Gives you a link to invite Nano to another (your) server.", "alias": "nano.invite"},
+    "nano.invite": {"desc": "Gives you a link to invite Nano to another (your) server.", "alias": "_invite"},
+    "_avatar": {"desc": "Gives you the avatar url of a mentioned person", "use": "[command] [mention or name]"},
+    "_say": {"desc": "Says something (#channel is optional)", "use": "[command] (#channel) [message]"},
+    "nano.info": {"desc": "A little info about me.", "alias": "_ayybot"},
+    "_nano": {"desc": "A little info about me.", "alias": "nano.info"},
 }
 
 valid_commands = commands.keys()
@@ -471,7 +471,7 @@ class Commons:
 
 class NanoPlugin:
     name = "Common Commands"
-    version = "25"
+    version = "26"
 
     handler = Commons
     events = {

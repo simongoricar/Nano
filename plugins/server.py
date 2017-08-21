@@ -22,15 +22,15 @@ log.setLevel(logging.INFO)
 FAILPROOF_TIME_WAIT = 2.5
 
 commands = {
-    "_debug": {"desc": "Displays EVEN MORE stats about Nano.", "use": None, "alias": None},
-    "_status": {"desc": "Displays current status: server, user and channel count.", "use": None, "alias": "nano.status"},
-    "nano.status": {"desc": "Displays current status: server, user and channel count.", "use": None, "alias": "_status"},
-    "_stats": {"desc": "Some stats like message count and stuff like that.", "use": None, "alias": "nano.stats"},
-    "nano.stats": {"desc": "Some stats like message count and stuff like that.", "use": None, "alias": "_stats"},
-    "_prefix": {"desc": "No use whatsoever, but jk here you have it.", "use": None, "alias": None},
-    "nano.prefix": {"desc": "Helps you figure out the prefix.", "use": None, "alias": None},
-    "_members": {"desc": "Lists all members on the server.", "use": None, "alias": None},
-    "_server": {"desc": "Shows info about current server.", "use": None, "alias": None}
+    "_debug": {"desc": "Displays EVEN MORE stats about Nano."},
+    "_status": {"desc": "Displays current status: server, user and channel count.", "alias": "nano.status"},
+    "nano.status": {"desc": "Displays current status: server, user and channel count.", "alias": "_status"},
+    "_stats": {"desc": "Some stats like message count and stuff like that.", "alias": "nano.stats"},
+    "nano.stats": {"desc": "Some stats like message count and stuff like that.", "alias": "_stats"},
+    "_prefix": {"desc": "No use whatsoever, but jk here you have it."},
+    "nano.prefix": {"desc": "Helps you figure out the prefix."},
+    "_members": {"desc": "Lists all members on the server."},
+    "_server": {"desc": "Shows info about current server."}
 }
 
 valid_commands = commands.keys()
@@ -50,7 +50,11 @@ class ServerManagement:
         self.bans = {}
 
     async def handle_log_channel(self, guild):
-        chan = int(self.handler.get_var(guild.id, "logchannel"))
+        # Older servers may still have names of channels, that can cause an error
+        try:
+            chan = int(self.handler.get_var(guild.id, "logchannel"))
+        except TypeError:
+            return None
 
         if is_disabled(chan):
             return None
@@ -402,7 +406,7 @@ class ServerManagement:
 
 class NanoPlugin:
     name = "Moderator"
-    version = "28"
+    version = "2"
 
     handler = ServerManagement
     events = {

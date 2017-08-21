@@ -52,47 +52,58 @@ commands = {
     "nano.kick": {"desc": "Kicks a member", "use": "[command] [mention]", "alias": "_kick"},
     "_unban": {"desc": "Unbans a member.", "use": "[command] [mention/user id]", "alias": "nano.unban"},
     "nano.unban": {"desc": "Unbans a member.", "use": "[command] [mention]", "alias": "_unban"},
-    "_softban": {"desc": "Temporarily bans a member (for time formatting see reminders)", "use": "[command] @mention/username | [time] or [command] @mention [time]", "alias": None},
-    "_cmd": {"desc": "Subcommands:\n`add` `remove` `status` `list`", "use": "[command]", "alias": None},
-    "_cmd add": {"desc": "Adds a command to the server.", "use": "[command] command|response", "alias": None},
-    "_cmd remove": {"desc": "Removes a command from the server.", "use": "[command] command", "alias": None},
-    "_cmd status": {"desc": "Displays how many commands you have and how many more you can add.", "use": "[command] command", "alias": None},
-    "_cmd list": {"desc": "Returns a server-specific command list.", "use": "[command] (page number)", "alias": None},
+    "_softban": {"desc": "Temporarily bans a member (for time formatting see reminders)", "use": "[command] @mention/username | [time] or [command] @mention [time]"},
 
-    "_mute": {"desc": "Mutes the user - deletes all future messages from the user until he/she is un-muted.", "use": "[command] [mention or name]", "alias": None},
-    "_unmute": {"desc": "Un-mutes the user (see mute help for more info).", "use": "[command] [mention or name]", "alias": None},
-    "_muted": {"desc": "Displays a list of all members currently muted.", "use": None, "alias": None},
-    # "_purge": {"desc": "Deletes the messages from the specified user in the last x messages", "use": "[command] [amount] [user name]", "alias": None},
+    "_cmd": {"desc": "Subcommands:\n`add` `remove` `status` `list`", "use": "[command]"},
+    "_cmd add": {"desc": "Adds a command to the server.", "use": "[command] command|response"},
+    "_cmd remove": {"desc": "Removes a command from the server.", "use": "[command] command"},
+    "_cmd status": {"desc": "Displays how many commands you have and how many more you can add.", "use": "[command] command"},
+    "_cmd list": {"desc": "Returns a server-specific command list.", "use": "[command] (page number)"},
 
-    "_setup": {"desc": "Helps admins set up basic settings for the bot (guided setup).", "use": None, "alias": "nano.setup"},
-    "nano.setup": {"desc": "Helps admins set up basic settings for the bot (guided setup).", "use": None, "alias": "_setup"},
-    "_user": {"desc": "Displays info about the user", "use": "[command] [@mention or name]", "alias": None},
+    "_mute": {"desc": "Mutes the user - deletes all future messages from the user until he/she is un-muted.", "use": "[command] [mention or name]"},
+    "_unmute": {"desc": "Un-mutes the user (see mute help for more info).", "use": "[command] [mention or name]"},
+    "_muted": {"desc": "Displays a list of all members currently muted."},
+    # "_purge": {"desc": "Deletes the messages from the specified user in the last x messages", "use": "[command] [amount] [user name]"},
+
+    "_setup": {"desc": "Helps admins set up basic settings for the bot (guided setup).", "alias": "nano.setup"},
+    "nano.setup": {"desc": "Helps admins set up basic settings for the bot (guided setup).", "alias": "_setup"},
+    "_user": {"desc": "Displays info about the user", "use": "[command] [@mention or name]"},
     "_welcomemsg": {"desc": "Sets the message sent when a member joins the server.\nFormatting: ':user' = @user, ':server' = server name", "use": "[command] [content]", "alias": "_joinmsg"},
     "_joinmsg": {"desc": "Sets the message sent when a member joins the server.\nFormatting: ':user' = @user, ':server' = server name", "use": "[command] [content]", "alias": "_welcomemsg"},
-    "_banmsg": {"desc": "Sets the message sent when a member is banned.\nFormatting: ':user' = user name", "use": "[command] [content]", "alias": None},
-    "_kickmsg": {"desc": "Sets the message sent when a member is kicked.\nFormatting: ':user' = user name", "use": "[command] [content]", "alias": None},
-    "_leavemsg": {"desc": "Sets the message sent when a member leaves the server.\nFormatting: ':user' = user name", "use": "[command] [content]", "alias": None},
-    "_nuke": {"desc": "Nukes (deletes) last x messages. (keep in mind that you can only nuke messages up to 2 weeks old)", "use": None, "alias": None},
+    "_banmsg": {"desc": "Sets the message sent when a member is banned.\nFormatting: ':user' = user name", "use": "[command] [content]"},
+    "_kickmsg": {"desc": "Sets the message sent when a member is kicked.\nFormatting: ':user' = user name", "use": "[command] [content]"},
+    "_leavemsg": {"desc": "Sets the message sent when a member leaves the server.\nFormatting: ':user' = user name", "use": "[command] [content]"},
+    "_nuke": {"desc": "Nukes (deletes) last x messages. (keep in mind that you can only nuke messages up to 2 weeks old)"},
 
-    "nano.blacklist add": {"desc": "Adds a channel to command blacklist.", "use": "[command] [channel name]", "alias": None},
-    "nano.blacklist remove": {"desc": "Removes a channel from command blacklist", "use": "[command] [channel name]", "alias": None},
-    "nano.blacklist list": {"desc": "Shows all blacklisted channels on this server", "use": "[command]", "alias": None},
+    "nano.blacklist add": {"desc": "Adds a channel to command blacklist.", "use": "[command] [channel name]"},
+    "nano.blacklist remove": {"desc": "Removes a channel from command blacklist", "use": "[command] [channel name]"},
+    "nano.blacklist list": {"desc": "Shows all blacklisted channels on this server", "use": "[command]"},
 
-    "nano.settings": {"desc": "Sets server settings like word, spam, invite filtering, log channel and selfrole.\nPossible setting keyords: wordfilter, spamfilter, invitefilter, logchannel, selfrole, defaultchannel", "use": "[command] [setting] True/False", "alias": None},
-    "nano.displaysettings": {"desc": "Displays all server settings.", "use": None, "alias": None},
-    "nano.changeprefix": {"desc": "Changes the prefix on the server.", "use": "[command] prefix", "alias": None},
-    "nano.serverreset": {"desc": "Resets all server settings to the default.", "use": None, "alias": None},
+    "nano.settings": {"desc": "Sets server settings like word, spam, invite filtering, log channel and selfrole.\nPossible setting keyords: `wordfilter`, `spamfilter`, `invitefilter`, `logchannel`, `selfrole`, `defaultchannel`", "use": "[command] [setting] True/False/Something else"},
+    "nano.settings wordfilter": {"desc": "Turns the swearing filter on or off.", "use": "[command] True/False"},
+    "nano.settings spamfilter": {"desc": "Turns the spam filter on or off. (please note, this is only a gibberish filter)", "use": "[command] True/False"},
+    "nano.settings invitefilter": {"desc": "Turns the invite filter on or off. All links except those sent by Nano Mods or higher will be deleted.", "use": "[command] True/False"},
+    "nano.settings logchannel": {"desc": "Sets the channel you want Nano to log events into (this includes join/leave/... events and also some command executions)", "use": "[command] True/False"},
+    "nano.settings defaultchannel": {"desc": "Sets the channel you want Nano to post join/leave/kick/ban messages in.", "use": "[command] True/False"},
+    "nano.settings selfrole": {"desc": "The selfrole system allows normal members to give themselves a role without an admin's supervision.\nSubcommands: `add` `remove` (For a list current selfroles see `{p}selfrole list`)"},
+    "nano.settings selfrole add": {"desc": "Adds a role to server's selfroles.", "use": "[command] [role name]"},
+    "nano.settings selfrole remove": {"desc": "Removes a role from server's selfrole list.", "use": "[command] [role name]"},
 
-    "_role": {"desc": "General role stuff. Subcommands:\n`add` `remove`", "use": None, "alias": None},
-    "_role add": {"desc": "Adds a role to the user.", "use": "[command] [role name] | [@mention @mention ...] OR [role name] @mention", "alias": None},
-    "_role remove": {"desc": "Removes a role from the user.", "use": "[command] [role name] | [@mention @mention ...] OR [role name] @mention", "alias": None},
-    #"_role replaceall": {"desc": "Replace all roles with the specified one for a user.", "use": "[command] [role name] [mention]", "alias": None},
 
-    "_language": {"desc": "Displays the current language you're using. \nSee `_language list` for available languages or use `_language set [language_code] to set your language.", "use": "[command] [argument]", "alias": None},
-    "_language list": {"desc": "Lists all available languages", "use": "[command]", "alias": None},
-    "_language set": {"desc": "Sets the language for the current server.", "use": "[command] [language_code]", "alias": None},
+    "nano.displaysettings": {"desc": "Displays all server settings."},
+    "nano.changeprefix": {"desc": "Changes the prefix on the server.", "use": "[command] prefix"},
+    "nano.serverreset": {"desc": "Resets all server settings to the default."},
 
-    "_selfrole": {"desc": "Allows everyone to give themselves an admin-set role (see `_selfrole list` for a list of available selfoles)\nIf you already have the role, this command removes it.", "use": "[command] [role name]", "alias": None},
+    "_role": {"desc": "General role stuff. Subcommands:\n`add` `remove`"},
+    "_role add": {"desc": "Adds a role to the user.", "use": "[command] [role name] | [@mention @mention ...] OR [role name] @mention"},
+    "_role remove": {"desc": "Removes a role from the user.", "use": "[command] [role name] | [@mention @mention ...] OR [role name] @mention"},
+
+    "_language": {"desc": "Displays the current language you're using. \nSee `_language list` for available languages or use `_language set [language_code] to set your language.", "use": "[command] [argument]"},
+    "_language list": {"desc": "Lists all available languages", "use": "[command]"},
+    "_language set": {"desc": "Sets the language for the current server.", "use": "[command] [language_code]"},
+
+    "_selfrole": {"desc": "Selfroles allow normal members to give themselves role(s) without an admin's supervision (see `_selfrole list` for a list of available selfoles)\nIf you already have the role, this command removes it.", "use": "[command] [role name]"},
+    "_selfrole list": {"desc": "Lists the current selfroles on this server,", "use": "[command]"},
 
 }
 
@@ -920,7 +931,7 @@ class Admin:
         ################################
         # PERMISSION CHECK (only admins)
         ################################
-        if not handler.can_use_admin_commands(message.author, message.guild):
+        if not handler.is_admin(message.author, message.guild):
             await message.channel.send(trans.get("PERM_ADMIN", lang))
             return
 
@@ -1799,7 +1810,7 @@ class Admin:
 
 class NanoPlugin:
     name = "Admin Commands"
-    version = "32"
+    version = "33"
 
     handler = Admin
     events = {

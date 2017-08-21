@@ -42,10 +42,10 @@ game_list = [
 
 commands = {
     "nano.dev": {"desc": "Developer commands, restricted."},
-    "nano.playing": {"desc": "Restricted to owner, changes 'playing' status.", "use": "[command] [status]", "alias": None},
-    "nano.restart": {"desc": "Restricted to owner, restarts down the bot.", "use": "[command]", "alias": None},
-    "nano.reload": {"desc": "Restricted to owner, reloads all settings from config file.", "use": None, "alias": "_reload"},
-    "nano.kill": {"desc": "Restricted to owner, shuts down the bot.", "use": "[command]", "alias": None},
+    "nano.playing": {"desc": "Restricted to owner, changes 'playing' status.", "use": "[command] [status]"},
+    "nano.restart": {"desc": "Restricted to owner, restarts down the bot.", "use": "[command]"},
+    "nano.reload": {"desc": "Restricted to owner, reloads all settings from config file.", "alias": "_reload"},
+    "nano.kill": {"desc": "Restricted to owner, shuts down the bot.", "use": "[command]"},
 }
 
 valid_commands = commands.keys()
@@ -331,7 +331,7 @@ class DevFeatures:
 
 class NanoPlugin:
     name = "Developer Commands"
-    version = "26"
+    version = "27"
 
     handler = DevFeatures
     events = {

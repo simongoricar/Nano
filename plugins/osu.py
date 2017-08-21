@@ -19,7 +19,7 @@ parser = configparser.ConfigParser()
 parser.read("plugins/config.ini")
 
 commands = {
-    "_osu": {"desc": "Displays stats for that osu! user.", "use": "[command] [username/id]", "alias": None},
+    "_osu": {"desc": "Displays stats for that osu! user.", "use": "[command] [username/id]"},
 }
 
 valid_commands = commands.keys()
@@ -148,7 +148,7 @@ class Osu:
 
 class NanoPlugin:
     name = "osu!"
-    version = "8"
+    version = "9"
 
     handler = Osu
     events = {

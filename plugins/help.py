@@ -8,29 +8,16 @@ from discord import Embed, Colour
 from data.stats import MESSAGE, HELP, WRONG_ARG
 from data.utils import is_valid_command
 
-# Template: {"desc": "", "use": None, "alias": None},
-
-
-# OBSOLETE HELP MESSAGES FOR VOICE
-
-# "_music join": {"desc": "Joins a voice channel.", "use": "[command] [channel name]", "alias": None},
-# "_music leave": {"desc": "Leaves a music channel.", "use": None, "alias": None},
-# "_music volume": {"desc": "Returns the current volume or sets one.", "use": "[command] [volume 0-150]", "alias": None},
-# "_music pause": {"desc": "Pauses the current song.", "use": None, "alias": None},
-# "_music resume": {"desc": "Resumes the paused song", "use": None, "alias": None},
-# "_music skip": {"desc": "Skips the current song.", "use": None, "alias": "_music stop"},
-# "_music stop": {"desc": "Skips the current song", "use": None, "alias": "_music skip"},
-# "_music playing": {"desc": "Gives you info about the current song.", "use": None, "alias": None},
-# "_music help": {"desc": "Some help with all the music commands.", "use": None, "alias": None},
+# Template: {"desc": ""},
 
 commands = {
-    "_cmds": {"desc": "Displays a link to the wiki page where all commands are listed.", "use": None, "alias": "_commands"},
-    "_commands": {"desc": "Displays a link to the wiki page where all commands are listed.", "use": None, "alias": "_cmds"},
-    "_help": {"desc": "This is here.", "use": None, "alias": None},
-    "_suggest": {"desc": "Sends a message to the developer", "use": "[command] [message]", "alias": None},
-    "_bug": {"desc": "Place where you can report bugs.", "use": None, "alias": "nano.bug"},
-    "nano.bug": {"desc": "Place where you can report bugs.", "use": None, "alias": "_bug"},
-    "_tos": {"desc": "Displays more info about the Terms of Service", "use": None, "alias": None},
+    "_cmds": {"desc": "Displays a link to the wiki page where all commands are listed.", "alias": "_commands"},
+    "_commands": {"desc": "Displays a link to the wiki page where all commands are listed.", "alias": "_cmds"},
+    "_help": {"desc": "This is here."},
+    "_suggest": {"desc": "Sends a message to the developer", "use": "[command] [message]"},
+    "_bug": {"desc": "Place where you can report bugs.", "alias": "nano.bug"},
+    "nano.bug": {"desc": "Place where you can report bugs.", "alias": "_bug"},
+    "_tos": {"desc": "Displays more info about the Terms of Service"},
 }
 
 valid_commands = commands.keys()
@@ -67,36 +54,34 @@ class Help:
         self.last_times = {}
         self.commands = {}
 
-    def get_command_info(self, cmd, prefix, lang):
+    def get_command_info(self, cmd_name, prefix, lang) -> tuple:
         # Normal commands
-        cmd1 = self.commands.get(str(cmd.replace(prefix, "_").strip(" ")))
-        if cmd1 is not None:
-            cmd_name = cmd.replace(prefix, "")
+        cmd = self.commands.get(str(cmd_name.replace(prefix, "_").strip(" ")))
 
-            description = cmd1.get("desc")
-
-            use = cmd1.get("use")
-            if use:
-                use = cmd1.get("use").replace("[command]",
-                                              prefix + cmd_name if not cmd_name.startswith("nano.") else cmd_name)
-
-            alias = cmd1.get("alias")
-            if alias:
-                alias = cmd1.get("alias").replace("_", prefix)
-
+        if cmd:
             emb = Embed(colour=Colour.blue())
 
-            emb.add_field(name=self.trans.get("MSG_HELP_DESC", lang), value=description)
+            cmd_name = cmd_name.replace(prefix, "")
 
+            description = cmd.get("desc")
+            if description:
+                description = description.replace("{p}", prefix)
+                emb.add_field(name=self.trans.get("MSG_HELP_DESC", lang), value=description)
+
+            use = cmd.get("use")
             if use:
+                use = cmd.get("use").replace("[command]", prefix + cmd_name if not cmd_name.startswith("nano.") else cmd_name)
                 emb.add_field(name=self.trans.get("MSG_HELP_USE", lang), value=use, inline=False)
+
+            alias = cmd.get("alias")
             if alias:
+                alias = cmd.get("alias").replace("_", prefix)
                 emb.add_field(name=self.trans.get("MSG_HELP_ALIASES", lang), value=alias, inline=False)
 
             self.stats.add(HELP)
             return "**{}**".format(cmd_name), emb
 
-        if not cmd1:
+        if not cmd:
             self.stats.add(WRONG_ARG)
             return None, None
 
@@ -234,7 +219,7 @@ class Help:
 
 class NanoPlugin:
     name = "Help Commands"
-    version = "29"
+    version = "30"
 
     handler = Help
     events = {

@@ -51,7 +51,7 @@ quality_names = {0: "Stock",
                  15: "Decorated"}
 
 commands = {
-    "_tf": {"desc": "Gets item prices from backpack.tf (not perfect for items with unusual effects/sheens)", "use": "[command] [item name]", "alias": None},
+    "_tf": {"desc": "Gets item prices from backpack.tf (not perfect for items with unusual effects/sheens)", "use": "[command] [item name]"},
 }
 
 valid_commands = commands.keys()
@@ -381,7 +381,7 @@ class TeamFortress:
 
 class NanoPlugin:
     name = "Team Fortress 2"
-    version = "20"
+    version = "21"
 
     handler = TeamFortress
     events = {

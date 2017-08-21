@@ -22,8 +22,8 @@ commands = {
     "_imdb plot": {"desc": "Displays more plot info about a film/series.", "use": "[command] [film/series/person name]", "alias": "_tmdb plot"},
     "_imdb rating": {"desc": "Displays different ratings for the film/series.", "use": "[command] [film/series/person name]", "alias": "_tmdb rating"},
     "_imdb help": {"desc": "Displays available commands regarding IMDb.", "use": "[command]", "alias": "_tmdb help"},
-    "_imdb": {"desc": "The TMDb (https://www.themoviedb.org/) module\nSubcommands: search trailer plot rating help", "use": None, "alias": None},
-    "_tmdb": {"desc": "General alias for the imdb command (see the help message)", "use": None, "alias": None}
+    "_imdb": {"desc": "Displays all kinds of film/series info. (Powered by https://www.themoviedb.org)\nSubcommands: `search` `trailer` `plot` `rating` `help`"},
+    "_tmdb": {"desc": "Displays all kinds of film/series info. (Powered by https://www.themoviedb.org)\nSubcommands: `search` `trailer` `plot` `rating` `help`"},
 }
 
 valid_commands = commands.keys()
@@ -205,7 +205,7 @@ class TMDb:
 
 class NanoPlugin:
     name = "TMDb Commands"
-    version = "17"
+    version = "18"
 
     handler = TMDb
     events = {
