@@ -91,18 +91,28 @@ class RedisReminderHandler:
         return reminders
 
     @staticmethod
-    def _extract_user_id(key_name: str):
+    def _extract_user_id(key_name: str) -> int:
         # Dirty but fast
         # How it works:
         # Example: "reminder:DefaltSimon:328742938"
         # Splits by the first and last : and returns the middle
         # Safe even if user has : in his/her name
 
-        return key_name.split(":", maxsplit=1)[1].rsplit(":", maxsplit=1)[0]
+        return int(key_name.split(":", maxsplit=1)[1].rsplit(":", maxsplit=1)[0])
 
-    def get_all_reminders(self):
+    def get_all_reminders(self) -> list:
+        """
+        Finds users and gets their reminders
+        :return: list(user_reminder_dict, ...)
+        """
+        users = set()
+
         # Not actually *, but reminder:*, due to how plugin manager works
-        return [self.get_reminders(self._extract_user_id(k)) for k in self.redis.scan_iter("*")]
+        for k_name in self.redis.scan_iter("*"):
+            users.add(self._extract_user_id(k_name))
+
+        return [self.get_reminders(u) for u in users]
+
 
     def find_id_from_content(self, user_id, content):
         reminders = self.get_reminders(user_id)
@@ -119,16 +129,13 @@ class RedisReminderHandler:
     def remove_reminder(self, user_id, rem_id):
         return self.redis.delete("{}:{}".format(user_id, rem_id))
 
-    def check_reminders(self, user):
+    def can_add_reminders(self, user_id):
         """
-        :param user: User or Member
+        :param user_id: user id
         :return: True -> user can add more reminders
         """
-        if self.redis.exists(user.id):
-            return len(self.get_reminders(user.id)) <= DEFAULT_REMINDER_LIMIT
 
-        else:
-            return True
+        return len(self.get_reminders(user_id)) <= DEFAULT_REMINDER_LIMIT
 
     def set_reminder(self, channel, author, content: str, tim: int,
                      lang: str, reminder_type: Union[REMINDER_CHANNEL, REMINDER_PERSONAL]=REMINDER_PERSONAL):
@@ -144,7 +151,7 @@ class RedisReminderHandler:
         """
         t = time.time()
 
-        if not self.check_reminders(author):
+        if not self.can_add_reminders(author.id):
             return -1
 
         tim = convert_to_seconds(tim)
@@ -224,13 +231,20 @@ class RedisReminderHandler:
 
         while True:
             # Iterate through users and their reminders
-            for user in self.get_all_reminders():
+            a = self.get_all_reminders()
+            print("TOTAL")
+            print(a)
+            print("__________")
+            for user in a:
 
                 for rm_id, reminder in user.items():
                     # If enough time has passed, send the reminder
+                    print("{} reminder: {}".format(rm_id, reminder))
                     if int(reminder["time_target"]) <= last_time:
+                        print("time reached, kk")
 
                         try:
+                            print("dispatching")
                             await self.dispatch(reminder)
                         except Exception:
                             log.warning("ERROR in reminders, see bugs.txt")
@@ -331,7 +345,7 @@ class Reminder:
 
             # Too many reminders going on
             if resp == -1:
-                await message.channel.send(trans.get("MSG_REMIDNER_LIMIT_EXCEEDED", lang).format(DEFAULT_REMINDER_LIMIT))
+                await message.channel.send(trans.get("MSG_REMINDER_LIMIT_EXCEEDED", lang).format(DEFAULT_REMINDER_LIMIT))
 
             # Invalid range
             elif resp is False:
@@ -354,7 +368,7 @@ class Reminder:
             resp = self.reminder.set_reminder(message.channel, message.author, text, r_time, lang, reminder_type=REMINDER_CHANNEL)
 
             if resp == -1:
-                await message.channel.send(trans.get("MSG_REMIDNER_LIMIT_EXCEEDED", lang).format(DEFAULT_REMINDER_LIMIT))
+                await message.channel.send(trans.get("MSG_REMINDER_LIMIT_EXCEEDED", lang).format(DEFAULT_REMINDER_LIMIT))
 
             elif resp is False:
                 await message.channel.send(trans.get("MSG_REMINDER_INVALID_RANGE", lang).format(REM_MIN_DURATION, REM_MAX_DAYS))
