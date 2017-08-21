@@ -2,6 +2,7 @@ ujson
 aiohttp
 giphypop
 psutil
+beautifulsoup4
 redis
 fuzzywuzzy
 python-Levenshtein
