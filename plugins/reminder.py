@@ -232,19 +232,13 @@ class RedisReminderHandler:
         while True:
             # Iterate through users and their reminders
             a = self.get_all_reminders()
-            print("TOTAL")
-            print(a)
-            print("__________")
             for user in a:
 
                 for rm_id, reminder in user.items():
                     # If enough time has passed, send the reminder
-                    print("{} reminder: {}".format(rm_id, reminder))
                     if int(reminder["time_target"]) <= last_time:
-                        print("time reached, kk")
 
                         try:
-                            print("dispatching")
                             await self.dispatch(reminder)
                         except Exception:
                             log.warning("ERROR in reminders, see bugs.txt")

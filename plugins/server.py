@@ -50,18 +50,18 @@ class ServerManagement:
         self.bans = {}
 
     async def handle_log_channel(self, guild):
-        chan = self.handler.get_var(guild.id, "logchannel")
+        chan = int(self.handler.get_var(guild.id, "logchannel"))
 
         if is_disabled(chan):
             return None
 
-        return utils.find(lambda m: m.id == chan, guild.channels)
+        return utils.find(lambda m: m.id == chan, guild.text_channels)
 
-    async def handle_def_channel(self, guild, channel_id):
+    async def handle_def_channel(self, guild, channel_id: int):
         if is_disabled(channel_id):
             return await self.default_channel(guild)
         else:
-            chan = utils.find(lambda c: c.id == channel_id, guild.channels)
+            chan = utils.find(lambda c: c.id == channel_id, guild.text_channels)
             if not chan:
                 log_to_file("Custom channel does not exist anymore: {} ({})".format(guild.name, guild.id))
                 return await self.default_channel(guild)
@@ -163,8 +163,6 @@ class ServerManagement:
             garbage = round(mem_after - mem_before, 2)
 
             # OTHER
-            d = datetime(1, 1, 1) + timedelta(seconds=time.time() - self.nano.boot_time)
-
             nano_version = self.nano.version
             discord_version = d_version
 

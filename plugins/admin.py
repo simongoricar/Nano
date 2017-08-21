@@ -673,17 +673,16 @@ class Admin:
             await message.channel.send(trans.get("MSG_NUKE_PURGING", lang).format(amount))
 
             additional = ""
+            reason = trans.get("MSG_NUKE_AUDIT_REASON", lang).format(message.author.name, amount)
 
             try:
-                await message.channel.purge(limit=amount, reason=trans.get("MSG_NUKE_AUDIT_REASON", lang).format(message.author.name, amount))
+                await message.channel.purge(limit=amount, reason=reason)
             except HTTPException:
                 additional = trans.get("MSG_NUKE_OLD", lang)
 
             # Show success
-            m = await message.channel.send(trans.get("MSG_NUKE_PURGED", lang).format(amount - 1) + additional)
-            # Wait 1.5 sec and delete the message
-            await asyncio.sleep(1.5)
-            await m.delete()
+            # Message is automatically deleted after 1.5s
+            await message.channel.send(trans.get("MSG_NUKE_PURGED", lang).format(amount - 1) + additional, delete_after=1.5, reason=reason)
 
             await self.log_nuke_command(message, amount, prefix, lang)
 
