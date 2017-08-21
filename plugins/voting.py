@@ -168,7 +168,7 @@ class Vote:
 
         # !vote start [title]|[option1]|(option2)|...
         if startswith(prefix + "vote start"):
-            if not self.handler.can_use_admin_commands(message.author, message.guild):
+            if not self.handler.is_admin(message.author, message.guild):
                 await message.channel.send(trans.get("PERM_ADMIN", lang))
                 self.stats.add(WRONG_PERMS)
                 return
@@ -216,7 +216,7 @@ class Vote:
 
         # !vote end
         elif startswith(prefix + "vote end"):
-            if not self.handler.can_use_admin_commands(message.author, message.guild):
+            if not self.handler.is_admin(message.author, message.guild):
                 await message.channel.send(trans.get("PERM_ADMIN", lang))
                 self.stats.add(WRONG_PERMS)
                 return

@@ -105,33 +105,30 @@ class ServerHandler:
 
         return False
 
-    def can_use_admin_commands(self, member: Member, server: Guild):
-        bo = self.is_bot_owner(member.id)
-        so = self.is_server_owner(member.id, server)
-        ia = self.is_admin(member)
-
-        return bo or so or ia
-
     @staticmethod
-    def is_bot_owner(uid: int):
-        return uid == int(par.get("Settings", "ownerid"))
+    def is_bot_owner(user_id: int):
+        return user_id == int(par.get("Settings", "ownerid"))
 
     @staticmethod
     def is_server_owner(user_id: int, server: Guild):
         return user_id == server.owner.id
 
-    def is_admin(self, member: Member):
-        return self.has_role(member, "Nano Admin")
-
-    def is_mod(self, member: Member, server: Guild):
+    def is_admin(self, member: Member, guild: Guild):
         # Changed in 3.7
         # Having Nano Admin allows access to Nano Mod commands as well
         bo = self.is_bot_owner(member.id)
-        so = self.is_server_owner(member.id, server)
+        so = self.is_server_owner(member.id, guild)
         im = self.has_role(member, "Nano Mod")
         ia = self.has_role(member, "Nano Admin")
 
         return bo or so or ia or im
+
+    def is_mod(self, member: Member, server: Guild):
+        bo = self.is_bot_owner(member.id)
+        so = self.is_server_owner(member.id, server)
+        im = self.has_role(member, "Nano Mod")
+
+        return bo or so or im
 
 
 # Everything regarding RedisServerHandler below

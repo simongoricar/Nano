@@ -266,7 +266,7 @@ class Moderator:
 
         if needs_invite_filter:
             # Ignore invites from admins
-            if not handler.can_use_admin_commands(message.author, message.guild):
+            if not handler.is_admin(message.author, message.guild):
                 invite = self.checker.check_invite(message.content)
 
             else:
