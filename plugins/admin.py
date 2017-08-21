@@ -8,7 +8,9 @@ from typing import Union
 from discord import utils, Client, Embed, TextChannel, Colour, DiscordException, Object, HTTPException
 
 from data.serverhandler import INVITEFILTER_SETTING, SPAMFILTER_SETTING, WORDFILTER_SETTING
-from data.utils import convert_to_seconds, matches_list, is_valid_command, StandardEmoji, decode, resolve_time, log_to_file, is_disabled, IgnoredException, parse_special_chars
+from data.utils import convert_to_seconds, matches_list, is_valid_command, StandardEmoji, \
+                       resolve_time, log_to_file, is_disabled, IgnoredException, parse_special_chars
+
 from data.stats import MESSAGE
 
 
@@ -107,7 +109,7 @@ class RedisSoftBanScheduler:
         return self.redis.hexists(guild_id, user_id)
 
     def get_all_bans(self) -> dict:
-        return {b: self.get_guild_bans(b) for b in [decode(a).strip("softban:") for a in self.redis.scan_iter("*")]}
+        return {b: self.get_guild_bans(b) for b in [a.strip("softban:") for a in self.redis.scan_iter("*")]}
 
     def set_softban(self, guild, user, tim):
         t = time.time()
@@ -544,6 +546,20 @@ class Admin:
 
         return role, users
 
+    async def log_nuke_command(self, message, amount, prefix, lang):
+        log_channel = await self.handle_log_channel(message.guild)
+
+        if not log_channel:
+            return
+
+        embed = Embed(title=self.trans.get("MSG_LOGPOST_NUKE", lang).format(prefix),
+                      description=self.trans.get("MSG_NUKE_AMOUNT", lang).format(amount))
+
+        embed.set_author(name="{} ({})".format(message.author.name, message.author.id), icon_url=message.author.avatar_url)
+        embed.add_field(name=self.trans.get("INFO_CHANNEL", lang), value=message.channel.mention)
+
+        await log_channel.send(embed=embed)
+
     async def on_message(self, message, **kwargs):
         client = self.client
         handler = self.handler
@@ -645,7 +661,7 @@ class Admin:
                 await message.channel.send(trans.get("PERM_MOD", lang))
                 return "return"
 
-            amount = str(message.content)[len(prefix + "nuke "):]
+            amount = message.content[len(prefix + "nuke "):]
 
             try:
                 amount = int(amount) + 1  # Includes the sender's message
@@ -659,7 +675,7 @@ class Admin:
             additional = ""
 
             try:
-                await message.channel.purge(limit=amount)
+                await message.channel.purge(limit=amount, reason=trans.get("MSG_NUKE_AUDIT_REASON", lang).format(message.author.name, amount))
             except HTTPException:
                 additional = trans.get("MSG_NUKE_OLD", lang)
 
@@ -668,6 +684,8 @@ class Admin:
             # Wait 1.5 sec and delete the message
             await asyncio.sleep(1.5)
             await m.delete()
+
+            await self.log_nuke_command(message, amount, prefix, lang)
 
             return
 
@@ -685,7 +703,7 @@ class Admin:
                 return
 
             await user.kick()
-            await message.channel.send(handler.get_var(message.guild.id, "kickmsg").replace(":user", user.name))
+            await message.channel.send(trans.get("MSG_KICK", lang).format(user.name))
 
             return
 
@@ -715,6 +733,8 @@ class Admin:
             else:
                 self.bans.append(user.id)
                 await user.ban(delete_message_days=0)
+
+                await message.channel.send(trans.get("MSG_BAN", lang).format(user.name))
 
             return
 
@@ -963,13 +983,13 @@ class Admin:
                 banmsg = handler.get_var(message.guild.id, "banmsg")
 
                 if is_disabled(banmsg):
-                    await message.channel.send(trans.get("MSG_BAN_IS_DISABLED", lang))
+                    await message.channel.send(trans.get("MSG_BANMSG_IS_DISABLED", lang))
                 else:
-                    await message.channel.send(trans.get("MSG_BAN_CURRENT", lang).format(banmsg))
+                    await message.channel.send(trans.get("MSG_BANMSG_CURRENT", lang).format(banmsg))
 
             elif is_disabled(change):
                 handler.update_var(message.guild.id, "banmsg", None)
-                await message.channel.send(trans.get("MSG_BAN_DISABLED", lang))
+                await message.channel.send(trans.get("MSG_BANMSG_DISABLED", lang))
 
             else:
                 if len(change) > MAX_NOTIF_LENGTH:
@@ -977,7 +997,7 @@ class Admin:
                     return
 
                 handler.update_var(message.guild.id, "banmsg", change)
-                await message.channel.send(trans.get("MSG_BAN", lang))
+                await message.channel.send(trans.get("MSG_BANMSG", lang))
 
         # !kickmsg
         elif startswith(prefix + "kickmsg"):
@@ -987,13 +1007,13 @@ class Admin:
                 kickmsg = handler.get_var(message.guild.id, "kickmsg")
 
                 if is_disabled(kickmsg):
-                    await message.channel.send(trans.get("MSG_KICK_IS_DISABLED", lang))
+                    await message.channel.send(trans.get("MSG_KICKMSG_IS_DISABLED", lang))
                 else:
-                    await message.channel.send(trans.get("MSG_KICK_CURRENT", lang).format(kickmsg))
+                    await message.channel.send(trans.get("MSG_KICKMSG_CURRENT", lang).format(kickmsg))
 
             elif is_disabled(change):
                 handler.update_var(message.guild.id, "kickmsg", None)
-                await message.channel.send(trans.get("MSG_KICK_DISABLED", lang))
+                await message.channel.send(trans.get("MSG_KICKMSG_DISABLED", lang))
 
             else:
                 if len(change) > MAX_NOTIF_LENGTH:
@@ -1001,7 +1021,7 @@ class Admin:
                     return
 
                 handler.update_var(message.guild.id, "kickmsg", change)
-                await message.channel.send(trans.get("MSG_KICK", lang))
+                await message.channel.send(trans.get("MSG_KICKMSG", lang))
 
         # !leavemsg
         elif startswith(prefix + "leavemsg"):

@@ -101,17 +101,21 @@ Also: `{p}gif` command powered by **Giphy**</string>
     <string name="ERROR_MSG_TOO_LONG">:x: Message was too long to display, consider making whatever it was a little shorter.</string>
 
     <string name="MSG_NUKE_PURGING">Purging last {} messages... :boom:</string>
+    <string name="MSG_NUKE_AUDIT_REASON">**{}** nuked {} messages.</string>
+    <string name="MSG_NUKE_AMOUNT">Nuked {} messages.</string>
     <string name="MSG_NUKE_PURGED">Purged {} messages :ok_hand:.</string>
     <string name="MSG_NUKE_OLD">(some messages were older than 2 weeks, so they were not deleted)</string>
 
     <string name="MSG_KICK_NANO">Nice try :smiley:</string>
+    <string name="MSG_KICK">Kicked **{}** :eyes:</string>
     <string name="MSG_BAN_USER">Are you sure you want to ban {}? Confirm by replying '{}'.</string>
+    <string name="MSG_BAN">Banned **{}** :eyes:</string>
     <string name="MSG_BAN_NANO">Nice try :smiley:</string>
     <string name="MSG_BAN_TIMEOUT">Confirmation not received, NOT banning :upside_down:</string>
-    <string name="MSG_UNBAN_SUCCESS">**{}** has been unbanned.</string>
+    <string name="MSG_UNBAN_SUCCESS">Unbanned **{}** :ok_hand:</string>
     <string name="MSG_UNBAN_NO_BAN">:x: No ban with that name.</string>
     <string name="MSG_UNBAN_WRONG_USAGE">Incorrect usage. See `{}help unban`</string>
-    <string name="MSG_SOFTBAN_SUCCESS">{} has been softbanned for: {}</string>
+    <string name="MSG_SOFTBAN_SUCCESS">Softbanned **{}** for {} :timer:</string>
     <string name="MSG_SOFTBAN_PLSMENTION">Please mention the member you want to softban. (only one)</string>
     <string name="MSG_SOFTBAN_DELIMIT">:no_entry_sign: Please delimit **time** and **@mention/username** with `|`</string>
     <string name="MSG_SOFTBAN_NO_TIME">:warning: Please specify the time to ban for.</string>
@@ -132,12 +136,12 @@ Also: `{p}gif` command powered by **Giphy**</string>
     <string name="MSG_JOIN">Join message has been updated :smile:</string>
     <string name="MSG_JOIN_DISABLED">Join message has been disabled :white_check_mark:</string>
     <string name="MSG_JOIN_IS_DISABLED">:information_source: Join message is currently disabled.</string>
-    <string name="MSG_BAN">Ban message has been updated :smile:</string>
-    <string name="MSG_BAN_DISABLED">Ban message has been disabled :white_check_mark:</string>
-    <string name="MSG_BAN_IS_DISABLED">:information_source: Ban message is currently disabled.</string>
-    <string name="MSG_KICK">Kick message has been updated :smile:</string>
-    <string name="MSG_KICK_DISABLED">Kick message has been disabled :white_check_mark:</string>
-    <string name="MSG_KICK_IS_DISABLED">:information_source: Kick message is currently disabled.</string>
+    <string name="MSG_BANMSG">Ban message has been updated :smile:</string>
+    <string name="MSG_BANMSG_DISABLED">Ban message has been disabled :white_check_mark:</string>
+    <string name="MSG_BANMSG_IS_DISABLED">:information_source: Ban message is currently disabled.</string>
+    <string name="MSG_KICKMSG">Kick message has been updated :smile:</string>
+    <string name="MSG_KICKMSG_DISABLED">Kick message has been disabled :white_check_mark:</string>
+    <string name="MSG_KICKMSG_IS_DISABLED">:information_source: Kick message is currently disabled.</string>
     <string name="MSG_LEAVE">Leave message has been updated :smile:</string>
     <string name="MSG_LEAVE_DISABLED">Leave message has been disabled :white_check_mark:</string>
     <string name="MSG_LEAVE_IS_DISABLED">:information_source: Leave message is currently disabled.</string>
@@ -146,7 +150,7 @@ Also: `{p}gif` command powered by **Giphy**</string>
     <string name="MSG_JOIN_CURRENT">:gear: Current welcome message:
 
 ```{}```</string>
-    <string name="MSG_BAN_CURRENT">:gear: Current ban message:
+    <string name="MSG_BANMSG_CURRENT">:gear: Current ban message:
 
 ```{}```</string>
     <string name="MSG_LEAVE_CURRENT">:gear: Current leave message:
@@ -332,6 +336,7 @@ For a list of all commands and their explanations, use `>cmds`.</string>
     <string name="MSG_PING_MEASURING">:ping_pong: Measuring...</string>
     <string name="MSG_PING_RESULT">:ping_pong: **Pong!** (lag: {} ms, reaction: {} ms)</string>
     <string name="MSG_LOGPOST_SAY">Executed {}say</string>
+    <string name="MSG_LOGPOST_NUKE">Executed {}nuke</string>
     <string name="MSG_UPTIME">I have been tirelessly answering people for **{} days, {} hours, {} minutes and {} seconds!** :open_mouth:</string>
     <string name="MSG_ROLL">{}, you rolled {}</string>
     <string name="MSG_DICE">:game_die: {}, the dice shows... **{}**</string>
