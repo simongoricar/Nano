@@ -53,7 +53,7 @@ class ServerManagement:
         # Older servers may still have names of channels, that can cause an error
         try:
             chan = int(self.handler.get_var(guild.id, "logchannel"))
-        except TypeError:
+        except ValueError:
             return None
 
         if is_disabled(chan):

@@ -693,7 +693,7 @@ class Admin:
 
             # Show success
             # Message is automatically deleted after 1.5s
-            await message.channel.send(trans.get("MSG_NUKE_PURGED", lang).format(amount - 1) + additional, delete_after=1.5, reason=reason)
+            await message.channel.send(trans.get("MSG_NUKE_PURGED", lang).format(amount - 1) + additional, delete_after=1.5)
 
             await self.log_nuke_command(message, amount, prefix, lang)
 
