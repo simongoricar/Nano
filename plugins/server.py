@@ -55,6 +55,8 @@ class ServerManagement:
             chan = int(self.handler.get_var(guild.id, "logchannel"))
         except ValueError:
             return None
+        except TypeError:
+            return None
 
         if is_disabled(chan):
             return None
