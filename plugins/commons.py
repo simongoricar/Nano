@@ -18,6 +18,9 @@ log.setLevel(logging.INFO)
 # Mostly simple commands like !ping and !quote
 #####
 
+MAX_DICE_EXPR = 50
+MAX_DICE = 1000
+
 quotes = [
     "You miss 100% of the shots you don’t take. –Wayne Gretzky",
     "The most difficult thing is the decision to act, the rest is merely tenacity. –Amelia Earhart",
@@ -330,6 +333,11 @@ class Commons:
             else:
                 dice_types = [a.strip(" ") for a in cut.split("+")]
 
+            # To prevent lag
+            if len(dice_types) > MAX_DICE_EXPR:
+                await message.channel.send(trans.get("MSG_DICE_TOO_MANY", lang).format(MAX_DICE_EXPR))
+                return
+
             results = []
             tt = 0
             for dice in dice_types:
@@ -338,6 +346,10 @@ class Commons:
                     times, sides = int(times), int(sides)
                 except ValueError:
                     await message.channel.send(trans.get("MSG_DICE_INVALID", lang))
+                    return
+
+                if times > MAX_DICE or sides > MAX_DICE:
+                    await message.channel.send(trans.get("MSG_DICE_TOO_BIG", lang).format(MAX_DICE))
                     return
 
                 total = 0
