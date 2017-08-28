@@ -4,10 +4,10 @@ import configparser
 import copy
 import importlib
 import logging
-import os
-import sys
+import os, sys
 import time
 import discord
+import traceback
 
 from data import serverhandler
 from data import stats as bot_stats
@@ -48,6 +48,7 @@ ON_PLUGINS_LOADED = "on_plugins_loaded"
 # Other constants
 
 IS_RESUME = False
+PLUGINS_DIR = "plugins"
 
 # LOGGING
 
@@ -113,8 +114,8 @@ class Nano(metaclass=Singleton):
 
     def update_plugins(self):
         started = time.monotonic()
-        self.plugin_names = [pl for pl in os.listdir("plugins")
-                             if os.path.isfile(os.path.join("plugins", pl)) and str(pl).endswith(".py")]
+        self.plugin_names = [pl for pl in os.listdir(PLUGINS_DIR)
+                             if os.path.isfile(os.path.join(PLUGINS_DIR, pl)) and str(pl).endswith(".py")]
 
         self._update_plugins(self.plugin_names)
 
@@ -127,29 +128,33 @@ class Nano(metaclass=Singleton):
         log.info("Loading plugins...")
 
         failed = []
-        ignored = []
+        disabled = []
 
-        for plugin in list(plugin_names):
+        for p_name in list(plugin_names):
             # Use the importlib to dynamically import all plugins
             try:
-                plug = importlib.import_module("plugins.{}".format(plugin[:-3]))
-            except ImportError as e:
-                log.warning("Failed import: {}".format(e))
-                self.plugin_names.pop(self.plugin_names.index(plugin))
-                failed.append(plugin)
+                plug = importlib.import_module("{}.{}".format(PLUGINS_DIR, p_name[:-3]))
+            except ImportError:
+                log.warning("Failed import: {}".format(p_name))
+                log.critical(traceback.format_exc())
+
+                self.plugin_names.pop(self.plugin_names.index(p_name))
+                failed.append(p_name)
+
                 continue
 
             # If this file is not a plugin (does not have a class NanoPlugin), ignore it
             try:
                 assert plug.NanoPlugin
                 # If plugin has attribute 'disabled' and it is True, disable the plugin
-                if hasattr(plug.NanoPlugin, "disabled"):
-                    assert plug.NanoPlugin.disabled is False
+                if hasattr(plug.NanoPlugin, "disabled") and plug.NanoPlugin.disabled is True:
+                    raise AssertionError
 
             except (AttributeError, AssertionError):
                 # remove it from the plugin list and delete it
-                self.plugin_names.pop(self.plugin_names.index(plugin))
-                ignored.append(plugin)
+                self.plugin_names.pop(self.plugin_names.index(p_name))
+                disabled.append(p_name)
+
                 del plug
                 continue
 
@@ -164,19 +169,25 @@ class Nano(metaclass=Singleton):
                                stats=stats,
                                trans=trans)
 
+            # This can be raised by plugins as a message: "I want to be disabled"
             except RuntimeError:
-                self.plugin_names.pop(self.plugin_names.index(plugin))
-                ignored.append(plugin)
-                del plug
-                continue
-            except Exception as e:
-                log.warning("Unexpected error in {}: {}".format(plugin, e))
-                self.plugin_names.pop(self.plugin_names.index(plugin))
-                failed.append(plugin)
+                self.plugin_names.pop(self.plugin_names.index(p_name))
+                disabled.append(p_name)
+
                 del plug
                 continue
 
-            self.plugins[plugin] = {
+            except Exception:
+                log.warning("Unexpected error in {}".format(p_name))
+                log.critical(traceback.format_exc())
+
+                self.plugin_names.pop(self.plugin_names.index(p_name))
+                failed.append(p_name)
+
+                del plug
+                continue
+
+            self.plugins[p_name] = {
                 "plugin": plug,
                 "handler": cls,
                 "instance": instance,
@@ -184,13 +195,13 @@ class Nano(metaclass=Singleton):
             }
 
             for event, importance in events.items():
-                self._plugin_events[event].append({"plugin": plugin, "importance": importance})
+                self._plugin_events[event].append({"plugin": p_name, "importance": importance})
 
         log.debug("Registered plugins: {}".format([str(p).rstrip(".py") for p in self.plugin_names]))
 
         # Display ignored / failed plugins
-        if ignored:
-            log.warning("Ignored/Disabled plugins: {}".format(", ".join(ignored)))
+        if disabled:
+            log.warning("Ignored/Disabled plugins: {}".format(", ".join(disabled)))
 
         if failed:
             log.warning("Failed plugins: {}".format(", ".join(failed)))
@@ -200,40 +211,46 @@ class Nano(metaclass=Singleton):
         asyncio.ensure_future(self.dispatch_event(ON_PLUGINS_LOADED))
 
     async def reload_plugin(self, plug_name: str):
-        if not str(plug_name).endswith(".py"):
-            plug_name = str(plug_name) + ".py"
-        else:
-            plug_name = str(plug_name)
+        if not plug_name.endswith(".py"):
+            plug_name += ".py"
 
-        c_plug = self.get_plugin(plug_name)
-        if not c_plug:
+        # Verify that the plugin is actually already loaded
+        plug_info = self.get_plugin(plug_name)
+        if not plug_info:
             return False
 
         # Gracefully reload if the plugin has ON_SHUTDOWN event
-        if ON_SHUTDOWN in c_plug.get("events").keys():
-            await getattr(c_plug.get("instance"), ON_SHUTDOWN)()
+        if ON_SHUTDOWN in plug_info.get("events").keys():
+            await getattr(plug_info.get("instance"), ON_SHUTDOWN)()
 
-        for event, imp in c_plug.get("events").items():
+        # Remove the current cached events
+        for event, imp in plug_info.get("events").items():
             self._plugin_events[event].remove({"plugin": plug_name, "importance": imp})
 
+        # Reload the plugin
         try:
-            c_plug = importlib.reload(c_plug.get("plugin"))
+            plugin = importlib.reload(plug_info.get("plugin"))
         except ImportError:
+            log.warning("Failed import: {}".format(plug_name))
+            log.critical(traceback.format_exc())
+
             return False
 
         try:
-            assert c_plug.NanoPlugin
+            assert plugin.NanoPlugin
             # If plugin has attribute 'disabled' and it is True, disable the plugin
-            if hasattr(c_plug.NanoPlugin, "disabled"):
-                assert c_plug.NanoPlugin.disabled is False
+            if hasattr(plugin.NanoPlugin, "disabled") and plugin.NanoPlugin.disabled is True:
+                raise AssertionError
 
         except (AttributeError, AssertionError):
             # remove it from the plugin list and delete it
             self.plugin_names.pop(self.plugin_names.index(plug_name))
-            del c_plug
 
-        cls = c_plug.NanoPlugin.handler
-        events = c_plug.NanoPlugin.events
+            del plugin
+            return -1
+
+        cls = plugin.NanoPlugin.handler
+        events = plugin.NanoPlugin.events
 
         # Instantiate the plugin
         try:
@@ -244,18 +261,25 @@ class Nano(metaclass=Singleton):
                            stats=stats,
                            trans=trans)
 
+
+        # This can be raised by plugins as a message: "I want to be disabled"
         except RuntimeError:
             self.plugin_names.pop(self.plugin_names.index(plug_name))
-            del c_plug
-            return False
-        except Exception as e:
-            log.warning("Unexpected error in {}: {}".format(plug_name, e))
+
+            del plugin
+            return -1
+
+        except Exception:
+            log.warning("Unexpected error while reloading in {}".format(plug_name))
+            log.critical(traceback.format_exc())
+
             self.plugin_names.pop(self.plugin_names.index(plug_name))
-            del c_plug
-            return False
+
+            del plugin
+            return -1
 
         self.plugins[plug_name] = {
-            "plugin": c_plug,
+            "plugin": plug_info,
             "handler": cls,
             "instance": instance,
             "events": events,
@@ -285,11 +309,11 @@ class Nano(metaclass=Singleton):
 
             self.plugin_events[element] = sorted_list
 
-    def get_plugin(self, name):
-        if not str(name).endswith(".py"):
-            return self.plugins.get(str(name) + ".py")
-        else:
-            return self.plugins.get(str(name))
+    def get_plugin(self, name: str) -> dict:
+        if not name.endswith(".py"):
+            name += ".py"
+
+        return self.plugins.get(name)
 
     async def dispatch_event(self, event_type, *args, **kwargs):
         """
@@ -304,7 +328,7 @@ class Nano(metaclass=Singleton):
             log.debug("Executing plugin {}:{}".format(plugin.strip(".py"), event_type))
 
             # Execute the corresponding method in the plugin
-            resp = await getattr(self.plugins[plugin].get("instance"), event_type)(*args, **kwargs)
+            resp = await getattr(self.plugins[plugin]["instance"], event_type)(*args, **kwargs)
 
             # COMMUNICATION
             # If data is passed, assign proper variables
@@ -315,18 +339,23 @@ class Nano(metaclass=Singleton):
                 resp = [resp]
 
             for cmd in resp:
+                # Parse additional variables
                 if isinstance(cmd, tuple):
+                    cmd = cmd[0]
                     var_addons = cmd[1:]
-                    cmd = str(cmd[0])
-
                 else:
-                    var_addons = list()
+                    var_addons = []
 
                 # Makes communication between the core and plugins possible
+
+                # RETURN
+                # Exits the current event immediately and doesn't call any more plugins
                 if cmd == "return":
                     log.debug("Exiting")
                     return
 
+                # ADD_VAR
+                # Adds a variable to the current kwargs
                 elif cmd == "add_var":
                     # Add/Set new kwargs
                     if isinstance(var_addons, tuple):
@@ -337,6 +366,8 @@ class Nano(metaclass=Singleton):
                         for k, v in var_addons.items():
                             kwargs[k] = v
 
+                # SET_ARG
+                # Sets the current argument at an index
                 elif cmd == "set_arg":
                     if isinstance(var_addons, tuple):
                         for k, v in var_addons[0].items():
@@ -350,13 +381,15 @@ class Nano(metaclass=Singleton):
                             temp[k] = v
                             args = tuple(b for b in temp)
 
+                # SHUTDOWN
+                # Calls the ON_SHUTDOWN event, then exists
                 elif cmd == "shutdown":
                     try:
                         await self.dispatch_event(ON_SHUTDOWN)
 
                     finally:
-                        # Sys.exit is usually handled by developer.py in the ON_SHUTDOWN event,
-                        # but it does not hurt to have it here as well.
+                        # Sys.exit is usually handled by developer.py in the ON_SHUTDOWN event
+                        # but it is here as backup as well
                         sys.exit(0)
 
 
@@ -448,6 +481,7 @@ async def on_ready():
     global IS_RESUME
     if IS_RESUME:
         print("Resumed connection...")
+        log_to_file("Resumed connection as {}".format(client.user.name))
         return
     IS_RESUME = True
 
@@ -463,6 +497,7 @@ async def start():
     if not parser.has_option("Credentials", "token"):
         log.critical("Token not found. Check your settings.ini")
         log_to_file("Could not start: Token not specified")
+        return
 
     token = parser.get("Credentials", "token")
 
@@ -477,13 +512,13 @@ def main():
 
     except Exception as e:
         loop.run_until_complete(client.logout())
-        log.critical("Something went wrong, quitting (see log for exception info).")
-        log_to_file("CRITICAL, shutting down: {}".format(e))
+        log.critical("Something went wrong, quitting (see log bugs.txt)")
+        log_to_file("CRITICAL, shutting down: {}".format(e), "bug")
 
         # Attempts to save plugin state
         log.critical("Dispatching ON_SHUTDOW...")
         loop.run_until_complete(nano.dispatch_event(ON_SHUTDOWN))
-        log.critical("done, shutting down...")
+        log.critical("Shutting down...")
 
     finally:
         loop.close()

@@ -56,7 +56,7 @@ class TranslationManager(metaclass=Singleton):
         log.info("Parsed {} languages: {}".format(len(self.meta.keys()), ",".join(self.meta.keys())))
 
     @staticmethod
-    def parse_xml_to_dict(tree: ElementTree) -> Union[dict, None]:
+    def parse_xml_to_dict(tree: ElementTree) -> dict:
         tree = tree.getroot()
 
         buffer = {}
