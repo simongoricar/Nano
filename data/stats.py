@@ -32,11 +32,11 @@ PRAYER = "prayerssaid"
 stat_types = [MESSAGE, WRONG_ARG, SERVER_LEFT, SLEPT, WRONG_PERMS, HELP, IMAGE_SENT, VOTE, PING, SUPPRESS, DOWNLOAD, PRAYER]
 
 
-# Regarding RedisNanoStats
+# Regarding NanoStats
 # Stats are saved in a hash => stats
 
 
-class RedisNanoStats:
+class NanoStats:
     __slots__ = (
         "_redis", "redis"
     )
@@ -46,33 +46,32 @@ class RedisNanoStats:
 
         try:
             self.redis.ping()
-        except self._redis.ConnectionError:
-            log.critical("Could not connect to Redis db!")
-            return
+        except redis.ConnectionError:
+            raise ConnectionError("Could not connect to Redis db!")
 
         # Set up the hash if it does not exist
         if not decode(self.redis.exists("stats")):
             types = {typ: 0 for typ in stat_types}
             self.redis.hmset("stats", types)
 
-            log.info("Enabled: hash 'stats' created")
+            log.info("Enabled: stats initialized")
 
         else:
-            log.info("Enabled: hash found")
+            log.info("Enabled: stats found")
 
     @classmethod
-    def instantiate(cls) -> "RedisNanoStats":
-        setup_type = 1 if par.get("Redis", "setup") == "openshift" else 2
+    def from_settings(cls) -> "NanoStats":
+        setup_type = par.get("Redis", "setup", fallback=None)
 
-        if setup_type == 1:
+        if setup_type == "openshift":
             redis_ip = os.environ["OPENSHIFT_REDIS_HOST"]
             redis_port = os.environ["OPENSHIFT_REDIS_PORT"]
             redis_pass = os.environ["REDIS_PASSWORD"]
 
         else:
-            redis_ip = par.get("Redis", "ip")
-            redis_port = par.get("Redis", "port")
-            redis_pass = par.get("Redis", "password")
+            redis_ip = par.get("Redis", "ip", fallback=None)
+            redis_port = par.get("Redis", "port", fallback=None)
+            redis_pass = par.get("Redis", "password", fallback=None)
 
             # Fallback to defaults
             if not redis_ip:
@@ -82,7 +81,7 @@ class RedisNanoStats:
             if not redis_pass:
                 redis_pass = None
 
-        return RedisNanoStats(redis_ip, redis_port, redis_pass)
+        return NanoStats(redis_ip, redis_port, redis_pass)
 
     def add(self, stat_type):
         if stat_type in stat_types:

@@ -8,8 +8,8 @@ import time
 import discord
 import traceback
 
-from data import serverhandler
-from data import stats as bot_stats
+from data.serverhandler import ServerHandler
+from data.stats import NanoStats
 from data.translations import TranslationManager
 from data.utils import log_to_file
 from data.confparser import get_settings_parser
@@ -72,8 +72,8 @@ client = discord.AutoShardedClient(loop=loop)
 log.info("Initializing ServerHandler and NanoStats...")
 
 # Setup the server data and stats
-handler = serverhandler.ServerHandler.get_handler()
-stats = bot_stats.RedisNanoStats.instantiate()
+handler = ServerHandler.get_handler()
+stats = NanoStats.from_settings()
 trans = TranslationManager()
 
 # Singleton metaclass
