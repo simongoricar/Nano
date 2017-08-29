@@ -8,6 +8,7 @@ from discord import Embed, Colour, errors
 
 from data.stats import MESSAGE
 from data.utils import is_valid_command, invert_num, invert_str, split_every
+from data.confparser import get_config_parser
 
 #####
 # osu! plugin
@@ -15,8 +16,7 @@ from data.utils import is_valid_command, invert_num, invert_str, split_every
 
 logger = logging.getLogger(__name__)
 
-parser = configparser.ConfigParser()
-parser.read("plugins/config.ini")
+parser = get_config_parser()
 
 commands = {
     "_osu": {"desc": "Displays stats for that osu! user.", "use": "[command] [username/id]"},

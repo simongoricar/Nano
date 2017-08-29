@@ -1,5 +1,4 @@
 # coding=utf-8
-import configparser
 import logging
 
 import steamapi
@@ -7,12 +6,12 @@ from discord import HTTPException
 
 from data.stats import MESSAGE, WRONG_ARG
 from data.utils import is_valid_command
+from data.confparser import get_config_parser
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-parser = configparser.ConfigParser()
-parser.read("plugins/config.ini")
+parser = get_config_parser()
 
 
 commands = {

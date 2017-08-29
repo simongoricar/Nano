@@ -1,16 +1,15 @@
 # coding=utf-8
-import configparser
 import logging
 
 from discord import TextChannel
 
 from data.stats import SLEPT
+from data.confparser import get_config_parser
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
-parser = configparser.ConfigParser()
-parser.read("plugins/config.ini")
+parser = get_config_parser()
 
 DEFAULT_PREFIX = parser.get("Servers", "defaultprefix")
 

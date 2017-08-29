@@ -2,6 +2,7 @@
 import asyncio
 import configparser
 import logging
+import os
 
 import aiohttp
 import giphypop
@@ -9,9 +10,14 @@ from discord import Message, Embed, Colour, File
 
 from data.stats import PRAYER, MESSAGE, IMAGE_SENT
 from data.utils import is_valid_command
+from data.confparser import PLUGIN_CONFIG_PATH, CONFIG_FILE
 
+# plugins/config.ini
 parser = configparser.ConfigParser()
-parser.read("plugins/config.ini")
+
+if not os.path.isfile(PLUGIN_CONFIG_PATH):
+    raise FileNotFoundError("Missing {} in plugins directory!".format(CONFIG_FILE))
+parser.read(PLUGIN_CONFIG_PATH)
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)

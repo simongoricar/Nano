@@ -13,6 +13,7 @@ from discord import Embed, Colour
 
 from data.stats import MESSAGE, IMAGE_SENT
 from data.utils import is_valid_command, is_number, log_to_file
+from data.confparser import get_config_parser
 
 commands = {
     "_xkcd": {"desc": "Fetches XKCD comics for you (defaults to random).", "use": "[command] (random/number/latest)"},
@@ -22,8 +23,7 @@ commands = {
 
 valid_commands = commands.keys()
 
-parser = configparser.ConfigParser()
-parser.read("plugins/config.ini")
+parser = get_config_parser()
 
 log = logging.getLogger(__name__)
 

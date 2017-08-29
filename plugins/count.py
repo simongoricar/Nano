@@ -2,11 +2,11 @@
 import configparser
 import json
 import logging
-
 import aiohttp
 
-parser = configparser.ConfigParser()
-parser.read("plugins/config.ini")
+from data.confparser import get_config_parser
+
+parser = get_config_parser()
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)

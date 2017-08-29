@@ -9,12 +9,12 @@ from typing import Union
 
 from data.stats import MESSAGE
 from data.utils import is_valid_command, IgnoredException
+from data.confparser import get_config_parser
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
-parser = configparser.ConfigParser()
-parser.read("plugins/config.ini")
+parser = get_config_parser()
 
 commands = {
     "_imdb search": {"desc": "Searches for a film/series/person and displays general info", "use": "[command] [film/series/person name]", "alias": "_tmdb search"},

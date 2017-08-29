@@ -1,9 +1,7 @@
 # coding=utf-8
-import configparser
 import logging
 import os
 import subprocess
-import sys
 from asyncio import sleep
 from datetime import datetime
 from random import shuffle
@@ -13,6 +11,7 @@ from discord import Game, utils, Embed, Colour
 
 from data.stats import MESSAGE
 from data.utils import is_valid_command, log_to_file, StandardEmoji
+from data.confparser import get_settings_parser
 
 #######################
 # NOT TRANSLATED
@@ -21,8 +20,9 @@ from data.utils import is_valid_command, log_to_file, StandardEmoji
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
-parser = configparser.ConfigParser()
-parser.read("settings.ini")
+# settings.ini
+parser = get_settings_parser()
+
 
 game_list = [
     "Hi there!",

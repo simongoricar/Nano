@@ -1,23 +1,20 @@
 # coding=utf-8
-import configparser
 import redis
 import logging
 import os
 from discord import Member, Guild
 from .utils import Singleton, decode, bin2bool
+from .confparser import get_settings_parser, get_config_parser
 
 __author__ = "DefaltSimon"
 
-# Server handler for Nano
-
-parser = configparser.ConfigParser()
-parser.read("plugins/config.ini")
-
-par = configparser.ConfigParser()
-par.read("settings.ini")
-
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
+
+# plugins/config.ini
+parser = get_config_parser()
+# settings.ini
+par = get_settings_parser()
 
 # CONSTANTS
 

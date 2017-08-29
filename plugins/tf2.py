@@ -5,12 +5,13 @@ import logging
 import os
 import time
 
-from ujson import load, dump, loads
+from ujson import load, dump
 
 import aiohttp
 
 from data.stats import MESSAGE, WRONG_ARG
 from data.utils import is_valid_command
+from data.confparser import get_config_parser
 
 #####
 # TF2 plugin
@@ -19,8 +20,7 @@ from data.utils import is_valid_command
 
 logger = logging.getLogger(__name__)
 
-parser = configparser.ConfigParser()
-parser.read("plugins/config.ini")
+parser = get_config_parser()
 
 # Constants
 

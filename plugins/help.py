@@ -1,12 +1,12 @@
 # coding=utf-8
 import time
-import configparser
 from datetime import datetime
 
 from discord import Embed, Colour
 
 from data.stats import MESSAGE, HELP, WRONG_ARG
 from data.utils import is_valid_command
+from data.confparser import get_settings_parser
 
 # Template: {"desc": ""},
 
@@ -22,9 +22,7 @@ commands = {
 
 valid_commands = commands.keys()
 
-
-parser = configparser.ConfigParser()
-parser.read("settings.ini")
+parser = get_settings_parser()
 
 OWNER_ID = parser.get("Settings", "ownerid")
 DEVSERVER_ID = parser.get("Dev", "server")

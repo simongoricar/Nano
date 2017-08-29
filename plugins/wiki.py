@@ -1,8 +1,8 @@
 # coding=utf-8
 import configparser
 import logging
-
 import aiohttp
+
 from typing import Union
 from discord import Message
 
@@ -13,12 +13,12 @@ except ImportError:
 
 from data.stats import MESSAGE
 from data.utils import is_valid_command, add_dots
+from data.confparser import get_config_parser
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-parser = configparser.ConfigParser()
-parser.read("plugins/config.ini")
+parser = get_config_parser()
 
 MAX_WIKI_LENGTH = parser.getint("wiki", "max-length")
 MAX_URBAN_LENGTH = parser.getint("urban", "max-length")
