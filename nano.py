@@ -1,6 +1,5 @@
 # coding=utf-8
 import asyncio
-import configparser
 import copy
 import importlib
 import logging
@@ -13,6 +12,7 @@ from data import serverhandler
 from data import stats as bot_stats
 from data.translations import TranslationManager
 from data.utils import log_to_file
+from data.confparser import get_settings_parser
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
@@ -61,9 +61,7 @@ logging.getLogger("discord").setLevel(logging.INFO)
 logging.getLogger("websockets.protocol").setLevel(logging.INFO)
 
 # Config parser setup
-parser = configparser.ConfigParser()
-parser.read("settings.ini")
-
+parser = get_settings_parser()
 
 # Loop, discord.py and Nano core modules initialization
 loop = asyncio.get_event_loop()

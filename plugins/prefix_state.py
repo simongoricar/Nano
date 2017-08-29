@@ -23,7 +23,7 @@ commands = {
 valid_commands = commands.keys()
 
 
-class PrefixState:
+class BotState:
     def __init__(self, *_, **kwargs):
         self.client = kwargs.get("client")
         self.handler = kwargs.get("handler")
@@ -156,7 +156,7 @@ class NanoPlugin:
     name = "Prefix and state handler"
     version = "23"
 
-    handler = PrefixState
+    handler = BotState
     events = {
         "on_message": 4,
         "on_member_join": 5,
