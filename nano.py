@@ -338,11 +338,12 @@ class Nano(metaclass=Singleton):
 
             for cmd in resp:
                 # Parse additional variables
-                if isinstance(cmd, tuple):
-                    cmd = cmd[0]
-                    var_addons = cmd[1:]
+                if isinstance(cmd, (tuple, list, set)):
+                    # Unpacks parameters
+                    cmd, arguments, *safe = cmd
+                # No additional arguments
                 else:
-                    var_addons = []
+                    arguments = []
 
                 # Makes communication between the core and plugins possible
 
@@ -355,26 +356,21 @@ class Nano(metaclass=Singleton):
                 # ADD_VAR
                 # Adds a variable to the current kwargs
                 elif cmd == "add_var":
-                    # Add/Set new kwargs
-                    if isinstance(var_addons, tuple):
-                        for k, v in var_addons[0].items():
-                            kwargs[k] = v
-
-                    else:
-                        for k, v in var_addons.items():
-                            kwargs[k] = v
+                    # Arguments must be a dict
+                    for k, v in arguments.items():
+                        kwargs[k] = v
 
                 # SET_ARG
                 # Sets the current argument at an index
                 elif cmd == "set_arg":
-                    if isinstance(var_addons, tuple):
-                        for k, v in var_addons[0].items():
+                    if isinstance(arguments, tuple):
+                        for k, v in arguments[0].items():
                             temp = [a for a in args]
                             temp[k] = v
                             args = tuple(b for b in temp)
 
                     else:
-                        for k, v in var_addons.items():
+                        for k, v in arguments.items():
                             temp = [a for a in args]
                             temp[k] = v
                             args = tuple(b for b in temp)
