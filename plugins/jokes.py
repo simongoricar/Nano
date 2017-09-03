@@ -33,14 +33,8 @@ class APIFailure(Exception):
 
 
 class Connector:
-    def __init__(self):
-        self.session = None
-
-    def _handle_session(self):
-        if not self.session:
-            self.session = aiohttp.ClientSession()
-
-        return self.session
+    def __init__(self, loop):
+        self.session = aiohttp.ClientSession(loop=loop)
 
     @staticmethod
     def _build_url(url, **fields):
@@ -51,29 +45,24 @@ class Connector:
         return str(url) + "&".join(field_list)
 
     async def get_json(self, url, **fields) -> dict:
-        session = self._handle_session()
-
-        async with session.get(self._build_url(url, **fields)) as resp:
+        async with self.session.get(self._build_url(url, **fields)) as resp:
             # Check if everything is ok
             if not (200 <= resp.status < 300):
                 raise APIFailure("response code: {}".format(resp.status))
 
-            text = await resp.text()
-            return loads(text)
+            return await resp.json(loads=loads, content_type=None)
 
     async def get_html(self, url, **fields):
-        session = self._handle_session()
-
-        async with session.get(self._build_url(url, **fields)) as resp:
+        async with self.session.get(self._build_url(url, **fields)) as resp:
             # Check if everything is ok
             if not (200 <= resp.status < 300):
                 raise APIFailure("response code: {}".format(resp.status))
 
-            return await resp.text()
+            return await resp.json(loads=loads, content_type=None)
 
 
 class CatGenerator:
-    def __init__(self):
+    def __init__(self, loop):
         try:
             self.key = parser.get("catapi", "api-key")
         except (configparser.NoOptionError, configparser.NoSectionError):
@@ -83,7 +72,7 @@ class CatGenerator:
         self.url = "http://thecatapi.com/api/images/get"
         self.format = "html"
         self.size = "med"
-        self.req = Connector()
+        self.req = Connector(loop)
 
     async def random_cat(self, type_="gif"):
         # structure:
@@ -124,7 +113,7 @@ class XKCD:
         self.last_num = None
         self.cache = {}
 
-        self.req = Connector()
+        self.req = Connector(loop)
         self.loop = loop
 
         self.running = True
@@ -206,11 +195,11 @@ class XKCD:
 
 
 class JokeGenerator:
-    def __init__(self):
+    def __init__(self, loop):
         self.yo_mama = "http://api.yomomma.info/"
         self.chuck = "https://api.chucknorris.io/jokes/random"
 
-        self.req = Connector()
+        self.req = Connector(loop)
 
         # More are added as time goes on
         # Hardcoded because why not
@@ -281,9 +270,9 @@ class Joke:
         self.stats = kwargs.get("stats")
         self.trans = kwargs.get("trans")
 
-        self.cats = CatGenerator()
+        self.cats = CatGenerator(self.loop)
         self.xkcd = XKCD(self.loop)
-        self.joke = JokeGenerator()
+        self.joke = JokeGenerator(self.loop)
 
     async def on_message(self, message, **kwargs):
         trans = self.trans

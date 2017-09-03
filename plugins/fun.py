@@ -41,7 +41,7 @@ class MemeGenerator:
     MEME_ENDPOINT = "https://api.imgflip.com/get_memes"
     CAPTION_ENDPOINT = "https://api.imgflip.com/caption_image"
 
-    def __init__(self, username, password, loop=asyncio.get_event_loop()):
+    def __init__(self, username, password, loop):
 
         self.loop = loop
 
@@ -51,7 +51,7 @@ class MemeGenerator:
         self.meme_list = []
         self.meme_name_id = {}
 
-        self.session = aiohttp.ClientSession()
+        self.session = aiohttp.ClientSession(loop=loop)
 
         loop.create_task(self.prepare())
 
@@ -106,9 +106,9 @@ class GiphyApiError(Exception):
 class GiphyApi:
     RANDOM_GIF = "https://api.giphy.com/v1/gifs/random"
 
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str, loop):
         self.key = str(api_key)
-        self.session = aiohttp.ClientSession()
+        self.session = aiohttp.ClientSession(loop=loop)
 
     async def _parse_response(self, response):
         meta = response.get("meta").get("msg")
@@ -163,7 +163,7 @@ class Fun:
 
         try:
             api_key = parser.get("giphy", "api-key")
-            self.gif = GiphyApi(api_key)
+            self.gif = GiphyApi(api_key, self.loop)
         except configparser.Error:
             log.critical("Missing api key for giphy, disabling command...")
             self.giphy_enabled = False
@@ -171,7 +171,7 @@ class Fun:
         try:
             username = parser.get("imgflip", "username")
             password = parser.get("imgflip", "password")
-            self.generator = MemeGenerator(username, password, loop=self.loop)
+            self.generator = MemeGenerator(username, password, self.loop)
             self.imgflip_enabled = True
         except configparser.Error:
             log.critical("Missing credentials for imgflip, disabling command...")
