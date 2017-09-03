@@ -135,16 +135,24 @@ Also: `{p}gif` command powered by **Giphy**</string>
 
     <string name="MSG_JOIN">Join message has been updated :smile:</string>
     <string name="MSG_JOIN_DISABLED">Join message has been disabled :white_check_mark:</string>
-    <string name="MSG_JOIN_IS_DISABLED">:information_source: Join message is currently disabled.</string>
+    <string name="MSG_JOIN_IS_DISABLED">:information_source: Join message is currently disabled.
+
+Set one with `_joinmsg your_message`</string>
     <string name="MSG_BANMSG">Ban message has been updated :smile:</string>
     <string name="MSG_BANMSG_DISABLED">Ban message has been disabled :white_check_mark:</string>
-    <string name="MSG_BANMSG_IS_DISABLED">:information_source: Ban message is currently disabled.</string>
+    <string name="MSG_BANMSG_IS_DISABLED">:information_source: Ban message is currently disabled.
+
+Set one with `_banmsg your_message`</string>
     <string name="MSG_KICKMSG">Kick message has been updated :smile:</string>
     <string name="MSG_KICKMSG_DISABLED">Kick message has been disabled :white_check_mark:</string>
-    <string name="MSG_KICKMSG_IS_DISABLED">:information_source: Kick message is currently disabled.</string>
+    <string name="MSG_KICKMSG_IS_DISABLED">:information_source: Kick message is currently disabled.
+
+Set one with `_kickmsg your_message`</string>
     <string name="MSG_LEAVE">Leave message has been updated :smile:</string>
     <string name="MSG_LEAVE_DISABLED">Leave message has been disabled :white_check_mark:</string>
-    <string name="MSG_LEAVE_IS_DISABLED">:information_source: Leave message is currently disabled.</string>
+    <string name="MSG_LEAVE_IS_DISABLED">:information_source: Leave message is currently disabled.
+
+Set one with `_leavemsg your_message`</string>
     <string name="MSG_NOTIF_TOO_LONG">:exclamation: Your message is **too long!** (maximum is {}, yours was {})</string>
 
     <string name="MSG_JOIN_CURRENT">:gear: Current welcome message:
@@ -366,6 +374,8 @@ For a list of all commands and their explanations, use `>cmds`.</string>
 
     <string name="MSG_AYYLMAO">My inspiration in the world of memes.</string>
     <string name="MSG_WHOKNOWS">¯\_(ツ)_/¯</string>
+    <string name="MSG_GIPHY_TOOFAST">:shield: Woah, too fast! Nano reached the ratelimit for gifs (just wait a bit and try again).</string>
+    <string name="MSG_GIPHY_POWEREDBY">Powered by Giphy</string>
     <string name="MSG_MEME_USAGE">Incorrect usage. See _help caption/_help meme for info.</string>
     <string name="MSG_MEME_NONEXISTENT">Meme is non-existent. rip (pssst, check top memes that are available here https://imgflip.com/memetemplates )</string>
     <string name="MSG_MEME_FOOTER">Provided by imgflip.com</string>
@@ -412,6 +422,7 @@ You can find me here: https://discord.gg/FZJB6UJ</string>
     <string name="MSG_REPORT_EMPTY">You cannot submit an empty report.</string>
     <string name="MSG_REPORT_RATELIMIT">You are being rate limited. Try again in 5 minutes.</string>
     <string name="MSG_REPORT_THANKS">**Thank you** for your suggestion.</string>
+    <string name="MSG_REPORT_EE_THX">Helloooo :wave:</string>
 
     <string name="MSG_IMDB_ERROR">Something went wrong while trying to get movie info.</string>
     <string name="MSG_IMDB_ERROR2">Something went wrong... Try again?</string>

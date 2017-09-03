@@ -344,8 +344,12 @@ class Commons:
                 try:
                     times, sides = dice.split("d")
                     times, sides = int(times), int(sides)
+
+                    if sides <= 0 or times <= 0:
+                        raise ValueError("can't roll 0 sides/times")
+
                 except ValueError:
-                    await message.channel.send(trans.get("MSG_DICE_INVALID", lang))
+                    await message.channel.send(trans.get("MSG_DICE_INVALID", lang).replace("_", prefix))
                     return
 
                 if times > MAX_DICE or sides > MAX_DICE:

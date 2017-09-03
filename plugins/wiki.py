@@ -77,7 +77,7 @@ class WikipediaParser:
                 raise ConnectionError("WikipediaParser status code: {}".format(resp.status))
 
             # Converts to json format
-            return await resp.json(loads=loads)
+            return await resp.json(loads=loads, content_type=None)
 
 
 class UrbanDictionary:

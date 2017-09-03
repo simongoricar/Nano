@@ -399,3 +399,10 @@ def parse_special_chars(text: str):
 
     return text
 
+
+def build_url(url, **fields):
+    if not url.endswith("?"):
+        url += "?"
+
+    field_list = ["{}={}".format(key, value) for key, value in fields.items()]
+    return str(url) + "&".join(field_list)

@@ -3,40 +3,45 @@ import asyncio
 import configparser
 import logging
 import os
-
 import aiohttp
-import giphypop
+
+try:
+    from ujson import loads
+except ImportError:
+    from json import loads
+
 from discord import Message, Embed, Colour, File
 
 from data.stats import PRAYER, MESSAGE, IMAGE_SENT
-from data.utils import is_valid_command
-from data.confparser import PLUGIN_CONFIG_PATH, CONFIG_FILE
+from data.utils import is_valid_command, build_url
+from data.confparser import get_config_parser
 
 # plugins/config.ini
-parser = configparser.ConfigParser()
-
-if not os.path.isfile(PLUGIN_CONFIG_PATH):
-    raise FileNotFoundError("Missing {} in plugins directory!".format(CONFIG_FILE))
-parser.read(PLUGIN_CONFIG_PATH)
+parser = get_config_parser()
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
+
+# Giphy's green color thingie
+GIPHY_GREEN = 0x00C073
+
 
 commands = {
     "_kappa": {"desc": "I couldn't resist it."},
     "_rip": {"desc": "Rest in peperoni, man.", "use": "[command] [mention]"},
     "_meme": {"desc": "Captions a meme with your text. Take a look at <https://imgflip.com/memegenerator>'s list of memes if you want.", "use": "[command] [meme name]|[top text]|[bottom text]", "alias": "_caption"},
     "_caption": {"desc": "Captions a meme with your text. Take a look at <https://imgflip.com/memegenerator>'s list of memes if you want.", "use": "[command] [meme name]|[top text]|[bottom text]", "alias": "_meme"},
-    "_randomgif": {"desc": "Sends a random gif from Giphy."},
+    "_randomgif": {"desc": "Sends a random gif from Giphy. Optionally, specify a tag after the command.", "use": "[command] (optional: tag)"},
 }
 
 valid_commands = commands.keys()
 
 
 class MemeGenerator:
+    MEME_ENDPOINT = "https://api.imgflip.com/get_memes"
+    CAPTION_ENDPOINT = "https://api.imgflip.com/caption_image"
+
     def __init__(self, username, password, loop=asyncio.get_event_loop()):
-        self.meme_endpoint = "https://api.imgflip.com/get_memes"
-        self.caption_endpoint = "https://api.imgflip.com/caption_image"
 
         self.loop = loop
 
@@ -45,6 +50,8 @@ class MemeGenerator:
 
         self.meme_list = []
         self.meme_name_id = {}
+
+        self.session = aiohttp.ClientSession()
 
         loop.create_task(self.prepare())
 
@@ -63,7 +70,7 @@ class MemeGenerator:
 
     async def get_memes(self):
         async with aiohttp.ClientSession() as session:
-            async with session.get(self.meme_endpoint) as resp:
+            async with session.get(MemeGenerator.MEME_ENDPOINT) as resp:
                 return await resp.json()
 
     async def caption_meme(self, name, top, bottom):
@@ -88,9 +95,62 @@ class MemeGenerator:
             template_id=meme_id,
         )
 
-        async with aiohttp.ClientSession() as session:
-            async with session.post(self.caption_endpoint, data=payload) as req:
-                return await req.json()
+        async with self.session.post(MemeGenerator.CAPTION_ENDPOINT, data=payload) as resp:
+            return await resp.json(loads=loads, content_type=None)
+
+
+class GiphyApiError(Exception):
+    pass
+
+
+class GiphyApi:
+    RANDOM_GIF = "https://api.giphy.com/v1/gifs/random"
+
+    def __init__(self, api_key: str):
+        self.key = str(api_key)
+        self.session = aiohttp.ClientSession()
+
+    async def _parse_response(self, response):
+        meta = response.get("meta").get("msg")
+
+        if meta != "OK":
+            raise GiphyApiError("Not ok: {}".format(meta))
+
+        data = response.get("data")
+        return data.get("image_original_url")
+
+    async def get_random_gif(self, optional_tag=None):
+        """
+        Gets a random gif (optionally with a tag)
+        :param optional_tag: str or None
+
+        :return:
+
+            -1   : HTTP 429
+        :raises GiphyApiError
+        """
+        payload = {
+            "api_key": self.key,
+            "fmt": "json"
+        }
+
+        if optional_tag is not None:
+            payload["tag"] = str(optional_tag)
+
+        full_url = build_url(GiphyApi.RANDOM_GIF, **payload)
+
+        async with self.session.get(full_url) as resp:
+
+            if resp.status == 429:
+                return -1
+
+            if 200 < resp.status <= 300:
+                # Anything other than 200 is not good
+                raise ConnectionError("GiphyApi status code: {}".format(resp.status))
+
+            data = await resp.json(loads=loads, content_type=None)
+
+            return await self._parse_response(data)
 
 
 class Fun:
@@ -102,27 +162,20 @@ class Fun:
         self.trans = kwargs.get("trans")
 
         try:
-            key = parser.get("giphy", "api-key")
-            self.gif = giphypop.Giphy(api_key=key if key else giphypop.GIPHY_PUBLIC_KEY)
-            self.giphy_enabled = True
-
-        except (configparser.NoSectionError, configparser.NoOptionError):
+            api_key = parser.get("giphy", "api-key")
+            self.gif = GiphyApi(api_key)
+        except configparser.Error:
             log.critical("Missing api key for giphy, disabling command...")
             self.giphy_enabled = False
-
-            raise RuntimeError
 
         try:
             username = parser.get("imgflip", "username")
             password = parser.get("imgflip", "password")
             self.generator = MemeGenerator(username, password, loop=self.loop)
             self.imgflip_enabled = True
-
-        except (configparser.NoOptionError, configparser.NoSectionError):
-            log.critical("Missing api key for imgflip, disabling command...")
+        except configparser.Error:
+            log.critical("Missing credentials for imgflip, disabling command...")
             self.imgflip_enabled = False
-
-            raise RuntimeError
 
         self.everyone_filter = None
 
@@ -167,9 +220,21 @@ class Fun:
 
             self.stats.add(IMAGE_SENT)
 
+        # !randomgif (optional_tag)
         elif startswith(prefix + "randomgif"):
-            random_gif = self.gif.screensaver().media_url
-            await message.channel.send(str(random_gif))
+            tags = message.content[len(prefix + "randomgif "):]
+
+            gif = await self.gif.get_random_gif(tags or None)
+
+            if gif == -1:
+                await message.channel.send(trans.get("MSG_GIPHY_TOOFAST", lang))
+                return
+
+            embed = Embed(colour=Colour(GIPHY_GREEN))
+            embed.set_image(url=gif)
+            embed.set_footer(text=trans.get("MSG_GIPHY_POWEREDBY", lang))
+
+            await message.channel.send(embed=embed)
 
             self.stats.add(IMAGE_SENT)
 

@@ -164,6 +164,11 @@ class Help:
                 await message.channel.send(trans.get("MSG_REPORT_EMPTY", lang))
                 return
 
+            # :P
+            if report in ("hi", "hello"):
+                await message.channel.send(trans.get("MSG_REPORT_EE_THX", lang))
+                return
+
             # Cooldown implementation
             if not self.last_times.get(message.author.id):
                 self.last_times[message.author.id] = time.time()
@@ -199,7 +204,7 @@ class Help:
             # Saves the submission
             to_file = "{0}\nSuggestion from {1}:{2}\nMessage: {3}\n" \
                       "Server: {4}:{5} with {6} members\nServer owner: {7}\n" \
-                      "Language used: {}\n{0}".format("-" * 10, name, u_id, report, guild_name, guild_id, guild_members, owner_info, lang)
+                      "Language used: {8}\n{0}".format("-" * 10, name, u_id, report, guild_name, guild_id, guild_members, owner_info, lang)
 
             save_submission(to_file)
             await owner.send(comp)
