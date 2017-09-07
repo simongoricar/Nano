@@ -295,6 +295,17 @@ class DevFeatures:
 
             await message.channel.send(StandardEmoji.PERFECT)
 
+        # nano.dev.test_default_channel
+        elif startswith("nano.dev.test_default_channel"):
+            df = await self.default_channel(message.guild)
+
+            if not df:
+                await message.channel.send("No default channel? w a t")
+                return
+
+            await message.channel.send("Default channel is {}, sending test message".format(df.mention))
+            await df.send("This is a test message. Apparently everything is ok.")
+
         # nano.dev.announce
         elif startswith("nano.dev.announce"):
             await message.channel.send("Sending... ")
@@ -305,10 +316,10 @@ class DevFeatures:
                 try:
                     d_chan = await self.default_channel(g)
                     await d_chan.send(ann)
-                    log_to_file("Sending announcement for {}".format(g.name))
+                    log_to_file("Sent announcement for {}".format(g.name))
                     s.append(g.name)
                 except:
-                    pass
+                    log_to_file("Couldn't send announcement for {}".format(g.name))
 
             await message.channel.send("Sent to {} servers".format(len(s)))
 

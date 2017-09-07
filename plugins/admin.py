@@ -496,15 +496,6 @@ class Admin:
 
         return chan
 
-    async def handle_def_channel(self, guild, channel_id):
-        """
-        Returns the default channel of the server (can be customized)
-        """
-        if is_disabled(channel_id):
-            return await self.default_channel(guild)
-        else:
-            return utils.find(lambda c: c.id == channel_id, guild.channels)
-
     @staticmethod
     def can_access_role(member_a, s_role):
         """
@@ -684,7 +675,6 @@ class Admin:
             await message.channel.send(trans.get("MSG_NUKE_PURGING", lang).format(amount))
 
             additional = ""
-            reason = trans.get("MSG_NUKE_AUDIT_REASON", lang).format(message.author.name, amount)
 
             try:
                 await message.channel.purge(limit=amount)
@@ -1486,7 +1476,7 @@ class Admin:
                 log_channel = "[{}]({})".format(l_obj.name, l_obj.id)
 
             # Default channel
-            d_channel = await self.handle_def_channel(message.guild, settings.get("dchan"))
+            d_channel = await self.default_channel(message.guild)
             if is_disabled(d_channel):
                 d_channel = DISABLED
             else:
@@ -1525,7 +1515,7 @@ class Admin:
 
         # nano.blacklist
         elif startswith("nano.blacklist"):
-            setting = message.content[len("nano.blacklist "):].split(" ")[0].strip(" ")
+            setting = message.content[len("nano.blacklist "):].strip(" ").split(" ")[0]
 
             # nano.blacklist add
             if setting == "add":
@@ -1568,12 +1558,16 @@ class Admin:
                 # Verifies channels
                 names = []
                 for ch_id in lst:
-                    channel = message.guild.get_channel(ch_id)
+                    channel = message.guild.get_channel(int(ch_id))
                     # If channel was deleted, remove it from the list
                     if not channel:
                         self.handler.remove_channel_blacklist(message.guild.id, ch_id)
                     else:
                         names.append("`{}`".format(channel.name))
+
+                if not names:
+                    await message.channel.send(trans.get("MSG_BLACKLIST_NONE", lang))
+                    return
 
                 await message.channel.send(trans.get("MSG_BLACKLIST_LIST", lang).format(" ".join(names)))
 

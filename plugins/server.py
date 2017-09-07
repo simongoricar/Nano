@@ -6,7 +6,6 @@ import os
 import time
 import psutil
 
-from datetime import datetime, timedelta
 from discord import utils, Embed, Colour, __version__ as d_version, HTTPException
 
 from data.stats import MESSAGE
@@ -63,27 +62,28 @@ class ServerManagement:
 
         return utils.find(lambda m: m.id == chan, guild.text_channels)
 
-    async def handle_def_channel(self, guild, channel_id: int):
-        if is_disabled(channel_id):
-            return await self.default_channel(guild)
-        else:
-            chan = utils.find(lambda c: c.id == channel_id, guild.text_channels)
-            if not chan:
-                log_to_file("Custom channel does not exist anymore: {} ({})".format(guild.name, guild.id))
-                return await self.default_channel(guild)
-            else:
+
+    async def default_channel(self, guild):
+        # If the guild doesn't have any text channels just exit
+        if not guild.text_channels:
+            raise IgnoredException
+
+        default = self.handler.get_defaultchannel(guild.id)
+
+        # If a custom one is set, ignore other logic
+        if not is_disabled(default):
+            default = int(default)
+
+            chan = utils.find(lambda c: c.id == default, guild.text_channels)
+            if chan:
                 return chan
 
-    @staticmethod
-    async def default_channel(guild):
         # Try to find #general or one that starts with general
         chan = utils.find(lambda c: c.name == "general", guild.text_channels)
         if chan:
             return chan
 
         # Else, return the topmost one
-        if not guild.text_channels:
-            raise IgnoredException
 
         top = sorted(guild.text_channels, key=lambda a: a.position)[0]
         return top
@@ -304,7 +304,7 @@ class ServerManagement:
             welcome_msg = welcome_msg.replace(trigg, repl)
 
         log_c = await self.handle_log_channel(member.guild)
-        def_c = await self.handle_def_channel(member.guild, self.handler.get_defaultchannel(member.guild))
+        def_c = await self.default_channel(member.guild)
 
         # Ignore if disabled
         if log_c:
@@ -330,7 +330,7 @@ class ServerManagement:
             ban_msg = ban_msg.replace(trigg, repl)
 
         log_c = await self.handle_log_channel(guild)
-        def_c = await self.handle_def_channel(guild, self.handler.get_defaultchannel(guild))
+        def_c = await self.default_channel(guild)
 
         # Ignore if disabled
         if log_c:
@@ -358,7 +358,7 @@ class ServerManagement:
             leave_msg = leave_msg.replace(trigg, repl)
 
         log_c = await self.handle_log_channel(member.guild)
-        def_c = await self.handle_def_channel(member.guild, self.handler.get_defaultchannel(member.guild))
+        def_c = await self.default_channel(member.guild)
 
         # Ignore if disabled
         if log_c:

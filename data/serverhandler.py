@@ -356,8 +356,8 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
         serv = "mutes:{}".format(server.id)
         return list(decode(self.redis.smembers(serv)) or [])
 
-    def get_defaultchannel(self, server):
-        return decode(self.redis.hget("server:{}".format(server.id), "dchan"))
+    def get_defaultchannel(self, server_id):
+        return decode(self.redis.hget("server:{}".format(server_id), "dchan"))
 
     def set_defaultchannel(self, server, channel_id):
         self.redis.hset("server:{}".format(server.id), "dchan", channel_id)
