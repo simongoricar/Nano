@@ -16,7 +16,7 @@ from data.confparser import get_settings_parser
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '3.7.3'
+__version__ = '3.7.4'
 
 
 # EVENTS
