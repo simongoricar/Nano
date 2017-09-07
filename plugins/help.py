@@ -11,8 +11,8 @@ from data.confparser import get_settings_parser
 # Template: {"desc": ""},
 
 commands = {
-    "_cmds": {"desc": "Displays a link to the wiki page where all commands are listed.", "alias": "_commands"},
-    "_commands": {"desc": "Displays a link to the wiki page where all commands are listed.", "alias": "_cmds"},
+    "_cmds": {"desc": "Displays a link to the wiki page where all commands are listed.\nTo link directly to a specific category, use `_cmds category_name` (for example: `_cmds admin`)", "alias": "_commands"},
+    "_commands": {"desc": "Displays a link to the wiki page where all commands are listed.\nTo link directly to a specific category, use `_commands category_name` (for example: `_commands admin`)", "alias": "_cmds"},
     "_help": {"desc": "This is here."},
     "_suggest": {"desc": "Sends a message to the developer", "use": "[command] [message]"},
     "_bug": {"desc": "Place where you can report bugs.", "alias": "nano.bug"},
@@ -27,6 +27,21 @@ parser = get_settings_parser()
 OWNER_ID = parser.get("Settings", "ownerid")
 DEVSERVER_ID = parser.get("Dev", "server")
 
+BASE_CMDS_LINK = "http://nanobot.pw/commands.html"
+cmd_links = {
+    "useful": "#useful",
+    "ful": "#fun",
+    "help": "#help",
+    "games": "#games",
+    "reminder": "#reminders",
+    "reminders": "#reminders",
+    "other": "#other",
+    "misc": "#other",
+    "mod": "#moderator",
+    "moderator": "#moderator",
+    "admin": "#admin"
+}
+
 
 def save_submission(sub):
     with open("data/submissions.txt", "a") as subs:
@@ -35,10 +50,7 @@ def save_submission(sub):
 
 
 def get_valid_commands(plugin):
-    try:
-        return plugin.commands
-    except AttributeError:
-        return None
+    return getattr(plugin, "commands", None)
 
 
 class Help:
@@ -121,7 +133,19 @@ class Help:
 
         # !cmds or !commands
         elif startswith(prefix + "cmds", prefix + "commands"):
-            await message.channel.send(trans.get("MSG_HELP_CMDWEB", lang))
+            if startswith(prefix + "cmds"):
+                arg = message.content[len(prefix + "cmds "):].lower()
+            else:
+                arg = message.content[len(prefix + "commands "):].lower()
+
+            if not arg or not cmd_links.get(arg):
+                await message.channel.send(trans.get("MSG_HELP_CMDWEB", lang))
+            else:
+                ending = cmd_links.get(arg)
+                full_link = BASE_CMDS_LINK + ending
+
+                await message.channel.send(trans.get("MSG_HELP_CMD_SPEC", lang).format(full_link))
+
 
             self.stats.add(HELP)
 

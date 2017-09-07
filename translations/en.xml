@@ -411,6 +411,7 @@ For more information, read &lt;http://nanobot.pw/tos.html></string>
 
 These are just a few of some of the simpler commands. For more info about each command, use `_help command` or type `_cmds` to look at the wiki page with all the commands.</string>
     <string name="MSG_HELP_CMDWEB">Commands and their explanations can be found here: http://nanobot.pw/commands.html</string>
+    <string name="MSG_HELP_CMD_SPEC">Read more about these commands here: {}</string>
     <string name="MSG_HELP_CMDNOTFOUND">Command could not be found.
 **(Use: `_help [command]`)**</string>
     <string name="MSG_HELP_DESC">Description</string>
