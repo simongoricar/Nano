@@ -1,8 +1,6 @@
 # coding=utf-8
-import asyncio
 import configparser
 import logging
-import os
 import aiohttp
 
 try:
@@ -13,7 +11,7 @@ except ImportError:
 from discord import Message, Embed, Colour, File
 
 from data.stats import PRAYER, MESSAGE, IMAGE_SENT
-from data.utils import is_valid_command, build_url
+from data.utils import is_valid_command, build_url, add_dots
 from data.confparser import get_config_parser
 
 # plugins/config.ini
@@ -58,13 +56,13 @@ class MemeGenerator:
     async def prepare(self):
         raw = await self.get_memes()
 
-        if raw.get("success") is not True:
+        if raw["success"] is not True:
             raise LookupError("could not get meme list")
 
-        self.meme_list = list(raw.get("data").get("memes"))
+        self.meme_list = list(raw["data"]["memes"])
 
         for m_dict in self.meme_list:
-            self.meme_name_id[str(m_dict.get("name")).lower()] = m_dict.get("id")
+            self.meme_name_id[str(m_dict["name"]).lower()] = m_dict["id"]
 
         log.info("Ready to make memes")
 
@@ -81,10 +79,10 @@ class MemeGenerator:
 
         resp = await self._caption_meme(meme_id, top, bottom)
 
-        if resp.get("success") is not True:
+        if resp["success"] is not True:
             raise LookupError("failed: {}".format(resp.get("error_message")))
 
-        return str(resp.get("data").get("url"))
+        return str(resp["data"]["url"])
 
     async def _caption_meme(self, meme_id, top, bottom):
         payload = dict(
@@ -117,6 +115,9 @@ class GiphyApi:
             raise GiphyApiError("Not ok: {}".format(meta))
 
         data = response.get("data")
+        if not data:
+            return None
+
         return data.get("image_original_url")
 
     async def get_random_gif(self, optional_tag=None):
@@ -225,14 +226,26 @@ class Fun:
             tags = message.content[len(prefix + "randomgif "):]
 
             gif = await self.gif.get_random_gif(tags or None)
+            nonexistent = False
 
             if gif == -1:
                 await message.channel.send(trans.get("MSG_GIPHY_TOOFAST", lang))
                 return
 
+            # Gif with such tag does not exist, fall back to random one
+            if gif is None:
+                gif = await self.gif.get_random_gif()
+                nonexistent = True
+
+
             embed = Embed(colour=Colour(GIPHY_GREEN))
             embed.set_image(url=gif)
-            embed.set_footer(text=trans.get("MSG_GIPHY_POWEREDBY", lang))
+
+            if not nonexistent:
+                embed.set_footer(text=trans.get("MSG_GIPHY_POWEREDBY", lang))
+            else:
+                that_text = trans.get("MSG_GIPHY_POWEREDBY", lang) + " | " + trans.get("MSG_GIPHY_NOSUCHTAG", lang).format(add_dots(tags, 20))
+                embed.set_footer(text=that_text)
 
             await message.channel.send(embed=embed)
 

@@ -107,6 +107,11 @@ commands = {
 
 }
 
+# !cmds conflicts with !cmd add/etc...
+ignore_commands = [
+    "_cmds"
+]
+
 class RedisSoftBanScheduler:
     def __init__(self, client, handler, loop=asyncio.get_event_loop()):
         self.client = client
@@ -576,6 +581,11 @@ class Admin:
         if not is_valid_command(message.content, commands, prefix):
             return
         else:
+            # Check for conflicts
+            for ignore in ignore_commands:
+                if message.content.startswith(ignore.replace("_", prefix)):
+                    return
+
             self.stats.add(MESSAGE)
 
         def startswith(*matches):
