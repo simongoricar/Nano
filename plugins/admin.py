@@ -1424,19 +1424,20 @@ class Admin:
                 setting, arg = spl[0], spl[1]
 
                 # Set word/spam/invite filter
-                if matches_list(setting, "word filter", "wordfilter", "filter words", "filterwords"):
+                # Pre-parsed into a list
+                if matches_list(setting, trans.get("MSG_SETTINGS_WF_OPTIONS", lang)):
                     decision = matches_list(arg)
                     handler.update_moderation_settings(message.guild.id, setting, decision)
 
                     await message.channel.send(trans.get("MSG_SETTINGS_WORD", lang).format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
 
-                elif matches_list(setting, "spam filter", "spamfilter", "filter spam", "filterspam"):
+                elif matches_list(setting, trans.get("MSG_SETTINGS_SF_OPTIONS", lang)):
                     decision = matches_list(arg)
                     handler.update_moderation_settings(message.guild.id, setting, decision)
 
                     await message.channel.send(trans.get("MSG_SETTINGS_SPAM", lang).format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
 
-                elif matches_list(setting, "filterinvite", "filterinvites", "invitefilter", "invite filter"):
+                elif matches_list(setting, trans.get("MSG_SETTINGS_IF_OPTIONS", lang)):
                     decision = matches_list(arg)
                     handler.update_moderation_settings(message.guild.id, setting, decision)
 

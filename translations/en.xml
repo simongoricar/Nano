@@ -240,6 +240,9 @@ Try `{}language list` to see all available languages.</string>
     <string name="MSG_SELFROLE_NO_PAGE">No such page! There are currently only **{}** pages.</string>
     <string name="MSG_SELFROLE_TOO_MANY">:warning: Selfrole limit reached! You can only have **{}** selfroles at a time.</string>
 
+    <string name="MSG_SETTINGS_WF_OPTIONS">word filter | wordfilter | filter words | filterwords</string>
+    <string name="MSG_SETTINGS_SF_OPTIONS">spam filter | spamfilter | filter spam | filterspam</string>
+    <string name="MSG_SETTINGS_IF_OPTIONS">invitefilter | filter invites | filterinvites</string>
     <string name="MSG_SETTINGS_DEFCHAN_SET">:ok: Default channel set to **{}**.</string>
     <string name="MSG_SETTINGS_DEFCHAN_RESET">:ok: Default channel set back to default - **{}**.</string>
     <string name="MSG_SETTINGS_WORD">Word filter {}</string>

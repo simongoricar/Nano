@@ -7,18 +7,6 @@ from fuzzywuzzy import fuzz, process
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
-strings_to_split = [
-    "conv_q_sleep",
-    "conv_mood_list",
-    "conv_q_how",
-    "conv_q_hello",
-    "conv_q_ayy",
-    "conv_q_rip",
-    "conv_q_master",
-    "conv_q_maker"
-
-]
-
 
 class Conversation:
     def __init__(self, *_, **kwargs):
@@ -28,33 +16,12 @@ class Conversation:
         self.trans = kwargs.get("trans")
         self.loop = kwargs.get("loop")
 
-        self.lists = {}
-
-        # Parse all language stuff
-        self.loop.create_task(self._parse_languages())
-
-
-    async def _parse_languages(self):
-        """
-        Caches random answers so they don't have to be split every time
-        """
-        langs = {l : self.trans.translations[l] for l in self.trans.meta.keys()}
-
-        for lang, trans_list in langs.items():
-            self.lists[lang] = {}
-
-            for name in strings_to_split:
-                if name in trans_list.keys():
-                    self.lists[lang][name] = [a.strip(" ") for a in trans_list.get(name).split("|")]
 
     def _safe_get(self, lang, lst):
-        return self.lists[lang].get(lst) or []
+        return self.trans.get(lst, lang) or []
 
     @staticmethod
-    def matches(query, *possibilities):
-        if not possibilities:
-            return False
-
+    def matches(query: str, possibilities: list):
         highest, score = process.extractOne(query, possibilities, scorer=fuzz.token_set_ratio)
 
         if score > 80:
@@ -92,30 +59,30 @@ class Conversation:
         elif has(trans.get("INFO_PREFIX_LITERAL", lang)):
             await message.channel.send(trans.get("INFO_PREFIX", lang).format(prefix))
 
-        elif self.matches(extracted, *self._safe_get(lang, "conv_q_how")):
-            lst = self.lists[lang].get("conv_mood_list")
+        elif self.matches(extracted, trans.get("CONV_Q_HOW", lang)):
+            lst = trans.get("CONV_MOOD_LIST", lang)
 
             # Choose random reply
             rn = randint(0, len(lst) - 1)
 
             await reply(str(lst[rn]))
 
-        elif self.matches(extracted, *self._safe_get(lang, "conv_q_snow")):
+        elif self.matches(extracted, trans.get("CONV_Q_SNOW", lang)):
             await reply(trans.get("CONV_SNOW", lang))
 
         elif has(trans.get("CONV_Q_DIE", lang)):
             await reply(trans.get("CONV_NAH", lang))
 
-        elif self.matches(extracted, *self._safe_get(lang, "conv_q_sleep")):
+        elif self.matches(extracted, trans.get("CONV_Q_SLEEP", lang)):
             await reply(trans.get("CONV_NOPE", lang))
 
-        elif self.matches(extracted, *self._safe_get(lang, "conv_q_ayy")):
+        elif self.matches(extracted, trans.get("CONV_Q_AYY", lang)):
             await reply(trans.get("CONV_AYYLMAO", lang))
 
-        elif self.matches(extracted, *self._safe_get(lang, "conv_q_rip")):
+        elif self.matches(extracted, trans.get("CONV_Q_RIP", lang)):
             await reply(trans.get("CONV_RIP", lang))
 
-        elif self.matches(extracted, *self._safe_get(lang, "conv_q_master")):
+        elif self.matches(extracted, trans.get("CONV_Q_MASTER", lang)):
             await reply(trans.get("CONV_MASTER", lang))
 
         elif has(trans.get("CONV_Q_WHAT", lang)):
@@ -127,13 +94,13 @@ class Conversation:
         elif self.matches(extracted, trans.get("CONV_Q_LOVE", lang)):
             await reply(trans.get("CONV_LOVE", lang))
 
-        elif self.matches(extracted, *self._safe_get(lang, "conv_q_hello")):
+        elif self.matches(extracted, trans.get("CONV_Q_HELLO", lang)):
             await reply(trans.get("CONV_HI", lang))
 
         elif self.matches(extracted, trans.get("CONV_Q_BIRTH", lang)):
             await reply(trans.get("CONV_BEGINDATE", lang))
 
-        elif self.matches(extracted, *self._safe_get(lang, "conv_q_maker")):
+        elif self.matches(extracted, trans.get("CONV_Q_MAKER", lang)):
             await reply(trans.get("CONV_OWNER", lang))
 
 
