@@ -5,7 +5,6 @@ from json import loads
 from xml.etree import ElementTree
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
 
 
 # To avoid circular import from utils.py
@@ -19,6 +18,45 @@ class Singleton(type):
 
 
 DEFAULT_LANGUAGE = "en"
+
+# Handle some string in a different way
+
+strings_to_list = [
+    # Used in conversation.py
+    "CONV_Q_SLEEP",
+    "CONV_MOOD_LIST",
+    "CONV_Q_HOW",
+    "CONV_Q_HELLO",
+    "CONV_Q_AYY",
+    "CONV_Q_RIP",
+    "CONV_Q_MASTER",
+    "CONV_Q_MAKER",
+
+]
+
+# required by .startswith
+strings_to_tuple = [
+    # Used in admin.py for nano.settings
+    "MSG_SETTINGS_WF_OPTIONS",
+    "MSG_SETTINGS_SF_OPTIONS",
+    "MSG_SETTINGS_IF_OPTIONS"
+
+]
+
+
+
+# Lower the strings (no performance impact, is done once at runtime)
+strings_to_list = [a.lower() for a in strings_to_list]
+strings_to_tuple = [a.lower() for a in strings_to_tuple]
+
+
+def split_into_list(something: str) -> list:
+    return [a.strip(" ") for a in something.split("|")]
+
+
+def split_into_tuple(something: str) -> tuple:
+    return tuple(a.strip(" ") for a in something.split("|"))
+
 
 def get_meta() -> dict:
     with open("translations/meta.json", "r") as meta:
@@ -35,14 +73,14 @@ class TranslationManager(metaclass=Singleton):
     )
 
     def __init__(self):
-        self.meta = get_meta()
-
+        self.meta = {}
         self.translations = {}
+
         self.default_lang = DEFAULT_LANGUAGE
 
-        self.parse_languages_from_meta()
+        self.reload_translations()
 
-    def parse_languages_from_meta(self):
+    def load_languages(self):
         for lang in self.meta.keys():
             etree = ElementTree.parse("translations/{}.xml".format(lang))
 
@@ -54,6 +92,33 @@ class TranslationManager(metaclass=Singleton):
             self.translations[lang] = xml_dict
 
         log.info("Parsed {} languages: {}".format(len(self.meta.keys()), ",".join(self.meta.keys())))
+        self.parse_special_strings()
+
+    def parse_special_strings(self):
+        if not self.translations:
+            raise RuntimeError("Translations are not yet loaded!")
+
+        c = 0
+
+        for lang, words in self.translations.items():
+            specials = {}
+
+            for name, string in words.items():
+
+                if name in strings_to_list:
+                    # Parse: split the string into a list
+                    specials[name] = split_into_list(string)
+                    c += 1
+                elif name in strings_to_tuple:
+                    # Parse: split the string into a tuple
+                    specials[name] = split_into_tuple(string)
+                    c += 1
+
+            # Overwrite existing dictionary with parsed strings
+            if specials:
+                self.translations[lang].update(specials)
+
+        log.info("Parsed {} special strings".format(c))
 
     @staticmethod
     def parse_xml_to_dict(tree: ElementTree) -> dict:
@@ -111,4 +176,4 @@ class TranslationManager(metaclass=Singleton):
 
     def reload_translations(self):
         self.meta = get_meta()
-        self.parse_languages_from_meta()
+        self.load_languages()

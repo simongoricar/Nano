@@ -224,10 +224,7 @@ words = (
 )
 
 
-def matches_list(content, *lst):
-    if not lst:
-        lst = words
-
+def matches_list(content: str, lst: tuple = words):
     return str(content).lower().startswith(lst)
 
 
