@@ -97,9 +97,6 @@ class MemeGenerator:
             return await resp.json(loads=loads, content_type=None)
 
 
-class GiphyApiError(Exception):
-    pass
-
 
 class GiphyApi:
     RANDOM_GIF = "https://api.giphy.com/v1/gifs/random"
@@ -112,7 +109,7 @@ class GiphyApi:
         meta = response.get("meta").get("msg")
 
         if meta != "OK":
-            raise GiphyApiError("Not ok: {}".format(meta))
+            raise LookupError("Not ok: {}".format(meta))
 
         data = response.get("data")
         if not data:
@@ -188,8 +185,6 @@ class Fun:
 
         prefix = kwargs.get("prefix")
         lang = kwargs.get("lang")
-
-        assert isinstance(message, Message)
 
         simple_commands = {
             "( ͡° ͜ʖ ͡°)": trans.get("MSG_WHOKNOWS", lang)
