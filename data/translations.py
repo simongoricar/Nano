@@ -143,7 +143,7 @@ class TranslationManager(metaclass=Singleton):
 
         return buffer
 
-    def get(self, name: str, lang=DEFAULT_LANGUAGE) -> str:
+    def get(self, name: str, lang=DEFAULT_LANGUAGE, fallback=True) -> str:
         if not lang:
             lang = DEFAULT_LANGUAGE
 
@@ -155,7 +155,7 @@ class TranslationManager(metaclass=Singleton):
             item = self.translations.get("en")
 
         trans = item.get(name)
-        if not trans:
+        if not trans and fallback:
             # Fall back to english, again
             trans = self.translations.get("en").get(name)
             # Emergency

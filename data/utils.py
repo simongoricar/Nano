@@ -5,15 +5,15 @@ import uuid
 from datetime import datetime
 from typing import Iterable
 
-from .translations import TranslationManager
+from .translations import TranslationManager, DEFAULT_LANGUAGE
+
 
 # Threading helper (OBSOLETE)
-
-
 def threaded(fn):
     def wrapper(*args, **kwargs):
         threading.Thread(target=fn, args=args, kwargs=kwargs).start()
     return wrapper
+
 
 class IgnoredException(Exception):
     """
@@ -21,9 +21,8 @@ class IgnoredException(Exception):
     """
     pass
 
+
 # Singleton
-
-
 class Singleton(type):
     _instances = {}
 
@@ -71,6 +70,7 @@ class StandardEmoji:
     WINK = ":wink:"
 
 
+# Special emojis that are available to Nano
 class BotEmoji:
     BOT_TAG = "<:botTag:230105988211015680>"
 
@@ -107,11 +107,15 @@ class BotEmoji:
 
 tr = TranslationManager()
 
-def resolve_time(tm, lang):
-    try:
-        tm = int(round(tm, 0))
-    except TypeError:
-        return None
+
+def resolve_time(tm: int, lang: str) -> str:
+    """
+    Converts an int to its human-friendly representation
+    :param tm: time in seconds
+    :param lang: language to use
+    :return: string
+    """
+    tm = int(tm)
 
     days = 0
     hours = 0
@@ -151,13 +155,22 @@ possibilities = [
     "s", "sec", "seconds",
     "m", "min", "minutes",
     "h", "hr", "hours",
-    "d", "day", "days"]
+    "d", "day", "days"
+]
 
 
-def convert_to_seconds(string):
-    if str(string).isnumeric():
+def convert_to_seconds(string: str) -> int:
+    """
+    Converts a text representation of time into a number
+    Opposite of resolve_time
+    :param string: text representation of time (1h 3min, ...)
+    :return: int
+    """
+    # If it's already a number, just return it
+    if string.isnumeric():
         return int(string)
 
+    # Groups expressions together
     cp = str(string).split(" ")
 
     for c, el in enumerate(cp):
@@ -167,6 +180,7 @@ def convert_to_seconds(string):
         except IndexError:
             pass
 
+    # Counts seconds
     total_seconds = 0
     for el in cp:
         el = str(el).replace(" ", "").replace("\n", "")
@@ -213,7 +227,8 @@ def convert_to_seconds(string):
             total_seconds += int(el[:-1])
 
     # Seconds
-    return int(total_seconds)
+    return total_seconds
+
 
 words = (
     "on",
@@ -224,15 +239,15 @@ words = (
 )
 
 
-def matches_list(content: str, lst: tuple = words):
-    return str(content).lower().startswith(lst)
+def matches_iterable(content: str, lst: Iterable = words) -> bool:
+    return content.lower() in lst
 
 
 def is_valid_command(msg: str, commands: Iterable, prefix: str):
-    for command in commands:
-        command = command.replace("_", prefix)
+    for cmd in commands:
+        cmd = cmd.replace("_", prefix)
 
-        if msg.startswith(command):
+        if msg.startswith(cmd):
             return True
 
     return False
@@ -250,7 +265,7 @@ def log_to_file(content, type_="log"):
             file.write("Error while writing to file, UnicodeEncodeError: {}".format(ev))
 
 
-def alternate_log(content, filename):
+def alternate_log(content: str, filename: str):
     with open(filename, "a") as file:
         cn = datetime.now().strftime("%d-%m-%Y %H:%M:%S") + " - " + str(content)
 
@@ -260,30 +275,44 @@ def alternate_log(content, filename):
             file.write("Error while writing to file, UnicodeEncodeError: {}".format(ev))
 
 
-def is_empty(path):
+def file_is_empty(path: str) -> bool:
     if os.path.isfile(path):
         return os.stat(path).st_size == 0
 
     else:
         return False
 
+
 none_ux = [
     "none", "false", "off", "disabled", "default", "disable"
 ]
 
+ux_disables = {}
 
-def is_disabled(ct, lang=None):
+# Adds representations of None from other languages at import
+for lng in tr.translations.keys():
+    if lng not in ux_disables.keys():
+        ux_disables[lng] = list(none_ux)
+
+    th1 = tr.get("INFO_DISABLED", lng, fallback=False)
+    th2 = tr.get("INFO_DISABLED_A", lng, fallback=False)
+
+    if th1:
+        ux_disables[lng].append(th1)
+    if th2:
+        ux_disables[lng].append(th2)
+
+
+# Returns a bool indicating if 'ct' represents a disabling action
+def is_disabled(ct: str, lang=DEFAULT_LANGUAGE):
     if ct is None or ct == "":
         return True
 
-    # Language-sensitive disabling
-    disables = list(none_ux)
-    if lang:
-        disables.append(tr.get("INFO_DISABLED"))
-        disables.append(tr.get("INFO_DISABLED_A"))
+    ct = str(ct).lower()
 
-    for a in disables:
-        if str(ct).lower().startswith(a):
+    # Language-sensitive disabling
+    for a in ux_disables[lang]:
+        if ct.startswith(a):
             return True
 
     return False
@@ -300,9 +329,8 @@ def invert_str(str_: str):
 def split_every(content, num):
     return [content[i:i + num] for i in range(0, len(content), num)]
 
+
 # Needed for redis
-
-
 def decode(c):
     if c is None:
         return None
@@ -321,6 +349,7 @@ def bin2bool(c):
 
     return c
 
+
 def boolify(s):
     if s == "True":
         return True
@@ -337,8 +366,8 @@ def decode_auto(some):
         return decode_auto(some.decode())
 
     if isinstance(some, str):
-        # Autoconvert IDs to int
-        if some.isnumeric() and len(some) == 17:
+        # Auto-convert numbers to int
+        if some.isnumeric():
             return int(some)
 
         return boolify(some)
@@ -355,7 +384,7 @@ def decode_auto(some):
     if isinstance(some, set):
         return set(map(decode_auto, some))
 
-    # In case it's some other type
+    # If it's some other type, return it as is
     return some
 
 
@@ -389,6 +418,7 @@ def is_number(string):
 specials = {
     "%20": " ",
 }
+
 
 def parse_special_chars(text: str):
     for t, rep in specials.items():
