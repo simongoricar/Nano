@@ -8,7 +8,7 @@ from typing import Union
 from discord import utils, Client, Embed, TextChannel, Colour, DiscordException, Object, HTTPException
 
 from data.serverhandler import INVITEFILTER_SETTING, SPAMFILTER_SETTING, WORDFILTER_SETTING
-from data.utils import convert_to_seconds, matches_list, is_valid_command, StandardEmoji, \
+from data.utils import convert_to_seconds, matches_iterable, is_valid_command, StandardEmoji, \
                        resolve_time, log_to_file, is_disabled, IgnoredException, parse_special_chars
 
 from data.stats import MESSAGE
@@ -1425,20 +1425,20 @@ class Admin:
 
                 # Set word/spam/invite filter
                 # Pre-parsed into a list
-                if matches_list(setting, trans.get("MSG_SETTINGS_WF_OPTIONS", lang)):
-                    decision = matches_list(arg)
+                if matches_iterable(setting, trans.get("MSG_SETTINGS_WF_OPTIONS", lang)):
+                    decision = matches_iterable(arg)
                     handler.update_moderation_settings(message.guild.id, setting, decision)
 
                     await message.channel.send(trans.get("MSG_SETTINGS_WORD", lang).format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
 
-                elif matches_list(setting, trans.get("MSG_SETTINGS_SF_OPTIONS", lang)):
-                    decision = matches_list(arg)
+                elif matches_iterable(setting, trans.get("MSG_SETTINGS_SF_OPTIONS", lang)):
+                    decision = matches_iterable(arg)
                     handler.update_moderation_settings(message.guild.id, setting, decision)
 
                     await message.channel.send(trans.get("MSG_SETTINGS_SPAM", lang).format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
 
-                elif matches_list(setting, trans.get("MSG_SETTINGS_IF_OPTIONS", lang)):
-                    decision = matches_list(arg)
+                elif matches_iterable(setting, trans.get("MSG_SETTINGS_IF_OPTIONS", lang)):
+                    decision = matches_iterable(arg)
                     handler.update_moderation_settings(message.guild.id, setting, decision)
 
                     await message.channel.send(trans.get("MSG_SETTINGS_INVITE", lang).format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
