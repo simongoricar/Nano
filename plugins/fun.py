@@ -24,7 +24,6 @@ from data.confparser import get_config_parser
 parser = get_config_parser()
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
 
 # Giphy's green color thingie
 GIPHY_GREEN = 0x00C073
@@ -43,6 +42,10 @@ valid_commands = commands.keys()
 
 
 class Achievement:
+    __slots__ = (
+        "_images", "font_mc", "__dict__"
+    )
+
     # Only one instance, speeds up the acces
     def __init__(self, upscale: int = 2):
         if upscale > 5:
@@ -64,18 +67,24 @@ class Achievement:
         # Load all images
         temp_path = os.path.join("plugins", "achievmentget")
 
-        # Loads different image sizes
-        self._image_sizes = [23, 46]
+        self._image_sizes = []
+        # Find valid image sizes
+        imgs = [a for a in os.listdir(temp_path) if a.startswith("aget_") and a.endswith(".png")]
+        for i in imgs:
+            num = i.strip("aget_").strip(".png")
+            self._image_sizes.append(int(num))
+
+        log.info("Found sizes: {}".format(", ".join([str(a) for a in self._image_sizes])))
+
         self._images = {}
 
-        for k in self._image_sizes:
-            self._images[k] = Image.open(os.path.join(temp_path, "aget_{}.png".format(k)))
+        for size, fn in zip(self._image_sizes, imgs):
+            self._images[size] = Image.open(os.path.join(temp_path, fn))
 
     def get_matching_image(self, text_length: int) -> Image:
         # Find the proper image to put this onto
         for size in self._image_sizes:
             if text_length <= size:
-                print("selected {}".format(size))
                 # Return a copy
                 return copy(self._images[size])
 
