@@ -1,17 +1,23 @@
 # coding=utf-8
 import configparser
+import time
+import os
 import logging
 import aiohttp
+import textwrap
+from copy import copy
+from io import BytesIO
 
 try:
     from ujson import loads
 except ImportError:
     from json import loads
 
-from discord import Message, Embed, Colour, File
+from discord import Embed, Colour, File
+from PIL import Image, ImageDraw, ImageFont
 
 from data.stats import PRAYER, MESSAGE, IMAGE_SENT
-from data.utils import is_valid_command, build_url, add_dots
+from data.utils import is_valid_command, build_url, add_dots, gen_id
 from data.confparser import get_config_parser
 
 # plugins/config.ini
@@ -30,9 +36,79 @@ commands = {
     "_meme": {"desc": "Captions a meme with your text. Take a look at <https://imgflip.com/memegenerator>'s list of memes if you want.", "use": "[command] [meme name]|[top text]|[bottom text]", "alias": "_caption"},
     "_caption": {"desc": "Captions a meme with your text. Take a look at <https://imgflip.com/memegenerator>'s list of memes if you want.", "use": "[command] [meme name]|[top text]|[bottom text]", "alias": "_meme"},
     "_randomgif": {"desc": "Sends a random gif from Giphy. Optionally, specify a tag after the command.", "use": "[command] (optional: tag)"},
+    "_achievement": {"desc": "Generates an achievment, Minecraft style.", "use": "[command] [text]"}
 }
 
 valid_commands = commands.keys()
+
+
+class Achievement:
+    # Only one instance, speeds up the acces
+    def __init__(self, upscale: int = 2):
+        if upscale > 5:
+            log.warning("Careful! Upscale ratios of more than 5 can cause big slowdowns.")
+
+        # Upscaling is used as an alternative to font anti-aliasing
+        self.UPSCALE = upscale
+
+        self.DRAW_X = 60
+        self.DRAW_Y = 35
+        self.DRAW_POS = (self.DRAW_X * self.UPSCALE, self.DRAW_Y * self.UPSCALE)
+
+        self.COLOR_WHITE = (255, 255, 255)
+        self.FONT_SIZE = 18 * upscale
+
+        self.FONT_PATH = os.path.join("plugins", "achievmentget", "Minecraft.ttf")
+        self.font_mc = ImageFont.truetype(self.FONT_PATH, self.FONT_SIZE)
+
+        # Load all images
+        temp_path = os.path.join("plugins", "achievmentget")
+
+        # Loads different image sizes
+        self._image_sizes = [23, 46]
+        self._images = {}
+
+        for k in self._image_sizes:
+            self._images[k] = Image.open(os.path.join(temp_path, "aget_{}.png".format(k)))
+
+    def get_matching_image(self, text_length: int) -> Image:
+        # Find the proper image to put this onto
+        for size in self._image_sizes:
+            if text_length <= size:
+                print("selected {}".format(size))
+                # Return a copy
+                return copy(self._images[size])
+
+        # None found? Return the biggest one
+        return copy(self._images[max(self._image_sizes)])
+
+    def create_image(self, text):
+        # Shorten really long text
+        text = add_dots(text, max(self._image_sizes) - 2, ending="..")
+
+        # Find the appropriate image size
+        image = self.get_matching_image(len(text))
+        text = "\n".join(textwrap.wrap(text, width=min(self._image_sizes)))
+
+        # Upscales the image
+        img_width, img_height = image.size
+        img_width_n = img_width * self.UPSCALE
+        img_height_n = img_height * self.UPSCALE
+
+        image = image.resize((img_width_n, img_height_n), Image.ANTIALIAS)
+        draw = ImageDraw.Draw(image)
+
+        # Puts text on top
+        draw.text(self.DRAW_POS, text, self.COLOR_WHITE, font=self.font_mc)
+        # Downscales the image again, effectively anti-aliasing the text
+        image = image.resize((img_width, img_height), Image.ANTIALIAS)
+
+        # Save data in memory
+        mem_file = BytesIO()
+        image.save(mem_file, "png")
+        # Reset cursor to start
+        mem_file.seek(0)
+        return mem_file
 
 
 class MemeGenerator:
@@ -69,7 +145,7 @@ class MemeGenerator:
     async def get_memes(self):
         async with aiohttp.ClientSession() as session:
             async with session.get(MemeGenerator.MEME_ENDPOINT) as resp:
-                return await resp.json()
+                return await resp.json(loads=loads, content_type=None)
 
     async def caption_meme(self, name, top, bottom):
         meme_id = self.meme_name_id.get(str(name).lower())
@@ -97,7 +173,6 @@ class MemeGenerator:
             return await resp.json(loads=loads, content_type=None)
 
 
-
 class GiphyApi:
     RANDOM_GIF = "https://api.giphy.com/v1/gifs/random"
 
@@ -105,7 +180,8 @@ class GiphyApi:
         self.key = str(api_key)
         self.session = aiohttp.ClientSession(loop=loop)
 
-    async def _parse_response(self, response):
+    @staticmethod
+    async def _parse_response(response):
         meta = response.get("meta").get("msg")
 
         if meta != "OK":
@@ -159,6 +235,7 @@ class Fun:
         self.loop = kwargs.get("loop")
         self.trans = kwargs.get("trans")
 
+        # Giphy
         try:
             api_key = parser.get("giphy", "api-key")
             self.gif = GiphyApi(api_key, self.loop)
@@ -166,6 +243,7 @@ class Fun:
             log.critical("Missing api key for giphy, disabling command...")
             self.giphy_enabled = False
 
+        # Meme generator
         try:
             username = parser.get("imgflip", "username")
             password = parser.get("imgflip", "password")
@@ -174,6 +252,8 @@ class Fun:
         except configparser.Error:
             log.critical("Missing credentials for imgflip, disabling command...")
             self.imgflip_enabled = False
+
+        self.achievement = Achievement()
 
         self.everyone_filter = None
 
@@ -231,7 +311,6 @@ class Fun:
             if gif is None:
                 gif = await self.gif.get_random_gif()
                 nonexistent = True
-
 
             embed = Embed(colour=Colour(GIPHY_GREEN))
             embed.set_image(url=gif)
@@ -300,6 +379,20 @@ class Fun:
             await message.channel.send(trans.get("MSG_RIP", lang).format(ripperoni, prays))
 
             self.stats.add(PRAYER)
+
+        elif startswith(prefix + "achievement"):
+            text = message.content[len(prefix + "achievement "):].strip(" ")
+
+            if not text:
+                await message.channel.send(trans.get("MSG_ACHIEVMENT_NOTEXT", lang))
+                return
+
+            img = self.achievement.create_image(text)
+            img_filename = "Achievment{}.png".format(gen_id(8))
+
+            await message.channel.send(file=File(img, img_filename))
+            # Just in case GC fails
+            del img
 
 
 class NanoPlugin:

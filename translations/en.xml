@@ -386,6 +386,7 @@ For a list of all commands and their explanations, use `>cmds`.</string>
     <string name="MSG_RIP">Rest in pepperoni{}.
 
 `{}` *prayers said so far*...</string>
+    <string name="MSG_ACHIEVMENT_NOTEXT">Please specify text to put in the image.</string>
 
     <string name="MSG_HELP">**Hey, I'm Nano!**
 
