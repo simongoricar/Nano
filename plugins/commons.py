@@ -477,7 +477,7 @@ class Commons:
             msg_data = self.pings.pop(reaction.message.id)
             lang = kwargs.get("lang")
 
-            delta = round((time.monotonic() - int(msg_data[0])) * 100, 2)
+            delta = int((time.monotonic() - int(msg_data[0])) * 100)
             # Message object
             msg = msg_data[1]
 

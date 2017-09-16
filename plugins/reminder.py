@@ -154,7 +154,6 @@ class RedisReminderHandler:
         if not self.can_add_reminders(author.id):
             return -1
 
-        tim = convert_to_seconds(tim)
         if not (REM_MIN_DURATION <= tim < REM_MAX_DURATION):  # Allowed reminder duration: 5 sec to 2 days
             return False
 
