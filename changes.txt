@@ -1,3 +1,8 @@
+4.7.5
+- Added !achievement generator
+- Raised cmd response length cap to 1000
+- Bugfixes
+
 3.7.4
 - Updated !randomgif with optional keywords
 - Added arguments to !cmds
