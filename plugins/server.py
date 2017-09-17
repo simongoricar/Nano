@@ -7,6 +7,7 @@ import time
 import psutil
 
 from discord import utils, Embed, Colour, __version__ as d_version, HTTPException
+from discord import Member
 
 from data.stats import MESSAGE
 from data.utils import is_valid_command, log_to_file, is_disabled, IgnoredException
@@ -46,7 +47,9 @@ class ServerManagement:
 
         # Debug
         self.lt = time.time()
-        self.bans = {}
+
+        self.bans = []
+        self.kicks = []
 
     async def handle_log_channel(self, guild):
         # Older servers may still have names of channels, that can cause an error
@@ -61,7 +64,6 @@ class ServerManagement:
             return None
 
         return utils.find(lambda m: m.id == chan, guild.text_channels)
-
 
     async def default_channel(self, guild):
         # If the guild doesn't have any text channels just exit
@@ -101,6 +103,20 @@ class ServerManagement:
     def make_logchannel_embed(user, action, color=Colour(0x2e75cc)):
         # Color: Nano's dark blue color
         return Embed(description="ID: {}".format(user.id), color=color).set_author(name="{} {}".format(user.name, action), icon_url=user.avatar_url)
+
+    @staticmethod
+    def parse_dynamic_response(text: str, member: Member):
+        order = [":username", ":user", ":server"]
+        replacements = {
+            ":user": member.mention,
+            ":username": member.display_name,
+            ":server": member.guild.name
+        }
+
+        for t in order:
+            text = text.replace(t, replacements[t])
+
+        return text
 
     async def on_message(self, message, **kwargs):
         client = self.client
@@ -291,17 +307,8 @@ class ServerManagement:
     async def on_member_join(self, member, **kwargs):
         lang = kwargs.get("lang")
 
-        replacement_logic = {
-            ":user": member.mention,
-            ":username": member.name,
-            ":server": member.guild.name
-        }
-
-        welcome_msg = str(self.handler.get_var(member.guild.id, "welcomemsg"))
-
-        # Replacement logic
-        for trigg, repl in replacement_logic.items():
-            welcome_msg = welcome_msg.replace(trigg, repl)
+        raw_msg = str(self.handler.get_var(member.guild.id, "welcomemsg"))
+        welcome_msg = self.parse_dynamic_response(raw_msg, member)
 
         log_c = await self.handle_log_channel(member.guild)
         def_c = await self.default_channel(member.guild)
@@ -315,19 +322,10 @@ class ServerManagement:
             await self.send_message_failproof(def_c, welcome_msg)
 
     async def on_member_ban(self, guild, member, **kwargs):
-        self.bans[member.id] = time.time()
-
         lang = kwargs.get("lang")
 
-        replacement_logic = {
-            ":user": member.mention,
-            ":username": member.name,
-            ":server": guild.name}
-
-        ban_msg = str(self.handler.get_var(guild.id, "banmsg"))
-
-        for trigg, repl in replacement_logic.items():
-            ban_msg = ban_msg.replace(trigg, repl)
+        raw_msg = str(self.handler.get_var(guild.id, "banmsg"))
+        ban_msg = self.parse_dynamic_response(raw_msg, member)
 
         log_c = await self.handle_log_channel(guild)
         def_c = await self.default_channel(guild)
@@ -341,21 +339,17 @@ class ServerManagement:
             await self.send_message_failproof(def_c, ban_msg)
 
     async def on_member_remove(self, member, **kwargs):
-        if member.id in self.bans.keys():
-            self.bans.pop(member.id)
-            return
-
         lang = kwargs.get("lang")
 
-        replacement_logic = {
-            ":user": member.mention,
-            ":username": member.name,
-            ":server": member.guild.name}
+        # Automatically switches between kick and leave messages
+        if member.id in self.kicks:
+            key = "kickmsg"
+            self.kicks.remove(member.id)
+        else:
+            key = "leavemsg"
 
-        leave_msg = str(self.handler.get_var(member.guild.id, "leavemsg"))
-
-        for trigg, repl in replacement_logic.items():
-            leave_msg = leave_msg.replace(trigg, repl)
+        raw_msg = str(self.handler.get_var(member.guild.id, key))
+        leave_msg = self.parse_dynamic_response(raw_msg, member)
 
         log_c = await self.handle_log_channel(member.guild)
         def_c = await self.default_channel(member.guild)

@@ -112,6 +112,7 @@ ignore_commands = [
     "_cmds"
 ]
 
+
 class RedisSoftBanScheduler:
     def __init__(self, client, handler, loop=asyncio.get_event_loop()):
         self.client = client
@@ -272,6 +273,7 @@ def make_pages_from_dict(item_dict: dict):
     # dict(page_index:[lines], etc...), total_pages
     return cmd_list, c_page
 
+
 def make_pages_from_list(item_list: list):
     """
     Makes pages out of a mute list
@@ -413,12 +415,15 @@ class Admin:
         self.loop.create_task(self.list.track.start_monitoring())
 
         self.bans = []
+        self.kick_list = []
+
         self.default_channel = None
         self.handle_log_channel = None
 
     async def on_plugins_loaded(self):
         self.default_channel = self.nano.get_plugin("server").get("instance").default_channel
         self.handle_log_channel = self.nano.get_plugin("server").get("instance").handle_log_channel
+        self.kick_list = self.nano.get_plugin("server").get("instance").kicks
 
     async def resolve_role(self, name, message, lang, no_error=False):
         if len(message.role_mentions) > 0:
@@ -712,7 +717,12 @@ class Admin:
                 await message.channel.send(trans.get("MSG_KICK_NANO", lang))
                 return
 
-            await user.kick()
+            self.kick_list.append(user.id)
+            try:
+                await user.kick()
+            except DiscordException:
+                self.kick_list.remove(user.id)
+
             await message.channel.send(trans.get("MSG_KICK", lang).format(user.name))
 
             return
@@ -742,7 +752,10 @@ class Admin:
                 await message.channel.send(trans.get("MSG_BAN_TIMEOUT", lang))
             else:
                 self.bans.append(user.id)
-                await user.ban(delete_message_days=0)
+                try:
+                    await user.ban(delete_message_days=0)
+                except DiscordException:
+                    self.bans.remove(user.id)
 
                 await message.channel.send(trans.get("MSG_BAN", lang).format(user.name))
 
@@ -1812,6 +1825,7 @@ class Admin:
 
     async def on_reaction_add(self, reaction, user, **kwargs):
         await self.list.handle_reaction(reaction, user, **kwargs)
+
 
 class NanoPlugin:
     name = "Admin Commands"

@@ -304,7 +304,7 @@ for lng in tr.translations.keys():
 
 
 # Returns a bool indicating if 'ct' represents a disabling action
-def is_disabled(ct: str, lang=DEFAULT_LANGUAGE):
+def is_disabled(ct, lang=DEFAULT_LANGUAGE):
     if ct is None or ct == "":
         return True
 
