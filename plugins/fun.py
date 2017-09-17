@@ -93,7 +93,7 @@ class Achievement:
 
     def create_image(self, text):
         # Shorten really long text
-        text = add_dots(text, max(self._image_sizes) - 2, ending="..")
+        text = add_dots(text, max(self._image_sizes), ending="")
 
         # Find the appropriate image size
         image = self.get_matching_image(len(text))
