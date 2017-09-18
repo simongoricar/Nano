@@ -1,6 +1,5 @@
 # coding=utf-8
 import asyncio
-import importlib
 import logging
 import time
 import traceback
@@ -16,11 +15,11 @@ log.setLevel(logging.INFO)
 
 # CONSTANTS
 
-DEFAULT_REMINDER_LIMIT = 2
+DEFAULT_REMINDER_LIMIT = 3
 TICK_DURATION = 15
 
 REM_MIN_DURATION = 5
-REM_MAX_DURATION = 172800
+REM_MAX_DURATION = 259200
 
 REM_MAX_CONTENT = 800
 
@@ -40,6 +39,7 @@ commands = {
 }
 
 valid_commands = commands.keys()
+
 
 class RedisReminderHandler:
     """
@@ -63,18 +63,13 @@ class RedisReminderHandler:
         self.client = client
         self.trans = trans
 
-        try:
-            self.json = importlib.import_module("ujson")
-        except ImportError:
-            self.json = importlib.import_module("json")
-
     def get_reminder_amount(self):
         return len(self.get_all_reminders())
 
-    def prepare_private(self, content, lang):
+    def _prepare_private(self, content, lang):
         return self.trans.get("MSG_REMINDER_PRIVATE", lang).format(content)
 
-    def prepare_channel(self, content, lang):
+    def _prepare_channel(self, content, lang):
         return self.trans.get("MSG_REMINDER_CHANNEL", lang).format(content)
 
     def get_reminders(self, user_id) -> dict:
@@ -105,14 +100,9 @@ class RedisReminderHandler:
         Finds users and gets their reminders
         :return: list(user_reminder_dict, ...)
         """
-        users = set()
-
-        # Not actually *, but reminder:*, due to how plugin manager works
-        for k_name in self.redis.scan_iter("*"):
-            users.add(self._extract_user_id(k_name))
+        users = set(self._extract_user_id(name) for name in self.redis.scan_iter("*"))
 
         return [self.get_reminders(u) for u in users]
-
 
     def find_id_from_content(self, user_id, content):
         reminders = self.get_reminders(user_id)
@@ -123,8 +113,9 @@ class RedisReminderHandler:
 
         return None
 
-    def remove_all_reminders(self, user):
-        self.redis.delete(user.id)
+    def remove_all_reminders(self, user_id):
+        for r_id in self.get_reminders(user_id).keys():
+            self.remove_reminder(user_id, r_id)
 
     def remove_reminder(self, user_id, rem_id):
         return self.redis.delete("{}:{}".format(user_id, rem_id))
@@ -134,8 +125,7 @@ class RedisReminderHandler:
         :param user_id: user id
         :return: True -> user can add more reminders
         """
-
-        return len(self.get_reminders(user_id)) <= DEFAULT_REMINDER_LIMIT
+        return len(self.get_reminders(user_id)) < DEFAULT_REMINDER_LIMIT
 
     def set_reminder(self, channel, author, content: str, tim: int,
                      lang: str, reminder_type: Union[REMINDER_CHANNEL, REMINDER_PERSONAL]=REMINDER_PERSONAL):
@@ -161,7 +151,6 @@ class RedisReminderHandler:
         # Add the reminder to the list
         rm_id = gen_id(length=12)
 
-
         if reminder_type == REMINDER_PERSONAL:
             tree = {"receiver": author.id, "time_created": int(t), "author": author.id,
                     "lang": lang, "time_target": int(tim + t), "raw": raw, "type": reminder_type}
@@ -169,7 +158,6 @@ class RedisReminderHandler:
         else:
             tree = {"receiver": channel.id, "server": channel.guild.id, "author": author.id, "lang": lang,
                     "time_created": int(t), "time_target": int(tim + t), "raw": raw, "type": reminder_type}
-
 
         log.info("New reminder by {}".format(author.id))
         hash_name = "{}:{}".format(author.id, rm_id)
@@ -194,36 +182,29 @@ class RedisReminderHandler:
         return time.time()
 
     async def dispatch(self, rem):
-        try:
-            rem_type = rem["type"]
+        if rem["type"] == REMINDER_CHANNEL:
+            log.info("Dispatching channel reminder by {}".format(rem["receiver"]))
 
-            if rem_type == REMINDER_CHANNEL:
-                log.info("Dispatching channel reminder by {}".format(rem["receiver"]))
+            guild = self.client.get_guild(int(rem["server"]))
+            channel = guild.get_channel(int(rem["receiver"]))
 
-                guild = self.client.get_guild(int(rem["server"]))
-                channel = guild.get_channel(int(rem["receiver"]))
+            content = self._prepare_channel(rem["raw"], rem["lang"])
+            await channel.send(content)
 
-                content = self.prepare_channel(rem["raw"], rem["lang"])
-                await channel.send(content)
+        # Private reminder.
+        else:
+            log.info("Dispatching personal reminder by {}".format(rem["receiver"]))
 
-            # Private reminder.
-            else:
-                log.info("Dispatching personal reminder by {}".format(rem["receiver"]))
+            user = self.client.get_user(int(rem["receiver"]))
 
-                user = self.client.get_user(int(rem["receiver"]))
+            if not user:
+                log.info("User missing, ignoring...")
+                return
 
-                if not user:
-                    log.info("User missing, ignoring...")
-                    return
+            content = self._prepare_private(rem["raw"], rem["lang"])
+            await user.send(content)
 
-                content = self.prepare_private(rem["raw"], rem["lang"])
-                await user.send(content)
-
-
-        except DiscordException as e:
-            log.warning(e)
-
-    async def start_monitoring(self):
+    async def monitor(self):
         await self.client.wait_until_ready()
 
         last_time = time.time()
@@ -233,19 +214,16 @@ class RedisReminderHandler:
             a = self.get_all_reminders()
             for user in a:
 
-                for rm_id, reminder in user.items():
+                for id_, reminder in user.items():
                     # If enough time has passed, send the reminder
                     if int(reminder["time_target"]) <= last_time:
-
                         try:
                             await self.dispatch(reminder)
                         except Exception:
                             log.warning("ERROR in reminders, see bugs.txt")
                             log_to_file(traceback.format_exc(), "bug")
 
-                            self.remove_reminder(reminder["author"], rm_id)
-                        finally:
-                            self.remove_reminder(reminder["author"], rm_id)
+                        self.remove_reminder(reminder["author"], id_)
 
             # And tick.
             last_time = await self.tick(last_time)
@@ -264,7 +242,7 @@ class Reminder:
 
         self.filter = None
 
-        self.loop.create_task(self.reminder.start_monitoring())
+        self.loop.create_task(self.reminder.monitor())
 
     async def on_plugins_loaded(self):
         self.filter = self.nano.get_plugin("commons").get("instance").at_everyone_filter
@@ -332,7 +310,6 @@ class Reminder:
             except ValueError:
                 await message.channel.send(trans.get("MSG_REMINDER_TOO_LONG_CONTENT", lang).format(REM_MAX_CONTENT))
                 return
-
 
             resp = self.reminder.set_reminder(message.author, message.author, text, r_time, lang)
 
@@ -405,8 +382,9 @@ class Reminder:
                 return
 
             if r_name == "all":
-                self.reminder.remove_all_reminders(message.author)
+                self.reminder.remove_all_reminders(message.author.id)
                 await message.channel.send(trans.get("MSG_REMINDER_DELETE_ALL", lang))
+                return
 
             else:
                 r_id = self.reminder.find_id_from_content(message.author.id, r_name)
