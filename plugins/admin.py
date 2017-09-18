@@ -855,7 +855,6 @@ class Admin:
                 except ValueError:
                     await message.channel.send(trans.get("ERROR_INVALID_CMD_ARGUMENTS", lang))
                     return
-
             else:
                 page = 0
 

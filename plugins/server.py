@@ -7,7 +7,7 @@ import time
 import psutil
 
 from discord import utils, Embed, Colour, __version__ as d_version, HTTPException
-from discord import Member
+from discord import Member, Guild
 
 from data.stats import MESSAGE
 from data.utils import is_valid_command, log_to_file, is_disabled, IgnoredException
@@ -105,12 +105,12 @@ class ServerManagement:
         return Embed(description="ID: {}".format(user.id), color=color).set_author(name="{} {}".format(user.name, action), icon_url=user.avatar_url)
 
     @staticmethod
-    def parse_dynamic_response(text: str, member: Member):
+    def parse_dynamic_response(text: str, member: Member, guild: Guild):
         order = [":username", ":user", ":server"]
         replacements = {
             ":user": member.mention,
             ":username": member.display_name,
-            ":server": member.guild.name
+            ":server": guild.name
         }
 
         for t in order:
@@ -308,7 +308,7 @@ class ServerManagement:
         lang = kwargs.get("lang")
 
         raw_msg = str(self.handler.get_var(member.guild.id, "welcomemsg"))
-        welcome_msg = self.parse_dynamic_response(raw_msg, member)
+        welcome_msg = self.parse_dynamic_response(raw_msg, member, member.guild)
 
         log_c = await self.handle_log_channel(member.guild)
         def_c = await self.default_channel(member.guild)
@@ -325,7 +325,7 @@ class ServerManagement:
         lang = kwargs.get("lang")
 
         raw_msg = str(self.handler.get_var(guild.id, "banmsg"))
-        ban_msg = self.parse_dynamic_response(raw_msg, member)
+        ban_msg = self.parse_dynamic_response(raw_msg, member, guild)
 
         log_c = await self.handle_log_channel(guild)
         def_c = await self.default_channel(guild)
@@ -349,7 +349,7 @@ class ServerManagement:
             key = "leavemsg"
 
         raw_msg = str(self.handler.get_var(member.guild.id, key))
-        leave_msg = self.parse_dynamic_response(raw_msg, member)
+        leave_msg = self.parse_dynamic_response(raw_msg, member, member.guild)
 
         log_c = await self.handle_log_channel(member.guild)
         def_c = await self.default_channel(member.guild)

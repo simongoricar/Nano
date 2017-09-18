@@ -61,6 +61,8 @@ class BotState:
         pref = self.handler.get_prefix(message.guild)
         if pref is None:
             pref = str(DEFAULT_PREFIX)
+        else:
+            pref = str(pref)
 
         # Parse language
         lang = self.handler.get_lang(message.guild.id)
