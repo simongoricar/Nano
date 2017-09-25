@@ -26,10 +26,10 @@ by DefaltSimon, made in python with [discord.py api](https://github.com/Rapptz/d
 
 ### Invite and help  
   
-Wanna add Nano to your server? Use this magic [invite link](https://discordapp.com/oauth2/authorize?client_id=171632249459048448&scope=bot&permissions=1543765079)!  
-If you're confused or need help, hop on our Discord server - [Nano lounge](htpp://discord.nanobot.pw).  
+Wanna add Nano to your server? Use this magic **[invite link](https://discordapp.com/oauth2/authorize?client_id=171632249459048448&scope=bot&permissions=1543765079)!**  
+If you're confused or need help, hop on our Discord server - **[Nano lounge](http://discord.nanobot.pw)**.  
 
 ----
 
 #### Need a local bot?
-If you want to run your copy of Nano locally, make sure to follow ** [this guide](https://github.com/DefaltSimon/Nano/wiki/Hosting-Nano-yourself)**.    
+If you want to run your copy of Nano locally, make sure to follow **[this guide](https://github.com/DefaltSimon/Nano/wiki/Hosting-Nano-yourself)**. (just keep in mind: you're not allowed to host this bot as public, only for private use on your servers.)
