@@ -230,7 +230,7 @@ class JokeList:
             self.redis.sadd(self.stupidstuff_ns, joke)
 
         del jokes
-        log.info("Ready!")
+        log.info("Dataset ready!")
 
     def random_joke(self) -> str:
         # title, body = self.redis.srandmember(self.r_namespace)[0].split("%SEP%")
