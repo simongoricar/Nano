@@ -3,9 +3,10 @@ import asyncio
 import configparser
 import logging
 import aiohttp
+import os
 
 from random import randint
-from ujson import loads
+from ujson import loads, load
 from bs4 import BeautifulSoup
 from typing import Union
 
@@ -13,7 +14,7 @@ from discord import Embed, Colour
 
 from data.stats import MESSAGE, IMAGE_SENT
 from data.utils import is_valid_command, is_number, log_to_file
-from data.confparser import get_config_parser
+from data.confparser import get_config_parser, PLUGINS_DIR
 
 commands = {
     "_xkcd": {"desc": "Fetches XKCD comics for you (defaults to random).", "use": "[command] (random/number/latest)"},
@@ -194,74 +195,55 @@ class XKCD:
         return await self.get_xkcd_by_number(num)
 
 
-class JokeGenerator:
-    def __init__(self, loop):
-        self.yo_mama = "http://api.yomomma.info/"
-        self.chuck = "https://api.chucknorris.io/jokes/random"
+class JokeList:
+    __slots__ = (
+        "redis", "reddit_ns", "stupidstuff_ns"
+    )
 
-        self.req = Connector(loop)
+    """
+    Data layout: set
+        body1
+        body2
+        ...
+    
+    """
 
-        # More are added as time goes on
-        # Hardcoded because why not
-        self.cache = [
-            "Yo mama's so fat the only alphabet she knows is her KFC's",
-            "Yo mama so fat the last time she saw 90210 was on a scale",
-            "Chuck Norris can arm wrestle with both hands tied behind his back.",
-            "Yo mama so fat that she fell over and rocked herself to sleep trying to get up"
-        ]
+    def __init__(self, handler):
+        self.stupidstuff_ns = "stupidstuff"
 
-    async def get_random_cache(self) -> str:
-        if len(self.cache) > 8:
-            rand = randint(0, len(self.cache) - 1)
-            return self.cache[rand]
+        self.redis = handler.get_plugin_data_manager("jokes")
 
-        # Else just try a new joke
-        else:
-            await self.get_joke(randint(0, 1))
+        if self.redis.scard(self.stupidstuff_ns):
+            log.info("Joke 'dataset' already in db. Ready!")
+            return
 
-    def add_to_cache(self, joke):
-        if joke not in self.cache:
-            self.cache.append(joke)
+        log.info("Jokes not yet in redis db, adding...")
 
-    async def yomama_joke(self) -> Union[str, None]:
-        try:
-            joke = await self.req.get_json(self.yo_mama)
-        except APIFailure:
-            return None
+        with open(os.path.join(PLUGINS_DIR, "jokes", "stupidstuff.json")) as j:
+            jokes = load(j)
 
-        if not joke:
-            return None
+        for joke in jokes:
+            # Verify that %SEP% exists
+            # if "%SEP%" not in joke:
+            #     raise LookupError("invalid jokes.json")
 
-        self.add_to_cache(joke.get("joke"))
-        return joke.get("joke")
+            self.redis.sadd(self.stupidstuff_ns, joke)
 
-    async def chuck_joke(self) -> Union[str, None]:
-        try:
-            joke = await self.req.get_json(self.chuck)
-        except APIFailure:
-            return None
+        del jokes
+        log.info("Ready!")
 
-        if not joke:
-            return None
+    def random_joke(self) -> str:
+        # title, body = self.redis.srandmember(self.r_namespace)[0].split("%SEP%")
+        # return title, body
 
-        self.add_to_cache(joke.get("value"))
-        return joke.get("value")
-
-    async def get_joke(self, type_=None) -> Union[str, None]:
-        # Defaults to a random joke type
-        if type_ is None:
-            type_ = randint(0, 2)
-
-        if type_ == 0:
-            return await self.yomama_joke()
-        elif type_ == 1:
-            return await self.chuck_joke()
-
-        else:
-            return await self.get_random_cache()
+        return self.redis.srandmember(self.stupidstuff_ns)[0]
 
 
 class Joke:
+    __slots__ = (
+        "client", "loop", "handler", "nano", "stats", "trans", "cats", "xkcd", "joke"
+    )
+
     def __init__(self, **kwargs):
         self.client = kwargs.get("client")
         self.loop = kwargs.get("loop")
@@ -272,7 +254,7 @@ class Joke:
 
         self.cats = CatGenerator(self.loop)
         self.xkcd = XKCD(self.loop)
-        self.joke = JokeGenerator(self.loop)
+        self.joke = JokeList(self.handler)
 
     async def on_message(self, message, **kwargs):
         trans = self.trans
@@ -365,26 +347,16 @@ class Joke:
 
         # !joke (yo mama/chuck norris)
         elif startswith(prefix + "joke"):
-            arg = str(message.content[len(prefix + "joke"):]).strip(" ").lower()
+            content = self.joke.random_joke()
 
-            if arg == "yo mama":
-                joke = await self.joke.get_joke(0)
-            elif arg == "chuck norris":
-                joke = await self.joke.get_joke(1)
-            else:
-                # Already random
-                joke = await self.joke.get_joke()
+            embed = Embed(description=content)
 
-            if not joke:
-                await message.channel.send(trans.get("MSG_JOKE_FAILED", lang))
-                return
-
-            await message.channel.send(str(joke))
+            await message.channel.send(embed=embed)
 
 
 class NanoPlugin:
     name = "Joke-telling module"
-    version = "9"
+    version = "10"
 
     handler = Joke
     events = {

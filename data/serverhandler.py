@@ -453,16 +453,16 @@ class RedisPluginDataManager:
         return decode(self.redis.lrange(self._make_key(key), from_key, to_key))
 
     def lrem(self, key, value, count=1):
-        return decode(self.redis.lrem(key, count, value))
+        return decode(self.redis.lrem(self._make_key(key), count, value))
 
     def lpop(self, key):
-        return decode(self.redis.lpop(key))
+        return decode(self.redis.lpop(self._make_key(key)))
 
     def sadd(self, name, *values):
-        return self.redis.sadd(name, *values)
+        return self.redis.sadd(self._make_key(name), *values)
 
     def srandmember(self, name, amount=1):
-        return decode(self.redis.srandmember(name, amount))
+        return decode(self.redis.srandmember(self._make_key(name), amount))
 
     def scard(self, name):
-        return self.redis.scard(name)
+        return self.redis.scard(self._make_key(name))

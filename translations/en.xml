@@ -468,7 +468,6 @@ User ratings on TMDb: __**{}** out of 10__</string>
     <string name="MSG_XKCD">XKCD number {}:</string>
     <string name="MSG_XKCD_SOURCe">Source: {}</string>
     <string name="MSG_XKCD_NO_SUCH">Such XKCD number does not exist.</string>
-    <string name="MSG_JOKE_FAILED">Could not get a proper joke... :cry:</string>
 
     <string name="MSG_MC_HELP">**Minecraft**
 ```css
