@@ -373,6 +373,9 @@ class ServerManagement:
         # Create server settings
         self.handler.server_setup(guild)
 
+        # Log
+        log_to_file("Joined guild: {}".format(guild.name))
+
     async def on_guild_remove(self, guild, **_):
         # Deletes server data
         self.handler.delete_server(guild.id)

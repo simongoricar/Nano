@@ -388,18 +388,27 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
         return int(self.redis.dbsize())
 
     # Plugin storage system
-    def get_plugin_data_manager(self, namespace, *args, **kwargs):
+    def get_plugin_data_manager(self, namespace, *args, **kwargs) -> "RedisPluginDataManager":
         return RedisPluginDataManager(self.pool, namespace, *args, **kwargs)
+
+    def _get_redis_instance(self):
+        return self.redis
 
 
 class RedisPluginDataManager:
     def __init__(self, pool, namespace, *_, **__):
-        self.namespace = str(namespace)
+        self.namespace = namespace
+        if namespace is None:
+            log.info("No namespace specified, is okay")
+
         self.redis = redis.StrictRedis(connection_pool=pool)
 
         log.info("New plugin namespace registered: {}".format(self.namespace))
 
     def _make_key(self, name):
+        if not self.namespace:
+            return name
+
         # Returns a hash name formatted with the namespace
         return "{}:{}".format(self.namespace, name)
 
@@ -419,7 +428,7 @@ class RedisPluginDataManager:
         return decode(self.redis.hdel(self._make_key(name), field))
 
     def hmset(self, name, payload):
-        return decode(self.redis.hmset(self._make_key(name), payload))
+        return self.redis.hmset(self._make_key(name), payload)
 
     def hset(self, name, field, value):
         return decode(self.redis.hset(self._make_key(name), field, value))
@@ -428,17 +437,17 @@ class RedisPluginDataManager:
         return self.redis.hexists(name, field)
 
     def exists(self, name, use_namespace=True):
-        return bool(self.redis.exists(self._make_key(name) if use_namespace else name))
+        return self.redis.exists(self._make_key(name) if use_namespace else name)
 
     def delete(self, name, use_namespace=True):
-        return bool(self.redis.delete(self._make_key(name) if use_namespace else name))
+        return self.redis.delete(self._make_key(name) if use_namespace else name)
 
     def scan_iter(self, match, use_namespace=True):
         match = self._make_key(match) if use_namespace else match
         return [a.decode() for a in self.redis.scan_iter(match)]
 
     def lpush(self, key, value):
-        return decode(self.redis.lpush(self._make_key(key), value))
+        return self.redis.lpush(self._make_key(key), value)
 
     def lrange(self, key, from_key=0, to_key=-1):
         return decode(self.redis.lrange(self._make_key(key), from_key, to_key))
@@ -448,3 +457,12 @@ class RedisPluginDataManager:
 
     def lpop(self, key):
         return decode(self.redis.lpop(key))
+
+    def sadd(self, name, *values):
+        return self.redis.sadd(name, *values)
+
+    def srandmember(self, name, amount=1):
+        return decode(self.redis.srandmember(name, amount))
+
+    def scard(self, name):
+        return self.redis.scard(name)
