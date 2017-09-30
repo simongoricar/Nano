@@ -210,17 +210,20 @@ class Moderator:
         self.checker = NanoModerator()
         self.log = LogManager(self.client, self.nano, self.loop, self.handler, self.trans)
 
-        self.valid_commands = []
+        self.valid_commands = set()
 
     async def on_plugins_loaded(self):
         # Collect all valid commands
         plugins = [a.get("plugin") for a in self.nano.plugins.values() if a.get("plugin")]
 
+        temp = []
         for pl in plugins:
             commands = get_valid_commands(pl)
             if commands is not None:
                 # Joins two lists
-                self.valid_commands += commands
+                temp += commands
+
+        self.valid_commands = set(temp)
 
         await self.log.get_plugin()
 
@@ -245,8 +248,8 @@ class Moderator:
             return "return"
 
         # Ignore the filter if user is executing a command
-        prless_command = message.content.replace(prefix, "_").split(" ")[0]
-        if prless_command in self.valid_commands:
+        noprefix_text = message.content.replace(prefix, "_").split(" ")[0]
+        if noprefix_text in self.valid_commands:
             return
 
         # Spam, swearing and invite filter

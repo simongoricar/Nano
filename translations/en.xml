@@ -359,6 +359,7 @@ The following formatting applies:
     <string name="MSG_SETUP_LOGCHANNEL_DISABLED">Logging disabled.</string>
     <string name="MSG_SETUP_LOGCHANNEL_SET">Log channel set to **{}**</string>
     <string name="MSG_SETUP_LOGCHANNEL_INVALID">:x: Invalid answer / log channel.</string>
+    <string name="MSG_SETUP_COMPLETE">**This concludes the basic server setup.**</string>
     <string name="MSG_SETUP_COMPLETE">**This concludes the basic server setup.**
 There are more settings if you need them:
 
@@ -559,6 +560,8 @@ PP: **{}** (played {} songs)</string>
     <string name="MSG_REMINDER_LIST_L">* {}
 > {}</string>
 
+    <string name="MSG_STATUS_RATELIMIT">This command is very taxing on the system, therefore it can only be used once every 5 min per whole shard.
+Please try again later.</string>
     <string name="MSG_STATUS_STATS">Stats</string>
     <string name="MSG_STATUS_SERVERS">Servers</string>
     <string name="MSG_STATUS_SERVERS_L">{} servers</string>

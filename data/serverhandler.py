@@ -313,7 +313,7 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
         return list(decode(self.redis.smembers(serv)) or [])
 
     def get_prefix(self, server: Guild) -> str:
-        return decode(self.redis.hget("server:{}".format(server.id), "prefix"))
+        return str(decode(self.redis.hget("server:{}".format(server.id), "prefix")))
 
     @validate_input
     def change_prefix(self, server, prefix):

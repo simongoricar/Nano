@@ -165,6 +165,7 @@ class ServerManagement:
 
             # Ratelimit every 360 seconds
             if ((self.lt - time.time()) < 360) and not self.handler.is_bot_owner(message.author.id):
+                await message.channel.send(trans.get("MSG_STATUS_RATELIMIT", lang))
                 return
 
             self.lt = time.time()
