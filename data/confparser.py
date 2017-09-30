@@ -16,6 +16,29 @@ PLUGIN_CONFIG_PATH = os.path.join(PLUGINS_DIR, CONFIG_FILE)
 # Allows for extensibility
 parsers = {}
 
+# COPIES FILES IF NEEDED
+must_shutdown = False
+if not os.path.isfile("settings.ini"):
+    must_shutdown = True
+    print("No settings.ini present! Please fill out the empty one!")
+
+    with open("settingsExample.ini") as ex:
+        with open("settings.ini", "w") as sett:
+            sett.write(ex.read())
+
+
+if not os.path.isfile(PLUGIN_CONFIG_PATH):
+    must_shutdown = True
+    print("No plugins/config.ini present! Please fill out the empty one!")
+
+    with open(os.path.join(PLUGINS_DIR, "configExample.ini")) as ex:
+        with open(PLUGIN_CONFIG_PATH, "w") as sett:
+            sett.write(ex.read())
+
+
+if must_shutdown:
+    exit(6)
+
 
 # SETS UP BASIC PARSERS
 

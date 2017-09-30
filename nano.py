@@ -105,6 +105,7 @@ class Nano(metaclass=Singleton):
                                   on_member_join=[], on_member_remove=[], on_member_update=[], on_member_ban=[],
                                   on_member_unban=[], on_guild_remove=[], on_error=[], on_shutdown=[],
                                   on_plugins_loaded=[], on_reaction_add=[])
+        self.event_types = set(self.plugin_events.keys())
         self._plugin_events = dict(self.plugin_events)
 
         # Updates the plugin list
@@ -317,8 +318,12 @@ class Nano(metaclass=Singleton):
         """
         Dispatches any discord event (for example: on_message)
         """
-        if event_type not in self.plugin_events.keys():
+        if event_type not in self.event_types:
             log.warning("No such event: {}".format(event_type))
+            return
+
+        # If there is no registered event, quit
+        if not self.plugin_events[event_type]:
             return
 
         # Plugins have already been ordered from most important to least important
@@ -334,23 +339,25 @@ class Nano(metaclass=Singleton):
                 continue
 
             if type(resp) is not list:
-                resp = [resp]
+                resp = tuple(resp)
 
+            # Multiple commands can be passed in a form of a tuple
             for cmd in resp:
                 # Parse additional variables
-                if isinstance(cmd, (tuple, list, set)):
+                if type(cmd) in (tuple, list, set):
                     # Unpacks parameters
                     cmd, arguments, *safe = cmd
+
                 # No additional arguments
                 else:
-                    arguments = []
+                    arguments = ()
 
                 # Makes communication between the core and plugins possible
 
                 # RETURN
                 # Exits the current event immediately and doesn't call any more plugins
                 if cmd == "return":
-                    log.debug("Exiting")
+                    log.debug("Exiting loop")
                     return
 
                 # ADD_VAR
@@ -359,21 +366,6 @@ class Nano(metaclass=Singleton):
                     # Arguments must be a dict
                     for k, v in arguments.items():
                         kwargs[k] = v
-
-                # SET_ARG
-                # Sets the current argument at an index
-                elif cmd == "set_arg":
-                    if isinstance(arguments, tuple):
-                        for k, v in arguments[0].items():
-                            temp = [a for a in args]
-                            temp[k] = v
-                            args = tuple(b for b in temp)
-
-                    else:
-                        for k, v in arguments.items():
-                            temp = [a for a in args]
-                            temp[k] = v
-                            args = tuple(b for b in temp)
 
                 # SHUTDOWN
                 # Calls the ON_SHUTDOWN event, then exists
