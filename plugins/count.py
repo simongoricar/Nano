@@ -54,6 +54,8 @@ class GuildCounter:
         async with session.post(url, data=json.dumps(payload), headers=headers) as resp:
             status_code = resp.status
 
+        log.info("Sent server count to {} with status code {}".format(url, status_code))
+
         return True if status_code == 200 else status_code
 
     async def upload_discordbots_pw(self, num, token=None):
