@@ -315,13 +315,12 @@ Confirm by replying with '{}'.</string>
     <string name="MSG_PREFIX_CHANGED">Prefix has been changed to **{}** :ok_hand:</string>
     <string name="MSG_PREFIX_PLS_ARGUMENTS">This command needs an argument: the prefix you want to set.</string>
 
-    <string name="MSG_SETUP_TIMEOUT">You ran out of time :upside_down: (timeout is 35 seconds)</string>
+    <string name="MSG_SETUP_TIMEOUT">You ran out of time :upside_down: (timeout is {} seconds)</string>
     <string name="MSG_SETUP_WELCOME">**SERVER SETUP**
 You have started the server setup. Because you started the setup, only your answers will be taken into account.
 **Let's get started!**</string>
     <string name="MSG_SETUP_RESET">Do you want to reset all bot-related settings for this server?
-(this includes spam and swearing protection, admin list, blacklisted channels,
-log channel, prefix, welcome, ban and kick messages).
+(this includes all standard settings along with blacklisted channels, your log channel and prefix and welcome, ban and kick messages).
 
 ```md
 [{yes}](Resets all settings)

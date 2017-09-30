@@ -1655,7 +1655,7 @@ class Admin:
             DIS_EXPR = StandardEmoji.GREEN_FAIL + " " + DISABLED
 
             async def timeout():
-                await message.channel.send(trans.get("MSG_SETUP_TIMEOUT", lang))
+                await message.channel.send(trans.get("MSG_SETUP_TIMEOUT", lang).format(MSG_TIMEOUT))
 
             def must_be_author(c):
                 return c.author == message.author

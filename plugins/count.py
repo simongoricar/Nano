@@ -72,12 +72,10 @@ class GuildCounter:
         return await self._send(url, payload, head)
 
     async def upload_discordbots_org(self, num, token=None):
-        info = await self.client.application_info()
-
         if not token:
             token = self.botsorg_token
 
-        url = "https://discordbots.org/api/bots/{}/stats".format(info.id)
+        url = "https://discordbots.org/api/bots/{}/stats".format(self.client.user.id)
 
         payload = {
             "server_count": num
