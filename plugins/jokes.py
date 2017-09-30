@@ -4,6 +4,7 @@ import configparser
 import logging
 import aiohttp
 import os
+import traceback
 
 from random import randint
 from ujson import loads, load
@@ -59,7 +60,7 @@ class Connector:
             if not (200 <= resp.status < 300):
                 raise APIFailure("response code: {}".format(resp.status))
 
-            return await resp.json(loads=loads, content_type=None)
+            return await resp.text()
 
 
 class CatGenerator:
@@ -82,7 +83,7 @@ class CatGenerator:
             data = await self.req.get_html(self.url, api_key=self.key, format=self.format, size=self.size, type=type_)
             link = BeautifulSoup(data, "lxml").find("img").get("src")
         except (APIFailure, Exception) as e:
-            log_to_file("CatGenerator exception: {}".format(e))
+            log_to_file("CatGenerator exception\n{}".format(traceback.format_exc()), "bug")
             return None
 
         return link
