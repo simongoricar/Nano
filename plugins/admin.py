@@ -1633,7 +1633,7 @@ class Admin:
 
         # !setup, nano.setup
         elif startswith(prefix + "setup", "nano.setup"):
-            MSG_TIMEOUT = 35
+            MSG_TIMEOUT = 60
 
             YES = trans.get("INFO_YES", lang)
             YES_L = YES.lower()
