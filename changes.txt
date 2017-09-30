@@ -1,4 +1,10 @@
-4.7.5
+3.7.6
+- !joke now has no parameters, but has a much bigger pool of jokes
+- !setup is now more beautiful than ever
+- Bugfixes
+
+
+3.7.5
 - Added !achievement generator
 - Raised cmd response length cap to 1000
 - Bugfixes

@@ -359,7 +359,6 @@ The following formatting applies:
     <string name="MSG_SETUP_LOGCHANNEL_DISABLED">Logging disabled.</string>
     <string name="MSG_SETUP_LOGCHANNEL_SET">Log channel set to **{}**</string>
     <string name="MSG_SETUP_LOGCHANNEL_INVALID">:x: Invalid answer / log channel.</string>
-    <string name="MSG_SETUP_COMPLETE">**This concludes the basic server setup.**</string>
     <string name="MSG_SETUP_COMPLETE">**This concludes the basic server setup.**
 There are more settings if you need them:
 

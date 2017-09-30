@@ -18,8 +18,8 @@ from data.utils import is_valid_command, is_number, log_to_file
 from data.confparser import get_config_parser, PLUGINS_DIR
 
 commands = {
-    "_xkcd": {"desc": "Fetches XKCD comics for you (defaults to random).", "use": "[command] (random/number/latest)"},
-    "_joke": {"desc": "Tries to make you laugh (defaults to random joke)", "use": "[command] (yo mama/chuck norris)"},
+    "_xkcd": {"desc": "Fetches XKCD comics (defaults to random).", "use": "[command] (random/number/latest)"},
+    "_joke": {"desc": "Tries to make you laugh", "use": "[command]"},
     "_cat": {"desc": "Gives you a random cat pic", "use": "[command] (gif/jpg/png)"},
 }
 
