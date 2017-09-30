@@ -9,7 +9,8 @@ from discord import utils, Client, Embed, TextChannel, Colour, DiscordException,
 
 from data.serverhandler import INVITEFILTER_SETTING, SPAMFILTER_SETTING, WORDFILTER_SETTING
 from data.utils import convert_to_seconds, matches_iterable, is_valid_command, StandardEmoji, \
-                       resolve_time, log_to_file, is_disabled, IgnoredException, parse_special_chars
+                       resolve_time, log_to_file, is_disabled, IgnoredException, parse_special_chars, \
+                       apply_string_padding
 
 from data.stats import MESSAGE
 
@@ -1637,9 +1638,21 @@ class Admin:
             YES = trans.get("INFO_YES", lang)
             YES_L = YES.lower()
             NO = trans.get("INFO_NO", lang)
+
             OK = trans.get("INFO_OK", lang)
             NONE = trans.get("INFO_NONE", lang)
             DONE = trans.get("INFO_DONE", lang)
+
+            ENABLED = trans.get("INFO_ENABLED", lang)
+            DISABLED = trans.get("INFO_DISABLED", lang)
+
+            # Padded strings
+            YES_PD, NO_PD = apply_string_padding((YES, NO))
+
+            DONE_EXPR = StandardEmoji.OK + " " + DONE
+            IGNORED_EXPR = StandardEmoji.GREEN_FAIL + " " + OK
+            EN_EXPR = StandardEmoji.OK + " " + ENABLED
+            DIS_EXPR = StandardEmoji.GREEN_FAIL + " " + DISABLED
 
             async def timeout():
                 await message.channel.send(trans.get("MSG_SETUP_TIMEOUT", lang))
@@ -1647,14 +1660,13 @@ class Admin:
             def must_be_author(c):
                 return c.author == message.author
 
-            msg_intro = trans.get("MSG_SETUP_WELCOME", lang)
-            await message.channel.send(msg_intro)
-            await asyncio.sleep(2)
+            await message.channel.send(trans.get("MSG_SETUP_WELCOME", lang))
+            await asyncio.sleep(3)
 
 
             # FIRST MESSAGE
             # Q: Do you want to reset all current settings?
-            msg_one = trans.get("MSG_SETUP_RESET", lang).format(YES, NO)
+            msg_one = trans.get("MSG_SETUP_RESET", lang).format(yes=YES_PD, no=NO_PD)
             one = await message.channel.send(msg_one)
 
             # Wait for first response
@@ -1670,18 +1682,19 @@ class Admin:
                     handler.server_setup(message.guild)
 
                     # Edit message to confirm action
-                    edit = msg_one + "\n\n{} ".format(DONE) + StandardEmoji.OK
+                    edit = msg_one + "\n\n " + DONE_EXPR
                     await one.edit(content=edit)
 
                 else:
                     # Edit message to confirm action
-                    edit = msg_one + "\n\n{} ".format(OK) + StandardEmoji.OK
+                    edit = msg_one + "\n\n " + IGNORED_EXPR
                     await one.edit(content=edit)
 
 
             # SECOND MESSAGE
             # Q: What prefix do you want?
-            msg_two = trans.get("MSG_SETUP_PREFIX", lang)
+            PREF_PD = apply_string_padding((trans.get("MSG_SETUP_PREFIX_TEXT", lang), ))
+            msg_two = trans.get("MSG_SETUP_PREFIX", lang).format(prefix=PREF_PD)
             two = await message.channel.send(msg_two)
 
             # Second check, does not need yes/no filter
@@ -1696,17 +1709,18 @@ class Admin:
                     await message.channel.send(trans.get("ERROR_PREFIX_TOO_LONG", lang))
                     return
 
-                pref = str(ch2.content).strip(" ")
+                pref = ch2.content.strip(" ")
                 handler.change_prefix(message.guild, pref)
 
                 # Edit to show that the prefix has been changed
-                edit = msg_two + "\n\n{} {} ({})".format(DONE, StandardEmoji.OK, pref)
+                edit = msg_two + "\n\n{} - **{}**".format(DONE_EXPR, pref)
                 await two.edit(content=edit)
 
 
             # THIRD MESSAGE
             # Q: What message would you like to see when a person joins your server?
-            msg_three = trans.get("MSG_SETUP_JOINMSG", lang)
+            TEXT_PD, NONE_PD = apply_string_padding((trans.get("MSG_SETUP_JOINMSG_TEXT", lang), NONE))
+            msg_three = trans.get("MSG_SETUP_JOINMSG", lang).format(text=TEXT_PD, none=NONE_PD)
             three = await message.channel.send(msg_three)
 
             try:
@@ -1721,16 +1735,18 @@ class Admin:
                 # Set the welcome msg to appropriate value
                 if is_disabled(welcome_msg):
                     handler.update_var(message.guild.id, "welcomemsg", None)
+                    edit = msg_three + "\n\n " + DIS_EXPR
                 else:
                     handler.update_var(message.guild.id, "welcomemsg", welcome_msg)
+                    edit = "{}\n\n{} {}".format(msg_three, StandardEmoji.OK, trans.get("INFO_UPDATED", lang))
 
                 # Again: edit to show that the welcome msg has been changed
-                edit = msg_three + "\n\n{} ".format(DONE) + StandardEmoji.OK
                 await three.edit(content=edit)
 
 
             # FOURTH MESSAGE
-            msg_four = trans.get("MSG_SETUP_SPAM", lang).format(YES, NO)
+            # Q: Spam filter
+            msg_four = trans.get("MSG_SETUP_SPAM", lang).format(yes=YES_PD, no=NO_PD)
             four = await message.channel.send(msg_four)
 
             # Fourth check
@@ -1743,16 +1759,18 @@ class Admin:
             else:
                 if ch4.content.lower().strip(" ") == YES_L:
                     handler.update_moderation_settings(message.guild.id, "filterspam", True)
+                    edit = msg_four + "\n\n " + EN_EXPR
                 else:
                     handler.update_moderation_settings(message.guild.id, "filterspam", False)
+                    edit = msg_four + "\n\n" + DIS_EXPR
 
                 # Edit to show that filtering is changed
-                edit = msg_four + "\n\n{} ".format(DONE) + StandardEmoji.OK
                 await four.edit(content=edit)
 
 
             # FIFTH MESSAGE
-            msg_five = trans.get("MSG_SETUP_SWEARING", lang).format(YES, NO)
+            # Q: swearing filter
+            msg_five = trans.get("MSG_SETUP_SWEARING", lang).format(yes=YES_PD, no=NO_PD)
             five = await message.channel.send(msg_five)
 
             # Wait for response
@@ -1765,17 +1783,20 @@ class Admin:
             else:
                 if ch5.content.lower().strip(" ") == YES_L:
                     handler.update_moderation_settings(message.guild.id, "filterwords", True)
+                    edit = msg_four + "\n\n " + EN_EXPR
                 else:
                     handler.update_moderation_settings(message.guild.id, "filterwords", False)
+                    edit = msg_four + "\n\n " + DIS_EXPR
 
                 # Edit to show that filtering is changed
-                edit = msg_five + "\n\n{} ".format(DONE) + StandardEmoji.OK
                 await five.edit(content=edit)
 
 
-
             # SIXTH (LAST) MESSAGE
-            msg_six = trans.get("MSG_SETUP_LOGCHANNEL", lang).format(NONE)
+            # Q: What channel would you like to use for logging?
+            CHANNEL_PD, NONE_PD1 = apply_string_padding((trans.get("MSG_SETUP_LOGCHANNEL_MENTION", lang), NONE))
+
+            msg_six = trans.get("MSG_SETUP_LOGCHANNEL", lang).format(mention=CHANNEL_PD, none=NONE_PD1)
             six = await message.channel.send(msg_six)
 
             try:
@@ -1793,11 +1814,11 @@ class Admin:
                     handler.update_var(message.guild.id, "logchannel", None)
 
                     # Edit to show that filtering is changed
-                    edit = msg_five + "\n\n{} {}".format(StandardEmoji.OK_BLUE, trans.get("MSG_SETUP_LOGCHANNEL_DISABLED", lang))
+                    edit = msg_six + "\n\n{} {}".format(StandardEmoji.OK_BLUE, trans.get("MSG_SETUP_LOGCHANNEL_DISABLED", lang))
                     await six.edit(content=edit)
 
                 else:
-                    if len(ch6.channel_mentions) > 0:
+                    if len(ch6.channel_mentions) != 0:
                         handler.update_var(message.guild.id, "logchannel", ch6.channel_mentions[0].id)
                     else:
                         await message.channel.send(trans.get("MSG_SETUP_LOGCHANNEL_INVALID", lang))

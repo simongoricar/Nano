@@ -433,3 +433,27 @@ def build_url(url, **fields):
 
     field_list = ["{}={}".format(key, value) for key, value in fields.items()]
     return str(url) + "&".join(field_list)
+
+
+def apply_string_padding(strings: tuple, amount: int = 1):
+    """
+    Not available with standard .format
+
+    :param amount: amount of padding left and right
+    :param strings: iterable with strings to format
+    :return: a tuple of inputted strings with applied formatting OR a string if length of strings is 1
+    """
+    max_len = max([len(a) for a in strings])
+    actual_padding = max_len + amount * 2
+
+    empty_fill = amount * " "
+
+    if len(strings) == 1:
+        return empty_fill + strings[0] + empty_fill
+
+    temp = []
+    for s in strings:
+        padd = actual_padding - (len(s) + 1)
+        temp.append(empty_fill + s + padd * " ")
+
+    return temp

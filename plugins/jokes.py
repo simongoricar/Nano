@@ -350,7 +350,6 @@ class Joke:
             content = self.joke.random_joke()
 
             embed = Embed(description=content)
-
             await message.channel.send(embed=embed)
 
 

@@ -46,6 +46,8 @@
     <string name="INFO_USE">Use</string>
     <string name="INFO_ALIASES">Aliases</string>
     <string name="INFO_DESCRIPTION">Description</string>
+    <string name="INFO_ENABLED">Enabled</string>
+    <string name="INFO_UPDATED">Updated</string>
     <string name="INFO_DISABLED">Disabled</string>
     <string name="INFO_DISABLED_A">Disable</string>
     <string name="INFO_GENERAL">**Hey! My name is Nano!**
@@ -315,34 +317,61 @@ Confirm by replying with '{}'.</string>
 
     <string name="MSG_SETUP_TIMEOUT">You ran out of time :upside_down: (timeout is 35 seconds)</string>
     <string name="MSG_SETUP_WELCOME">**SERVER SETUP**
-You have started the server setup. It consists of a few steps, where you will be prompted to answer. Because you started the setup, only your answers will be taken into account.
-**Let's get started, shall we?**</string>
+You have started the server setup. Because you started the setup, only your answers will be taken into account.
+**Let's get started!**</string>
     <string name="MSG_SETUP_RESET">Do you want to reset all bot-related settings for this server?
 (this includes spam and swearing protection, admin list, blacklisted channels,
-log channel, prefix, welcome, ban and kick messages). **{} / {}**</string>
+log channel, prefix, welcome, ban and kick messages).
+
+```md
+[{yes}](Resets all settings)
+[{no}](Keeps all settings)```</string>
+    <string name="MSG_SETUP_PREFIX_TEXT">Prefix</string>
     <string name="MSG_SETUP_PREFIX">What prefix would you like to use for all commands?
-Type that prefix.
-(prefix example: **!** 'translates to' `!help`, `!ping`, ...)</string>
+Example: having *!* as your prefix translates to `!help`, `!ping`, etc.
+
+```md
+[{prefix}](The prefix you want)```</string>
+    <string name="MSG_SETUP_JOINMSG_TEXT">Text</string>
     <string name="MSG_SETUP_JOINMSG">What would you like me to say when a person joins your server?
-Reply with that message or with None if you want to disable welcome messages.
-(:user translates to a mention of the joined user; for example -> :user, welcome to this server!)</string>
-    <string name="MSG_SETUP_SPAM">Would you like me to filter spam? **{} / {}**</string>
-    <string name="MSG_SETUP_SWEARING">Would you like me to filter swearing? **{} / {}**</string>
-    <string name="MSG_SETUP_LOGCHANNEL">What channel would you like to use for logging? **#channel mention/{}**</string>
+
+The following formatting applies:
+*:user* -> user mention
+*:username* -> user name
+*:server* -> server name
+
+```md
+[{text}](Text you want to see)
+[{none}](Disables join messagse)```</string>
+    <string name="MSG_SETUP_SPAM">Would you like me to filter spam?
+```md
+[{yes}](Enables the spam filter)
+[{no}](Disables the spam filter)```</string>
+    <string name="MSG_SETUP_SWEARING">Would you like me to filter swearing?
+```md
+[{yes}](Enables the swearing filter)
+[{no}](Disables the swearing filter)```</string>
+    <string name="MSG_SETUP_LOGCHANNEL_MENTION">#channel mention</string>
+    <string name="MSG_SETUP_LOGCHANNEL">What channel would you like to use for logging?
+```md
+[{mention}](Uses the mentioned channel)
+[{none}](Disables logging)```</string>
     <string name="MSG_SETUP_LOGCHANNEL_DISABLED">Logging disabled.</string>
     <string name="MSG_SETUP_LOGCHANNEL_SET">Log channel set to **{}**</string>
-    <string name="MSG_SETUP_LOGCHANNEL_INVALID">:x: Invalid log channel.</string>
+    <string name="MSG_SETUP_LOGCHANNEL_INVALID">:x: Invalid answer / log channel.</string>
     <string name="MSG_SETUP_COMPLETE">**This concludes the basic server setup.**
-But there are a few more settings to set up if you need'em:
-➤ channel blacklisting - `nano.blacklist add/remove channel_name`
-➤ join message - `>welcomemsg message`
+There are more settings if you need them:
+
+➤ channel blacklisting - `nano.blacklist add/remove #channel`
 ➤ leave message - `>leavemsg message`
+➤ ban message - `>banmsg message`
+This are not all settings. For an extensive list, see below.
 
 The prefix can simply be changed again with `nano.changeprefix prefix`.
 Admin and mod commands can only be used by people with a role named "Nano Admin"/"Nano Mod".
 
 You and all admins can also add/remove/list custom commands with `>cmd add/remove/list command|response`.
-For a list of all commands and their explanations, use `>cmds`.</string>
+For a list of admin commands and their explanations, please refer to &lt;http://nanobot.pw/commands.html#admin></string>
 
     <string name="MSG_PING_MEASURING">:ping_pong: Measuring...</string>
     <string name="MSG_PING_RESULT">:ping_pong: **Pong!** (lag: {} ms, reaction: {} ms)</string>
