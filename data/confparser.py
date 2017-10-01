@@ -18,12 +18,12 @@ parsers = {}
 
 # COPIES FILES IF NEEDED
 must_shutdown = False
-if not os.path.isfile("settings.ini"):
+if not os.path.isfile(SETTINGS_FILE):
     must_shutdown = True
     print("No settings.ini present! Please fill out the empty one!")
 
     with open("settingsExample.ini") as ex:
-        with open("settings.ini", "w") as sett:
+        with open(SETTINGS_FILE, "w") as sett:
             sett.write(ex.read())
 
 

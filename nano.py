@@ -1,12 +1,13 @@
 # coding=utf-8
 import asyncio
-import copy
 import importlib
 import logging
-import os, sys
+import os
+import sys
 import time
 import discord
 import traceback
+from copy import deepcopy
 
 from data.serverhandler import ServerHandler
 from data.stats import NanoStats
@@ -297,7 +298,7 @@ class Nano(metaclass=Singleton):
     def _parse_priorities(self):
         log.info("Parsing priorities...")
 
-        pe_copy = copy.deepcopy(self._plugin_events)
+        pe_copy = deepcopy(self._plugin_events)
         for element, thing in pe_copy.items():
             # Skip if empty
             if not element or not thing:
