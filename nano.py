@@ -339,7 +339,7 @@ class Nano(metaclass=Singleton):
                 continue
 
             if type(resp) is not list:
-                resp = tuple(resp)
+                resp = (resp, )
 
             # Multiple commands can be passed in a form of a tuple
             for cmd in resp:
@@ -363,9 +363,13 @@ class Nano(metaclass=Singleton):
                 # ADD_VAR
                 # Adds a variable to the current kwargs
                 elif cmd == "add_var":
-                    # Arguments must be a dict
-                    for k, v in arguments.items():
-                        kwargs[k] = v
+                    if type(arguments) is tuple:
+                        # Arguments must be a dict
+                        for k, v in arguments[0].items():
+                            kwargs[k] = v
+                    else:
+                        for k, v in arguments.items():
+                            kwargs[k] = v
 
                 # SHUTDOWN
                 # Calls the ON_SHUTDOWN event, then exists

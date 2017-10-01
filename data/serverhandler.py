@@ -62,12 +62,12 @@ def validate_input(fn):
 class ServerHandler:
     @staticmethod
     def get_redis_credentials() -> tuple:
-        setup_type = 1 if par.get("Redis", "setup") == "openshift" else 2
+        setup_type = 1 if par.get("Redis", "setup") == "envirovment" else 2
 
         if setup_type == 1:
-            redis_ip = os.environ["OPENSHIFT_REDIS_HOST"]
-            redis_port = os.environ["OPENSHIFT_REDIS_PORT"]
-            redis_pass = os.environ["REDIS_PASSWORD"]
+            redis_ip = os.environ["REDIS_HOST"]
+            redis_port = os.environ["REDIS_PORT"]
+            redis_pass = os.environ["REDIS_PASS"]
 
         else:
             redis_ip = par.get("Redis", "ip")
@@ -76,7 +76,7 @@ class ServerHandler:
 
             # Fallback to defaults
             if not redis_ip:
-                redis_ip = "localhost"
+                redis_ip = "127.0.0.1"
             if not redis_port:
                 redis_port = 6379
             if not redis_pass:

@@ -111,7 +111,7 @@ class BotState:
         if not lang:
             lang = str(self.trans.default_lang)
 
-        return [("add_var", dict(lang=lang))]
+        return "add_var", dict(lang=lang)
 
     async def on_member_ban(self, guild, _, **__):
         # Quit if the bot is sleeping
@@ -122,7 +122,7 @@ class BotState:
         if not lang:
             lang = str(self.trans.default_lang)
 
-        return [("add_var", dict(lang=lang))]
+        return "add_var", dict(lang=lang)
 
     async def on_member_remove(self, member, **_):
         # Quit if the bot is sleeping
@@ -133,12 +133,12 @@ class BotState:
         if not lang:
             lang = str(self.trans.default_lang)
 
-        return [("add_var", dict(lang=lang))]
+        return "add_var", dict(lang=lang)
 
     async def on_guild_join(self, _, **__):
         lang = str(self.trans.default_lang)
 
-        return [("add_var", dict(lang=lang))]
+        return "add_var", dict(lang=lang)
 
     async def on_reaction_add(self, reaction, user, **__):
         # Ignore private messages
@@ -149,7 +149,7 @@ class BotState:
         if not lang:
             lang = str(self.trans.default_lang)
 
-        return [("add_var", dict(lang=lang))]
+        return "add_var", dict(lang=lang)
 
 
 
