@@ -74,6 +74,8 @@ class Achievement:
             num = i.strip("aget_").strip(".png")
             self._image_sizes.append(int(num))
 
+        self._image_sizes = sorted(self._image_sizes)
+
         log.info("Found sizes: {}".format(", ".join([str(a) for a in self._image_sizes])))
 
         self._images = {}
