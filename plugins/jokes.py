@@ -107,13 +107,14 @@ class ComicImage:
 
 
 class XKCD:
-    def __init__(self, loop=asyncio.get_event_loop()):
+    def __init__(self, handler, loop=asyncio.get_event_loop()):
         self.url_latest = "http://xkcd.com/info.0.json"
         self.url_number = "http://xkcd.com/{}/info.0.json"
         self.link_base = "https://xkcd.com/{}"
 
         self.last_num = None
-        self.cache = {}
+        cache_handler = handler.get_cache_handler()
+        self.cache = cache_handler.get_plugin_manager("xkcd")
 
         self.req = Connector(loop)
         self.loop = loop
@@ -123,10 +124,10 @@ class XKCD:
         self.loop.create_task(self.updater())
 
     def exists_in_cache(self, number) -> bool:
-        return bool(self.cache.get(number))
+        return self.cache.exists(number)
 
-    def get_from_cache(self, number) -> Union[None, ComicImage]:
-        return self.cache.get(number)
+    def get_from_cache(self, number) -> Union[None, dict]:
+        return self.cache.hgetall(number)
 
     def make_link(self, number) -> str:
         return self.link_base.format(number)
@@ -136,7 +137,7 @@ class XKCD:
             return False
 
         if not self.exists_in_cache(number):
-            self.cache[int(number)] = data
+            self.cache.hmset(int(number), data)
             return True
         else:
             return False
@@ -151,15 +152,15 @@ class XKCD:
         c = await self.get_latest_xkcd()
 
         if c:
-            self.last_num = int(c.num)
+            self.last_num = int(c["num"])
             log.info("Last comic number gotten: {}".format(self.last_num))
         else:
-            log.warning("Could not get latest xkcd number! (retrying in {} min)".format(5 * time_falloff))
+            log.warning("Could not get latest xkcd! (retrying in {} min)".format(5 * time_falloff))
             # First retry is always 5 minutes, after that, 25 minutes
             await asyncio.sleep(60 * 5 * time_falloff)
             await self._set_last_num(time_falloff=5)
 
-    async def get_latest_xkcd(self) -> Union[None, ComicImage]:
+    async def get_latest_xkcd(self) -> Union[None, dict]:
         # Checks cache
         if self.exists_in_cache(self.last_num):
             return self.get_from_cache(self.last_num)
@@ -169,11 +170,10 @@ class XKCD:
         except APIFailure:
             return None
 
-        comic = ComicImage(**data)
-        await self.add_to_cache(data.get("num"), comic)
-        return comic
+        await self.add_to_cache(data.get("num"), data)
+        return data
 
-    async def get_xkcd_by_number(self, num) -> Union[None, ComicImage]:
+    async def get_xkcd_by_number(self, num) -> Union[None, dict]:
         # Checks cache
         if self.exists_in_cache(num):
             return self.get_from_cache(num)
@@ -183,9 +183,8 @@ class XKCD:
         except APIFailure:
             return None
 
-        comic = ComicImage(**data)
-        await self.add_to_cache(data.get("num"), comic)
-        return comic
+        await self.add_to_cache(data.get("num"), data)
+        return data
 
     async def get_random_xkcd(self) -> Union[None, ComicImage]:
         if not self.last_num:
@@ -212,7 +211,7 @@ class JokeList:
     def __init__(self, handler):
         self.stupidstuff_ns = "stupidstuff"
 
-        self.redis = handler.get_plugin_data_manager("jokes")
+        self.redis = handler.get_cache_handler()
 
         if self.redis.scard(self.stupidstuff_ns):
             log.info("Joke 'dataset' already in db. Ready!")
@@ -254,7 +253,7 @@ class Joke:
         self.trans = kwargs.get("trans")
 
         self.cats = CatGenerator(self.loop)
-        self.xkcd = XKCD(self.loop)
+        self.xkcd = XKCD(self.handler, self.loop)
         self.joke = JokeList(self.handler)
 
     async def on_message(self, message, **kwargs):
@@ -338,10 +337,10 @@ class Joke:
                 await message.channel.send(trans.get("MSG_XKCD_FAILED", lang))
                 log_to_file("XKCD: string {}, fetch: {}, got None".format(fmt, fetch))
 
-            xkcd_link = self.xkcd.make_link(xkcd.num)
+            xkcd_link = self.xkcd.make_link(xkcd["num"])
 
-            embed = Embed(title=trans.get("MSG_XKCD", lang).format(xkcd.num), description=xkcd.safe_title)
-            embed.set_image(url=xkcd.img)
+            embed = Embed(title=trans.get("MSG_XKCD", lang).format(xkcd["num"]), description=xkcd["safe_title"])
+            embed.set_image(url=xkcd["img"])
             embed.set_footer(text=trans.get("MSG_XKCD_SOURCe", lang).format(xkcd_link))
 
             await message.channel.send(embed=embed)
