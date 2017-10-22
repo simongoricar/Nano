@@ -84,11 +84,35 @@ class ServerHandler:
 
         return redis_ip, redis_port, redis_pass
 
+    @staticmethod
+    def get_redis_cache_cred() -> tuple:
+        redis_ip = par.get("RedisCache", "ip")
+        redis_port = par.get("RedisCache", "port")
+        redis_pass = par.get("RedisCache", "password")
+
+        # Fallback to defaults
+        if not redis_ip:
+            redis_ip = "127.0.0.1"
+        if not redis_port:
+            redis_port = 6379
+        if not redis_pass:
+            redis_pass = None
+
+        return redis_ip, redis_port, redis_pass
+
     @classmethod
     def get_handler(cls) -> "RedisServerHandler":
         # Factory method
         redis_ip, redis_port, redis_pass = cls.get_redis_credentials()
         return RedisServerHandler(redis_ip, redis_port, redis_pass)
+
+    @staticmethod
+    def get_cache_handler() -> "RedisCacheHandler":
+        return RedisCacheHandler()
+
+    @staticmethod
+    def make_pool(ip, port, password, **kwargs):
+        return redis.ConnectionPool(host=ip, port=port, password=password, **kwargs)
 
     # Permission checker
     @staticmethod
@@ -396,14 +420,14 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
 
 
 class RedisPluginDataManager:
-    def __init__(self, pool, namespace, *_, **__):
+    def __init__(self, pool, namespace=None, *_, **__):
         self.namespace = namespace
         if namespace is None:
             log.info("No namespace specified, is okay")
 
         self.redis = redis.StrictRedis(connection_pool=pool)
 
-        log.info("New plugin namespace registered: {}".format(self.namespace))
+        log.info("New plugin namespace registered: {}".format(self.namespace or "(no namespace)"))
 
     def _make_key(self, name):
         if not self.namespace:
@@ -466,3 +490,16 @@ class RedisPluginDataManager:
 
     def scard(self, name):
         return self.redis.scard(self._make_key(name))
+
+
+# Singleton
+
+class RedisCacheHandler(RedisPluginDataManager, ServerHandler, metaclass=Singleton):
+    def __init__(self):
+        redis_ip, redis_port, redis_pass = self.get_redis_cache_cred()
+        self.pool = self.make_pool(redis_ip, redis_port, redis_pass, db=0)
+
+        super().__init__(self.pool)
+
+    def get_plugin_manager(self, namespace):
+        return RedisPluginDataManager(self.pool, namespace)

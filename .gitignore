@@ -15,6 +15,7 @@ data/data*.rdb
 # Sensitive info
 settings.ini
 redis.conf
+redisCache.conf
 plugins/config.ini
 redis.bat
 

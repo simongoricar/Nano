@@ -7,11 +7,26 @@ import configparser
 ############
 
 PLUGINS_DIR = "plugins"
+CACHE_DIR = "cache"
+BACKUP_DIR = "backup"
 
 SETTINGS_FILE = "settings.ini"
 CONFIG_FILE = "config.ini"
 
 PLUGIN_CONFIG_PATH = os.path.join(PLUGINS_DIR, CONFIG_FILE)
+
+
+# Folder checks
+if not os.path.isdir(PLUGINS_DIR):
+    raise LookupError("missing plugins directory!")
+
+if not os.path.isdir(CACHE_DIR):
+    os.mkdir(CACHE_DIR)
+    print("Directory '{}' was missing, created.".format(CACHE_DIR))
+
+if not os.path.isdir(BACKUP_DIR):
+    os.mkdir(BACKUP_DIR)
+    print("Directory '{}' was missing, created.".format(BACKUP_DIR))
 
 # Allows for extensibility
 parsers = {}

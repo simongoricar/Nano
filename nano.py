@@ -46,6 +46,16 @@ ON_ERROR = "on_error"
 ON_SHUTDOWN = "on_shutdown"
 ON_PLUGINS_LOADED = "on_plugins_loaded"
 
+
+EVENTS = ["on_message", "on_guild_join", "on_channel_create", "on_channel_delete",
+          "on_channel_update", "on_message_edit", "on_message_delete", "on_ready",
+          "on_member_join", "on_member_remove", "on_member_update", "on_member_ban",
+          "on_member_unban", "on_guild_remove", "on_error", "on_shutdown",
+          "on_plugins_loaded", "on_reaction_add"]
+
+# Ensure there are no duplicates
+assert len(set(EVENTS)) == len(EVENTS)
+
 # Other constants
 
 IS_RESUME = False
@@ -101,11 +111,7 @@ class Nano(metaclass=Singleton):
         # Plugin-related
         self.plugin_names = []
         self.plugins = {}
-        self.plugin_events = dict(on_message=[], on_guild_join=[], on_channel_create=[], on_channel_delete=[],
-                                  on_channel_update=[], on_message_delete=[], on_message_edit=[], on_ready=[],
-                                  on_member_join=[], on_member_remove=[], on_member_update=[], on_member_ban=[],
-                                  on_member_unban=[], on_guild_remove=[], on_error=[], on_shutdown=[],
-                                  on_plugins_loaded=[], on_reaction_add=[])
+        self.plugin_events = {a: [] for a in EVENTS}
         self.event_types = set(self.plugin_events.keys())
         self._plugin_events = dict(self.plugin_events)
 
