@@ -45,7 +45,7 @@ class Achievement:
         "_images", "font_mc", "__dict__"
     )
 
-    # Only one instance, speeds up the acces
+    # Only one instance, speeds up the access
     def __init__(self, upscale: int = 2):
         if upscale > 5:
             log.warning("Careful! Upscale ratios of more than 5 can cause big slowdowns.")
