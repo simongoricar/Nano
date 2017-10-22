@@ -1,6 +1,7 @@
 # coding=utf-8
 import configparser
 import logging
+import time
 
 # External library available here: https://github.com/DefaltSimon/TMDbie
 import tmdbie
@@ -29,16 +30,111 @@ commands = {
 valid_commands = commands.keys()
 
 
+class ObjectCompat:
+    __slots__ = (
+        "fields",
+    )
+
+    def __init__(self, **fields):
+        self.fields = fields
+
+        if "genres" in fields:
+            self.fields["genres"] = fields["genres"].split("|")
+
+    def __getattr__(self, item):
+        return self.fields[item]
+
+
+class RedisMovieCache:
+    __slots__ = (
+        "cache", "max_age"
+    )
+
+    def __init__(self, handler, max_age=21600):
+        cache = handler.get_cache_handler()
+        self.cache = cache.get_plugin_manager("movies")
+
+        self.max_age = max_age
+
+    def _is_valid(self, id_):
+        """
+        Checks timestamps to see if the definition is valid
+        """
+        if not self.cache.exists(id_):
+            return False
+
+        timestamp = float(self.cache.hget(id_, "timestamp"))
+        return (time.time() - timestamp) < self.max_age
+
+    def get_item_by_name(self, name):
+        query = str(name).lower()
+
+        if self.cache.hexists("by_name", query):
+            return None
+
+        raw = self.cache.hget("by_name", name)
+        if not self._is_valid(raw):
+            return None
+
+        # Item exists, get it from redis cache
+        item = self.cache.hgetall(raw)
+        return ObjectCompat(**item)
+
+    def get_item_by_id(self, id_):
+        if not self._is_valid(id_):
+            return None
+
+        # Item exists, get it from redis cache
+        item = self.cache.hgetall(id_)
+        return ObjectCompat(**item)
+
+    def get_from_cache(self, query):
+        if not query:
+            return None
+
+        try:
+            int(query)
+        except ValueError:
+            # Query is a name
+            return self.get_item_by_name(query)
+        else:
+            # Query is a number
+            return self.get_item_by_id(query)
+
+    @staticmethod
+    def _get_properties(obj):
+        return {s: getattr(obj, s) for s in obj.__slots__ if hasattr(obj, s)}
+
+    def item_set(self, item):
+        """
+        Puts the item into cache
+        """
+        payload = {**self._get_properties(item), **{"timestamp": time.time()}}
+
+        if "genres" in payload.keys():
+            payload.update({"genres": "|".join(payload["genres"])})
+
+        self.cache.hmset(payload["id"], payload)
+
+        # self.by_name[payload["title"].lower()] = payload["id"]
+        self.cache.hset("by_name", payload["title"].lower(), payload["id"])
+
+        log.info("Added new item to cache")
+
+
+
 class TMDb:
     def __init__(self, **kwargs):
         self.client = kwargs.get("client")
         self.nano = kwargs.get("nano")
+        self.handler = kwargs.get("handler")
         self.stats = kwargs.get("stats")
         self.loop = kwargs.get("loop")
         self.trans = kwargs.get("trans")
 
         try:
-            self.tmdb = tmdbie.Client(api_key=parser.get("tmdb", "api-key"))
+            redis_cache = RedisMovieCache(self.handler)
+            self.tmdb = tmdbie.Client(api_key=parser.get("tmdb", "api-key"), cache_manager=redis_cache)
         except (configparser.NoSectionError, configparser.NoOptionError):
             log.critical("Missing api key for tmdb, disabling plugin...")
             raise RuntimeError
