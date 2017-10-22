@@ -1,6 +1,7 @@
 # coding=utf-8
 import logging
 import os
+import time
 from json import loads, JSONDecodeError
 
 import aiohttp
@@ -25,15 +26,37 @@ valid_commands = commands.keys()
 
 
 class McItems:
+    """
+    Data layout:
+        raw_data: json
+        last_fetch: float (epoch time)
+
+        hash:
+            <id:meta>: dict(info)
+    """
     url = "http://minecraft-ids.grahamedgecombe.com/items.json"
 
-    def __init__(self, loop):
+    def __init__(self, handler, loop):
         # Gets a fresh copy of items at each startup.
-        self.data = None
         self.ids = {}
+        self.by_type = {}
         self.names = {}
 
-        loop.run_until_complete(self.request_data())
+        MAX_AGE = 604800  # 1 week
+
+        cache_temp = handler.get_cache_handler()
+        self.cache = cache_temp.get_plugin_manager("mc")
+
+        # Check validity of cache
+        if self.cache.exists("raw_data") and (time.time() - float(self.cache.get("last_fetch"))) < MAX_AGE:
+            log.info("Valid minecraft data found in DB.")
+            data = loads(self.cache.get("raw_data"))
+            loop.create_task(self._parse(data))
+
+        else:
+            # Fetch and parse data
+            log.info("No cache found.")
+            loop.create_task(self.request_data())
 
     async def request_data(self):
         log.info("Requesting JSON data from minecraft-ids.grahamedgecombe.com")
@@ -42,22 +65,30 @@ class McItems:
                 raw_data = await resp.text()
 
                 try:
-                    self.data = loads(raw_data)
-                    await self._parse_items(self.data)
+                    self.cache.set("raw_data", raw_data)
+                    self.cache.set("last_fetch", time.time())
+                    log.info("New mc dataset in cache")
+
+                    data = loads(raw_data)
+                    await self._parse(data)
                 except JSONDecodeError as e:
                     log.critical("Could not load JSON: {}".format(e))
                     raise RuntimeError
 
         log.info("Done")
 
-    async def _parse_items(self, data):
+    async def _parse(self, data):
         for item in data:
-            idmeta_string = "{}:{}".format(item.get("type"), item.get("meta"))
+            idmeta_string = "{}:{}".format(item["type"], item["meta"])
             name_string = str(item.get("name")).lower()
 
             self.ids[idmeta_string] = item
             self.names[name_string] = item
 
+            if self.by_type.get(item["type"]):
+                self.by_type[int(item["type"])].append(item)
+            else:
+                self.by_type[int(item["type"])] = [item]
 
     def find_by_id_meta(self, id_, meta):
         return self.ids.get("{}:{}".format(id_, meta))
@@ -66,12 +97,7 @@ class McItems:
         return self.names.get(name)
 
     def group_to_list(self, group):
-        items = []
-        for item in self.data:
-            if str(item.get("type")) == str(group):
-                items.append(item)
-
-        return items
+        return self.by_type.get(int(group)) or []
 
     @staticmethod
     def get_picture_path_by_item(item):
@@ -82,67 +108,66 @@ class McItems:
             return path
 
     def get_group_by_name(self, name):
-        data = None
-
         # Group(ify)
         if str(name).lower() == "wool":
-            data = self.group_to_list(35)
+            return self.group_to_list(35)
         elif str(name).lower() == "stone":
-            data = self.group_to_list(1)
+            return self.group_to_list(1)
         elif str(name).lower() == "wood plank":
-            data = self.group_to_list(5)
+            return self.group_to_list(5)
         elif str(name).lower() == "sapling":
-            data = self.group_to_list(6)
+            return self.group_to_list(6)
         elif str(name).lower() == "sand":
-            data = self.group_to_list(12)
+            return self.group_to_list(12)
         elif str(name).lower() == "wood":
-            data = self.group_to_list(17)
+            return self.group_to_list(17)
         elif str(name).lower() == "leaves":
-            data = self.group_to_list(18)
+            return self.group_to_list(18)
         elif str(name).lower() == "sponge":
-            data = self.group_to_list(19)
+            return self.group_to_list(19)
         elif str(name).lower() == "sandstone":
-            data = self.group_to_list(24)
+            return self.group_to_list(24)
         elif str(name).lower() == "flower":
-            data = self.group_to_list(38)
+            return self.group_to_list(38)
         elif str(name).lower() == "double slab":
-            data = self.group_to_list(43)
+            return self.group_to_list(43)
         elif str(name).lower() == "slab":
-            data = self.group_to_list(44)
+            return self.group_to_list(44)
         elif str(name).lower() == "stained glass":
-            data = self.group_to_list(95)
+            return self.group_to_list(95)
         elif str(name).lower() == "monster egg":
-            data = self.group_to_list(97)
+            return self.group_to_list(97)
         elif str(name).lower() == "stone brick":
-            data = self.group_to_list(98)
+            return self.group_to_list(98)
         elif str(name).lower() == "double wood slab":
-            data = self.group_to_list(125)
+            return self.group_to_list(125)
         elif str(name).lower() == "wood slab":
-            data = self.group_to_list(126)
+            return self.group_to_list(126)
         elif str(name).lower() == "quartz block":
-            data = self.group_to_list(155)
+            return self.group_to_list(155)
         elif str(name).lower() == "stained clay":
-            data = self.group_to_list(159)
+            return self.group_to_list(159)
         elif str(name).lower() == "stained glass pane":
-            data = self.group_to_list(160)
+            return self.group_to_list(160)
         elif str(name).lower() == "prismarine":
-            data = self.group_to_list(168)
+            return self.group_to_list(168)
         elif str(name).lower() == "carpet":
-            data = self.group_to_list(171)
+            return self.group_to_list(171)
         elif str(name).lower() == "plant":
-            data = self.group_to_list(175)
+            return self.group_to_list(175)
         elif str(name).lower() == "sandstone":
-            data = self.group_to_list(179)
+            return self.group_to_list(179)
         elif str(name).lower() == "fish":
-            data = self.group_to_list(349)
+            return self.group_to_list(349)
         elif str(name).lower() == "dye":
-            data = self.group_to_list(351)
+            return self.group_to_list(351)
         elif str(name).lower() == "spawn egg":
-            data = self.group_to_list(383)
+            return self.group_to_list(383)
         elif str(name).lower() == "head":
-            data = self.group_to_list(397)
+            return self.group_to_list(397)
 
-        return data
+        else:
+            return []
 
 
 class Minecraft:
@@ -154,7 +179,7 @@ class Minecraft:
         self.loop = kwargs.get("loop")
         self.trans = kwargs.get("trans")
 
-        self.mc = McItems(self.loop)
+        self.mc = McItems(self.handler, self.loop)
 
     async def on_message(self, message, **kwargs):
         trans = self.trans
