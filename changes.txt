@@ -1,3 +1,8 @@
+3.8
+- Transitioned to two redis dbs: one for data and one as a cache
+- Simplified !imdb usage
+- Optimizations
+
 3.7.6
 - !joke now has no parameters, but has a much bigger pool of jokes
 - !setup is now more beautiful than ever

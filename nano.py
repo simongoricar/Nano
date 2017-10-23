@@ -13,11 +13,11 @@ from data.serverhandler import ServerHandler
 from data.stats import NanoStats
 from data.translations import TranslationManager
 from data.utils import log_to_file
-from data.confparser import get_settings_parser
+from data.confparser import get_settings_parser, PLUGINS_DIR
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '3.7.6'
+__version__ = '3.8dev'
 
 
 # EVENTS
@@ -59,7 +59,6 @@ assert len(set(EVENTS)) == len(EVENTS)
 # Other constants
 
 IS_RESUME = False
-PLUGINS_DIR = "plugins"
 
 # LOGGING
 
@@ -193,11 +192,18 @@ class Nano(metaclass=Singleton):
                 del plug
                 continue
 
+            def get_callback(plugin, fn_name):
+                return getattr(plugin, fn_name, None)
+
             self.plugins[p_name] = {
                 "plugin": plug,
                 "handler": cls,
                 "instance": instance,
                 "events": events,
+                # Speeds up executing
+                "event_cbs": {
+                    a: get_callback(instance, a) for a in events.keys()
+                }
             }
 
             for event, importance in events.items():
@@ -284,11 +290,17 @@ class Nano(metaclass=Singleton):
             del plugin
             return -1
 
+        def get_callback(plugin, fn_name):
+            return getattr(plugin, fn_name, None)
+
         self.plugins[plug_name] = {
             "plugin": plug_info,
             "handler": cls,
             "instance": instance,
             "events": events,
+            "event_cbs": {
+                a: get_callback(instance, a) for a in events.keys()
+            }
         }
 
         for event, importance in events.items():
@@ -315,6 +327,8 @@ class Nano(metaclass=Singleton):
 
             self.plugin_events[element] = sorted_list
 
+        del self._plugin_events
+
     def get_plugin(self, name: str) -> dict:
         if not name.endswith(".py"):
             name += ".py"
@@ -338,7 +352,7 @@ class Nano(metaclass=Singleton):
             log.debug("Executing plugin {}:{}".format(plugin.strip(".py"), event_type))
 
             # Execute the corresponding method in the plugin
-            resp = await getattr(self.plugins[plugin]["instance"], event_type)(*args, **kwargs)
+            resp = await self.plugins[plugin]["event_cbs"][event_type](*args, **kwargs)
 
             # COMMUNICATION
             # If data is passed, assign proper variables
