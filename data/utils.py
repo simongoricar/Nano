@@ -1,19 +1,10 @@
 # coding=utf-8
-import threading
 import os
 import uuid
 from datetime import datetime
 from typing import Iterable
 
 from .translations import TranslationManager, DEFAULT_LANGUAGE
-
-
-# Threading helper (OBSOLETE)
-def threaded(fn):
-    def wrapper(*args, **kwargs):
-        threading.Thread(target=fn, args=args, kwargs=kwargs).start()
-    return wrapper
-
 
 class IgnoredException(Exception):
     """
@@ -24,6 +15,9 @@ class IgnoredException(Exception):
 
 # Singleton
 class Singleton(type):
+    """
+    Only allows one instantiation. On subsequent __init__ calls, returns the first instance
+    """
     _instances = {}
 
     def __call__(cls, *args, **kwargs):
@@ -105,6 +99,7 @@ class BotEmoji:
     EMPTY = "<:empty:314349398723264512>"
 
 
+# Singleton, so it doesn't matter
 tr = TranslationManager()
 
 
@@ -261,26 +256,18 @@ def log_to_file(content, type_="log"):
 
         try:
             file.write(cn + "\n")
-        except UnicodeEncodeError as ev:
-            file.write("Error while writing to file, UnicodeEncodeError: {}".format(ev))
+        except UnicodeEncodeError:
+            pass
 
 
-def alternate_log(content: str, filename: str):
-    with open(filename, "a") as file:
+def alternate_log(content: str, filename: str, append=True):
+    with open(filename, "a" if append else "w") as file:
         cn = datetime.now().strftime("%d-%m-%Y %H:%M:%S") + " - " + str(content)
 
         try:
             file.write(cn + "\n")
-        except UnicodeEncodeError as ev:
-            file.write("Error while writing to file, UnicodeEncodeError: {}".format(ev))
-
-
-def file_is_empty(path: str) -> bool:
-    if os.path.isfile(path):
-        return os.stat(path).st_size == 0
-
-    else:
-        return False
+        except UnicodeEncodeError:
+            pass
 
 
 none_ux = [
@@ -338,7 +325,11 @@ def decode(c):
     return boolify(decode_auto(c))
 
 
-def bin2bool(c):
+def bin2bool(c) -> bool:
+    """
+    Converts a number (redis int response) to bool
+    :param c: bytes/int
+    """
     if isinstance(c, bytes):
         c = c.decode()
 
@@ -362,6 +353,9 @@ def boolify(s):
 
 
 def decode_auto(some):
+    """
+    Converts/decodes all kinds of types (mostly bytes) into their expected types
+    """
     if isinstance(some, bytes):
         return decode_auto(some.decode())
 
@@ -389,10 +383,16 @@ def decode_auto(some):
 
 
 def gen_id(length=38):
+    """
+    Not cryptographically safe, should only be used for IDs
+    """
     return int(str(uuid.uuid4().int)[:length])
 
 
-def chunks(item, n):
+def chunks(item: list, n):
+    """
+    Generator, splits list into chunks
+    """
     for i in range(0, len(item), n):
         yield item[i:i + n]
 
@@ -407,7 +407,7 @@ def add_dots(content, max_len=55, ending="[...]"):
         return "{}".format(content[:max_len]) + ending
 
 
-def is_number(string):
+def is_number(string) -> bool:
     try:
         int(string)
         return True
@@ -427,12 +427,15 @@ def parse_special_chars(text: str):
     return text
 
 
-def build_url(url, **fields):
+def build_url(url, **fields) -> str:
+    """
+    Build an url with supplied dict of fields
+    """
     if not url.endswith("?"):
         url += "?"
 
     field_list = ["{}={}".format(key, value) for key, value in fields.items()]
-    return str(url) + "&".join(field_list)
+    return url + "&".join(field_list)
 
 
 def apply_string_padding(strings: tuple, amount: int = 1):
@@ -442,6 +445,13 @@ def apply_string_padding(strings: tuple, amount: int = 1):
     :param amount: amount of padding left and right
     :param strings: iterable with strings to format
     :return: a tuple of inputted strings with applied formatting OR a string if length of strings is 1
+
+    Example:
+
+        strings: ["ayy", "some longer"]
+        amount: 1
+        >> [" ayy         ",
+            " some longer "]
     """
     max_len = max([len(a) for a in strings])
     actual_padding = max_len + amount * 2
