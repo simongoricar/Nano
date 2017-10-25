@@ -108,7 +108,10 @@ class Parser:
     @staticmethod
     def _parse_group(group, ctx):
         name, *tokens = group.split("|")
-        first = tokens[0]
+        if len(tokens) != 0:
+            first = tokens[0]
+        else:
+            first = None
 
         # Actually gets the result
         # whole system in this function because of performance
@@ -130,9 +133,17 @@ class Parser:
                 return ctx.author.name
 
         # 2. Mention stuff
-        elif name == "mention":
+        elif name == "mentions":
             # first == index
-            typ = tokens[2]
+            try:
+                typ = tokens[1]
+            except IndexError:
+                typ = None
+
+            if first:
+                first = int(first)
+            else:
+                first = 0
 
             if typ == "name":
                 return ctx.mentions[first].display_name
@@ -152,6 +163,7 @@ class Parser:
             # from is first
             # to is the second item (index 1)
             to = l_get(tokens, 1)
+            first = first or 1
 
             # Two arguments
             if to:
@@ -171,7 +183,9 @@ class Parser:
                 if (t[0] == "{") and (t[-1] == "}"):
                     # valid group, parse
                     # Cut out { and }
-                    ls[ind] = str(self._parse_group(t[1:-1], ctx))
+                    group = t[1:-1]
+                    print(group)
+                    ls[ind] = str(self._parse_group(group, ctx))
 
         return "".join(ls)
 
@@ -224,34 +238,18 @@ class Commons:
         lang = kwargs.get("lang")
 
         # Custom commands registered for the server
-        server_commands = self.handler.get_custom_commands(message.guild.id)
-
-        if server_commands:
-            # Checks for server specific commands
-            for command in server_commands.keys():
-                # UPDATE 2.1.4: not .startswith anymore!
-                if message.content == command:
-                    await message.channel.send(server_commands.get(command))
-                    self.stats.add(MESSAGE)
-
-                    return
+        server_commands = self.handler.get_custom_commands_keys(message.guild.id)
 
         # TODO test this thoroughly
-        # if server_commands:
-        #     # According to tests, .startswith is faster than slicing, wtf
-        #     pass
-        #
-        #     for k in server_commands.keys():
-        #         if message.content.startswith(k):
-        #             raw_resp = server_commands[k]
-        #             response = self.parser.parse(raw_resp, message)
-        #
-        #             print("response")
-        #             print(response)
-        #
-        #             await message.channel.send(response)
-        #
-        #             return
+        if server_commands:
+            # According to tests, .startswith is faster than slicing, m8pls
+            for k in server_commands:
+                if message.content.startswith(k):
+                    raw_resp = self.handler.get_custom_command_by_key(message.guild.id, k)
+                    response = self.parser.parse(raw_resp, message)
+
+                    await message.channel.send(response)
+                    return
 
 
         # Check if this is a valid command
