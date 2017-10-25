@@ -8,7 +8,7 @@ from random import randint
 from discord import Embed, Forbidden, utils
 
 from data.stats import MESSAGE, PING
-from data.utils import is_valid_command, add_dots
+from data.utils import is_valid_command, add_dots, DynamicResponse, CmdResponseTypes, IgnoredException
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -101,10 +101,6 @@ class Parser:
 
         return text_list
 
-    def _verify_groups(self, groups):
-        # TODO implement
-        raise NotImplementedError
-
     @staticmethod
     def _parse_group(group, ctx):
         name, *tokens = group.split("|")
@@ -115,6 +111,8 @@ class Parser:
 
         # Actually gets the result
         # whole system in this function because of performance
+
+        # TODO
         # Assumes groups have been verified with _verify_groups
 
         # 1. Author stuff
@@ -174,20 +172,41 @@ class Parser:
                 # Assumes argument is int
                 return randint(0, int(first))
 
+        # 4. Failure fallback
+        elif name == "onfail":
+            return DynamicResponse.register_failure_response(first)
+
 
     def parse(self, text, ctx):
         ls = self._split_groups(text)
+        responses = []
+
+        on_fail = None
 
         for ind, t in enumerate(ls):
-            if t:
-                if (t[0] == "{") and (t[-1] == "}"):
-                    # valid group, parse
-                    # Cut out { and }
-                    group = t[1:-1]
-                    print(group)
-                    ls[ind] = str(self._parse_group(group, ctx))
+            if t and (t[0] == "{") and (t[-1] == "}"):
+                # valid group, parse
+                # Cut out { and }
+                try:
+                    result = self._parse_group(t[1:-1], ctx)
+                except Exception:
+                    if on_fail is not None:
+                        return on_fail
+                    else:
+                        # Silently fail
+                        raise IgnoredException
 
-        return "".join(ls)
+                if type(result) is DynamicResponse:
+                    # Special cases (for example: {onfail|text}
+                    if result.intention == CmdResponseTypes.REGISTER_ON_FAIL:
+                        on_fail = result.data
+
+                    # Don't add that class' repr to the list
+                    continue
+
+                responses.append(str(result))
+
+        return "".join(responses)
 
 
 class Commons:
