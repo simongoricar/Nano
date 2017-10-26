@@ -3,6 +3,7 @@ import asyncio
 import datetime
 import logging
 import time
+import traceback
 
 from typing import Union
 from discord import utils, Client, Embed, TextChannel, Colour, DiscordException, Object, HTTPException
@@ -513,6 +514,16 @@ class Admin:
         Checks if the user is permitted to change this role (can only change roles lower in the hierarchy)
         """
         return bool((member_a.top_role.position >= s_role.position) or member_a == member_a.guild.owner)
+
+    @staticmethod
+    async def try_accessing_role(nano_user, role):
+        try:
+            await nano_user.add_roles(role, atomic=True)
+            await nano_user.remove_roles(role, reason="Checking permissions for selfrole.", atomic=True)
+            return True
+        except:
+            log_to_file("ERROR in try_accessing_role: (role: {})".format(role.name) + traceback.format_exc())
+            return False
 
     async def _role_command_parameters(self, message, lang, cut_length) -> tuple:
         """
@@ -1384,7 +1395,8 @@ class Admin:
                         return
 
                     # Checks role position
-                    perms = self.can_access_role(nano_user, role)
+                    # perms = self.can_access_role(nano_user, role)
+                    perms = await self.try_accessing_role(nano_user, role)
                     if not perms:
                         await message.channel.send(trans.get("MSG_SELFROLE_INACCESSIBLE", lang).format(role.name))
                         return
