@@ -216,6 +216,10 @@ class Parser:
             return on_fail
 
     def parse(self, text, ctx):
+        # Ignore stuff that isn't a dynamic command
+        if "{" not in text or "}" not in text:
+            return text
+
         ls = self._split_groups(text)
         responses = []
 
