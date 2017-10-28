@@ -1,5 +1,6 @@
 # coding=utf-8
 import logging
+import sys
 import time
 import re
 from datetime import timedelta, datetime
@@ -83,7 +84,7 @@ def l_get(lst, index, fallback=None):
 class Parser:
     def __init__(self):
         # Used to capture parsing groups
-        self.pt = re.compile(r"({(?:[0-9a-z]+[|]?)+})")
+        self.pt = re.compile(r"({.+?})")
 
     def _split_groups(self, text):
         text_list = []
@@ -99,21 +100,22 @@ class Parser:
             text_list.append(text[st:en])
             c_ind = en
 
+        # Append the last group
+        last = text[c_ind:len(text)]
+        text_list.append(last)
+
         return text_list
 
     @staticmethod
     def _parse_group(group, ctx):
         name, *tokens = group.split("|")
         if len(tokens) != 0:
-            first = tokens[0]
+            first, *tokens = tokens
         else:
             first = None
 
         # Actually gets the result
         # whole system in this function because of performance
-
-        # TODO
-        # Assumes groups have been verified with _verify_groups
 
         # 1. Author stuff
         if name == "author":
@@ -134,7 +136,7 @@ class Parser:
         elif name == "mentions":
             # first == index
             try:
-                typ = tokens[1]
+                typ = tokens[0]
             except IndexError:
                 typ = None
 
@@ -143,24 +145,27 @@ class Parser:
             else:
                 first = 0
 
-            if typ == "name":
-                return ctx.mentions[first].display_name
-            if typ == "id":
-                return ctx.mentions[first].id
-            if typ == "mention":
-                return ctx.mentions[first].mention
-            if typ == "discrim":
-                return ctx.mentions[first].discriminator
-            if typ == "avatar":
-                return ctx.mentions[first].avatar_url or ctx.mentions[first].default_avatar_url
-            else:
-                return ctx.mentions[first].name
+            try:
+                if typ == "name":
+                    return ctx.mentions[first].display_name
+                if typ == "id":
+                    return ctx.mentions[first].id
+                if typ == "mention":
+                    return ctx.mentions[first].mention
+                if typ == "discrim":
+                    return ctx.mentions[first].discriminator
+                if typ == "avatar":
+                    return ctx.mentions[first].avatar_url or ctx.mentions[first].default_avatar_url
+                else:
+                    return ctx.mentions[first].name
+            except IndexError:
+                raise IndexError("No such mention") from None
 
         # 3. Random numbers
         elif name == "rnd":
             # from is first
             # to is the second item (index 1)
-            to = l_get(tokens, 1)
+            to = l_get(tokens, 0)
             first = first or 1
 
             # Two arguments
@@ -172,10 +177,43 @@ class Parser:
                 # Assumes argument is int
                 return randint(0, int(first))
 
+        elif name == "time":
+            # https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior
+            first = first or "format"
+
+            if first == "epoch":
+                return time.time()
+            elif first == "format":
+                return datetime.now().strftime(tokens[0])
+            else:
+                # Defaults to epoch time
+                return time.time()
+
+        elif name == "choose":
+            items = (first, *tokens)
+            chnum = randint(0, len(items) - 1)
+
+            return items[chnum]
+
         # 4. Failure fallback
         elif name == "onfail":
-            return DynamicResponse.register_failure_response(first)
+            # onfail|<message> - returns your custom text
+            # onfail|raw - returns the raw exception
+            if first == "raw":
+                def _formatter():
+                    _, val, _ = sys.exc_info()
+                    return "Error in execution: " + str(val)
 
+                return DynamicResponse.register_failure_response(_formatter)
+            else:
+                return DynamicResponse.register_failure_response(first)
+
+    @staticmethod
+    def _handle_onfail(on_fail):
+        if callable(on_fail):
+            return on_fail()
+        else:
+            return on_fail
 
     def parse(self, text, ctx):
         ls = self._split_groups(text)
@@ -191,10 +229,9 @@ class Parser:
                     result = self._parse_group(t[1:-1], ctx)
                 except Exception:
                     if on_fail is not None:
-                        return on_fail
-                    else:
-                        # Silently fail
-                        raise IgnoredException
+                        return self._handle_onfail(on_fail)
+
+                    raise IgnoredException
 
                 if type(result) is DynamicResponse:
                     # Special cases (for example: {onfail|text}
@@ -205,6 +242,9 @@ class Parser:
                     continue
 
                 responses.append(str(result))
+            # Not a group, just append it to responses
+            else:
+                responses.append(t)
 
         return "".join(responses)
 
