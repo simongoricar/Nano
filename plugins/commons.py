@@ -61,7 +61,7 @@ commands = {
     "_ping": {"desc": "Just to check if I'm alive. fyi: I love ping-pong."},
     "_roll": {"desc": "Replies with a random number in range from 0 to your number.", "use": "[command] [number]", "alias": "_rng"},
     "_rng": {"desc": "Replies with a random number in range from 0 to your number.", "use": "[command] [number]", "alias": "_roll"},
-    "_dice": {"desc": "Rolls the dice\nDice expression example: `5d6` - rolls five dices with six sides, `1d9` - rolls one dice with nine sides", "use": "[command] [dice expression]"},
+    "_dice": {"desc": "Rolls the dice\nDice expression example: `5d6` - rolls five dice with six sides, `1d9` - rolls one dice with nine sides", "use": "[command] [dice expression]"},
     "_decide": {"desc": "Decides between different choices so you don't have to.", "use": "[command] word1|word2|word3|..."},
     "_8ball": {"desc": "Answers your questions. 8ball style.", "use": "[command] [question]"},
     "_quote": {"desc": "Brightens your day with a random quote."},
@@ -82,6 +82,8 @@ def l_get(lst, index, fallback=None):
 
 
 class Parser:
+    __slots__ = ("pt", )
+
     def __init__(self):
         # Used to capture parsing groups
         self.pt = re.compile(r"({.+?})")
@@ -98,6 +100,7 @@ class Parser:
 
             text_list.append(text[c_ind:st])
             text_list.append(text[st:en])
+            # Set last char index
             c_ind = en
 
         # Append the last group
@@ -200,11 +203,7 @@ class Parser:
             # onfail|<message> - returns your custom text
             # onfail|raw - returns the raw exception
             if first == "raw":
-                def _formatter():
-                    _, val, _ = sys.exc_info()
-                    return "Error in execution: " + str(val)
-
-                return DynamicResponse.register_failure_response(_formatter)
+                return DynamicResponse.register_failure_response(lambda: "Error: " + str(sys.exc_info()[1]))
             else:
                 return DynamicResponse.register_failure_response(first)
 
@@ -303,7 +302,6 @@ class Commons:
         # Custom commands registered for the server
         server_commands = self.handler.get_custom_commands_keys(message.guild.id)
 
-        # TODO test this thoroughly
         if server_commands:
             # According to tests, .startswith is faster than slicing, m8pls
             for k in server_commands:
