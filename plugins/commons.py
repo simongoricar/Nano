@@ -1,5 +1,6 @@
 # coding=utf-8
 import logging
+import sys
 import time
 import re
 from datetime import timedelta, datetime
@@ -8,7 +9,7 @@ from random import randint
 from discord import Embed, Forbidden, utils
 
 from data.stats import MESSAGE, PING
-from data.utils import is_valid_command, add_dots
+from data.utils import is_valid_command, add_dots, DynamicResponse, CmdResponseTypes, IgnoredException
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -60,7 +61,7 @@ commands = {
     "_ping": {"desc": "Just to check if I'm alive. fyi: I love ping-pong."},
     "_roll": {"desc": "Replies with a random number in range from 0 to your number.", "use": "[command] [number]", "alias": "_rng"},
     "_rng": {"desc": "Replies with a random number in range from 0 to your number.", "use": "[command] [number]", "alias": "_roll"},
-    "_dice": {"desc": "Rolls the dice\nDice expression example: `5d6` - rolls five dices with six sides, `1d9` - rolls one dice with nine sides", "use": "[command] [dice expression]"},
+    "_dice": {"desc": "Rolls the dice\nDice expression example: `5d6` - rolls five dice with six sides, `1d9` - rolls one dice with nine sides", "use": "[command] [dice expression]"},
     "_decide": {"desc": "Decides between different choices so you don't have to.", "use": "[command] word1|word2|word3|..."},
     "_8ball": {"desc": "Answers your questions. 8ball style.", "use": "[command] [question]"},
     "_quote": {"desc": "Brightens your day with a random quote."},
@@ -81,9 +82,11 @@ def l_get(lst, index, fallback=None):
 
 
 class Parser:
+    __slots__ = ("pt", )
+
     def __init__(self):
         # Used to capture parsing groups
-        self.pt = re.compile(r"({(?:[0-9a-z]+[|]?)+})")
+        self.pt = re.compile(r"({.+?})")
 
     def _split_groups(self, text):
         text_list = []
@@ -97,22 +100,25 @@ class Parser:
 
             text_list.append(text[c_ind:st])
             text_list.append(text[st:en])
+            # Set last char index
             c_ind = en
 
-        return text_list
+        # Append the last group
+        last = text[c_ind:len(text)]
+        text_list.append(last)
 
-    def _verify_groups(self, groups):
-        # TODO implement
-        raise NotImplementedError
+        return text_list
 
     @staticmethod
     def _parse_group(group, ctx):
         name, *tokens = group.split("|")
-        first = tokens[0]
+        if len(tokens) != 0:
+            first, *tokens = tokens
+        else:
+            first = None
 
         # Actually gets the result
         # whole system in this function because of performance
-        # Assumes groups have been verified with _verify_groups
 
         # 1. Author stuff
         if name == "author":
@@ -130,28 +136,40 @@ class Parser:
                 return ctx.author.name
 
         # 2. Mention stuff
-        elif name == "mention":
+        elif name == "mentions":
             # first == index
-            typ = tokens[2]
+            try:
+                typ = tokens[0]
+            except IndexError:
+                typ = None
 
-            if typ == "name":
-                return ctx.mentions[first].display_name
-            if typ == "id":
-                return ctx.mentions[first].id
-            if typ == "mention":
-                return ctx.mentions[first].mention
-            if typ == "discrim":
-                return ctx.mentions[first].discriminator
-            if typ == "avatar":
-                return ctx.mentions[first].avatar_url or ctx.mentions[first].default_avatar_url
+            if first:
+                first = int(first)
             else:
-                return ctx.mentions[first].name
+                first = 0
+
+            try:
+                if typ == "name":
+                    return ctx.mentions[first].display_name
+                if typ == "id":
+                    return ctx.mentions[first].id
+                if typ == "mention":
+                    return ctx.mentions[first].mention
+                if typ == "discrim":
+                    return ctx.mentions[first].discriminator
+                if typ == "avatar":
+                    return ctx.mentions[first].avatar_url or ctx.mentions[first].default_avatar_url
+                else:
+                    return ctx.mentions[first].name
+            except IndexError:
+                raise IndexError("No such mention") from None
 
         # 3. Random numbers
         elif name == "rnd":
             # from is first
             # to is the second item (index 1)
-            to = l_get(tokens, 1)
+            to = l_get(tokens, 0)
+            first = first or 1
 
             # Two arguments
             if to:
@@ -162,18 +180,76 @@ class Parser:
                 # Assumes argument is int
                 return randint(0, int(first))
 
+        elif name == "time":
+            # https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior
+            first = first or "format"
+
+            if first == "epoch":
+                return time.time()
+            elif first == "format":
+                return datetime.now().strftime(tokens[0])
+            else:
+                # Defaults to epoch time
+                return time.time()
+
+        elif name == "choose":
+            items = (first, *tokens)
+            chnum = randint(0, len(items) - 1)
+
+            return items[chnum]
+
+        # 4. Failure fallback
+        elif name == "onfail":
+            # onfail|<message> - returns your custom text
+            # onfail|raw - returns the raw exception
+            if first == "raw":
+                return DynamicResponse.register_failure_response(lambda: "Error: " + str(sys.exc_info()[1]))
+            else:
+                return DynamicResponse.register_failure_response(first)
+
+    @staticmethod
+    def _handle_onfail(on_fail):
+        if callable(on_fail):
+            return on_fail()
+        else:
+            return on_fail
 
     def parse(self, text, ctx):
+        # Ignore stuff that isn't a dynamic command
+        if "{" not in text or "}" not in text:
+            return text
+
         ls = self._split_groups(text)
+        responses = []
+
+        on_fail = None
 
         for ind, t in enumerate(ls):
-            if t:
-                if (t[0] == "{") and (t[-1] == "}"):
-                    # valid group, parse
-                    # Cut out { and }
-                    ls[ind] = str(self._parse_group(t[1:-1], ctx))
+            if t and (t[0] == "{") and (t[-1] == "}"):
+                # valid group, parse
+                # Cut out { and }
+                try:
+                    result = self._parse_group(t[1:-1], ctx)
+                except Exception:
+                    if on_fail is not None:
+                        return self._handle_onfail(on_fail)
 
-        return "".join(ls)
+                    raise IgnoredException
+
+                if type(result) is DynamicResponse:
+                    # Special cases (for example: {onfail|text}
+                    if result.intention == CmdResponseTypes.REGISTER_ON_FAIL:
+                        on_fail = result.data
+
+                    # Don't add that class' repr to the list
+                    continue
+
+                responses.append(str(result))
+            # Not a group, just append it to responses
+            else:
+                responses.append(t)
+
+        return "".join(responses)
 
 
 class Commons:
@@ -224,34 +300,17 @@ class Commons:
         lang = kwargs.get("lang")
 
         # Custom commands registered for the server
-        server_commands = self.handler.get_custom_commands(message.guild.id)
+        server_commands = self.handler.get_custom_commands_keys(message.guild.id)
 
         if server_commands:
-            # Checks for server specific commands
-            for command in server_commands.keys():
-                # UPDATE 2.1.4: not .startswith anymore!
-                if message.content == command:
-                    await message.channel.send(server_commands.get(command))
-                    self.stats.add(MESSAGE)
+            # According to tests, .startswith is faster than slicing, m8pls
+            for k in server_commands:
+                if message.content.startswith(k):
+                    raw_resp = self.handler.get_custom_command_by_key(message.guild.id, k)
+                    response = self.parser.parse(raw_resp, message)
 
+                    await message.channel.send(response)
                     return
-
-        # TODO test this thoroughly
-        # if server_commands:
-        #     # According to tests, .startswith is faster than slicing, wtf
-        #     pass
-        #
-        #     for k in server_commands.keys():
-        #         if message.content.startswith(k):
-        #             raw_resp = server_commands[k]
-        #             response = self.parser.parse(raw_resp, message)
-        #
-        #             print("response")
-        #             print(response)
-        #
-        #             await message.channel.send(response)
-        #
-        #             return
 
 
         # Check if this is a valid command

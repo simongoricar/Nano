@@ -420,7 +420,7 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
 
 class RedisPluginDataManager:
     def __init__(self, pool, namespace=None, *_, **__):
-        self.namespace = str(namespace)
+        self.namespace = namespace
         self.redis = redis.StrictRedis(connection_pool=pool)
 
         log.info("New plugin namespace registered: {}".format(self.namespace or "(no namespace)"))

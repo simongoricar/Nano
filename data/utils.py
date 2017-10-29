@@ -6,11 +6,28 @@ from typing import Iterable
 
 from .translations import TranslationManager, DEFAULT_LANGUAGE
 
+
 class IgnoredException(Exception):
     """
     An exception that will be ignored (for flow control)
     """
     pass
+
+
+class CmdResponseTypes:
+    REGISTER_ON_FAIL = "reg_on_fail"
+
+
+class DynamicResponse:
+    __slots__ = ("intention", "data")
+
+    def __init__(self, intention, data):
+        self.intention = intention
+        self.data = data
+
+    @classmethod
+    def register_failure_response(cls, text):
+        return cls(CmdResponseTypes.REGISTER_ON_FAIL, text)
 
 
 # Singleton
