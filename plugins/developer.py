@@ -10,7 +10,7 @@ from shutil import copy2
 from discord import Game, utils, Embed, Colour
 
 from data.stats import MESSAGE
-from data.utils import is_valid_command, log_to_file, StandardEmoji
+from data.utils import is_valid_command, log_to_file, StandardEmoji, resolve_time
 from data.confparser import get_settings_parser
 
 #######################
@@ -322,6 +322,49 @@ class DevFeatures:
                     log_to_file("Couldn't send announcement for {}".format(g.name))
 
             await message.channel.send("Sent to {} servers".format(len(s)))
+
+        # nano.dev.userdetective
+
+        elif startswith("nano.dev.userdetective"):
+            param = str(message.content[len(prefix + "nano.dev.userdetective"):])
+
+            # Number
+            if param.isdigit():
+                user = self.client.get_user(int(param))
+                if not user:
+                    await message.channel.send("No user with such ID.")
+                    return
+            elif len(message.mentions) > 0:
+                user = message.mentions[0]
+            else:
+                members = [user for user in self.client.get_all_members()
+                           if user.name == param]
+
+                if not members:
+                    await message.channel.send("No users with that name.")
+                    return
+
+                user = members[0]
+
+            srv_in_common = 0
+            server_table_temp = []
+            # Loop though servers and find ones the user is in
+            for srv in self.client.guilds:
+                mem = srv.get_member(user.id)
+                if mem:
+                    srv_in_common += 1
+                    server_table_temp.append("{}: {}".format(srv.name, mem.display_name))
+
+
+            join_time_ago = int((datetime.now() - user.created_at).total_seconds())
+            join_time_ago = resolve_time(join_time_ago, "en")
+
+            embed = Embed(title="{}#{}{}".format(user.name, user.discriminator, ":robot:" if user.bot else ""), description="ID: {}".format(user.id))
+            embed.add_field(name="Joined Discord", value="**{}** ago\nISO time: {}".format(join_time_ago, user.created_at))
+            embed.add_field(name="Avatar url", value=user.avatar_url_as(format="png"))
+            embed.add_field(name="Servers in common", value="**{}** on this shard:\n```http\n{}```".format(srv_in_common, "\n".join(server_table_temp)))
+
+            await message.channel.send(embed=embed)
 
 
     async def on_ready(self):

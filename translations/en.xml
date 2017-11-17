@@ -75,6 +75,7 @@ Also: `{p}gif` command powered by **Giphy**</string>
     <string name="INFO_ERROR">error</string>
     <string name="INFO_ALL">all</string>
 
+    <string name="TIME_YEARS">years</string>
     <string name="TIME_DAYS">days</string>
     <string name="TIME_HOURS">hours</string>
     <string name="TIME_MINUTES">minutes</string>

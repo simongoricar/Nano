@@ -129,11 +129,16 @@ def resolve_time(tm: int, lang: str) -> str:
     """
     tm = int(tm)
 
+    years = 0
     days = 0
     hours = 0
     minutes = 0
 
     while True:
+        if tm >= 31556926:  # 1 Year
+            years += 1
+            tm -= 31556926
+
         if tm >= 86400:  # 1 Day
             days += 1
             tm -= 86400
@@ -150,6 +155,8 @@ def resolve_time(tm: int, lang: str) -> str:
             break
 
     fields = []
+    if years:
+        fields.append("{} {}".format(years, tr.get("TIME_YEARS", lang)))
     if days:
         fields.append("{} {}".format(days, tr.get("TIME_DAYS", lang)))
     if hours:
@@ -158,9 +165,9 @@ def resolve_time(tm: int, lang: str) -> str:
         fields.append("{} {}".format(minutes, tr.get("TIME_MINUTES", lang)))
 
     last = "{} {}".format(int(tm), tr.get("TIME_SECONDS", lang))
-    and_lit = " and " if fields else ""
 
-    return ", ".join(fields) + and_lit + last
+    # If tm is less than a minute, do not add "and".
+    return ", ".join(fields) + (" and " if fields else "") + last
 
 
 possibilities = [
