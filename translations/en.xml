@@ -525,6 +525,7 @@ PP: **{}** (played {} songs)</string>
     <string name="MSG_OSU_AVG_ACC">Average accuracy</string>
     <string name="MSG_OSU_TIME">Search took {} ms</string>
 
+    <string name="MSG_RATELIMIT">Woah, chill! :snowflake: You are being ratelimited, please try again in a few seconds.</string>
     <string name="MSG_NANO_SLEEP">G'night! :sleeping:</string>
     <string name="MSG_NANO_WAKE">:wave:</string>
     <string name="MSG_NANO_WASNT_SLEEPING">Was not in sleep mode.</string>
