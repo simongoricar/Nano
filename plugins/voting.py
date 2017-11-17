@@ -16,9 +16,10 @@ __author__ = "DefaltSimon"
 # Voting plugin
 
 commands = {
-    "_vote start": {"desc": "Starts a vote on the server.", "use": "[command] \"question\" choice1|choice2|..."},
-    "_vote end": {"desc": "Simply ends the current vote on the server."},
-    "_vote status": {"desc": "Shows info about the current voting."},
+    "_poll": {"desc": "A group of commands designed to handle poll creation and managment.\nSubcommands: `start`, `end`, `status`", "use": "[command] [subcommand]"},
+    "_poll start": {"desc": "Starts a poll on the server.", "use": "[command] \"question\" choice1|choice2|..."},
+    "_poll end": {"desc": "Simply ends the current poll on the server."},
+    "_poll status": {"desc": "Shows info about the current poll."},
     "_vote": {"desc": "Votes for an option if there is voting going on.", "use": "[command] [1,2,3,...]"},
 }
 
@@ -166,8 +167,10 @@ class Vote:
 
             return False
 
-        # !vote start [title]|[option1]|(option2)|...
-        if startswith(prefix + "vote start"):
+        # !poll start
+        # Arguments: "[title]" [option1]|(option2)|...
+        # OR       : "[title]" [option1],(option2),...
+        if startswith(prefix + "poll start"):
             if not self.handler.is_admin(message.author, message.guild):
                 await message.channel.send(trans.get("PERM_ADMIN", lang))
                 self.stats.add(WRONG_PERMS)
@@ -177,19 +180,37 @@ class Vote:
                 await message.channel.send(trans.get("MSG_VOTING_IN_PROGRESS", lang))
                 return
 
-            arguments = message.content[len(prefix + "vote start "):].strip(" ")
+            arguments = message.content[len(prefix + "poll start "):].strip(" ")
             if not arguments:
                 await message.channel.send(trans.get("MSG_VOTING_I_USAGE", lang).format(prefix))
                 return
 
-            s = arguments.split("|")
+            # TITLE
+            # Handle short_title, "longer title", 'also like this'
+            if arguments[0] == "\"":
+                _, title, arguments = arguments.split("\"", maxsplit=3)
+            elif arguments[0] == "'":
+                _, title, arguments = arguments.split("'", maxsplit=3)
+            else:
+                title, arguments = arguments.split(" ", maxsplit=1)
 
-            # Minimal is the title and one choice
-            if len(s) < 2:
-                await message.channel.send(trans.get("MSG_VOTING_I_USAGE", lang).format(prefix))
+            arguments = arguments.lstrip(" ")
+
+
+            # CHOICES
+            # | as separator
+            if "|" in arguments:
+                items = [a.strip(" ") for a in arguments.split("|") if a]
+            # , used as separator
+            else:
+                items = [a.strip(" ") for a in arguments.split(",") if a]
+
+            # Send an error if there's only a title
+            if len(items) < 2:
+                await message.channel.send(trans.get("MSG_VOTING_NEED_OPTIONS", lang).format(prefix))
                 return
+            # END OF ARGUMENT PARSING
 
-            title, *items = [a.strip(" ") for a in s]
 
             # Check item amount
             if len(items) > VOTE_ITEM_LIMIT:
@@ -210,12 +231,12 @@ class Vote:
 
             # Generates a list of options to show
             choices = "\n\n".join(["[{}]\n{}".format(en + 1, ch) for en, ch in
-                            enumerate(self.vote.get_choices(message.guild.id))])
+                                   enumerate(self.vote.get_choices(message.guild.id))])
 
             await message.channel.send(trans.get("MSG_VOTING_STARTED", lang).format(title, choices))
 
-        # !vote end
-        elif startswith(prefix + "vote end"):
+        # !poll end
+        elif startswith(prefix + "poll end"):
             if not self.handler.is_admin(message.author, message.guild):
                 await message.channel.send(trans.get("PERM_ADMIN", lang))
                 self.stats.add(WRONG_PERMS)
@@ -224,6 +245,21 @@ class Vote:
             if not self.vote.in_progress(message.guild.id):
                 await message.channel.send(trans.get("MSG_VOTING_NO_PROGRESS", lang))
                 return
+
+            # Wait for confirmation
+            msg = await message.channel.send(trans.get("MSG_VOTING_END_CONFIRMATION", lang).format(OK_EMOJI))
+            msg.add_reaction(OK_EMOJI)
+
+            def check(reaction, user):
+                return user == message.author and str(reaction.emoji) == OK_EMOJI
+
+            try:
+                await self.client.wait_for('reaction_add', timeout=45, check=check)
+            except asyncio.TimeoutError:
+                await message.channel.send(trans.get("MSG_VOTING_END_ABORT", lang))
+                return
+
+            await msg.delete()
 
             votes = self.vote.get_votes(message.guild.id)
             title = self.vote.get_title(message.guild.id)
@@ -246,8 +282,8 @@ class Vote:
                 await message.channel.send(trans.get("MSG_VOTING_ERROR", lang))
                 log_to_file("VOTING ({}): {}".format(e, embed.to_dict()), "bug")
 
-        # !vote status
-        elif startswith(prefix + "vote status"):
+        # !poll status
+        elif startswith(prefix + "poll status"):
             if not self.vote.in_progress(message.guild.id):
                 await message.channel.send(trans.get("MSG_VOTING_NO_PROGRESS", lang))
                 return

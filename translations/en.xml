@@ -693,6 +693,7 @@ Direct link: http://steamcommunity.com/id/{}/</string>
     <string name="MSG_VOTING_IN_PROGRESS">:warning: A vote is already in progress.</string>
     <string name="MSG_VOTING_I_USAGE">Incorrect usage. Check `{}help vote start` for more info.</string>
     <string name="MSG_VOTING_NO_TITLE">Please include a title.</string>
+    <string name="MSG_VOTING_NEED_OPTIONS">:warning: Please include at least two choices in your poll.</string>
     <string name="MSG_VOTING_EMPTY_ITEM">:x: One or more of your options are empty!</string>
     <string name="MSG_VOTING_STARTED">:scroll: Vote started:
 
@@ -703,6 +704,8 @@ Direct link: http://steamcommunity.com/id/{}/</string>
 {}```</string>
     <string name="MSG_VOTING_AMOUNT">In total, {} people voted</string>
     <string name="MSG_VOTING_AMOUNT2">{} votes</string>
+    <string name="MSG_VOTING_END_CONFIRMATION">Are you sure you want to close this poll? React with {} to confirm.</string>
+    <string name="MSG_VOTING_END_ABORT">Timeout reached, not closing the poll.</string>
     <string name="MSG_VOTING_ENDED">:dividers: **Voting ended:**</string>
     <string name="MSG_VOTING_ERROR">Something went wrong when trying to end voting.</string>
     <string name="MSG_VOTING_OPTIONS_TM">:warning: Too many vote options (max is **{}**, you put *{}*)</string>
