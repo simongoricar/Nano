@@ -119,7 +119,7 @@ class Steam:
                 except ValueError:
                     await message.channel.send(trans.get("MSG_STEAM_INVALID_URL", lang))
                     return
-                except (steamapi.errors.APIFailure, steamapi.errors.APIException):
+                except (steamapi.errors.APIFailure, steamapi.errors.APIException, steamapi.errors.AccessException):
                     await message.channel.send(trans.get("MSG_STEAM_PRIVATE", lang))
                     raise
 
