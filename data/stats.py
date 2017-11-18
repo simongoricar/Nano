@@ -42,6 +42,7 @@ class NanoStats:
     )
 
     def __init__(self, redis_ip, redis_port, redis_pass):
+        # TODO make request buffering (~5s)
         self.redis = redis.StrictRedis(host=redis_ip, port=redis_port, password=redis_pass)
 
         try:

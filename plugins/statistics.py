@@ -152,7 +152,6 @@ class Statistics:
         np_text = "_" + message.content.lstrip(prefix).split(" ")[0]
         if np_text in self.valid_commands:
             # Register user to stats
-            print("TRACKING: {}".format(message.content))
             self.adv_stats.track_user(message.author.id, message.guild.id)
 
         # Check if this is a valid command

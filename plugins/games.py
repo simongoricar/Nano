@@ -43,7 +43,7 @@ class Game:
 
         videos = fields.get("videos")
         if videos:
-            self.video = Igdb.VIDEO.format(videos[0])
+            self.video = Igdb.VIDEO.format(videos[0]["video_id"])
         else:
             self.video = None
 
@@ -72,14 +72,12 @@ class Igdb:
     async def get_game_by_name(self, name: str):
         payload = {
             "search": name,
-            # TODO ask how to specify optional field
-            "fields": "name,publishers,summary,total_rating,genres,cover",
+            "fields": "name,publishers,summary,total_rating,genres,cover,videos",
             "expand": "genres,publishers",
             "limit": 1
         }
 
         resp = await self._request(Igdb.GAMES, payload)
-        print(resp)
         if len(resp) < 1:
             raise ValueError("unexpected: resp has length {}".format(len(resp)))
 
@@ -146,7 +144,6 @@ class GameDB:
                 rating = "{} / 100".format(int(game.rating))
                 embed.add_field(name=trans.get("MSG_IGDB_RATING", lang), value=rating)
 
-            # TODO doesn't always work
             if game.video:
                 embed.add_field(name=trans.get("MSG_IGDB_VIDEO", lang), value=game.video)
 
