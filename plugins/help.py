@@ -49,7 +49,7 @@ def save_submission(sub):
         subs.write("\n\n")
 
 
-def get_valid_commands(plugin):
+def get_raw_commands(plugin):
     return getattr(plugin, "commands", None)
 
 
@@ -98,7 +98,7 @@ class Help:
     async def on_plugins_loaded(self):
         # Collect all commands
         plugins = [a.get("plugin") for a in self.nano.plugins.values() if a.get("plugin")]
-        cmdslist = [get_valid_commands(b) for b in plugins if get_valid_commands(b)]
+        cmdslist = [get_raw_commands(b) for b in plugins if get_raw_commands(b)]
 
         for pl_list in cmdslist:
             for command, info in pl_list.items():

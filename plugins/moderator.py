@@ -6,7 +6,7 @@ from pickle import load
 from discord import Message, Embed, TextChannel
 
 from data.stats import SUPPRESS
-from data.utils import add_dots
+from data.utils import add_dots, get_valid_commands
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -29,13 +29,6 @@ def two_chars(line):
     # Yields two by two
     for rn in range(0, len(norm) - 1):
         yield norm[rn:rn + 1], norm[rn + 1:rn + 2]
-
-
-def get_valid_commands(plugin):
-        try:
-            return list(plugin.commands.keys())
-        except AttributeError:
-            return None
 
 
 class NanoModerator:

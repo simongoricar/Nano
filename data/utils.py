@@ -491,3 +491,9 @@ def apply_string_padding(strings: tuple, amount: int = 1):
         temp.append(empty_fill + s + padd * " ")
 
     return temp
+
+def get_valid_commands(plugin):
+    try:
+        return list(plugin.commands.keys())
+    except AttributeError:
+        return None

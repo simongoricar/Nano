@@ -6,6 +6,7 @@ from discord import TextChannel
 
 from data.stats import SLEPT
 from data.confparser import get_config_parser
+from data.utils import get_valid_commands
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -22,13 +23,6 @@ commands = {
 }
 
 valid_commands = commands.keys()
-
-
-def get_valid_commands(plugin):
-    try:
-        return list(plugin.commands.keys())
-    except AttributeError:
-        return None
 
 
 class Bucket:
