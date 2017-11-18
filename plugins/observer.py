@@ -104,7 +104,7 @@ class Observer:
             lang = str(self.trans.default_lang)
 
         # Ignore the filter if user is not executing a command
-        np_text = message.content.replace(pref, "_").split(" ")[0]
+        np_text = "_" + message.content.lstrip(pref).split(" ")[0]
         if np_text in self.valid_commands:
             # Check rate-limits
             # If user was silent until now, create a new bucket

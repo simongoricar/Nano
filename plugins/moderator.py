@@ -241,7 +241,7 @@ class Moderator:
             return "return"
 
         # Ignore the filter if user is executing a command
-        noprefix_text = message.content.replace(prefix, "_").split(" ")[0]
+        noprefix_text = "_" + message.content.lstrip(prefix).split(" ")[0]
         if noprefix_text in self.valid_commands:
             return
 

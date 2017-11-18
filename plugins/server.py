@@ -25,8 +25,6 @@ commands = {
     "_debug": {"desc": "Displays EVEN MORE stats about Nano."},
     "_status": {"desc": "Displays current status: server, user and channel count.", "alias": "nano.status"},
     "nano.status": {"desc": "Displays current status: server, user and channel count.", "alias": "_status"},
-    "_stats": {"desc": "Some stats like message count and stuff like that.", "alias": "nano.stats"},
-    "nano.stats": {"desc": "Some stats like message count and stuff like that.", "alias": "_stats"},
     "_prefix": {"desc": "No use whatsoever, but jk here you have it."},
     "nano.prefix": {"desc": "Helps you figure out the prefix."},
     "_members": {"desc": "Lists all members on the server."},
@@ -205,33 +203,6 @@ class ServerManagement:
             additional = trans.get("MSG_DEBUG_MULTI_2", lang).format(total_shards, current_shard)
 
             await message.channel.send(fields + "\n" + additional)
-
-        # !stats
-        elif startswith(prefix + "stats"):
-            file = self.stats.get_data()
-
-            messages = file.get("msgcount")
-            wrong_args = file.get("wrongargcount")
-            sleeps = file.get("timesslept")
-            wrong_permissions = file.get("wrongpermscount")
-            helps = file.get("peoplehelped")
-            votes = file.get("votesgot")
-            pings = file.get("timespinged")
-            imgs = file.get("imagessent")
-
-            embed = Embed(colour=Colour.gold())
-
-            embed.add_field(name=trans.get("MSG_STATS_MSGS", lang), value=messages)
-            embed.add_field(name=trans.get("MSG_STATS_ARGS", lang), value=wrong_args)
-            embed.add_field(name=trans.get("MSG_STATS_PERM", lang), value=wrong_permissions)
-            embed.add_field(name=trans.get("MSG_STATS_HELP", lang), value=helps)
-            embed.add_field(name=trans.get("MSG_STATS_IMG", lang), value=imgs)
-            embed.add_field(name=trans.get("MSG_STATS_VOTES", lang), value=votes)
-            embed.add_field(name=trans.get("MSG_STATS_SLEPT", lang), value=sleeps)
-            embed.add_field(name=trans.get("MSG_STATS_PONG", lang), value=pings)
-            embed.add_field(name=trans.get("MSG_STATS_IMG", lang), value=imgs)
-
-            await message.channel.send(trans.get("MSG_STATS_INFO", lang), embed=embed)
 
         # !prefix
         elif startswith(prefix + "prefix"):

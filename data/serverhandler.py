@@ -462,6 +462,14 @@ class RedisPluginDataManager:
     def delete(self, name, use_namespace=True):
         return self.redis.delete(self._make_key(name) if use_namespace else name)
 
+    def scan(self, cursor, use_namespace=True, match=None, **kwargs):
+        match = self._make_key(match) if use_namespace else match
+        return self.redis.scan(cursor, match=match, **kwargs)
+
+    def sscan(self, name, cursor, use_namespace=True, match=None, **kwargs):
+        match = self._make_key(match) if use_namespace else match
+        return self.redis.sscan(name, cursor, match=match, **kwargs)
+
     def scan_iter(self, match, use_namespace=True):
         match = self._make_key(match) if use_namespace else match
         return [a.decode() for a in self.redis.scan_iter(match)]

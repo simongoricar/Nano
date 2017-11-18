@@ -631,6 +631,22 @@ Please try again later.</string>
     <string name="MSG_STATS_PONG">Times Pong!-ed</string>
     <string name="MSG_STATS_INFO">**Stats**</string>
 
+    <string name="MSG_ADVS_TITLE">:hammer: Advanced Statistics v{}</string>
+    <string name="MSG_ADVS_DESC">Total unique users: **{}**
+Total unique guilds: **{}**
+*(Only command usages are counted)*</string>
+    <string name="MSG_ADVS_HISTORY">**Usage in the last day/week/month**</string>
+    <string name="MSG_ADVS_HISTORY_BODY">```md
+* Today
+[{day_u} users]({day_g} unique guilds)
+
+* This week
+[{week_u} users]({week_g} unique guilds)
+
+* This month
+[{month_u} users]({month_g} unique guilds)
+```</string>
+
     <string name="MSG_PREFIX_OHYEAH">You guessed it!</string>
     <string name="MSG_PREFIX">The prefix on this server is **{}**</string>
     <string name="MSG_MEMBERS_LIST">*__Members__*:
