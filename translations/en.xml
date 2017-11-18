@@ -738,6 +738,12 @@ Direct link: http://steamcommunity.com/id/{}/</string>
 **{}**
 ```{}```</string>
 
+    <string name="MSG_IGDB_NONAME">Please specify a game to search for</string>
+    <string name="MSG_IGDB_GENRES">Genres</string>
+    <string name="MSG_IGDB_PUBLISHERS">Publishers</string>
+    <string name="MSG_IGDB_RATING">Rating</string>
+    <string name="MSG_IGDB_VIDEO">Trailer/video</string>
+
     <string name="EVENT_JOIN">joined</string>
     <string name="EVENT_LEAVE">left</string>
     <string name="EVENT_BAN">was banned</string>
@@ -751,4 +757,5 @@ After that, you might want to see `!commands` to get familiar with my commands.
 Also, I recommend that you join the "official" Nano server for announcements and help : https://discord.gg/FZJB6UJ
 
 By using Nano you agree that we may store some user data such as names of users, servers and channels to aid functionality. For more info, see `!tos`.</string>
+
 </resources>
