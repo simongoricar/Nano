@@ -45,7 +45,7 @@ class McItems:
         MAX_AGE = 604800  # 1 week
 
         cache_temp = handler.get_cache_handler()
-        self.cache = cache_temp.get_plugin_manager("mc")
+        self.cache = cache_temp.get_plugin_data_manager("mc")
 
         # Check validity of cache
         if self.cache.exists("raw_data") and (time.time() - float(self.cache.get("last_fetch"))) < MAX_AGE:

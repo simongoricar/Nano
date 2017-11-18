@@ -114,7 +114,7 @@ class XKCD:
 
         self.last_num = None
         cache_handler = handler.get_cache_handler()
-        self.cache = cache_handler.get_plugin_manager("xkcd")
+        self.cache = cache_handler.get_plugin_data_manager("xkcd")
 
         self.req = Connector(loop)
         self.loop = loop

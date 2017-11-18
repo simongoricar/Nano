@@ -52,7 +52,7 @@ class RedisMovieCache:
 
     def __init__(self, handler, max_age=21600):
         cache = handler.get_cache_handler()
-        self.cache = cache.get_plugin_manager("movies")
+        self.cache = cache.get_plugin_data_manager("movies")
 
         self.max_age = max_age
 

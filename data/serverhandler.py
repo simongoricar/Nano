@@ -432,8 +432,8 @@ class RedisPluginDataManager:
         # Returns a hash name formatted with the namespace
         return "{}:{}".format(self.namespace, name)
 
-    def set(self, key, val):
-        return decode(self.redis.set(self._make_key(key), val))
+    def set(self, key, val, **kwargs):
+        return decode(self.redis.set(self._make_key(key), val, **kwargs))
 
     def get(self, key):
         return decode(self.redis.get(self._make_key(key)))
@@ -466,6 +466,10 @@ class RedisPluginDataManager:
         match = self._make_key(match) if use_namespace else match
         return [a.decode() for a in self.redis.scan_iter(match)]
 
+    def sscan_iter(self, name, match=None, use_namespace=True):
+        name = self._make_key(name) if use_namespace else name
+        return [a.decode() for a in self.redis.sscan_iter(name, match)]
+
     def lpush(self, key, value):
         return self.redis.lpush(self._make_key(key), value)
 
@@ -487,6 +491,15 @@ class RedisPluginDataManager:
     def scard(self, name):
         return self.redis.scard(self._make_key(name))
 
+    def pipeline(self, **options):
+        return self.redis.pipeline(**options)
+
+    def expire(self, name, time):
+        return self.redis.expire(name, int(time))
+
+    def ttl(self, name):
+        return decode(self.redis.ttl(name))
+
 
 # Singleton
 
@@ -497,5 +510,5 @@ class RedisCacheHandler(RedisPluginDataManager, ServerHandler, metaclass=Singlet
 
         super().__init__(self.pool)
 
-    def get_plugin_manager(self, namespace):
+    def get_plugin_data_manager(self, namespace):
         return RedisPluginDataManager(self.pool, namespace)
