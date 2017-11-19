@@ -37,12 +37,9 @@ stat_types = [MESSAGE, WRONG_ARG, SERVER_LEFT, SLEPT, WRONG_PERMS, HELP, IMAGE_S
 
 
 class NanoStats:
-    __slots__ = (
-        "_redis", "redis"
-    )
+    __slots__ = ("_redis", "redis", "_pending_data", "MAX_BEFORE_UPDATE")
 
     def __init__(self, redis_ip, redis_port, redis_pass):
-        # TODO make request buffering (~5s)
         self.redis = redis.StrictRedis(host=redis_ip, port=redis_port, password=redis_pass)
 
         try:
@@ -60,33 +57,21 @@ class NanoStats:
         else:
             log.info("Enabled: stats found")
 
-    @classmethod
-    def from_settings(cls) -> "NanoStats":
-        setup_type = par.get("Redis", "setup", fallback=None)
-
-        if setup_type == "openshift":
-            redis_ip = os.environ["OPENSHIFT_REDIS_HOST"]
-            redis_port = os.environ["OPENSHIFT_REDIS_PORT"]
-            redis_pass = os.environ["REDIS_PASSWORD"]
-
-        else:
-            redis_ip = par.get("Redis", "ip", fallback=None)
-            redis_port = par.get("Redis", "port", fallback=None)
-            redis_pass = par.get("Redis", "password", fallback=None)
-
-            # Fallback to defaults
-            if not redis_ip:
-                redis_ip = "localhost"
-            if not redis_port:
-                redis_port = 6379
-            if not redis_pass:
-                redis_pass = None
-
-        return NanoStats(redis_ip, redis_port, redis_pass)
+        self._pending_data = {a: 0 for a in stat_types}
+        self.MAX_BEFORE_UPDATE = 5
 
     def add(self, stat_type):
-        if stat_type in stat_types:
-            self.redis.hincrby("stats", stat_type, 1)
+        if stat_type not in stat_types:
+            return False
+
+        self._pending_data[stat_type] += 1
+
+        value = self._pending_data[stat_type]
+        if value >= self.MAX_BEFORE_UPDATE:
+            log.info("Reached max size, posting to redis...")
+            # Send data and reset the pending counter
+            self.redis.hincrby("stats", stat_type, value)
+            self._pending_data[stat_type] = 0
 
     def get_data(self):
         return decode(self.redis.hgetall("stats"))

@@ -83,7 +83,7 @@ log.info("Initializing ServerHandler and NanoStats...")
 
 # Setup the server data and stats
 handler = ServerHandler.get_handler()
-stats = NanoStats.from_settings()
+stats = NanoStats(*ServerHandler.get_redis_credentials())
 trans = TranslationManager()
 
 # Singleton metaclass

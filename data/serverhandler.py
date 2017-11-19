@@ -69,9 +69,9 @@ class ServerHandler:
             redis_pass = os.environ["REDIS_PASS"]
 
         else:
-            redis_ip = par.get("Redis", "ip")
-            redis_port = par.get("Redis", "port")
-            redis_pass = par.get("Redis", "password")
+            redis_ip = par.get("Redis", "ip", fallback=None)
+            redis_port = par.get("Redis", "port", fallback=None)
+            redis_pass = par.get("Redis", "password", fallback=None)
 
             # Fallback to defaults
             if not redis_ip:
@@ -195,8 +195,7 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
         try:
             self.redis.ping()
         except redis.ConnectionError:
-            log.critical("Could not connect to redis! Make sure your server is running and settings.ini is correct.")
-            exit(5)
+            raise ConnectionError("Could not connect to redis! Check settings.ini and your redis server")
 
         log.info("Connected to Redis database")
 

@@ -115,11 +115,12 @@ class Observer:
             # Otherwise, check bucket size
             else:
                 bucket = self.buckets[message.author.id]
+                # bucket.action() returns a bool indicating if the user can execute the requested command
                 if not bucket.action():
                     if not bucket.was_warned:
                         # Do not send additional warnings in the same time period
                         bucket.was_warned = True
-                        await message.channel.send(trans.get("MSG_RATELIMIT", lang))
+                        await message.channel.send(trans.get("MSG_RATELIMIT", lang).format(message.author.mention))
 
                     return "return"
 
