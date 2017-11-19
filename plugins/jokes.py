@@ -82,7 +82,7 @@ class CatGenerator:
         try:
             data = await self.req.get_html(self.url, api_key=self.key, format=self.format, size=self.size, type=type_)
             link = BeautifulSoup(data, "lxml").find("img").get("src")
-        except (APIFailure, Exception) as e:
+        except (APIFailure, Exception):
             log_to_file("CatGenerator exception\n{}".format(traceback.format_exc()), "bug")
             return None
 

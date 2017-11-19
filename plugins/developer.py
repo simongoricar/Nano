@@ -7,7 +7,7 @@ from datetime import datetime
 from random import shuffle
 from shutil import copy2
 
-from discord import Game, utils, Embed, Colour
+from discord import Game, utils, Embed, Colour, DiscordException
 
 from data.stats import MESSAGE
 from data.utils import is_valid_command, log_to_file, StandardEmoji, resolve_time
@@ -200,7 +200,7 @@ class DevFeatures:
         elif startswith("nano.dev.server_info"):
             s_id = message.content[len("nano.dev.server_info "):]
 
-            srv = utils.find(lambda s: s.id == s_id, client.guilds)
+            srv = utils.find(lambda b: b.id == s_id, client.guilds)
 
             if not srv:
                 await message.channel.send("No such guild. " + StandardEmoji.CROSS)
@@ -318,7 +318,7 @@ class DevFeatures:
                     await d_chan.send(ann)
                     log_to_file("Sent announcement for {}".format(g.name))
                     s.append(g.name)
-                except:
+                except DiscordException:
                     log_to_file("Couldn't send announcement for {}".format(g.name))
 
             await message.channel.send("Sent to {} servers".format(len(s)))

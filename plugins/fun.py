@@ -152,7 +152,8 @@ class MemeGenerator:
 
         log.info("Ready to make memes")
 
-    async def get_memes(self):
+    @staticmethod
+    async def get_memes():
         async with aiohttp.ClientSession() as session:
             async with session.get(MemeGenerator.MEME_ENDPOINT) as resp:
                 return await resp.json(loads=loads, content_type=None)

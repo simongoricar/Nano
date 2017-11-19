@@ -219,7 +219,7 @@ class RedisReminderHandler:
                     if int(reminder["time_target"]) <= last_time:
                         try:
                             await self.dispatch(reminder)
-                        except Exception:
+                        except (DiscordException, KeyError):
                             log.warning("ERROR in reminders, see bugs.txt")
                             log_to_file(traceback.format_exc(), "bug")
 

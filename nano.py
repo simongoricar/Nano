@@ -290,8 +290,8 @@ class Nano(metaclass=Singleton):
             del plugin
             return -1
 
-        def get_callback(plugin, fn_name):
-            return getattr(plugin, fn_name, None)
+        def get_callback(p, fn_name):
+            return getattr(p, fn_name, None)
 
         self.plugins[plug_name] = {
             "plugin": plug_info,

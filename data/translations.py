@@ -59,7 +59,7 @@ def split_into_tuple(something: str) -> tuple:
 
 
 def get_meta() -> dict:
-    with open("translations/meta.json", "r") as meta:
+    with open("translations/meta.json") as meta:
         d = meta.read()
         if not d:
             raise RuntimeError("meta.json is empty")

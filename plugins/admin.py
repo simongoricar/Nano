@@ -521,7 +521,7 @@ class Admin:
             await nano_user.add_roles(role, atomic=True)
             await nano_user.remove_roles(role, reason="Checking permissions for selfrole.", atomic=True)
             return True
-        except:
+        except DiscordException:
             log_to_file("ERROR in try_accessing_role: (role: {})".format(role.name) + traceback.format_exc())
             return False
 

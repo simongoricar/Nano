@@ -6,6 +6,7 @@ import os
 import time
 
 from ujson import load, dump
+from json import JSONDecodeError
 
 import aiohttp
 
@@ -202,7 +203,7 @@ class CommunityPrices:
                     data = load(cache)
 
                 # Malformed json data
-                except:
+                except JSONDecodeError:
                     data = await self._request()
 
                 # Everything is fine, validate data

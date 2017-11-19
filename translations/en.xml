@@ -406,7 +406,7 @@ For a list of admin commands and their explanations, please refer to &lt;http://
 
     <string name="MSG_AYYLMAO">My inspiration in the world of memes.</string>
     <string name="MSG_WHOKNOWS">¯\_(ツ)_/¯</string>
-    <string name="MSG_GIPHY_TOOFAST">:shield: Woah, too fast! Nano reached the ratelimit for gifs (just wait a bit and try again).</string>
+    <string name="MSG_GIPHY_TOOFAST">:shield: Woah, too fast! Nano reached the rate-limit for gifs (just wait a bit and try again).</string>
     <string name="MSG_GIPHY_NOSUCHTAG">No gif with tag: {}, falling back to random gif</string>
     <string name="MSG_GIPHY_POWEREDBY">Powered by Giphy</string>
     <string name="MSG_MEME_USAGE">Incorrect usage. See _help caption/_help meme for info.</string>
