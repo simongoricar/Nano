@@ -974,7 +974,7 @@ class Admin:
                     await message.channel.send(trans.get("MSG_JOIN_CURRENT", lang).format(joinmsg))
 
             elif is_disabled(change):
-                handler.update_var(message.guild.id, "welcomemsg", None)
+                handler.set_custom_event_message(message.guild.id, "welcomemsg", None)
                 await message.channel.send(trans.get("MSG_JOIN_DISABLED", lang))
 
             else:
@@ -982,7 +982,7 @@ class Admin:
                     await message.channel.send(trans.get("MSG_NOTIF_TOO_LONG", lang).format(MAX_NOTIF_LENGTH, len(change)))
                     return
 
-                handler.update_var(message.guild.id, "welcomemsg", change)
+                handler.set_custom_event_message(message.guild.id, "welcomemsg", change)
                 await message.channel.send(trans.get("MSG_JOIN", lang))
 
         # !welcomemsg
@@ -998,7 +998,7 @@ class Admin:
                     await message.channel.send(trans.get("MSG_JOIN_CURRENT", lang).format(joinmsg))
 
             elif is_disabled(change):
-                handler.update_var(message.guild.id, "welcomemsg", None)
+                handler.set_custom_event_message(message.guild.id, "welcomemsg", None)
                 await message.channel.send(trans.get("MSG_JOIN_DISABLED", lang))
 
             else:
@@ -1006,7 +1006,7 @@ class Admin:
                     await message.channel.send(trans.get("MSG_NOTIF_TOO_LONG", lang).format(MAX_NOTIF_LENGTH, len(change)))
                     return
 
-                handler.update_var(message.guild.id, "welcomemsg", change)
+                handler.set_custom_event_message(message.guild.id, "welcomemsg", change)
                 await message.channel.send(trans.get("MSG_JOIN", lang))
 
         # !banmsg
@@ -1022,7 +1022,7 @@ class Admin:
                     await message.channel.send(trans.get("MSG_BANMSG_CURRENT", lang).format(banmsg))
 
             elif is_disabled(change):
-                handler.update_var(message.guild.id, "banmsg", None)
+                handler.set_custom_event_message(message.guild.id, "banmsg", None)
                 await message.channel.send(trans.get("MSG_BANMSG_DISABLED", lang))
 
             else:
@@ -1030,7 +1030,7 @@ class Admin:
                     await message.channel.send(trans.get("MSG_NOTIF_TOO_LONG", lang).format(MAX_NOTIF_LENGTH, len(change)))
                     return
 
-                handler.update_var(message.guild.id, "banmsg", change)
+                handler.set_custom_event_message(message.guild.id, "banmsg", change)
                 await message.channel.send(trans.get("MSG_BANMSG", lang))
 
         # !kickmsg
@@ -1046,7 +1046,7 @@ class Admin:
                     await message.channel.send(trans.get("MSG_KICKMSG_CURRENT", lang).format(kickmsg))
 
             elif is_disabled(change):
-                handler.update_var(message.guild.id, "kickmsg", None)
+                handler.set_custom_event_message(message.guild.id, "kickmsg", None)
                 await message.channel.send(trans.get("MSG_KICKMSG_DISABLED", lang))
 
             else:
@@ -1054,7 +1054,7 @@ class Admin:
                     await message.channel.send(trans.get("MSG_NOTIF_TOO_LONG", lang).format(MAX_NOTIF_LENGTH, len(change)))
                     return
 
-                handler.update_var(message.guild.id, "kickmsg", change)
+                handler.set_custom_event_message(message.guild.id, "kickmsg", change)
                 await message.channel.send(trans.get("MSG_KICKMSG", lang))
 
         # !leavemsg
@@ -1070,7 +1070,7 @@ class Admin:
                     await message.channel.send(trans.get("MSG_LEAVE_CURRENT", lang).format(leavemsg))
 
             elif is_disabled(change):
-                handler.update_var(message.guild.id, "leavemsg", None)
+                handler.set_custom_event_message(message.guild.id, "leavemsg", None)
                 await message.channel.send(trans.get("MSG_LEAVE_DISABLED", lang))
 
             else:
@@ -1078,7 +1078,7 @@ class Admin:
                     await message.channel.send(trans.get("MSG_NOTIF_TOO_LONG", lang).format(MAX_NOTIF_LENGTH, len(change)))
                     return
 
-                handler.update_var(message.guild.id, "leavemsg", change)
+                handler.set_custom_event_message(message.guild.id, "leavemsg", change)
                 await message.channel.send(trans.get("MSG_LEAVE", lang))
 
         # !user
@@ -1746,10 +1746,10 @@ class Admin:
 
                 # Set the welcome msg to appropriate value
                 if is_disabled(welcome_msg):
-                    handler.update_var(message.guild.id, "welcomemsg", None)
+                    handler.set_custom_event_message(message.guild.id, "welcomemsg", None)
                     edit = msg_three + "\n\n " + DIS_EXPR
                 else:
-                    handler.update_var(message.guild.id, "welcomemsg", welcome_msg)
+                    handler.set_custom_event_message(message.guild.id, "welcomemsg", welcome_msg)
                     edit = "{}\n\n{} {}".format(msg_three, StandardEmoji.OK, trans.get("INFO_UPDATED", lang))
 
                 # Again: edit to show that the welcome msg has been changed
