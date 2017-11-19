@@ -1349,7 +1349,7 @@ class Admin:
                 if len(message.channel_mentions) == 0:
                     # User wants to disable the logchannel
                     if is_disabled(arg):
-                        handler.update_var(message.guild.id, "logchannel", None)
+                        handler.set_custom_channel(message.guild.id, "logchannel", None)
                         await message.channel.send(trans.get("MSG_SETTINGS_LOGCHANNEL_DISABLED", lang))
                         return
 
@@ -1366,7 +1366,7 @@ class Admin:
                     return
 
                 # At this point, the channel should be valid
-                handler.update_var(message.guild.id, "logchannel", chan.id)
+                handler.set_custom_channel(message.guild.id, "logchannel", chan.id)
                 await message.channel.send(trans.get("MSG_SETTINGS_LOGCHANNEL_SET", lang).format(chan.name))
 
             # nano.settings selfrole
@@ -1428,7 +1428,7 @@ class Admin:
                 if len(message.channel_mentions) == 0:
                     # User wants to reset the channel
                     if is_disabled(arg):
-                        handler.update_var(message.guild.id, "logchannel", None)
+                        handler.set_custom_channel(message.guild.id, "logchannel", None)
                         def_chan = await self.default_channel(message.guild)
                         await message.channel.send(trans.get("MSG_SETTINGS_DEFCHAN_RESET", lang).format(def_chan.name))
                         return
@@ -1823,7 +1823,7 @@ class Admin:
 
                 # Disabling works in both languages
                 if channel.lower() == NONE or is_disabled(channel.lower()):
-                    handler.update_var(message.guild.id, "logchannel", None)
+                    handler.set_custom_channel(message.guild.id, "logchannel", None)
 
                     # Edit to show that filtering is changed
                     edit = msg_six + "\n\n{} {}".format(StandardEmoji.OK_BLUE, trans.get("MSG_SETUP_LOGCHANNEL_DISABLED", lang))
@@ -1831,7 +1831,7 @@ class Admin:
 
                 else:
                     if len(ch6.channel_mentions) != 0:
-                        handler.update_var(message.guild.id, "logchannel", ch6.channel_mentions[0].id)
+                        handler.set_custom_channel(message.guild.id, "logchannel", ch6.channel_mentions[0].id)
                     else:
                         await message.channel.send(trans.get("MSG_SETUP_LOGCHANNEL_INVALID", lang))
                         return

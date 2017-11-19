@@ -241,8 +241,13 @@ class Moderator:
             return "return"
 
         # Ignore the filter if user is executing a command
-        noprefix_text = "_" + message.content.lstrip(prefix).split(" ")[0]
-        if noprefix_text in self.valid_commands:
+        if message.content.startswith(prefix):
+            np_text = message.content[len(prefix):]
+        else:
+            np_text = message.content
+
+        np_text = "_" + np_text.split(" ", maxsplit=1)[0]
+        if np_text in self.valid_commands:
             return
 
         # Spam, swearing and invite filter

@@ -14,6 +14,13 @@ class IgnoredException(Exception):
     pass
 
 
+class SecurityError(Exception):
+    """
+    Raised when something would go wrong but has been caught (see validate_input decorator)
+    """
+    pass
+
+
 class CmdResponseTypes:
     REGISTER_ON_FAIL = "reg_on_fail"
 

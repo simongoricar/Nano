@@ -53,7 +53,6 @@ class NanoStats:
             self.redis.hmset("stats", types)
 
             log.info("Enabled: stats initialized")
-
         else:
             log.info("Enabled: stats found")
 
@@ -77,11 +76,7 @@ class NanoStats:
         return decode(self.redis.hgetall("stats"))
 
     def get_amount(self, typ):
-        if typ in stat_types:
-            return decode(self.redis.hget("stats", typ))
-        else:
-            return 0
+        if typ not in stat_types:
+            raise TypeError("invalid type")
 
-    def _set_amount(self, stat_type: str, amount: int):
-        if stat_type in stat_types:
-            self.redis.hset("stats", stat_type, amount)
+        return decode(self.redis.hget("stats", typ))

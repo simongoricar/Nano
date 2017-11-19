@@ -149,7 +149,12 @@ class Statistics:
         lang = kwargs.get("lang")
 
         # If any of the commands match, add user to statistics
-        np_text = "_" + message.content.lstrip(prefix).split(" ")[0]
+        if message.content.startswith(prefix):
+            np_text = message.content[len(prefix):]
+        else:
+            np_text = message.content
+
+        np_text = "_" + np_text.split(" ", maxsplit=1)[0]
         if np_text in self.valid_commands:
             # Register user to stats
             self.adv_stats.track_user(message.author.id, message.guild.id)

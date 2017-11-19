@@ -2,8 +2,9 @@
 import redis
 import logging
 import os
+
 from discord import Member, Guild
-from .utils import Singleton, decode, bin2bool
+from .utils import Singleton, decode, bin2bool, SecurityError
 from .confparser import get_settings_parser, get_config_parser
 
 __author__ = "DefaltSimon"
@@ -18,7 +19,7 @@ par = get_settings_parser()
 
 # CONSTANTS
 
-MAX_INPUT_LENGTH = 800
+MAX_INPUT_LENGTH = 1100
 
 server_defaults = {
     "name": "",
@@ -40,14 +41,18 @@ server_defaults = {
 # Decorator utility for input validation
 
 
+def security_error(fn, args, kwargs):
+    raise SecurityError("WARNING: function: {}\nParameters: {}, {}".format(fn.__name__, args, kwargs))
+
+
 def validate_input(fn):
     def wrapper(self, *args, **kwargs):
         if max([len(str(a)) for a in args]) > MAX_INPUT_LENGTH:
-            return False
+            security_error(fn, args, kwargs)
 
         for k, v in kwargs.items():
             if (len(str(k)) > MAX_INPUT_LENGTH) or (len(str(v)) > MAX_INPUT_LENGTH):
-                return False
+                security_error(fn, args, kwargs)
 
         # If no filters need to be applied, do everything normally
         return fn(self, *args, **kwargs)
@@ -202,25 +207,36 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
     def bg_save(self):
         return bool(self.redis.bgsave() == b"OK")
 
-    def server_setup(self, server: Guild):
+    # SERVER SETUPS
+    @staticmethod
+    def _default_guild_data(guild):
         # These are server defaults
         s_data = server_defaults.copy()
-        s_data["owner"] = server.owner.id
-        s_data["name"] = server.name
+        s_data["owner"] = guild.owner.id
+        s_data["name"] = guild.name
 
-        sid = "server:{}".format(server.id)
+        # Remove entries with None
+        return {a: b for a, b in s_data.items() if b is not None}
+
+    def server_setup(self, guild: Guild):
+        # These are server defaults
+        s_data = self._default_guild_data(guild)
+
+        sid = "server:{}".format(guild.id)
 
         self.redis.hmset(sid, s_data)
         # commands:id, mutes:id, blacklist:id and sr:id are created automatically when needed
 
-        log.info("New server: {}".format(server.name))
+        log.info("New server: {}".format(guild.name))
 
-    def reset_server(self, server: Guild):
-        sid = "server:{}".format(server.id)
+    def reset_server(self, guild: Guild):
+        server_data = self._default_guild_data(guild)
+        sid = "server:{}".format(guild.id)
+
         self.redis.delete(sid)
-        self.redis.hmset(sid, server_defaults.copy())
+        self.redis.hmset(sid, server_data)
 
-        log.info("Guild reset: {}".format(server.name))
+        log.info("Guild reset: {}".format(guild.name))
 
     def server_exists(self, server_id: int) -> bool:
         return bool(self.redis.exists("server:{}".format(server_id)))
@@ -244,6 +260,8 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
 
         return data
 
+    # GENERAL USE: moderation settings, server vars
+    # TODO investigate uses
     def get_var(self, server_id: int, key: str):
         # If value is in json, it will be a json-encoded string and not parsed
         return decode(self.redis.hget("server:{}".format(server_id), key))
@@ -261,13 +279,13 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
 
     def check_server_vars(self, server: Guild):
         try:
-            serv_ns = "server:{}".format(server.id)
+            sid = "server:{}".format(server.id)
 
-            if int(decode(self.redis.hget(serv_ns, "owner"))) != server.owner.id:
-                self.redis.hset(serv_ns, "owner", server.owner.id)
+            if int(decode(self.redis.hget(sid, "owner"))) != server.owner.id:
+                self.redis.hset(sid, "owner", server.owner.id)
 
-            if decode(self.redis.hget(serv_ns, "name")) != str(server.name):
-                self.redis.hset(serv_ns, "name", server.name)
+            if decode(self.redis.hget(sid, "name")) != str(server.name):
+                self.redis.hset(sid, "name", server.name)
         except AttributeError:
             pass
 
@@ -294,6 +312,7 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
 
         log.info("Deleted server: {}".format(server_id))
 
+    # COMMANDS
     @validate_input
     def set_command(self, server: Guild, trigger: str, response: str) -> bool:
         if len(trigger) > 80:
@@ -319,6 +338,7 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
     def custom_command_exists(self, server_id: int, trigger: str):
         return self.redis.hexists("commands:{}".format(server_id), trigger)
 
+    # CHANNEL BLACKLIST
     @validate_input
     def add_channel_blacklist(self, server_id: int, channel_id: int):
         return bool(self.redis.sadd("blacklist:{}".format(server_id), channel_id))
@@ -334,6 +354,7 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
         serv = "blacklist:{}".format(server_id)
         return list(decode(self.redis.smembers(serv)) or [])
 
+    # PREFIX
     def get_prefix(self, server: Guild) -> str:
         return str(decode(self.redis.hget("server:{}".format(server.id), "prefix")))
 
@@ -341,6 +362,7 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
     def change_prefix(self, server, prefix):
         self.redis.hset("server:{}".format(server.id), "prefix", prefix)
 
+    # MODERATION
     def has_spam_filter(self, server):
         return decode(self.redis.hget("server:{}".format(server.id), SPAMFILTER_SETTING)) is True
 
@@ -353,13 +375,43 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
     def get_log_channel(self, server):
         return decode(self.redis.hget("server:{}".format(server.id), "logchannel"))
 
+    def get_defaultchannel(self, server_id):
+        return decode(self.redis.hget("server:{}".format(server_id), "dchan"))
+
+    @validate_input
+    def set_defaultchannel(self, server, channel_id):
+        self.redis.hset("server:{}".format(server.id), "dchan", channel_id)
+
+    # SETTINGS
+    @validate_input
+    def set_custom_channel(self, guild_id, var_name, value):
+        if var_name not in ["logchannel", "dchan"]:
+            raise TypeError("invalid channel type")
+
+        if value is not None:
+            return bin2bool(self.redis.hset("server:{}".format(guild_id), var_name, value))
+        else:
+            return self.redis.hdel("server:{}".format(guild_id), var_name)
+
+    @validate_input
+    def set_custom_event_message(self, guild_id, var_name, value):
+        if var_name not in ["welcomemsg", "banmsg", "kickmsg", "leavemsg"]:
+            raise TypeError("invalid event type")
+
+        if value is not None:
+            return bin2bool(self.redis.hset("server:{}".format(guild_id), var_name, value))
+        else:
+            return self.redis.hdel("server:{}".format(guild_id), var_name)
+
+    # SLEEPING
     def is_sleeping(self, server_id):
         return decode(self.redis.hget("server:{}".format(server_id), "sleeping"))
 
     @validate_input
     def set_sleeping(self, server, bool_var):
-        self.redis.hset("server:{}".format(server.id), "sleeping", bool_var)
+        self.redis.hset("server:{}".format(server.id), "sleeping", bool(bool_var))
 
+    # MUTING
     @validate_input
     def mute(self, server, user_id):
         serv = "mutes:{}".format(server.id)
@@ -378,24 +430,23 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
         serv = "mutes:{}".format(server.id)
         return list(decode(self.redis.smembers(serv)) or [])
 
-    def get_defaultchannel(self, server_id):
-        return decode(self.redis.hget("server:{}".format(server_id), "dchan"))
-
-    def set_defaultchannel(self, server, channel_id):
-        self.redis.hset("server:{}".format(server.id), "dchan", channel_id)
-
+    # LANGUAGES
+    @validate_input
     def set_lang(self, server_id, language):
         self.redis.hset("server:{}".format(server_id), "lang", language)
 
     def get_lang(self, server_id):
         return decode(self.redis.hget("server:{}".format(server_id), "lang"))
 
+    # SELFROLES
     def get_selfroles(self, server_id):
         return decode(self.redis.smembers("sr:{}".format(server_id)))
 
+    @validate_input
     def add_selfrole(self, server_id, role_name):
         return bin2bool(self.redis.sadd("sr:{}".format(server_id), role_name))
 
+    @validate_input
     def remove_selfrole(self, server_id, role_name):
         return bin2bool(self.redis.srem("sr:{}".format(server_id), role_name))
 
