@@ -206,7 +206,7 @@ Subcommands: `add` `remove`</string>
     <string name="MSG_CMD_NO_CUSTOM">No custom commands on this server. Add one with `{}cmd add trigger|response`!</string>
     <string name="MSG_CMD_LIST">Custom commands: (page **{}**/{})
 ```{}```</string>
-    <string name="MSG_CMD_LIST_NO_PAGE">No such page! There are currently only **{}** command pages.</string>
+    <string name="MSG_CMD_LIST_NO_PAGE">:eyes: No such page! There are currently only **{}** command pages.</string>
     <string name="MSG_CMD_REMOVE_FAIL">:warning: Failed to remove command (does not exist)</string>
     <string name="MSG_CMD_REMOVE_PARAMS">:warning: Please specify a command to remove.</string>
     <string name="MSG_CMD_LIST_TOO_LONG">Your commands are too long to display. Consider cleaning some of them or ask the bot owner to do it for you if you don't remember the commands.</string>
@@ -216,7 +216,7 @@ Subcommands: `add` `remove`</string>
 {}
 
 Please keep in mind that this feature is not yet perfect and some translations might be missing. Also, !help messages are **not** translated.</string>
-    <string name="MSG_LANG_NOT_AVAILABLE">No such language available. :cry:</string>
+    <string name="MSG_LANG_NOT_AVAILABLE">:eyes: No such language available. :cry:</string>
     <string name="MSG_LANG_SET">Language has been set to **{}**. {}</string>
     <string name="MSG_LANG_TRANS">(translators: {})</string>
     <string name="MSG_LANG_CURRENT">You're currently using `{}` ({}), but you probably knew that :stuck_out_tongue:
@@ -240,7 +240,7 @@ Try `{}language list` to see all available languages.</string>
     <string name="MSG_SELFROLE_REMOVED">:ok_hand: Removed **{}** from your list of roles.</string>
     <string name="MSG_SELFROLE_ADDED">:ok_hand: Role added.</string>
     <string name="MSG_SELFROLE_NONE">No selfrole are currently available on this server. Add one with `nano.settings selfrole add [role]` !</string>
-    <string name="MSG_SELFROLE_NO_PAGE">No such page! There are currently only **{}** pages.</string>
+    <string name="MSG_SELFROLE_NO_PAGE">:eyes: No such page! There are currently only **{}** pages.</string>
     <string name="MSG_SELFROLE_TOO_MANY">:warning: Selfrole limit reached! You can only have **{}** selfroles at a time.</string>
 
     <string name="MSG_SETTINGS_WF_OPTIONS">word filter | wordfilter | filter words | filterwords</string>
@@ -464,7 +464,7 @@ You can find me here: https://discord.gg/FZJB6UJ</string>
     <string name="MSG_IMDB_INVALID_USAGE">Invalid command usage, see `{}help imdb`</string>
     <string name="MSG_IMDB_NEED_TITLE">:warning: Need a title to search for.</string>
     <string name="MSG_IMDB_ERROR_REPDEV">Something went wrong, please report it to the dev, preferably with a screenshot. Thanks!</string>
-    <string name="MSG_IMDB_NORESULTS">No results.</string>
+    <string name="MSG_IMDB_NORESULTS">:eyes: No results.</string>
     <string name="MSG_IMDB_CANTPERSON">You can't get the plot of a person :rofl:</string>
     <string name="MSG_IMDB_PLOT">**{}**'s story
 ```{}```</string>
@@ -754,7 +754,8 @@ Direct link: http://steamcommunity.com/id/{}/</string>
 **{}**
 ```{}```</string>
 
-    <string name="MSG_IGDB_NONAME">Please specify a game to search for</string>
+    <string name="MSG_IGDB_NONAME">:mag: Please specify a game to search for.</string>
+    <string name="MSG_IGDB_NO_RESULT">:eyes: No results.</string>
     <string name="MSG_IGDB_GENRES">Genres</string>
     <string name="MSG_IGDB_PUBLISHERS">Publishers</string>
     <string name="MSG_IGDB_RATING">Rating</string>

@@ -24,11 +24,12 @@ log = logging.getLogger(__name__)
 
 
 class Game:
-    __slots__ = ("id", "name", "summary", "genres", "publishers", "rating", "cover_image", "video")
+    __slots__ = ("id", "name", "summary", "genres", "publishers", "rating", "cover_image", "video", "url")
 
     def __init__(self, **fields):
         self.id = fields.get("id")
         self.name = fields.get("name")
+        self.url = fields.get("url")
 
         self.summary = fields.get("summary")
         self.genres = [a["name"] for a in fields.get("genres")]
@@ -51,7 +52,7 @@ class Game:
 class Igdb:
     GAMES = "https://api-2445582011268.apicast.io/games/"
     IMAGES = "https://images.igdb.com/igdb/image/upload/t_{size}/{id}.jpg"
-    VIDEO = "https://www.youtube.com/watch?v={}"
+    VIDEO = "https://youtu.be/{}"
 
     def __init__(self, api_key: str):
         # TODO caching
@@ -72,14 +73,15 @@ class Igdb:
     async def get_game_by_name(self, name: str):
         payload = {
             "search": name,
-            "fields": "name,publishers,summary,total_rating,genres,cover,videos",
+            "fields": "name,publishers,summary,total_rating,genres,cover,videos,url",
             "expand": "genres,publishers",
             "limit": 1
         }
 
         resp = await self._request(Igdb.GAMES, payload)
+        # No result
         if len(resp) < 1:
-            raise ValueError("unexpected: resp has length {}".format(len(resp)))
+            return None
 
         game_obj = Game(**resp[0])
 
@@ -124,28 +126,31 @@ class GameDB:
         # !gamedb [name]
         if startswith(prefix + "gamedb"):
             game_name = message.content[len(prefix + "gamedb "):]
-
             if not game_name:
                 await message.channel.send(trans.get("MSG_IGDB_NONAME", lang))
                 return
 
 
             game = await self.gamedb.get_game_by_name(game_name)
+            if not game:
+                await message.channel.send(trans.get("MSG_IGDB_NO_RESULT", lang))
+                return
 
-            embed = Embed(title=":video_game: **{}**".format(game.name), description=game.summary)
+            embed = Embed(description=game.summary)
             embed.set_image(url=game.cover_image)
+            embed.set_author(name=game.name, url=game.url)
 
             genres = " ".join(["`{}`".format(a) for a in game.genres])
             embed.add_field(name=trans.get("MSG_IGDB_GENRES", lang), value=genres)
             publishers = " ".join(["`{}`".format(a) for a in game.publishers])
-            embed.add_field(name=trans.get("MSG_IGDB_PUBLISHERS", lang), value=publishers)
+            embed.add_field(name=trans.get("MSG_IGDB_PUBLISHERS", lang), value=publishers, inline=False)
 
             if game.rating:
                 rating = "{} / 100".format(int(game.rating))
-                embed.add_field(name=trans.get("MSG_IGDB_RATING", lang), value=rating)
+                embed.add_field(name=trans.get("MSG_IGDB_RATING", lang), value=rating, inline=False)
 
             if game.video:
-                embed.add_field(name=trans.get("MSG_IGDB_VIDEO", lang), value=game.video)
+                embed.add_field(name=trans.get("MSG_IGDB_VIDEO", lang), value=game.video, inline=False)
 
             embed.set_footer(text="Powered by idgb.com")
 
