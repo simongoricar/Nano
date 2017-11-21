@@ -18,13 +18,12 @@ log.setLevel(logging.INFO)
 parser = get_config_parser()
 
 commands = {
-    "_imdb search": {"desc": "Searches for a film/series/person and displays general info", "use": "[command] [film/series title]", "alias": "_tmdb search"},
-    "_imdb trailer": {"desc": "Gives you a link to the trailer of a film/series.", "use": "[command] [film/series title]", "alias": "_tmdb trailer"},
-    "_imdb plot": {"desc": "Displays more plot info about a film/series.", "use": "[command] [film/series title]", "alias": "_tmdb plot"},
-    "_imdb rating": {"desc": "Displays different ratings for the film/series.", "use": "[command] [film/series title]", "alias": "_tmdb rating"},
-    "_imdb help": {"desc": "Displays available commands regarding IMDb.", "use": "[command]", "alias": "_tmdb help"},
+    "_imdb search": {"desc": "Searches for films/tv series and displays things such as release year, summary, ratings, ...", "use": "[command] [film/series title]"},
+    "_imdb trailer": {"desc": "Gives you a link to the trailer of a film/series.", "use": "[command] [film/series title]"},
+    "_imdb plot": {"desc": "Displays more plot info about a film/series.", "use": "[command] [film/series title]"},
+    "_imdb rating": {"desc": "Displays different ratings for the film/series.", "use": "[command] [film/series title]"},
+    "_imdb help": {"desc": "Displays available commands regarding IMDb.", "use": "[command]"},
     "_imdb": {"desc": "Displays all kinds of film/series info. (Powered by https://www.themoviedb.org)\nSubcommands: `search` `trailer` `plot` `rating` `help`", "use": "[command] [subcommand] OR [command] [film/series title (shortcut for search)]"},
-    "_tmdb": {"desc": "Displays all kinds of film/series info. (Powered by https://www.themoviedb.org)\nSubcommands: `search` `trailer` `plot` `rating` `help`", "use": "[command] [subcommand] OR [command] [film/series title (shortcut for search)]"},
 }
 
 valid_commands = commands.keys()
@@ -178,7 +177,7 @@ class TMDb:
             return False
 
         # !imdb
-        if startswith(prefix + "imdb", prefix + "tmdb"):
+        if startswith(prefix + "imdb"):
             # The process can take some time so we show that something is happening
             await message.channel.trigger_typing()
 
