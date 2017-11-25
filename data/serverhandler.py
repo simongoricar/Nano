@@ -488,8 +488,8 @@ class RedisPluginDataManager:
     def get(self, key):
         return decode(self.redis.get(self._make_key(key)))
 
-    def hget(self, name, field):
-        return decode(self.redis.hget(self._make_key(name), field))
+    def hget(self, name, field, use_namespace=True):
+        return decode(self.redis.hget(self._make_key(name) if use_namespace else name, field))
 
     def hgetall(self, name, use_namespace=True):
         return decode(self.redis.hgetall(self._make_key(name) if use_namespace else name))

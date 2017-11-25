@@ -2,6 +2,7 @@
 import configparser
 import aiohttp
 import logging
+from fuzzywuzzy import process, fuzz
 
 try:
     from ujson import loads, dumps
@@ -24,17 +25,17 @@ log = logging.getLogger(__name__)
 
 
 class Game:
-    __slots__ = ("id", "name", "summary", "genres", "publishers", "rating", "cover_image", "video", "url")
-
     def __init__(self, **fields):
         self.id = fields.get("id")
         self.name = fields.get("name")
         self.url = fields.get("url")
 
         self.summary = fields.get("summary")
-        self.genres = [a["name"] for a in fields.get("genres")]
-        self.publishers = [a["name"] for a in fields.get("publishers")]
-        self.rating = fields.get("total_rating")
+        # Optimized for parsing
+        self.genres = "|".join([a["name"] for a in fields.get("genres")])
+        self.publishers = "|".join([a["name"] for a in fields.get("publishers")])
+
+        self.rating = int(fields.get("total_rating")) if fields.get("total_rating") else None
 
         cover = fields.get("cover")
         if cover:
@@ -49,16 +50,107 @@ class Game:
             self.video = None
 
 
+class GameCompat:
+    __slots__ = ("id", "name", "summary", "genres", "publishers", "rating", "cover_image", "video", "url", "_fields")
+
+    def __init__(self, fields):
+        self._fields = fields
+
+        # Parse strings split by |
+        self._fields["genres"] = fields.get("genres").split("|")
+        self._fields["publishers"] = fields.get("publishers").split("|")
+
+    def __getattr__(self, item):
+        return self._fields[item]
+
+
+class IgdbCacheManager:
+    """
+    Layout:
+        namespace: games
+        type: hash
+
+            games:ID
+                hash fields with all
+    """
+    def __init__(self, handler):
+        self._cache = handler.get_cache_handler().get_plugin_data_manager("games")
+
+        self._tmp_names = {}
+        self._fill_name_cache()
+
+    def _fill_name_cache(self):
+        """
+        Fills the local name cache with entries already present in the database
+        """
+        games = self._cache.scan_iter("*")
+
+        for id_ in games:
+            name = self._cache.hget(id_, "name", use_namespace=False)
+
+            self._tmp_names[name] = id_.split(":")[1]
+
+        log.info("Local name cache updated with {} entries".format(len(games)))
+
+    def exists_in_cache(self, id_):
+        return self._cache.exists(id_)
+
+    def _get(self, id_):
+        obj = self._cache.hgetall(id_)
+        if not obj:
+            for name, g_id in list(self._tmp_names.items()):
+                if g_id == id_:
+                    del self._tmp_names[name]
+                    log.debug("Game object was invalid, removed")
+
+            return None
+
+        return obj
+
+    def get_by_id(self, id_):
+        return self._get(id_)
+
+    def get_by_name(self, name):
+        compares = self._tmp_names.keys()
+        if not compares:
+            return None
+
+        highest, score = process.extractOne(name, compares, scorer=fuzz.partial_token_sort_ratio)
+
+        if score > 85:
+            return self._get(self._tmp_names[highest])
+        else:
+            return None
+
+    def add_to_cache(self, item: Game):
+        id_ = item.id
+        # 1 Day of cache
+        ttl = 60 * 60 * 24
+
+        # Add to local "cache"
+        self._tmp_names[item.name] = item.id
+
+        # item = {**item, **{"timestamp": ttl}}
+
+        pipe = self._cache.pipeline()
+
+        pipe.hmset("games:{}".format(id_), item.__dict__)
+        pipe.expire("games:{}".format(id_), ttl)
+
+        pipe.execute()
+        log.info("Added new game to cache")
+
+
 class Igdb:
     GAMES = "https://api-2445582011268.apicast.io/games/"
     IMAGES = "https://images.igdb.com/igdb/image/upload/t_{size}/{id}.jpg"
     VIDEO = "https://youtu.be/{}"
 
-    def __init__(self, api_key: str):
-        # TODO caching
+    def __init__(self, api_key: str, handler, loop):
         self.key = api_key
+        self.cache = IgdbCacheManager(handler)
 
-        self.session = aiohttp.ClientSession()
+        self.session = aiohttp.ClientSession(loop=loop)
 
     async def _request(self, url: str, fields: dict):
         url = build_url(url, **fields)
@@ -71,6 +163,11 @@ class Igdb:
             return await resp.json(loads=loads, content_type=None)
 
     async def get_game_by_name(self, name: str):
+        a = self.cache.get_by_name(name)
+        if a is not None:
+            return GameCompat(a)
+
+
         payload = {
             "search": name,
             "fields": "name,publishers,summary,total_rating,genres,cover,videos,url",
@@ -84,6 +181,7 @@ class Igdb:
             return None
 
         game_obj = Game(**resp[0])
+        self.cache.add_to_cache(game_obj)
 
         return game_obj
 
@@ -91,10 +189,9 @@ class Igdb:
 class GameDB:
     def __init__(self, **kwargs):
         self.handler = kwargs.get("handler")
-        self.nano = kwargs.get("nano")
-        self.client = kwargs.get("client")
         self.stats = kwargs.get("stats")
         self.trans = kwargs.get("trans")
+        self.loop = kwargs.get("loop")
 
         try:
             gamedb_key = parser.get("igdb", "api-key")
@@ -102,7 +199,7 @@ class GameDB:
             log.critical("Missing api key for Igdb, disabling plugin...")
             raise RuntimeError
 
-        self.gamedb = Igdb(gamedb_key)
+        self.gamedb = Igdb(gamedb_key, self.handler, self.loop)
 
     async def on_message(self, message, **kwargs):
         trans = self.trans
