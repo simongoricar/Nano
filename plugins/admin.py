@@ -416,16 +416,14 @@ class Admin:
         self.list = ObjectListReactions(self.client, self.handler, self.trans)
         self.loop.create_task(self.list.track.start_monitoring())
 
-        self.bans = []
-        self.kick_list = []
-
         self.default_channel = None
         self.handle_log_channel = None
+
+        self.modp = self.handler.get_plugin_data_manager("moderation")
 
     async def on_plugins_loaded(self):
         self.default_channel = self.nano.get_plugin("server").get("instance").default_channel
         self.handle_log_channel = self.nano.get_plugin("server").get("instance").handle_log_channel
-        self.kick_list = self.nano.get_plugin("server").get("instance").kicks
 
     async def resolve_role(self, name, message, lang, no_error=False):
         if len(message.role_mentions) > 0:
@@ -729,11 +727,17 @@ class Admin:
                 await message.channel.send(trans.get("MSG_KICK_NANO", lang))
                 return
 
-            self.kick_list.append(user.id)
+            # self.kick_list.append(user.id)
+
             try:
+                # Create an entry in the database
+                self.modp.set("{}:{}".format(message.guild.id, user.id), "kick", ex=10)
+
                 await user.kick()
             except DiscordException:
-                self.kick_list.remove(user.id)
+                await message.channel.send(trans.get("ERROR_PERMS", lang))
+                self.modp.delete("{}:{}".format(message.guild.id, user.id))
+                return
 
             await message.channel.send(trans.get("MSG_KICK", lang).format(user.name))
 
@@ -763,11 +767,15 @@ class Admin:
             except asyncio.TimeoutError:
                 await message.channel.send(trans.get("MSG_BAN_TIMEOUT", lang))
             else:
-                self.bans.append(user.id)
                 try:
+                    # Create an entry in the database
+                    self.modp.set("{}:{}".format(message.guild.id, user.id), "ban", ex=10)
+
                     await user.ban(delete_message_days=0)
                 except DiscordException:
-                    self.bans.remove(user.id)
+                    await message.channel.send(trans.get("ERROR_PERMS", lang))
+                    self.modp.delete("{}:{}".format(message.guild.id, user.id))
+                    return
 
                 await message.channel.send(trans.get("MSG_BAN", lang).format(user.name))
 
@@ -1847,12 +1855,6 @@ class Admin:
     async def on_member_remove(self, member, **_):
         # check for softban
         if self.timer.is_guild_ban(member.guild.id, member.id):
-            return "return"
-
-        # check for normal ban
-        # Prevents double messages
-        elif member.id in self.bans:
-            self.bans.remove(member.id)
             return "return"
 
     async def on_reaction_add(self, reaction, user, **kwargs):

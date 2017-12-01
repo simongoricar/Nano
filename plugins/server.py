@@ -46,8 +46,7 @@ class ServerManagement:
         # Debug
         self.lt = time.time()
 
-        self.bans = []
-        self.kicks = []
+        self.modp = self.handler.get_plugin_data_manager("moderation")
 
     async def handle_log_channel(self, guild):
         # Older servers may still have names of channels, that can cause an error
@@ -314,9 +313,13 @@ class ServerManagement:
         lang = kwargs.get("lang")
 
         # Automatically switches between kick and leave messages
-        if member.id in self.kicks:
+        val = self.modp.get("{}:{}".format(member.guild.id, member.id))
+
+        if val == "kick":
             key = "kickmsg"
-            self.kicks.remove(member.id)
+        # Ignore bans
+        elif val == "ban":
+            return
         else:
             key = "leavemsg"
 
@@ -328,7 +331,9 @@ class ServerManagement:
 
         # Ignore if disabled
         if log_c:
-            embed = self.make_logchannel_embed(member, self.trans.get("EVENT_LEAVE", lang))
+            ev_text = self.trans.get("EVENT_KICK", lang) if key == "kickmsg" else self.trans.get("EVENT_LEAVE", lang)
+
+            embed = self.make_logchannel_embed(member, ev_text)
             await self.send_message_failproof(log_c, embed=embed)
         
         if not is_disabled(leave_msg):
