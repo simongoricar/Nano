@@ -4,7 +4,8 @@
 - Renamed !vote start/end/status to !poll start/end/status
 - Usage overhaul for !poll start
 - Dynamic commands (BETA!)
-- Ratelimiting was added to prevent abuse
+- Rate-limiting of commands prevent abuse
+- More confirmations for stuff
 - Optimizations
 
 3.7.6

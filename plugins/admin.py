@@ -47,6 +47,9 @@ MAX_MSG_AGE = 60 * 3
 # Maximum join/leave/kick/ban message length
 MAX_NOTIF_LENGTH = 800
 
+
+CHECK_EMOJI = "✅"
+
 commands = {
     "_ban": {"desc": "Bans a member.", "use": "[command] [mention/user id]", "alias": "nano.ban"},
     "nano.ban": {"desc": "Bans a member.", "use": "User: [command] [mention]", "alias": "_ban"},
@@ -727,17 +730,28 @@ class Admin:
                 await message.channel.send(trans.get("MSG_KICK_NANO", lang))
                 return
 
-            # self.kick_list.append(user.id)
+            target = await message.channel.send(trans.get("MSG_KICK_CONFIRM", lang).format(user.name, CHECK_EMOJI))
+            await target.add_reaction(CHECK_EMOJI)
+
+            def check(reaction, usr):
+                return usr == message.author and str(reaction.emoji) == CHECK_EMOJI and reaction.message.id == target.id
 
             try:
-                # Create an entry in the database
-                self.modp.set("{}:{}".format(message.guild.id, user.id), "kick", ex=10)
-
-                await user.kick()
-            except DiscordException:
-                await message.channel.send(trans.get("ERROR_PERMS", lang))
-                self.modp.delete("{}:{}".format(message.guild.id, user.id))
+                await self.client.wait_for('reaction_add', timeout=30, check=check)
+            except asyncio.TimeoutError:
+                await message.channel.send(trans.get("MSG_KICK_TIMEOUT", lang))
                 return
+            else:
+
+                try:
+                    # Create an entry in the database
+                    self.modp.set("{}:{}".format(message.guild.id, user.id), "kick", ex=10)
+
+                    await user.kick()
+                except DiscordException:
+                    await message.channel.send(trans.get("ERROR_PERMS", lang))
+                    self.modp.delete("{}:{}".format(message.guild.id, user.id))
+                    return
 
             await message.channel.send(trans.get("MSG_KICK", lang).format(user.name))
 
@@ -756,16 +770,18 @@ class Admin:
                 await message.channel.send(trans.get("MSG_BAN_NANO", lang))
                 return
 
-            confirm = trans.get("INFO_CONFIRM", lang)
-            await message.channel.send(trans.get("MSG_BAN_USER", lang).format(user.name, confirm))
+            target = await message.channel.send(trans.get("MSG_BAN_USER", lang).format(user.name, CHECK_EMOJI))
+            await target.add_reaction(CHECK_EMOJI)
 
-            def is_author(c):
-                return c.author == message.author and c.channel == message.channel and c.content == confirm
+            def check(reaction, usr):
+                return usr == message.author and str(reaction.emoji) == CHECK_EMOJI and reaction.message.id == target.id
 
             try:
-                await client.wait_for("message", check=is_author, timeout=15)
+                await self.client.wait_for('reaction_add', timeout=30, check=check)
             except asyncio.TimeoutError:
                 await message.channel.send(trans.get("MSG_BAN_TIMEOUT", lang))
+                return
+
             else:
                 try:
                     # Create an entry in the database
@@ -851,8 +867,20 @@ class Admin:
                         return
 
             user = await self.resolve_user(name, message, lang)
-
             total_seconds = convert_to_seconds(tim)
+
+            # Wait for confirmation
+            target = await message.channel.send(trans.get("MSG_SOFTBAN_CONFIRM", lang).format(user.name, tim))
+            await target.add_reaction(CHECK_EMOJI)
+
+            def check(reaction, usr):
+                return usr == message.author and str(reaction.emoji) == CHECK_EMOJI and reaction.message.id == target.id
+
+            try:
+                await self.client.wait_for('reaction_add', timeout=30, check=check)
+            except asyncio.TimeoutError:
+                await message.channel.send(trans.get("MSG_SOFTBAN_TIMEOUT", lang))
+                return
 
             self.timer.set_softban(message.guild, user, total_seconds)
             await user.ban(delete_message_days=0)

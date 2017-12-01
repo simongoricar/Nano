@@ -248,7 +248,7 @@ class Vote:
 
             # Wait for confirmation
             msg = await message.channel.send(trans.get("MSG_VOTING_END_CONFIRMATION", lang).format(OK_EMOJI))
-            msg.add_reaction(OK_EMOJI)
+            await msg.add_reaction(OK_EMOJI)
 
             def check(reaction, user):
                 return user == message.author and str(reaction.emoji) == OK_EMOJI
