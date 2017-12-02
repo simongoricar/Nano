@@ -97,7 +97,7 @@ class Help:
 
     async def on_plugins_loaded(self):
         # Collect all commands
-        plugins = [a.get("plugin") for a in self.nano.plugins.values() if a.get("plugin")]
+        plugins = [a.plugin for a in self.nano.plugins.values() if a.plugin]
         cmdslist = [get_raw_commands(b) for b in plugins if get_raw_commands(b)]
 
         for pl_list in cmdslist:

@@ -245,7 +245,7 @@ class Reminder:
         self.loop.create_task(self.reminder.monitor())
 
     async def on_plugins_loaded(self):
-        self.filter = self.nano.get_plugin("commons").get("instance").at_everyone_filter
+        self.filter = self.nano.get_plugin("commons").instance.at_everyone_filter
 
     async def parse_parameters(self, message, cut_length, lang, fail_msg):
         args = message.content[cut_length:].split(":")

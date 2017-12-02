@@ -67,7 +67,7 @@ class Observer:
 
     async def on_plugins_loaded(self):
         # Collect all valid commands
-        plugins = [a.get("plugin") for a in self.nano.plugins.values() if a.get("plugin")]
+        plugins = [a.plugin for a in self.nano.plugins.values() if hasattr(a, "plugin")]
 
         temp = []
         for pl in plugins:

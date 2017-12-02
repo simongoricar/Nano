@@ -425,8 +425,8 @@ class Admin:
         self.modp = self.handler.get_plugin_data_manager("moderation")
 
     async def on_plugins_loaded(self):
-        self.default_channel = self.nano.get_plugin("server").get("instance").default_channel
-        self.handle_log_channel = self.nano.get_plugin("server").get("instance").handle_log_channel
+        self.default_channel = self.nano.get_plugin("server").instance.default_channel
+        self.handle_log_channel = self.nano.get_plugin("server").instance.handle_log_channel
 
     async def resolve_role(self, name, message, lang, no_error=False):
         if len(message.role_mentions) > 0:

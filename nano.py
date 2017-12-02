@@ -86,9 +86,17 @@ handler = ServerHandler.get_handler()
 stats = NanoStats(*ServerHandler.get_redis_credentials())
 trans = TranslationManager()
 
+
+class PluginObject:
+    def __init__(self, lib, instance):
+        self.plugin = lib
+        self.handler = getattr(lib, "NanoPlugin")
+
+        self.instance = instance
+        self.events = self.handler.events
+
+
 # Singleton metaclass
-
-
 class Singleton(type):
     _instances = {}
 
@@ -112,108 +120,83 @@ class Nano(metaclass=Singleton):
         self.plugins = {}
         self.plugin_events = {a: [] for a in EVENTS}
         self.event_types = set(self.plugin_events.keys())
-        self._plugin_events = dict(self.plugin_events)
 
         # Updates the plugin list
         self.update_plugins()
 
     def update_plugins(self):
         started = time.monotonic()
-        self.plugin_names = [pl for pl in os.listdir(PLUGINS_DIR)
-                             if os.path.isfile(os.path.join(PLUGINS_DIR, pl)) and str(pl).endswith(".py")]
+        plugin_names = [pl[:-3] for pl in os.listdir(PLUGINS_DIR)
+                        if os.path.isfile(os.path.join(PLUGINS_DIR, pl))
+                        and pl.endswith(".py")]
 
-        self._update_plugins(self.plugin_names)
+        self._update_plugins(plugin_names)
 
         log.info("Plugins loaded in {}s".format(round(time.monotonic() - started, 3)))
 
-    def _update_plugins(self, plugin_names):
-        """
-        Updates all plugins (imports them).
-        """
+    def _update_plugins(self, names: list):
         log.info("Loading plugins...")
 
+        loaded = []
         failed = []
         disabled = []
 
-        for p_name in list(plugin_names):
-            # Use the importlib to dynamically import all plugins
+        for plug_name in list(names):
+            # Import the plugin
             try:
-                plug = importlib.import_module("{}.{}".format(PLUGINS_DIR, p_name[:-3]))
+                plugin = importlib.import_module("{}.{}".format(PLUGINS_DIR, plug_name))
             except ImportError:
-                log.warning("Failed import: {}".format(p_name))
+                log.warning("Couldn't import {}".format(plug_name))
                 log.critical(traceback.format_exc())
-
-                self.plugin_names.pop(self.plugin_names.index(p_name))
-                failed.append(p_name)
+                failed.append(plug_name)
 
                 continue
 
-            # If this file is not a plugin (does not have a class NanoPlugin), ignore it
-            try:
-                assert plug.NanoPlugin
-                # If plugin has attribute 'disabled' and it is True, disable the plugin
-                if hasattr(plug.NanoPlugin, "disabled") and plug.NanoPlugin.disabled is True:
-                    raise AssertionError
+            # Plugin loaded, check validity
+            # Plugin must have a class NanoPlugin, see examples in plugins/
+            if not hasattr(plugin, "NanoPlugin"):
+                log.warning("Plugin {} does not have the required NanoPlugin class".format(plug_name))
+                failed.append(plug_name)
 
-            except (AttributeError, AssertionError):
-                # remove it from the plugin list and delete it
-                self.plugin_names.pop(self.plugin_names.index(p_name))
-                disabled.append(p_name)
-
-                del plug
+                del plugin
                 continue
 
-            cls = plug.NanoPlugin.handler
-            events = plug.NanoPlugin.events
-            # Instantiate the plugin
-            try:
-                instance = cls(client=client,
-                               loop=loop,
-                               handler=handler,
-                               nano=self,
-                               stats=stats,
-                               trans=trans)
+            info = getattr(plugin, "NanoPlugin")
 
-            # This can be raised by plugins as a message: "I want to be disabled"
+            handler_cls = info.handler
+
+            # Make an instance
+            try:
+                inst = handler_cls(client=client,
+                                   loop=loop,
+                                   handler=handler,
+                                   nano=self,
+                                   stats=stats,
+                                   trans=trans)
+            # A plugin can raise RuntimeError to indicate it doesn't want to be loaded
             except RuntimeError:
-                self.plugin_names.pop(self.plugin_names.index(p_name))
-                disabled.append(p_name)
+                disabled.append(plug_name)
 
-                del plug
+                del plugin
                 continue
-
+            # Other exceptions make it fail
             except Exception:
-                log.warning("Unexpected error in {}".format(p_name))
+                log.warning("Failed to instantiate {}".format(plug_name))
                 log.critical(traceback.format_exc())
 
-                self.plugin_names.pop(self.plugin_names.index(p_name))
-                failed.append(p_name)
-
-                del plug
+                del plugin
                 continue
 
-            def get_callback(plugin, fn_name):
-                return getattr(plugin, fn_name, None)
+            self.plugins[plug_name] = PluginObject(plugin, inst)
+            loaded.append(plug_name)
 
-            self.plugins[p_name] = {
-                "plugin": plug,
-                "handler": cls,
-                "instance": instance,
-                "events": events,
-                # Speeds up executing
-                "event_cbs": {
-                    a: get_callback(instance, a) for a in events.keys()
-                }
-            }
+        self.plugin_names = loaded
 
-            for event, importance in events.items():
-                self._plugin_events[event].append({"plugin": p_name, "importance": importance})
+        log.debug("Plugins: {}".format(self.plugin_names))
 
-        log.debug("Registered plugins: {}".format([str(p).rstrip(".py") for p in self.plugin_names]))
-
-        # Display ignored / failed plugins
+        # Warn if any plugins failed to load
         if disabled:
-            log.warning("Ignored/Disabled plugins: {}".format(", ".join(disabled)))
+            log.warning("Disabled plugins: {}".format(", ".join(disabled)))
 
         if failed:
             log.warning("Failed plugins: {}".format(", ".join(failed)))
@@ -222,118 +205,100 @@ class Nano(metaclass=Singleton):
 
         asyncio.ensure_future(self.dispatch_event(ON_PLUGINS_LOADED))
 
-    async def reload_plugin(self, plug_name: str):
-        if not plug_name.endswith(".py"):
-            plug_name += ".py"
+    async def reload_plugin(self, name: str):
+        log.info("Reloading plugin: {}".format(name))
+
+        if name.endswith(".py"):
+            name = name[:-3]
 
         # Verify that the plugin is actually already loaded
-        plug_info = self.get_plugin(plug_name)
-        if not plug_info:
-            return False
+        if name not in self.plugins.keys():
+            raise NotImplementedError
+
+        plug = self.get_plugin(name)
+        assert isinstance(plug, PluginObject)
 
         # Gracefully reload if the plugin has ON_SHUTDOWN event
-        if ON_SHUTDOWN in plug_info.get("events").keys():
-            await getattr(plug_info.get("instance"), ON_SHUTDOWN)()
-
-        # Remove the current cached events
-        for event, imp in plug_info.get("events").items():
-            self._plugin_events[event].remove({"plugin": plug_name, "importance": imp})
+        if ON_SHUTDOWN in plug.events.keys():
+            await getattr(plug.instance, ON_SHUTDOWN)()
 
         # Reload the plugin
         try:
-            plugin = importlib.reload(plug_info.get("plugin"))
+            plugin = importlib.reload(plug.plugin)
         except ImportError:
-            log.warning("Failed import: {}".format(plug_name))
+            log.warning("Couldn't reload {}".format(name))
             log.critical(traceback.format_exc())
+            raise RuntimeError
 
-            return False
-
-        try:
-            assert plugin.NanoPlugin
-            # If plugin has attribute 'disabled' and it is True, disable the plugin
-            if hasattr(plugin.NanoPlugin, "disabled") and plugin.NanoPlugin.disabled is True:
-                raise AssertionError
-
-        except (AttributeError, AssertionError):
-            # remove it from the plugin list and delete it
-            self.plugin_names.pop(self.plugin_names.index(plug_name))
+        # Plugin loaded, check validity
+        # Plugin must have a class NanoPlugin, see examples in plugins/
+        if not hasattr(plugin, "NanoPlugin"):
+            log.warning("Plugin {} does not have the required NanoPlugin class".format(name))
 
             del plugin
-            return -1
+            raise RuntimeError
 
-        cls = plugin.NanoPlugin.handler
-        events = plugin.NanoPlugin.events
+        info = getattr(plugin, "NanoPlugin")
+        events = info.events
+        handler_cls = info.handler
 
-        # Instantiate the plugin
+        # Make an instance
         try:
-            instance = cls(client=client,
-                           loop=loop,
-                           handler=handler,
-                           nano=self,
-                           stats=stats,
-                           trans=trans)
-
-
-        # This can be raised by plugins as a message: "I want to be disabled"
+            inst = handler_cls(client=client,
+                               loop=loop,
+                               handler=handler,
+                               nano=self,
+                               stats=stats,
+                               trans=trans)
+        # A plugin can raise RuntimeError to indicate it doesn't want to be loaded
         except RuntimeError:
-            self.plugin_names.pop(self.plugin_names.index(plug_name))
-
             del plugin
-            return -1
-
+            raise RuntimeError
+        # Other exceptions make it fail
         except Exception:
-            log.warning("Unexpected error while reloading in {}".format(plug_name))
+            log.warning("Failed to reload and instantiate {}".format(name))
             log.critical(traceback.format_exc())
 
-            self.plugin_names.pop(self.plugin_names.index(plug_name))
-
             del plugin
-            return -1
+            raise RuntimeError
 
-        def get_callback(p, fn_name):
-            return getattr(p, fn_name, None)
-
-        self.plugins[plug_name] = {
-            "plugin": plug_info,
-            "handler": cls,
-            "instance": instance,
-            "events": events,
-            "event_cbs": {
-                a: get_callback(instance, a) for a in events.keys()
-            }
-        }
-
-        for event, importance in events.items():
-            self._plugin_events[event].append({"plugin": plug_name, "importance": importance})
+        self.plugins[name] = PluginObject(plugin, inst)
 
         self._parse_priorities()
+
         # Call ON_PLUGINS_LOADED if the plugin requires it
         if ON_PLUGINS_LOADED in events.keys():
-            await getattr(instance, ON_PLUGINS_LOADED)()
+            await getattr(inst, ON_PLUGINS_LOADED)()
 
+        log.info("Plugin reloaded: {}".format(name))
         return True
 
     def _parse_priorities(self):
         log.info("Parsing priorities...")
 
-        pe_copy = deepcopy(self._plugin_events)
-        for element, thing in pe_copy.items():
-            # Skip if empty
-            if not element or not thing:
-                continue
+        temp = {}
 
-            sorted_list = sorted(thing, key=lambda a: a.get("importance"))
-            sorted_list = [it.get("plugin") for it in list(sorted_list)]
+        for p in self.plugins.values():
+            assert isinstance(p, PluginObject)
 
-            self.plugin_events[element] = sorted_list
+            for ev_name, priority in p.events.items():
+                if not temp.get(ev_name):
+                    temp[ev_name] = []
 
-        del self._plugin_events
+                temp[ev_name].append({"callback": getattr(p.instance, ev_name), "importance": priority})
+
+        # Order callbacks
+        for event, unordered in temp.items():
+            ordered = sorted(unordered, key=lambda a: a["importance"])
+            ordered = [i["callback"] for i in ordered]
+
+            self.plugin_events[event] = ordered
 
     def get_plugin(self, name: str) -> dict:
-        if not name.endswith(".py"):
-            name += ".py"
+        if name.endswith(".py"):
+            name = name[:-3]
 
-        return self.plugins.get(name)
+        return self.plugins[name]
 
     async def dispatch_event(self, event_type, *args, **kwargs):
         """
@@ -348,11 +313,11 @@ class Nano(metaclass=Singleton):
             return
 
         # Plugins have already been ordered from most important to least important
-        for plugin in self.plugin_events[event_type]:
-            log.debug("Executing plugin {}:{}".format(plugin.strip(".py"), event_type))
+        for cb in self.plugin_events[event_type]:
+            # log.debug("Executing plugin {}:{}".format(cb.strip(".py"), event_type))
 
             # Execute the corresponding method in the plugin
-            resp = await self.plugins[plugin]["event_cbs"][event_type](*args, **kwargs)
+            resp = await cb(*args, **kwargs)
 
             # COMMUNICATION
             # If data is passed, assign proper variables

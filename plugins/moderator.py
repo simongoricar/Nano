@@ -166,7 +166,7 @@ class LogManager:
         self.running = True
 
     async def get_plugin(self):
-        self.getter = self.nano.get_plugin("server").get("instance")
+        self.getter = self.nano.get_plugin("server").instance
 
     async def send_log(self, message: Message, lang, reason=""):
         if not self.getter:
@@ -207,7 +207,7 @@ class Moderator:
 
     async def on_plugins_loaded(self):
         # Collect all valid commands
-        plugins = [a.get("plugin") for a in self.nano.plugins.values() if a.get("plugin")]
+        plugins = [a.plugin for a in self.nano.plugins.values() if a.plugin]
 
         temp = []
         for pl in plugins:

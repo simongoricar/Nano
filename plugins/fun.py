@@ -269,7 +269,7 @@ class Fun:
         self.everyone_filter = None
 
     async def on_plugins_loaded(self):
-        self.everyone_filter = self.nano.get_plugin("commons").get("instance").at_everyone_filter
+        self.everyone_filter = self.nano.get_plugin("commons").instance.at_everyone_filter
 
     async def on_message(self, message, **kwargs):
         trans = self.trans

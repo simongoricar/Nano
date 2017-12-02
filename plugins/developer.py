@@ -169,7 +169,7 @@ class DevFeatures:
         self.default_channel = None
 
     async def on_plugins_loaded(self):
-        self.default_channel = self.nano.get_plugin("server").get("instance").default_channel
+        self.default_channel = self.nano.get_plugin("server").instance.default_channel
 
     async def on_message(self, message, **kwargs):
         client = self.client
@@ -242,7 +242,7 @@ class DevFeatures:
 
         # nano.dev.tf.reload
         elif startswith("nano.dev.tf.clean"):
-            self.nano.get_plugin("tf2").get("instance").tf.request()
+            self.nano.get_plugin("tf2").instance.tf.request()
 
             await message.channel.send("Re-downloaded data...")
 
@@ -250,13 +250,12 @@ class DevFeatures:
         elif startswith("nano.dev.plugin.reload"):
             name = message.content[len("nano.dev.plugin.reload "):]
 
-            v_old = self.nano.get_plugin(name).get("plugin").NanoPlugin.version
+            v_old = self.nano.get_plugin(name).plugin.NanoPlugin.version
             s = await self.nano.reload_plugin(name)
-            v_new = self.nano.get_plugin(name).get("plugin").NanoPlugin.version
+            v_new = self.nano.get_plugin(name).plugin.NanoPlugin.version
 
             if s:
-                await message.channel.send("Successfully reloaded **{}**\n"
-                                                           "From version *{}* to *{}*.".format(name, v_old, v_new))
+                await message.channel.send("Successfully reloaded **{}**\nFrom version *{}* to *{}*.".format(name, v_old, v_new))
             else:
                 await message.channel.send("Something went wrong, check the logs.")
 

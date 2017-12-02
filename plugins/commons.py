@@ -268,8 +268,8 @@ class Commons:
         self.parser = Parser()
 
     async def on_plugins_loaded(self):
-        self.getter = self.nano.get_plugin("server").get("instance")
-        self.resolve_user = self.nano.get_plugin("admin").get("instance").resolve_user
+        self.getter = self.nano.get_plugin("server").instance
+        self.resolve_user = self.nano.get_plugin("admin").instance.resolve_user
 
     async def log_say_command(self, message, content, prefix, lang):
         log_channel = await self.getter.handle_log_channel(message.guild)

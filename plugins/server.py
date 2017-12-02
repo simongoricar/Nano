@@ -186,8 +186,8 @@ class ServerManagement:
             nano_version = self.nano.version
             discord_version = d_version
 
-            reminders = self.nano.get_plugin("reminder").get("instance").reminder.get_reminder_amount()
-            polls = self.nano.get_plugin("voting").get("instance").vote.get_vote_amount()
+            reminders = self.nano.get_plugin("reminder").instance.reminder.get_reminder_amount()
+            polls = self.nano.get_plugin("voting").instance.vote.get_vote_amount()
 
             # Redis db stats
             redis_mem = self.handler.db_info("memory").get("used_memory_human")
@@ -379,7 +379,6 @@ class NanoPlugin:
         "on_message": 10,
         "on_ready": 11,
         "on_member_join": 10,
-        "on_member_ban": 10,
         "on_member_remove": 10,
         "on_guild_join": 9,
         "on_guild_remove": 9,
