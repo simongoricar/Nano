@@ -292,36 +292,28 @@ class ServerManagement:
         if not is_disabled(welcome_msg):
             await self.send_message_failproof(def_c, welcome_msg)
 
-    async def on_member_ban(self, guild, member, **kwargs):
-        lang = kwargs.get("lang")
-
-        raw_msg = str(self.handler.get_var(guild.id, "banmsg"))
-        ban_msg = self.parse_dynamic_response(raw_msg, member, guild)
-
-        log_c = await self.handle_log_channel(guild)
-        def_c = await self.default_channel(guild)
-
-        # Ignore if disabled
-        if log_c:
-            embed = self.make_logchannel_embed(member, self.trans.get("EVENT_BAN", lang))
-            await self.send_message_failproof(log_c, embed=embed)
-
-        if not is_disabled(ban_msg):
-            await self.send_message_failproof(def_c, ban_msg)
-
     async def on_member_remove(self, member, **kwargs):
+        """
+        Bans, kicks, softbans and leaves are all handled here
+        """
         lang = kwargs.get("lang")
 
-        # Automatically switches between kick and leave messages
+        # Automatically switches between kick/leave/... messages
         val = self.modp.get("{}:{}".format(member.guild.id, member.id))
 
         if val == "kick":
             key = "kickmsg"
-        # Ignore bans
+            ev_text = self.trans.get("EVENT_KICK", lang)
+        elif val == "softban":
+            key = "banmsg"
+            ev_text = self.trans.get("EVENT_SOFTBAN", lang)
         elif val == "ban":
-            return
+            key = "banmsg"
+            ev_text = self.trans.get("EVENT_BAN", lang)
         else:
             key = "leavemsg"
+            ev_text = self.trans.get("EVENT_LEAVE", lang)
+
 
         raw_msg = str(self.handler.get_var(member.guild.id, key))
         leave_msg = self.parse_dynamic_response(raw_msg, member, member.guild)
@@ -331,8 +323,6 @@ class ServerManagement:
 
         # Ignore if disabled
         if log_c:
-            ev_text = self.trans.get("EVENT_KICK", lang) if key == "kickmsg" else self.trans.get("EVENT_LEAVE", lang)
-
             embed = self.make_logchannel_embed(member, ev_text)
             await self.send_message_failproof(log_c, embed=embed)
         

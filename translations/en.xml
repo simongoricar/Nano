@@ -772,6 +772,7 @@ Direct link: http://steamcommunity.com/id/{}/</string>
     <string name="EVENT_JOIN">joined</string>
     <string name="EVENT_LEAVE">left</string>
     <string name="EVENT_KICK">was kicked</string>
+    <string name="EVENT_SOFTBAN">was soft-banned</string>
     <string name="EVENT_BAN">was banned</string>
     <string name="EVENT_SERVER_JOIN">**Hi!** I'm Nano!
 Now that you have invited me to your server, you might want to set up some things. Right now only the server owner can use my restricted commands. But no worries, you can add admin permissions to others by assigning them a role named **Nano Admin**!

@@ -844,8 +844,8 @@ class Admin:
                 name, tim = name.strip(" "), tim.strip(" ")
             # In case the value can't be unpacked: no |
             except ValueError:
+                # Try notation with 'for'
                 if len(message.mentions) == 0:
-                    # Try notation with for
                     try:
                         name, tim = cut.rsplit("for", maxsplit=1)
                         name, tim = name.strip(" "), tim.strip(" ")
@@ -857,8 +857,8 @@ class Admin:
 
                         return
 
+                # Alternate method: @mention [time] (without |)
                 else:
-                    # Alternate method: @mention [time] (without |)
                     name = message.mentions[0].name
                     tim = cut.replace("<@{}>".format(message.mentions[0].id), "").strip(" ")
 
@@ -868,9 +868,11 @@ class Admin:
 
             user = await self.resolve_user(name, message, lang)
             total_seconds = convert_to_seconds(tim)
+            # Makes it pretty
+            pretty_time = resolve_time(total_seconds, lang)
 
             # Wait for confirmation
-            target = await message.channel.send(trans.get("MSG_SOFTBAN_CONFIRM", lang).format(user.name, tim))
+            target = await message.channel.send(trans.get("MSG_SOFTBAN_CONFIRM", lang).format(user.name, pretty_time, CHECK_EMOJI))
             await target.add_reaction(CHECK_EMOJI)
 
             def check(reaction, usr):
@@ -882,8 +884,16 @@ class Admin:
                 await message.channel.send(trans.get("MSG_SOFTBAN_TIMEOUT", lang))
                 return
 
-            self.timer.set_softban(message.guild, user, total_seconds)
-            await user.ban(delete_message_days=0)
+            try:
+                # Create an entry in the database
+                self.timer.set_softban(message.guild, user, total_seconds)
+                self.modp.set("{}:{}".format(message.guild.id, user.id), "softban", ex=10)
+
+                await user.ban(delete_message_days=0)
+            except DiscordException:
+                await message.channel.send(trans.get("ERROR_PERMS", lang))
+                self.modp.delete("{}:{}".format(message.guild.id, user.id))
+                return
 
             await message.channel.send(trans.get("MSG_SOFTBAN_SUCCESS", lang).format(user.name, resolve_time(total_seconds, lang)))
 
