@@ -37,7 +37,7 @@ if not os.path.isfile(SETTINGS_FILE):
     must_shutdown = True
     print("No settings.ini present! Please fill out the empty one!")
 
-    with open("settingsExample.ini") as ex:
+    with open("settings.ini.example") as ex:
         with open(SETTINGS_FILE, "w") as sett:
             sett.write(ex.read())
 
@@ -46,7 +46,7 @@ if not os.path.isfile(PLUGIN_CONFIG_PATH):
     must_shutdown = True
     print("No plugins/config.ini present! Please fill out the empty one!")
 
-    with open(os.path.join(PLUGINS_DIR, "configExample.ini")) as ex:
+    with open(os.path.join(PLUGINS_DIR, "config.ini.example")) as ex:
         with open(PLUGIN_CONFIG_PATH, "w") as sett:
             sett.write(ex.read())
 

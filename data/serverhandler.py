@@ -66,7 +66,7 @@ def validate_input(fn):
 class ServerHandler:
     @staticmethod
     def get_redis_credentials() -> tuple:
-        setup_type = 1 if par.get("Redis", "setup") == "envirovment" else 2
+        setup_type = 1 if par.get("Redis", "setup") == "environment" else 2
 
         if setup_type == 1:
             redis_ip = os.environ["REDIS_HOST"]
