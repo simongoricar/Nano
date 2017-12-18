@@ -42,7 +42,7 @@ valid_commands = commands.keys()
 
 class Achievement:
     __slots__ = (
-        "_images", "font_mc", "__dict__"
+        "cached_sizes", "font_mc", "__dict__"
     )
 
     # Only one instance, speeds up the access
@@ -77,20 +77,20 @@ class Achievement:
 
         log.info("Found sizes: {}".format(", ".join([str(a) for a in self._image_sizes])))
 
-        self._images = {}
+        self.cached_sizes = {}
 
         for size, fn in zip(self._image_sizes, imgs):
-            self._images[size] = Image.open(os.path.join(temp_path, fn))
+            self.cached_sizes[size] = Image.open(os.path.join(temp_path, fn))
 
     def get_matching_image(self, text_length: int) -> Image:
         # Find the proper image to put this onto
         for size in self._image_sizes:
             if text_length <= size:
                 # Return a copy
-                return copy(self._images[size])
+                return copy(self.cached_sizes[size])
 
         # None found? Return the biggest one
-        return copy(self._images[max(self._image_sizes)])
+        return copy(self.cached_sizes[max(self._image_sizes)])
 
     def create_image(self, text):
         # Shorten really long text

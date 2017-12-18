@@ -94,7 +94,6 @@ commands = {
     "nano.settings selfrole add": {"desc": "Adds a role to server's selfroles.", "use": "[command] [role name]"},
     "nano.settings selfrole remove": {"desc": "Removes a role from server's selfrole list.", "use": "[command] [role name]"},
 
-
     "nano.displaysettings": {"desc": "Displays all server settings."},
     "nano.changeprefix": {"desc": "Changes the prefix on the server.", "use": "[command] prefix"},
     "nano.serverreset": {"desc": "Resets all server settings to the default."},
@@ -109,6 +108,11 @@ commands = {
 
     "_selfrole": {"desc": "Selfroles allow normal members to give themselves role(s) without an admin's supervision (see `_selfrole list` for a list of available selfoles)\nIf you already have the role, this command removes it.", "use": "[command] [role name]"},
     "_selfrole list": {"desc": "Lists the current selfroles on this server,", "use": "[command]"},
+
+    "_permission": {"desc": "A shortcut for giving other people Nano permissions. Subcommands: `admin` `mod` `help`"},
+    "_permission admin": {"desc": "A shortcut for giving other people the Nano Admin permissions", "use": "[command] @mention"},
+    "_permission mod": {"desc": "A shortcut for giving other people the Nano Mod permissions", "use": "[command] @mention"},
+    "_permission help": {"desc": "Displays help for the _permission command", "use": "[command]"},
 
 }
 
@@ -584,6 +588,33 @@ class Admin:
         embed.add_field(name=self.trans.get("INFO_CHANNEL", lang), value=message.channel.mention)
 
         await log_channel.send(embed=embed)
+
+    async def handle_permission_command(self, member, permission: str, lang):
+        """
+        Returns:
+        True if permission is assigned and
+        False if user already had that role and it has been removes
+        """
+        if permission not in ["Nano Admin", "Nano Mod"]:
+            raise RuntimeError("1. someone is trying hax or 2. your code is shit")
+
+        # Check if role exists
+        valid_roles = [r for r in member.guild.roles if r.name == permission]
+
+        if len(valid_roles) == 0:
+            # Create role
+            # Defaults to no permissions
+            role = await member.guild.create_role(name=permission, reason=self.trans.get("MSG_PERMISSION_CREATION_REASON", lang))
+        else:
+            role = valid_roles[0]
+
+        if role in member.roles:
+            await member.remove_roles(role)
+            return False
+        else:
+            await member.add_roles(role, reason=self.trans.get("MSG_PERMISSION_ASSIGN_REASON", lang))
+            return True
+
 
     async def on_message(self, message, **kwargs):
         client = self.client
@@ -1889,6 +1920,95 @@ class Admin:
             # FINAL MESSAGE, formats with new prefix
             msg_final = trans.get("MSG_SETUP_COMPLETE", lang).replace("_", str(ch2.content))
             await message.channel.send(msg_final)
+
+        # !permission
+        elif startswith(prefix + "permission"):
+            # EXPLANATION
+            # Owners can assign admins and mods
+            # Admins can assign mods, but not admins
+            # Mods can't assign anything
+
+            # Autofix "common" mistakes
+            if startswith(prefix + "permissions "):
+                raw = message.content[len(prefix + "permissions "):]
+            else:
+                raw = message.content[len(prefix + "permission "):]
+
+            if not raw:
+                await message.channel.send(trans.get("MSG_PERMISSION_NOARG", lang))
+                return
+
+            cut = raw.split(" ", 1)
+            try:
+                setting, arg = cut[0].strip(" "), cut[1].strip(" ")
+            except IndexError:
+                setting, arg = cut[0], ""
+
+            # !permission admin @mention
+            if setting == "admin":
+                if not message.author.id == message.guild.owner.id:
+                    await message.channel.send(trans.get("MSG_PERMISSION_MISSINGPERM_A", lang))
+                    return
+
+                user = await self.resolve_user(arg, message, lang)
+
+                target = await message.channel.send(trans.get("MSG_PERMISSION_ADMIN_CONFIRM", lang).format(user.name, CHECK_EMOJI))
+                await target.add_reaction(CHECK_EMOJI)
+
+                def check(reaction, usr):
+                    return usr == message.author and \
+                           str(reaction.emoji) == CHECK_EMOJI and \
+                           reaction.message.id == target.id
+
+                try:
+                    await self.client.wait_for('reaction_add', timeout=30, check=check)
+                except asyncio.TimeoutError:
+                    await message.channel.send(trans.get("MSG_PERMISSION_TIMEOUT", lang))
+                    return
+
+                # Is ok, execute command
+                resp = await self.handle_permission_command(user, "Nano Admin", lang)
+                # Permission added
+                if resp:
+                    await message.channel.send(trans.get("MSG_PERMISSION_ADMIN_A", lang).format(user.name))
+                # Permission removed
+                else:
+                    await message.channel.send(trans.get("MSG_PERMISSION_ADMIN_R", lang).format(user.name))
+
+            # !permission mod @mention
+            elif setting == "mod":
+                # No need to check admin permissions, mods cant reach this
+                user = await self.resolve_user(arg, message, lang)
+
+                target = await message.channel.send(trans.get("MSG_PERMISSION_MOD_CONFIRM", lang).format(user.name, CHECK_EMOJI))
+                await target.add_reaction(CHECK_EMOJI)
+
+                def check(reaction, usr):
+                    return usr == message.author and \
+                           str(reaction.emoji) == CHECK_EMOJI and \
+                           reaction.message.id == target.id
+
+                try:
+                    await self.client.wait_for('reaction_add', timeout=30, check=check)
+                except asyncio.TimeoutError:
+                    await message.channel.send(trans.get("MSG_PERMISSION_TIMEOUT", lang))
+                    return
+
+                # Is ok, execute command
+                resp = await self.handle_permission_command(user, "Nano Mod", lang)
+                # Permission added
+                if resp:
+                    await message.channel.send(trans.get("MSG_PERMISSION_MOD_A", lang).format(user.name))
+                # Permission removed
+                else:
+                    await message.channel.send(trans.get("MSG_PERMISSION_MOD_R", lang).format(user.name))
+
+            # !permission/!permission help
+            elif setting == "help":
+                await message.channel.send(trans.get("MSG_PERMISSION_HELP", lang).replace("_", prefix))
+
+            else:
+                await message.channel.send(trans.get("MSG_PERMISSION_WRONGARG", lang).replace("_", prefix))
 
     async def on_member_remove(self, member, **_):
         # check for softban

@@ -343,7 +343,6 @@ class Nano(metaclass=Singleton):
                 # RETURN
                 # Exits the current event immediately and doesn't call any more plugins
                 if cmd == "return":
-                    log.debug("Exiting loop")
                     return
 
                 # ADD_VAR

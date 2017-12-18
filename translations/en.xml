@@ -381,6 +381,24 @@ Admin and mod commands can only be used by people with a role named "Nano Admin"
 You and all admins can also add/remove/list custom commands with `>cmd add/remove/list command|response`.
 For a list of admin commands and their explanations, please refer to &lt;http://nanobot.pw/commands.html#admin></string>
 
+    <string name="MSG_PERMISSION_NOARG">:warning: Missing arguments, check the help command.</string>
+    <string name="MSG_PERMISSION_WRONGARG">:warning: Invalid subcommand, check `_permission help`</string>
+    <string name="MSG_PERMISSION_CREATION_REASON">The permission command has been executed, creating permission role.</string>
+    <string name="MSG_PERMISSION_ASSIGN_REASON">The permission command has been executed, assigned that permission.</string>
+    <string name="MSG_PERMISSION_ADMIN_CONFIRM">:eyes: Are you sure you want to give **{}** admin permissions? Confirm by reacting with {}</string>
+    <string name="MSG_PERMISSION_MOD_CONFIRM">:eyes: Are you sure you want to give **{}** mod permissions? Confirm by reacting with {}</string>
+    <string name="MSG_PERMISSION_MISSINGPERM_M">:warning: You do not have the correct permissions to assign mod permissions (you must be an admin or the owner)</string>
+    <string name="MSG_PERMISSION_MISSINGPERM_A">:warning: You do not have the correct permissions to assign admin permissions (you must be the owner)</string>
+    <string name="MSG_PERMISSION_TIMEOUT">:eyes: Timed out while waiting for response.</string>
+
+    <string name="MSG_PERMISSION_ADMIN_A">:ok_hand: **{}** now has admin permissions</string>
+    <string name="MSG_PERMISSION_ADMIN_R">:ok_hand: Removed admin permissions from **{}**</string>
+    <string name="MSG_PERMISSION_MOD_A">:ok_hand: **{}** now has mod permissions</string>
+    <string name="MSG_PERMISSION_MOD_R">:ok_hand: Removed mod permissions from **{}**</string>
+    <string name="MSG_PERMISSION_HELP">**The _permission command is designed to help you quickly add/remove admins and mods.**
+To give a user admin permissions, use _permission admin @mention (if that user is already an admin, it will remove the permission)
+To give a user mod permissions, use _permission mod @mention (same applies here)</string>
+
     <string name="MSG_PING_MEASURING">:ping_pong: Measuring...</string>
     <string name="MSG_PING_RESULT">:ping_pong: **Pong!** (lag: {} ms, reaction: {} ms)</string>
     <string name="MSG_LOGPOST_SAY">Executed {}say</string>

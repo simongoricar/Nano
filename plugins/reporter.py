@@ -65,6 +65,7 @@ class Reporter:
             log_to_file("EXCEPTION in {}: {}".format(event, readable), "bug")
 
             exc = traceback.format_exc()
+            traceback.print_exc()
             log_to_file(exc, "bug")
 
             log.warning("Something went wrong, see bugs.txt")
