@@ -183,7 +183,7 @@ class Igdb:
         game_obj = Game(**resp[0])
         self.cache.add_to_cache(game_obj)
 
-        return game_obj
+        return GameCompat(game_obj.__dict__)
 
 
 class GameDB:

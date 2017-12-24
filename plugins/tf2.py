@@ -205,7 +205,7 @@ class CommunityPrices:
                     data = load(cache)
 
                 # Malformed json data
-                except JSONDecodeError:
+                except (JSONDecodeError, ValueError):
                     data = await self._request()
 
                 # Everything is fine, validate data
