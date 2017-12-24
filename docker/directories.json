@@ -1,6 +1,6 @@
 {
   "plugins": "plugins/",
-  "data": "/data/data/",
-  "cache": "/data/cache/",
-  "backup": "/data/backup/"
+  "data": "/files/data/",
+  "cache": "/files/cache/",
+  "backup": "/files/backup/"
 }
