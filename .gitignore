@@ -20,3 +20,4 @@ redis.bat
 !*.conf.example
 # All config files
 *.ini
+!*.ini.example

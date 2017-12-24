@@ -1,14 +1,21 @@
 # coding=utf-8
 import os
+import json
 import configparser
 
 ############
 # CONFIG PARSER
 ############
 
-PLUGINS_DIR = "plugins"
-CACHE_DIR = "cache"
-BACKUP_DIR = "backup"
+with open("core/directories.json") as file:
+    dir_locations = json.loads(file.read())
+    if not dir_locations:
+        dir_locations = {}
+
+PLUGINS_DIR = dir_locations.get("plugins", "plugins/")
+CACHE_DIR = dir_locations.get("cache", "cache/")
+DATA_DIR = dir_locations.get("data", "data/")
+BACKUP_DIR = dir_locations.get("backup", "backup/")
 
 SETTINGS_FILE = "settings.ini"
 CONFIG_FILE = "config.ini"
@@ -37,7 +44,7 @@ if not os.path.isfile(SETTINGS_FILE):
     must_shutdown = True
     print("No settings.ini present! Please fill out the empty one!")
 
-    with open("settings.ini.example") as ex:
+    with open("{}.example".format(SETTINGS_FILE)) as ex:
         with open(SETTINGS_FILE, "w") as sett:
             sett.write(ex.read())
 
@@ -46,7 +53,7 @@ if not os.path.isfile(PLUGIN_CONFIG_PATH):
     must_shutdown = True
     print("No plugins/config.ini present! Please fill out the empty one!")
 
-    with open(os.path.join(PLUGINS_DIR, "config.ini.example")) as ex:
+    with open(os.path.join(PLUGINS_DIR, "{}.example".format(CONFIG_FILE))) as ex:
         with open(PLUGIN_CONFIG_PATH, "w") as sett:
             sett.write(ex.read())
 

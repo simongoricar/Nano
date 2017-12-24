@@ -7,6 +7,7 @@ from discord import Message, Embed, TextChannel
 
 from core.stats import SUPPRESS
 from core.utils import add_dots, get_valid_commands
+from core.confparser import PLUGINS_DIR
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -40,7 +41,7 @@ class NanoModerator:
             dict(a="@"),
         ]
 
-        with open("plugins/banned_words.txt") as banned:
+        with open("{}/banned_words.txt".format(PLUGINS_DIR)) as banned:
             self.word_list = [line.strip("\n") for line in banned.readlines()]
 
         # Builds a more sophisticated list
@@ -58,7 +59,7 @@ class NanoModerator:
 
 
         # Gibberish detector
-        with open("plugins/spam_model.pki", "rb") as spam_model:
+        with open("{}/spam_model.pki".format(PLUGINS_DIR), "rb") as spam_model:
             self.spam_model = load(spam_model)
 
         self.data = self.spam_model["data"]

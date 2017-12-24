@@ -17,7 +17,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 from core.stats import PRAYER, MESSAGE, IMAGE_SENT
 from core.utils import is_valid_command, build_url, add_dots, gen_id
-from core.confparser import get_config_parser
+from core.confparser import get_config_parser, DATA_DIR, PLUGINS_DIR
 
 # plugins/config.ini
 parser = get_config_parser()
@@ -26,6 +26,8 @@ log = logging.getLogger(__name__)
 
 # Giphy's green color thingie
 GIPHY_GREEN = 0x00C073
+
+KAPPA_LOCATION = os.path.join(DATA_DIR, "images/kappasmall.png")
 
 
 commands = {
@@ -60,11 +62,11 @@ class Achievement:
         self.COLOR_WHITE = (255, 255, 255)
         self.FONT_SIZE = 18 * upscale
 
-        self.FONT_PATH = os.path.join("plugins", "achievmentget", "Minecraft.ttf")
+        self.FONT_PATH = os.path.join(PLUGINS_DIR, "achievmentget", "Minecraft.ttf")
         self.font_mc = ImageFont.truetype(self.FONT_PATH, self.FONT_SIZE)
 
         # Load all images
-        temp_path = os.path.join("plugins", "achievmentget")
+        temp_path = os.path.join(PLUGINS_DIR, "achievmentget")
 
         self._image_sizes = []
         # Find valid image sizes
@@ -303,7 +305,7 @@ class Fun:
 
         # Other commands
         if startswith(prefix + "kappa"):
-            await message.channel.send(file=File("data/images/kappasmall.png", "kappa.png"))
+            await message.channel.send(file=File(KAPPA_LOCATION, "kappa.png"))
 
             self.stats.add(IMAGE_SENT)
 

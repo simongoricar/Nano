@@ -12,12 +12,14 @@ import aiohttp
 
 from core.stats import MESSAGE, WRONG_ARG
 from core.utils import is_valid_command
-from core.confparser import get_config_parser
+from core.confparser import get_config_parser, CACHE_DIR
 
 #####
 # TF2 plugin
 # Uses API by backpack.tf
 #####
+
+TF2_CACHE = os.path.join(CACHE_DIR, "tf2_cache.temp")
 
 logger = logging.getLogger(__name__)
 
@@ -197,8 +199,8 @@ class CommunityPrices:
 
     async def _download_data(self, cache_read=True, cache_write=True):
         # Read from cache if permitted and it exists
-        if cache_read and os.path.isfile("cache/bptf_cache.temp"):
-            with open("cache/bptf_cache.temp") as cache:
+        if cache_read and os.path.isfile(TF2_CACHE):
+            with open(TF2_CACHE) as cache:
                 try:
                     data = load(cache)
 
@@ -285,7 +287,7 @@ class CommunityPrices:
         if not os.path.isdir("cache"):
             os.mkdir("cache")
 
-        dump(data, open("cache/bptf_cache.temp", "w"))
+        dump(data, open(TF2_CACHE, "w"))
 
     async def _check_cache(self):
         if (time.time() - self.cache_timestamp) > self.max_age:

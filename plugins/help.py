@@ -1,12 +1,13 @@
 # coding=utf-8
 import time
+import os
 from datetime import datetime
 
 from discord import Embed, Colour
 
 from core.stats import MESSAGE, HELP, WRONG_ARG
 from core.utils import is_valid_command
-from core.confparser import get_settings_parser
+from core.confparser import get_settings_parser, DATA_DIR
 
 # Template: {"desc": ""},
 
@@ -42,9 +43,11 @@ cmd_links = {
     "admin": "#admin"
 }
 
+SUBMISSION_LOC = os.path.join(DATA_DIR, "submissions.txt")
+
 
 def save_submission(sub):
-    with open("data/submissions.txt", "a") as subs:
+    with open(SUBMISSION_LOC, "a") as subs:
         subs.write(str(sub) + "\n" + ("-" * 20))
         subs.write("\n\n")
 

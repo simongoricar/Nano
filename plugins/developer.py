@@ -11,7 +11,7 @@ from discord import Game, utils, Embed, Colour, DiscordException
 
 from core.stats import MESSAGE
 from core.utils import is_valid_command, log_to_file, StandardEmoji, resolve_time
-from core.confparser import get_settings_parser
+from core.confparser import get_settings_parser, BACKUP_DIR, DATA_DIR
 
 #######################
 # NOT TRANSLATED
@@ -90,11 +90,11 @@ class BackupManager:
     def __init__(self, time=86400, keep_backup_every=3):  # 86400 seconds = one day (backup is executed once a day)
         log.info("Backup enabled")
 
-        self.s_path = os.path.join("data", "data.rdb")
-        self.s_path_d = os.path.join("backup", "data.rdb.bak")
+        self.s_path = os.path.join(DATA_DIR, "data.rdb")
+        self.s_path_d = os.path.join(BACKUP_DIR, "data.rdb.bak")
 
-        if not os.path.isdir("backup"):
-            os.mkdir("backup")
+        if not os.path.isdir(BACKUP_DIR):
+            os.mkdir(BACKUP_DIR)
 
         self.time = int(time)
         self.keep_every = int(keep_backup_every)
@@ -109,18 +109,19 @@ class BackupManager:
         if not self.enabled:
             return
 
-        if not os.path.isdir("backup"):
-            os.mkdir("backup")
+        if not os.path.isdir(BACKUP_DIR):
+            os.mkdir(BACKUP_DIR)
 
         # Make a dated backup if needed
+        # Dated backups are located in a directory named "full"
         if make_dated_backup:
-            path_full = os.path.join("backup", "full")
+            path_full = os.path.join(BACKUP_DIR, "full")
 
             if not os.path.isdir(path_full):
                 os.mkdir(path_full)
 
             bkp_name = "data{}.rdb".format(str(datetime.now().strftime("%d-%B-%Y_%H-%M-%S")))
-            bkp_path = os.path.join("backup", "full", bkp_name)
+            bkp_path = os.path.join(BACKUP_DIR, "full", bkp_name)
             copy2(self.s_path, bkp_path)
             log.info("Created a dated backup.")
 
