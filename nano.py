@@ -140,10 +140,12 @@ class Nano(metaclass=Singleton):
         failed = []
         disabled = []
 
+        PLUGINS_NAMESPACE = PLUGINS_DIR.replace("/", "").replace("\\", "")
+
         for plug_name in list(names):
             # Import the plugin
             try:
-                plugin = importlib.import_module("{}.{}".format(PLUGINS_DIR, plug_name))
+                plugin = importlib.import_module("{}.{}".format(PLUGINS_NAMESPACE, plug_name))
             except ImportError:
                 log.warning("Couldn't import {}".format(plug_name))
                 log.critical(traceback.format_exc())

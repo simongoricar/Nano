@@ -48,8 +48,7 @@ SUBMISSION_LOC = os.path.join(DATA_DIR, "submissions.txt")
 
 def save_submission(sub):
     with open(SUBMISSION_LOC, "a") as subs:
-        subs.write(str(sub) + "\n" + ("-" * 20))
-        subs.write("\n\n")
+        subs.write("{}\n{}\n\n".format(sub, "-" * 20))
 
 
 def get_raw_commands(plugin):
@@ -229,9 +228,9 @@ class Help:
                    "\n**Language used:** `{}`".format(name, u_id, report, ts, guild_name, guild_id, guild_members, owner_info, lang)
 
             # Saves the submission
-            to_file = "{0}\nSuggestion from {1}:{2}\nMessage: {3}\n" \
-                      "Server: {4}:{5} with {6} members\nServer owner: {7}\n" \
-                      "Language used: {8}\n{0}".format("-" * 10, name, u_id, report, guild_name, guild_id, guild_members, owner_info, lang)
+            to_file = "Suggestion from {0}:{1}\nMessage: {2}\n" \
+                      "Server: {3}:{4} with {5} members\nServer owner: {6}\n" \
+                      "Language used: {7}".format(name, u_id, report, guild_name, guild_id, guild_members, owner_info, lang)
 
             save_submission(to_file)
             await owner.send(comp)
