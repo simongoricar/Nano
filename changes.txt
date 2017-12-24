@@ -3,7 +3,6 @@
 - Simplified !imdb usage
 - Renamed !vote start/end/status to !poll start/end/status
 - Usage overhaul for !poll start
-- Dynamic commands (BETA!)
 - Rate-limiting of commands prevent abuse
 - More confirmations for stuff
 - Optimizations
