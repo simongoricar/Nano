@@ -8,8 +8,8 @@ from random import randint
 
 from discord import Embed, Forbidden, utils
 
-from data.stats import MESSAGE, PING
-from data.utils import is_valid_command, add_dots, DynamicResponse, CmdResponseTypes, IgnoredException
+from core.stats import MESSAGE, PING
+from core.utils import is_valid_command, add_dots, DynamicResponse, CmdResponseTypes, IgnoredException
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -184,8 +184,10 @@ class Parser:
             # https://docs.python.org/3/library/datetime.html#strftime-strptime-behavior
             first = first or "format"
 
-            if first == "epoch":
+            if first == "raw":
                 return time.time()
+            elif first == "now":
+                return datetime.now().strftime("%H:%M %d. of %B, %Y")
             elif first == "format":
                 return datetime.now().strftime(tokens[0])
             else:
@@ -306,8 +308,9 @@ class Commons:
             # According to tests, .startswith is faster than slicing, m8pls
             for k in server_commands:
                 if message.content.startswith(k):
-                    raw_resp = self.handler.get_custom_command_by_key(message.guild.id, k)
-                    response = self.parser.parse(raw_resp, message)
+                    # raw_resp = self.handler.get_custom_command_by_key(message.guild.id, k)
+                    # response = self.parser.parse(raw_resp, message)
+                    response = self.handler.get_custom_command_by_key(message.guild.id, k)
 
                     await message.channel.send(response)
                     return
