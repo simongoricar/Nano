@@ -7,18 +7,16 @@ __pycache__/
 # PyCharm config
 .idea/
 
-# Files generated on the fly
+# Folders generated on the fly
 backup/
 cache/
-data/data*.rdb
+data/
 
-# Sensitive info
-settings.ini
-redis.conf
-redisCache.conf
-plugins/config.ini
+# SENSITIVE FILES
 redis.bat
 
-# Logs, etc...
-data/log.txt
-data/bugs.txt
+# Match all conf files except .example files
+*.conf
+!*.conf.example
+# All config files
+*.ini
