@@ -15,9 +15,9 @@ except ImportError:
 from discord import Embed, Colour, File
 from PIL import Image, ImageDraw, ImageFont
 
-from data.stats import PRAYER, MESSAGE, IMAGE_SENT
-from data.utils import is_valid_command, build_url, add_dots, gen_id
-from data.confparser import get_config_parser
+from core.stats import PRAYER, MESSAGE, IMAGE_SENT
+from core.utils import is_valid_command, build_url, add_dots, gen_id
+from core.confparser import get_config_parser
 
 # plugins/config.ini
 parser = get_config_parser()

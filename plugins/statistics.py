@@ -7,9 +7,9 @@ except ImportError:
     from json import loads, dumps
 from discord import Embed, Colour
 
-from data.utils import is_valid_command, get_valid_commands
-from data.confparser import get_config_parser
-from data.stats import MESSAGE
+from core.utils import is_valid_command, get_valid_commands
+from core.confparser import get_config_parser
+from core.stats import MESSAGE
 
 commands = {
     "_stats": {"desc": "Some stats like message count and stuff like that."},

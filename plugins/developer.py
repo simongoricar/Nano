@@ -9,9 +9,9 @@ from shutil import copy2
 
 from discord import Game, utils, Embed, Colour, DiscordException
 
-from data.stats import MESSAGE
-from data.utils import is_valid_command, log_to_file, StandardEmoji, resolve_time
-from data.confparser import get_settings_parser
+from core.stats import MESSAGE
+from core.utils import is_valid_command, log_to_file, StandardEmoji, resolve_time
+from core.confparser import get_settings_parser
 
 #######################
 # NOT TRANSLATED

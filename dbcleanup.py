@@ -4,8 +4,8 @@ import logging
 import sys
 import configparser
 
-from data.serverhandler import ServerHandler, server_defaults
-from data.utils import decode
+from core.serverhandler import ServerHandler, server_defaults
+from core.utils import decode
 
 #########################################
 # Cleanup

@@ -5,8 +5,8 @@ from pickle import load
 
 from discord import Message, Embed, TextChannel
 
-from data.stats import SUPPRESS
-from data.utils import add_dots, get_valid_commands
+from core.stats import SUPPRESS
+from core.utils import add_dots, get_valid_commands
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)

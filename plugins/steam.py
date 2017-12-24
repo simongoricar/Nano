@@ -4,9 +4,9 @@ import logging
 import steamapi
 from discord import HTTPException
 
-from data.stats import MESSAGE, WRONG_ARG
-from data.utils import is_valid_command
-from data.confparser import get_config_parser
+from core.stats import MESSAGE, WRONG_ARG
+from core.utils import is_valid_command
+from core.confparser import get_config_parser
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)

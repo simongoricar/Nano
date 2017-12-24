@@ -9,8 +9,8 @@ import psutil
 from discord import utils, Embed, Colour, __version__ as d_version, HTTPException
 from discord import Member, Guild
 
-from data.stats import MESSAGE
-from data.utils import is_valid_command, log_to_file, is_disabled, IgnoredException
+from core.stats import MESSAGE
+from core.utils import is_valid_command, log_to_file, is_disabled, IgnoredException
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)

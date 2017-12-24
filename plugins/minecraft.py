@@ -7,8 +7,8 @@ from json import loads, JSONDecodeError
 import aiohttp
 from discord import File
 
-from data.stats import MESSAGE, WRONG_ARG, IMAGE_SENT
-from data.utils import is_valid_command, is_number
+from core.stats import MESSAGE, WRONG_ARG, IMAGE_SENT
+from core.utils import is_valid_command, is_number
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)

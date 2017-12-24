@@ -6,9 +6,9 @@ import time
 import osu_ds
 from discord import Embed, Colour, errors
 
-from data.stats import MESSAGE
-from data.utils import is_valid_command, invert_num, invert_str, split_every
-from data.confparser import get_config_parser
+from core.stats import MESSAGE
+from core.utils import is_valid_command, invert_num, invert_str, split_every
+from core.confparser import get_config_parser
 
 #####
 # osu! plugin

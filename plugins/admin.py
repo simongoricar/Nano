@@ -8,12 +8,12 @@ import traceback
 from typing import Union
 from discord import utils, Client, Embed, TextChannel, Colour, DiscordException, Object, HTTPException
 
-from data.serverhandler import INVITEFILTER_SETTING, SPAMFILTER_SETTING, WORDFILTER_SETTING
-from data.utils import convert_to_seconds, matches_iterable, is_valid_command, StandardEmoji, \
+from core.serverhandler import INVITEFILTER_SETTING, SPAMFILTER_SETTING, WORDFILTER_SETTING
+from core.utils import convert_to_seconds, matches_iterable, is_valid_command, StandardEmoji, \
                        resolve_time, log_to_file, is_disabled, IgnoredException, parse_special_chars, \
                        apply_string_padding
 
-from data.stats import MESSAGE
+from core.stats import MESSAGE
 
 
 #####

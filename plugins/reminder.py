@@ -7,8 +7,8 @@ import traceback
 from typing import Union
 from discord import DiscordException
 
-from data.stats import MESSAGE, WRONG_ARG
-from data.utils import resolve_time, convert_to_seconds, is_valid_command, gen_id, IgnoredException, log_to_file
+from core.stats import MESSAGE, WRONG_ARG
+from core.utils import resolve_time, convert_to_seconds, is_valid_command, gen_id, IgnoredException, log_to_file
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)

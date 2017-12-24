@@ -4,9 +4,9 @@ from datetime import datetime
 
 from discord import Embed, Colour
 
-from data.stats import MESSAGE, HELP, WRONG_ARG
-from data.utils import is_valid_command
-from data.confparser import get_settings_parser
+from core.stats import MESSAGE, HELP, WRONG_ARG
+from core.utils import is_valid_command
+from core.confparser import get_settings_parser
 
 # Template: {"desc": ""},
 

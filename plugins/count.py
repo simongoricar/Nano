@@ -4,7 +4,7 @@ import json
 import logging
 import aiohttp
 
-from data.confparser import get_config_parser
+from core.confparser import get_config_parser
 
 parser = get_config_parser()
 

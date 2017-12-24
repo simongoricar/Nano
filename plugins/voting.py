@@ -9,8 +9,8 @@ except ImportError:
 
 from discord import Embed, Colour, errors
 
-from data.stats import MESSAGE, VOTE, WRONG_PERMS
-from data.utils import is_valid_command, log_to_file, decode, add_dots
+from core.stats import MESSAGE, VOTE, WRONG_PERMS
+from core.utils import is_valid_command, log_to_file, decode, add_dots
 
 __author__ = "DefaltSimon"
 # Voting plugin

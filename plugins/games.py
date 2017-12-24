@@ -10,9 +10,9 @@ except ImportError:
     from json import loads, dumps
 from discord import Embed
 
-from data.utils import is_valid_command, build_url
-from data.confparser import get_config_parser
-from data.stats import MESSAGE
+from core.utils import is_valid_command, build_url
+from core.confparser import get_config_parser
+from core.stats import MESSAGE
 
 commands = {
     "_gamedb": {"desc": "Looks up information on all kinds of video games.\nUses https://www.igdb.com"},

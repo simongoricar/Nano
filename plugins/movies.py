@@ -8,9 +8,9 @@ import tmdbie
 from discord import errors
 from typing import Union
 
-from data.stats import MESSAGE
-from data.utils import is_valid_command, IgnoredException
-from data.confparser import get_config_parser
+from core.stats import MESSAGE
+from core.utils import is_valid_command, IgnoredException
+from core.confparser import get_config_parser
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)

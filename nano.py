@@ -7,13 +7,12 @@ import sys
 import time
 import discord
 import traceback
-from copy import deepcopy
 
-from data.serverhandler import ServerHandler
-from data.stats import NanoStats
-from data.translations import TranslationManager
-from data.utils import log_to_file
-from data.confparser import get_settings_parser, PLUGINS_DIR
+from core.serverhandler import ServerHandler
+from core.stats import NanoStats
+from core.translations import TranslationManager
+from core.utils import log_to_file
+from core.confparser import get_settings_parser, PLUGINS_DIR
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'

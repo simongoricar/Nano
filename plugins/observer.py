@@ -4,9 +4,9 @@ import time
 
 from discord import TextChannel
 
-from data.stats import SLEPT
-from data.confparser import get_config_parser
-from data.utils import get_valid_commands
+from core.stats import SLEPT
+from core.confparser import get_config_parser
+from core.utils import get_valid_commands
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)

@@ -13,9 +13,9 @@ from typing import Union
 
 from discord import Embed, Colour
 
-from data.stats import MESSAGE, IMAGE_SENT
-from data.utils import is_valid_command, is_number, log_to_file
-from data.confparser import get_config_parser, PLUGINS_DIR
+from core.stats import MESSAGE, IMAGE_SENT
+from core.utils import is_valid_command, is_number, log_to_file
+from core.confparser import get_config_parser, PLUGINS_DIR
 
 commands = {
     "_xkcd": {"desc": "Fetches XKCD comics (defaults to random).", "use": "[command] (random/number/latest)"},
