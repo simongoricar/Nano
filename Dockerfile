@@ -2,13 +2,15 @@
 FROM ubuntu:16.04
 LABEL maintainer="DefaltSimon"
 EXPOSE 80
-VOLUME ["/files"]
 
-RUN apt-get update && apt-get upgrade -y
+# Update stuff
+# This is soooo slow
+RUN apt-get update
+#   && apt-get upgrade -y
 WORKDIR /home/
 
 # Install python and pip
-RUN apt-get install wget python3.5 python3-dev build-essential git -y \
+RUN apt-get install wget python3.5 python3-dev build-essential git nano -y \
 	&& wget -O get-pip.py "https://bootstrap.pypa.io/get-pip.py" \
 	&& python3.5 get-pip.py \
 	&& rm -f get-pip.py
@@ -33,13 +35,18 @@ RUN rm -rf redis-4.0.6/ \
 # Copy files	
 ENV DATA /files
 ENV HOME /home
-ENV NANO /home/Nano/
+ENV NANO /home/Nano
 
 COPY . $HOME/Nano
+
+RUN mkdir $DATA \
+    && mkdir $DATA/cache
 COPY data/ $DATA/data/
 # Overwrite certain files
-ADD docker/directories.json $NANO/core/
-ADD docker/dockerautorun.sh $HOME
+COPY docker/directories.json $NANO/core/
+# Docker configuration
+COPY ["docker/redis-docker.conf", "docker/redisCache-docker.conf", "/files/"]
+COPY docker/dockerautorun.sh $HOME
 
 RUN rm -rf $NANO/data/ \
     && pip install -r $NANO/requirements.txt
@@ -51,4 +58,6 @@ RUN apt-get remove build-essential -y \
 
 # Set version and entrypoint
 LABEL version="3.8"
-ENTRYPOINT ["dockerautorun.sh"]
+
+VOLUME ["/files"]
+ENTRYPOINT ["/home/dockerautorun.sh"]

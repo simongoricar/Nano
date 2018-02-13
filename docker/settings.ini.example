@@ -1,0 +1,22 @@
+[Credentials]
+token = 
+
+[Settings]
+ownerid = 
+
+[Dev]
+server =
+
+[Redis]
+# Setup types:
+# manual = uses values below or defaults if empty
+# environment = uses REDIS_HOST, REDIS_PORT and REDIS_PASS from the system variables
+setup = manual
+ip = localhost
+port = 6379
+password = 
+
+[RedisCache]
+ip = localhost
+port = 6380
+password =

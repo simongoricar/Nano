@@ -1,0 +1,11 @@
+# Python cache
+__pycache__/
+
+# PyCharm config
+.idea/
+
+# Git stuff
+.git/
+
+# Sensitive stuff
+*.ini
