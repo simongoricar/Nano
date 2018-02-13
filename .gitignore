@@ -21,3 +21,5 @@ redis.bat
 # All config files
 *.ini
 !*.ini.example
+
+!docker/*.conf
