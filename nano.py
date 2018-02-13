@@ -81,8 +81,8 @@ client = discord.AutoShardedClient(loop=loop)
 log.info("Initializing ServerHandler and NanoStats...")
 
 # Setup the server data and stats
-handler = ServerHandler.get_handler()
-stats = NanoStats(*ServerHandler.get_redis_credentials())
+handler = ServerHandler.get_handler(loop)
+stats = NanoStats(loop, *ServerHandler.get_redis_credentials())
 trans = TranslationManager()
 
 

@@ -36,9 +36,15 @@ stat_types = [MESSAGE, WRONG_ARG, SERVER_LEFT, SLEPT, WRONG_PERMS, HELP, IMAGE_S
 
 
 class NanoStats:
-    __slots__ = ("_redis", "redis", "_pending_data", "MAX_BEFORE_UPDATE")
+    __slots__ = ("_redis", "redis", "loop", "_pending_data", "MAX_BEFORE_UPDATE")
 
-    def __init__(self, redis_ip, redis_port, redis_pass):
+    def __init__(self, loop, redis_ip, redis_port, redis_pass):
+        self.loop = loop
+        self.redis = None
+
+        self._pending_data = {a: 0 for a in stat_types}
+        self.MAX_BEFORE_UPDATE = 5
+
         self.redis = redis.StrictRedis(host=redis_ip, port=redis_port, password=redis_pass)
 
         try:
@@ -55,8 +61,7 @@ class NanoStats:
         else:
             log.info("Enabled: stats found")
 
-        self._pending_data = {a: 0 for a in stat_types}
-        self.MAX_BEFORE_UPDATE = 5
+
 
     def add(self, stat_type):
         if stat_type not in stat_types:
