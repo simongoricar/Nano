@@ -12,11 +12,11 @@ server =
 # manual = uses values below or defaults if empty
 # environment = uses REDIS_HOST, REDIS_PORT and REDIS_PASS from the system variables
 setup = manual
-ip = localhost
+ip = redis-data
 port = 6379
 password = 
 
 [RedisCache]
-ip = localhost
+ip = redis-cache
 port = 6380
 password =

@@ -10,45 +10,35 @@ RUN apt-get update
 WORKDIR /home/
 
 # Install python and pip
-RUN apt-get install wget python3.5 python3-dev build-essential git nano -y \
-	&& wget -O get-pip.py "https://bootstrap.pypa.io/get-pip.py" \
+RUN apt-get install wget python3.5 python3-dev build-essential git nano \
+    ## Pillow, lxml, ....
+    zlibc libxml2 libxml2-dev libxslt1-dev \
+    libjpeg8-dev zlib1g-dev libfreetype6-dev -y
+
+RUN wget -O get-pip.py "https://bootstrap.pypa.io/get-pip.py" \
 	&& python3.5 get-pip.py \
 	&& rm -f get-pip.py
-
-ENV BINARIES /usr/local/bin/
-
-# Download and install redis
-RUN wget -O redis-4.0.6.tar.gz "http://download.redis.io/releases/redis-4.0.6.tar.gz" \
-	&& tar xzf redis-4.0.6.tar.gz \
-	&& cd redis-4.0.6/ && make
-RUN cd redis-4.0.6/ \
-	&& cp src/redis-server $BINARIES \
-	&& cp src/redis-cli $BINARIES \
-	&& cp src/redis-sentinel $BINARIES \
-	&& cp src/redis-check-aof $BINARIES \
-	&& cp src/redis-check-rdb $BINARIES
 
 # Remove source
 RUN rm -rf redis-4.0.6/ \
 	&& rm -f redis-4.0.6.tar.gz
 
 # Copy files	
-ENV DATA /files
+# ENV DATA /files
 ENV HOME /home
 ENV NANO /home/Nano
 
 COPY . $HOME/Nano
 
-RUN mkdir $DATA \
-    && mkdir $DATA/cache
-COPY data/ $DATA/data/
 # Overwrite certain files
 COPY docker/directories.json $NANO/core/
 # Docker configuration
-COPY ["docker/redis-docker.conf", "docker/redisCache-docker.conf", "/files/"]
 COPY docker/dockerautorun.sh $HOME
+RUN chmod +x $HOME/dockerautorun.sh
 
 RUN rm -rf $NANO/data/ \
+    && rm -rf $NANO/cache/ \
+    && rm -rf $NANO/backup/
     && pip install -r $NANO/requirements.txt
 
 # ujson needs build-essential!
@@ -59,5 +49,5 @@ RUN apt-get remove build-essential -y \
 # Set version and entrypoint
 LABEL version="3.8"
 
-VOLUME ["/files"]
+# VOLUME $DATA
 ENTRYPOINT ["/home/dockerautorun.sh"]
