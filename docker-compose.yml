@@ -30,6 +30,7 @@ services:
     volumes:
       - ./data:/data
       - ./data/redis.conf:/usr/local/etc/redis/redis.conf
+    command: "redis-server /usr/local/etc/redis/redis.conf"
 
   redis-cache:
     container_name: "redis-cache"
@@ -38,3 +39,4 @@ services:
     volumes:
       - ./data:/data
       - ./data/redisCache.conf:/usr/local/etc/redis/redis.conf
+    command: "redis-server /usr/local/etc/redis/redis.conf"
