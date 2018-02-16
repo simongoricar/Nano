@@ -10,7 +10,6 @@ __pycache__/
 # Folders generated on the fly
 backup/
 cache/
-data/
 
 # SENSITIVE FILES
 redis.bat
@@ -18,8 +17,16 @@ redis.bat
 # Match all conf files except .example files
 *.conf
 !*.conf.example
-# All config files
+
+# All config files, dbs, ...
 *.ini
 !*.ini.example
+
+*.old
+*.rdb
+
+# Logs
+data/bugs.txt
+data/log.txt
 
 !docker/*.conf
