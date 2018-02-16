@@ -9,3 +9,6 @@ __pycache__/
 
 # Sensitive stuff
 *.ini
+*.conf
+*.rdb
+*.temp
