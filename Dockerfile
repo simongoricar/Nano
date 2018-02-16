@@ -36,10 +36,7 @@ COPY docker/directories.json $NANO/core/
 COPY docker/dockerautorun.sh $HOME
 RUN chmod +x $HOME/dockerautorun.sh
 
-RUN rm -rf $NANO/data/ \
-    && rm -rf $NANO/cache/ \
-    && rm -rf $NANO/backup/
-    && pip install -r $NANO/requirements.txt
+RUN pip install -r $NANO/requirements.txt
 
 # ujson needs build-essential!
 # Uninstall unneeded stuff

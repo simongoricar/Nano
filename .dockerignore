@@ -7,6 +7,12 @@ __pycache__/
 # Git stuff
 .git/
 
+# Useless folders
+docker/
+cache/
+backup/
+data/
+
 # Sensitive stuff
 *.ini
 *.conf
