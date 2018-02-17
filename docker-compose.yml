@@ -8,12 +8,14 @@
 version: '3'
 services:
   nano:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    # ##########
+    # IMPORTANT: This should only be used for building an image from source, which you shouldn't do!
+    # ##########
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
 
-    # TODO update
-    image: nanobeta:0.4
+    image: defaltsimon/nano:latest
     ######
     # Both nano and redis databases share the same directory - /data
     ######

@@ -8,7 +8,7 @@ __author__ = "DefaltSimon"
 # Stats handler for Nano
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
+log.setLevel(logging.DEBUG)
 
 par = configparser.ConfigParser()
 par.read("settings.ini")
@@ -71,7 +71,7 @@ class NanoStats:
 
         value = self._pending_data[stat_type]
         if value >= self.MAX_BEFORE_UPDATE:
-            log.info("Reached max size, posting to redis...")
+            log.debug("Reached max size, posting to redis...")
             # Send data and reset the pending counter
             self.redis.hincrby("stats", stat_type, value)
             self._pending_data[stat_type] = 0

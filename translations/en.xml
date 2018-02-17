@@ -732,9 +732,9 @@ Direct link: http://steamcommunity.com/id/{}/</string>
 
 {}</string>
 
-    <string name="MSG_VOTING_NO_PROGRESS">:warning: There is no vote in progress.</string>
-    <string name="MSG_VOTING_IN_PROGRESS">:warning: A vote is already in progress.</string>
-    <string name="MSG_VOTING_I_USAGE">Incorrect usage. Check `{}help vote start` for more info.</string>
+    <string name="MSG_VOTING_NO_PROGRESS">:warning: No vote in progress...</string>
+    <string name="MSG_VOTING_IN_PROGRESS">:warning: A vote is already in progress...</string>
+    <string name="MSG_VOTING_I_USAGE">Incorrect usage. Check `{}help poll start` for more info.</string>
     <string name="MSG_VOTING_NO_TITLE">Please include a title.</string>
     <string name="MSG_VOTING_NEED_OPTIONS">:warning: Please include at least two choices in your poll.</string>
     <string name="MSG_VOTING_EMPTY_ITEM">:x: One or more of your options are empty!</string>

@@ -207,7 +207,6 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
     def verify_connection(self, redis_ip, redis_port, redis_password):
         try:
             self.redis.ping()
-            print("OK")
         except redis.ConnectionError:
             log.error("Could not connect to redis! Check settings.ini and your redis server")
             log.error("Retrying in 3 sec...")
