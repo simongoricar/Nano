@@ -8,7 +8,6 @@ __pycache__/
 .git/
 
 # Useless folders
-docker/
 cache/
 backup/
 data/

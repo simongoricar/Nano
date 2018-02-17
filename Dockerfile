@@ -3,14 +3,11 @@ FROM ubuntu:16.04
 LABEL maintainer="DefaltSimon"
 EXPOSE 80
 
-# Update stuff
-# This is soooo slow
-RUN apt-get update
-#   && apt-get upgrade -y
 WORKDIR /home/
 
-# Install python and pip
-RUN apt-get install wget python3.5 python3-dev build-essential git nano \
+# Install python and pip, update stuff
+RUN apt-get update \
+    && apt-get install wget python3.5 python3-dev build-essential git nano \
     ## Pillow, lxml, ....
     zlibc libxml2 libxml2-dev libxslt1-dev \
     libjpeg8-dev zlib1g-dev libfreetype6-dev -y
@@ -36,7 +33,8 @@ COPY docker/directories.json $NANO/core/
 COPY docker/dockerautorun.sh $HOME
 RUN chmod +x $HOME/dockerautorun.sh
 
-RUN pip install -r $NANO/requirements.txt
+RUN rm -rf docker/ \
+    && pip install -r $NANO/requirements.txt
 
 # ujson needs build-essential!
 # Uninstall unneeded stuff
