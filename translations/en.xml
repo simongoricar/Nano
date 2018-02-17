@@ -723,7 +723,7 @@ Direct link: http://steamcommunity.com/id/{}/</string>
     <string name="MSG_STEAM_ONLINE">Online</string>
     <string name="MSG_STEAM_OFFLINE">Offline</string>
     <string name="MSG_STEAM_HELP">**Steam commands:**
-`_steam user community_url`, `_steam friends community_url`, `_steam games community_url`</string>
+`!steam user community_url`, `!steam friends community_url`, `!steam games community_url`</string>
 
     <string name="MSG_TF_UNAVAILABLE">This command is currently unavailable. Apologies.</string>
     <string name="MSG_TF_NO_PARAMS">:warning: Please specify an item to search for.</string>

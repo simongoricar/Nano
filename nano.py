@@ -16,7 +16,7 @@ from core.confparser import get_settings_parser, PLUGINS_DIR
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '3.8dev'
+__version__ = '3.8'
 
 
 # EVENTS

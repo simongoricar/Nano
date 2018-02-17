@@ -175,7 +175,7 @@ class Steam:
                     await message.channel.send(info)
 
             elif subcommand == "help":
-                await message.channel.send(trans.get("MSG_STEAM_HELP", lang).replace("_", prefix))
+                await message.channel.send(trans.get("MSG_STEAM_HELP", lang).replace("!", prefix))
 
 
 class NanoPlugin:
