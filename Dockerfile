@@ -16,10 +16,6 @@ RUN wget -O get-pip.py "https://bootstrap.pypa.io/get-pip.py" \
 	&& python3.5 get-pip.py \
 	&& rm -f get-pip.py
 
-# Remove source
-RUN rm -rf redis-4.0.6/ \
-	&& rm -f redis-4.0.6.tar.gz
-
 # Copy files	
 # ENV DATA /files
 ENV HOME /home
