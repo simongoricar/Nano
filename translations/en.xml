@@ -403,9 +403,12 @@ To give a user mod permissions, use _permission mod @mention (same applies here)
     <string name="MSG_PING_RESULT">:ping_pong: **Pong!** (lag: {} ms, reaction: {} ms)</string>
     <string name="MSG_LOGPOST_SAY">Executed {}say</string>
     <string name="MSG_LOGPOST_NUKE">Executed {}nuke</string>
+    <string name="MSG_LOGPOST_SELFROLE">Executed {}selfrole</string>
+    <string name="MSG_LOGPOST_SELFROLE_INFO">User self-assigned role: **{}**</string>
+    <string name="MSG_LOGPOST_SELFROLE_INFO2">User unassigned role: **{}**</string>
     <string name="MSG_UPTIME">I have been tirelessly answering people for **{} days, {} hours, {} minutes and {} seconds!** :open_mouth:</string>
     <string name="MSG_ROLL">{}, you rolled {}</string>
-    <string name="MSG_DICE">:game_die: {}, the dice shows... **{}**</string>
+    <string name="MSG_DICE">:game_die: {}, the die shows... **{}**</string>
     <string name="MSG_DICE_TOO_MANY">:eyes: Too many dice (max. is {})</string>
     <string name="MSG_DICE_TOO_BIG">:eyes: Dice expression is too big! (maximum sides and dice: {})</string>
     <string name="MSG_DICE_RESULTS">:game_die: **{}**, you rolled:

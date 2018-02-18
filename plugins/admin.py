@@ -589,6 +589,20 @@ class Admin:
 
         await log_channel.send(embed=embed)
 
+    async def log_selfrole_command(self, message, role_name, prefix, lang, type_):
+        log_channel = await self.handle_log_channel(message.guild)
+
+        if not log_channel:
+            return
+
+        embed = Embed(title=self.trans.get("MSG_LOGPOST_SELFROLE", lang).format(prefix),
+                      description=self.trans.get(type_, lang).format(role_name))
+
+        embed.set_author(name="{} ({})".format(message.author.name, message.author.id),
+                         icon_url=message.author.avatar_url)
+
+        await log_channel.send(embed=embed)
+
     async def handle_permission_command(self, member, permission: str, lang):
         """
         Returns:
@@ -709,10 +723,15 @@ class Admin:
                 if role in message.author.roles:
                     await message.author.remove_roles(role)
                     await message.channel.send(trans.get("MSG_SELFROLE_REMOVED", lang).format(role_n))
+
+                    await self.log_selfrole_command(message, role.name, prefix, lang, "MSG_LOGPOST_SELFROLE_INFO2")
+
                 # Otherwise, add it
                 else:
                     await message.author.add_roles(role)
                     await message.channel.send(trans.get("MSG_SELFROLE_ADDED", lang))
+
+                    await self.log_selfrole_command(message, role.name, prefix, lang, "MSG_LOGPOST_SELFROLE_INFO")
 
             return
 
