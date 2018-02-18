@@ -540,6 +540,7 @@ Id: {}:{}```</string>
     <string name="MSG_MOD_SPAM_G">spam (gibberish)</string>
     <string name="MSG_MOD_SPAM_C">spam (caps)</string>
     <string name="MSG_MOD_SPAM_R">spam (repeated messages)</string>
+    <string name="MSG_MOD_SPAM_M">spam (mention spam)</string>
     <string name="MSG_MOD_SWEARING">swearing</string>
     <string name="MSG_MOD_INVITE">invite link</string>
     <string name="MSG_OSU_ERROR">Something went wrong... :thinking:</string>

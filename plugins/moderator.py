@@ -37,6 +37,7 @@ class SpamType(IntEnum):
     REPEATED = 1
     GIBBERISH = 2
     CAPS = 3
+    MENTIONS = 4
 
 
 class ModBucket:
@@ -200,7 +201,7 @@ class NanoModerator:
         return self.swearing_detect.has_swearing(message.lower())
 
 
-    def check_spam(self, author_id: int, message: str):
+    def check_spam(self, author_id: int, message: str, raw_message):
         """
         Does a set of checks to know whether something is spam or not.
 
@@ -227,6 +228,14 @@ class NanoModerator:
         up_count = sum([1 for c in message if c.isupper()])
         if len(message) > 5 and up_count > caps_threshold:
             return SpamType.CAPS
+
+
+        #########
+        # Mention spam
+        #########
+        mention_limit = 5
+        if sum([len(raw_message.mentions), len(raw_message.role_mentions)]) > mention_limit:
+            return SpamType.MENTIONS
 
 
         #########
@@ -359,7 +368,7 @@ class Moderator:
         needs_invite_filter = handler.has_invite_filter(message.guild)
 
         if needs_spam_filter:
-            spam_reason = self.checker.check_spam(message.author.id, message.content)
+            spam_reason = self.checker.check_spam(message.author.id, message.content, message)
         else:
             spam_reason = False
 
@@ -398,6 +407,8 @@ class Moderator:
                     await self.log.send_log(message, lang, self.trans.get("MSG_MOD_SPAM_C", lang))
                 elif spam_reason == SpamType.REPEATED:
                     await self.log.send_log(message, lang, self.trans.get("MSG_MOD_SPAM_R", lang))
+                elif spam_reason == SpamType.MENTIONS:
+                    await self.log.send_log(message, lang, self.trans.get("MSG_MOD_SPAM_M", lang))
 
                 else:
                     raise NotImplementedError("This offense type is not implemented.")
