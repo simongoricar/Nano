@@ -138,7 +138,10 @@ class Statistics:
                 temp += cmds
 
         # Special case: rip
-        temp.remove("_rip")
+        try:
+            temp.remove("_rip")
+        except:
+            pass
 
         self.valid_commands = set(temp)
 

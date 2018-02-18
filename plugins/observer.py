@@ -131,7 +131,8 @@ class Observer:
 
 
         # Set up the server if it is not present in redis db
-        self.handler.auto_setup_server(message.guild)
+        if not self.handler.server_exists(message.guild.id):
+            self.handler.server_setup(message.guild)
 
         # Ah, the shortcuts
         def startswith(*matches):
