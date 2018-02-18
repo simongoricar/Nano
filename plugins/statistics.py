@@ -53,8 +53,16 @@ class StatisticsParser:
             "month": StatisticsParser.T_MONTH
         }
 
+        self.pending = []
 
     def track_user(self, user_id, guild_id):
+        self.pending.append([user_id, guild_id])
+
+        if len(self.pending) >= 5:
+            self._track_user()
+
+
+    def _track_user(self, user_id, guild_id):
         # To increase performance
         pipe = self.plugin.pipeline()
 
@@ -177,16 +185,16 @@ class Statistics:
 
         # !stats
         if startswith(prefix + "stats"):
-            file = self.stats.get_data()
+            stats = self.stats.get_data()
 
-            messages = file.get("msgcount")
-            wrong_args = file.get("wrongargcount")
-            sleeps = file.get("timesslept")
-            wrong_permissions = file.get("wrongpermscount")
-            helps = file.get("peoplehelped")
-            votes = file.get("votesgot")
-            pings = file.get("timespinged")
-            imgs = file.get("imagessent")
+            messages = stats.get("msgcount") or 0
+            wrong_args = stats.get("wrongargcount") or 0
+            sleeps = stats.get("timesslept") or 0
+            wrong_permissions = stats.get("wrongpermscount") or 0
+            helps = stats.get("peoplehelped") or 0
+            votes = stats.get("votesgot") or 0
+            pings = stats.get("timespinged") or 0
+            imgs = stats.get("imagessent") or 0
 
             embed = Embed(colour=Colour.gold())
 

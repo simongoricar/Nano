@@ -36,7 +36,7 @@ commands = {
     "_meme": {"desc": "Captions a meme with your text. Take a look at <https://imgflip.com/memegenerator>'s list of memes if you want.", "use": "[command] [meme name]|[top text]|[bottom text]", "alias": "_caption"},
     "_caption": {"desc": "Captions a meme with your text. Take a look at <https://imgflip.com/memegenerator>'s list of memes if you want.", "use": "[command] [meme name]|[top text]|[bottom text]", "alias": "_meme"},
     "_randomgif": {"desc": "Sends a random gif from Giphy. Optionally, specify a tag after the command.", "use": "[command] (optional: tag)"},
-    "_achievement": {"desc": "Generates an achievment, Minecraft style.", "use": "[command] [text]"}
+    "_achievement": {"desc": "Generates an achievement, Minecraft style.", "use": "[command] [text]"}
 }
 
 valid_commands = commands.keys()
@@ -62,11 +62,11 @@ class Achievement:
         self.COLOR_WHITE = (255, 255, 255)
         self.FONT_SIZE = 18 * upscale
 
-        self.FONT_PATH = os.path.join(PLUGINS_DIR, "achievmentget", "Minecraft.ttf")
+        self.FONT_PATH = os.path.join(PLUGINS_DIR, "achievement", "Minecraft.ttf")
         self.font_mc = ImageFont.truetype(self.FONT_PATH, self.FONT_SIZE)
 
         # Load all images
-        temp_path = os.path.join(PLUGINS_DIR, "achievmentget")
+        temp_path = os.path.join(PLUGINS_DIR, "achievement")
 
         self._image_sizes = []
         # Find valid image sizes
@@ -401,7 +401,7 @@ class Fun:
                 return
 
             img = self.achievement.create_image(text)
-            img_filename = "Achievment{}.png".format(gen_id(8))
+            img_filename = "Achievement_{}.png".format(gen_id(4))
 
             await message.channel.send(file=File(img, img_filename))
             # Just in case GC fails
