@@ -34,4 +34,4 @@ RUN apt-get remove $BUILD_DEPS -y \
 # Set version and entrypoint
 ARG VERSION=unknown
 LABEL version=$VERSION
-CMD ["python3.5", "./nano.py"]
+ENTRYPOINT ["/home/dockerautorun.sh"]
