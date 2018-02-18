@@ -1,5 +1,6 @@
 # coding=utf-8
 import logging
+import time
 
 try:
     from ujson import loads, dumps
@@ -53,31 +54,41 @@ class StatisticsParser:
             "month": StatisticsParser.T_MONTH
         }
 
-        self.pending = []
+        self.buffer = []
 
     def track_user(self, user_id, guild_id):
-        self.pending.append([user_id, guild_id])
+        self.buffer.append([user_id, guild_id])
 
-        if len(self.pending) >= 5:
-            self._track_user()
+        # Buffer data together
+        if len(self.buffer) >= 5:
+            t = time.clock()
+            # Update data and reset buffer
+            self._update_data()
+            self.buffer = []
+            log.info("Buffered update took {}s".format(time.clock()-t))
 
 
-    def _track_user(self, user_id, guild_id):
+    def _update_data(self):
         # To increase performance
         pipe = self.plugin.pipeline()
 
-        pipe.sadd("bs:uniqueusers", user_id)
-        pipe.sadd("bs:uniqueguilds", guild_id)
-
-        pipe.execute()
-
-        # History belongs to the cache part
+        #  History belongs to the cache part
         cpipe = self.cache.pipeline()
 
-        for name, ttl in self.time_periods.items():
-            cpipe.set("bs:u:{}:{}".format(name, user_id), 0, ex=ttl)
-            cpipe.set("bs:g:{}:{}".format(name, guild_id), 0, ex=ttl)
+        for item in self.buffer:
+            # Unpack
+            user_id, guild_id = item
 
+            # Add operations to pipeline
+            pipe.sadd("bs:uniqueusers", user_id)
+            pipe.sadd("bs:uniqueguilds", guild_id)
+
+            for name, ttl in self.time_periods.items():
+                cpipe.set("bs:u:{}:{}".format(name, user_id), 0, ex=ttl)
+                cpipe.set("bs:g:{}:{}".format(name, guild_id), 0, ex=ttl)
+
+        # Execute these operations all at once
+        pipe.execute()
         cpipe.execute()
 
     def get_statistics_uniques(self) -> tuple:
