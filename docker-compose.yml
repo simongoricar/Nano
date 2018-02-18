@@ -31,7 +31,7 @@ services:
     image: redis
 
     volumes:
-      - ./data/data.rdb:/data
+      - ./data:/data
       - ./data/redis.conf:/usr/local/etc/redis/redis.conf
     command: "redis-server /usr/local/etc/redis/redis.conf"
 
@@ -40,6 +40,6 @@ services:
     image: redis
 
     volumes:
-      - ./data/cache.rdb:/data
+      - ./data:/data
       - ./data/redisCache.conf:/usr/local/etc/redis/redis.conf
     command: "redis-server /usr/local/etc/redis/redis.conf"
