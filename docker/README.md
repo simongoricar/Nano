@@ -6,5 +6,4 @@ You do not need to build Docker images yourself, they are provided on the [Docke
 ---
 These files should replace standard ones. This makes sure that stuff like logs, etc. are put into /data and not elsewhere.
 
-## TODO
-Ready-to-use redis configuration
+# HOW-TO

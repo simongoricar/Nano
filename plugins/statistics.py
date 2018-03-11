@@ -1,5 +1,6 @@
 # coding=utf-8
 import logging
+import time
 
 try:
     from ujson import loads, dumps
@@ -53,23 +54,41 @@ class StatisticsParser:
             "month": StatisticsParser.T_MONTH
         }
 
+        self.buffer = []
 
     def track_user(self, user_id, guild_id):
+        self.buffer.append([user_id, guild_id])
+
+        # Buffer data together
+        if len(self.buffer) >= 5:
+            t = time.clock()
+            # Update data and reset buffer
+            self._update_data()
+            self.buffer = []
+            log.info("Buffered update took {}s".format(time.clock()-t))
+
+
+    def _update_data(self):
         # To increase performance
         pipe = self.plugin.pipeline()
 
-        pipe.sadd("bs:uniqueusers", user_id)
-        pipe.sadd("bs:uniqueguilds", guild_id)
-
-        pipe.execute()
-
-        # History belongs to the cache part
+        #  History belongs to the cache part
         cpipe = self.cache.pipeline()
 
-        for name, ttl in self.time_periods.items():
-            cpipe.set("bs:u:{}:{}".format(name, user_id), 0, ex=ttl)
-            cpipe.set("bs:g:{}:{}".format(name, guild_id), 0, ex=ttl)
+        for item in self.buffer:
+            # Unpack
+            user_id, guild_id = item
 
+            # Add operations to pipeline
+            pipe.sadd("bs:uniqueusers", user_id)
+            pipe.sadd("bs:uniqueguilds", guild_id)
+
+            for name, ttl in self.time_periods.items():
+                cpipe.set("bs:u:{}:{}".format(name, user_id), 0, ex=ttl)
+                cpipe.set("bs:g:{}:{}".format(name, guild_id), 0, ex=ttl)
+
+        # Execute these operations all at once
+        pipe.execute()
         cpipe.execute()
 
     def get_statistics_uniques(self) -> tuple:
@@ -138,7 +157,10 @@ class Statistics:
                 temp += cmds
 
         # Special case: rip
-        temp.remove("_rip")
+        try:
+            temp.remove("_rip")
+        except:
+            pass
 
         self.valid_commands = set(temp)
 
@@ -174,16 +196,16 @@ class Statistics:
 
         # !stats
         if startswith(prefix + "stats"):
-            file = self.stats.get_data()
+            stats = self.stats.get_data()
 
-            messages = file.get("msgcount")
-            wrong_args = file.get("wrongargcount")
-            sleeps = file.get("timesslept")
-            wrong_permissions = file.get("wrongpermscount")
-            helps = file.get("peoplehelped")
-            votes = file.get("votesgot")
-            pings = file.get("timespinged")
-            imgs = file.get("imagessent")
+            messages = stats.get("msgcount") or 0
+            wrong_args = stats.get("wrongargcount") or 0
+            sleeps = stats.get("timesslept") or 0
+            wrong_permissions = stats.get("wrongpermscount") or 0
+            helps = stats.get("peoplehelped") or 0
+            votes = stats.get("votesgot") or 0
+            pings = stats.get("timespinged") or 0
+            imgs = stats.get("imagessent") or 0
 
             embed = Embed(colour=Colour.gold())
 

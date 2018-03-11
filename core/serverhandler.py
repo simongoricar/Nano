@@ -1,6 +1,7 @@
 # coding=utf-8
 import redis
 import logging
+import time
 import os
 
 from discord import Member, Guild
@@ -105,10 +106,10 @@ class ServerHandler:
         return redis_ip, redis_port, redis_pass
 
     @classmethod
-    def get_handler(cls) -> "RedisServerHandler":
+    def get_handler(cls, loop) -> "RedisServerHandler":
         # Factory method
         redis_ip, redis_port, redis_pass = cls.get_redis_credentials()
-        return RedisServerHandler(redis_ip, redis_port, redis_pass)
+        return RedisServerHandler(loop, redis_ip, redis_port, redis_pass)
 
     @staticmethod
     def get_cache_handler() -> "RedisCacheHandler":
@@ -191,16 +192,29 @@ mod_settings_map = {
 class RedisServerHandler(ServerHandler, metaclass=Singleton):
     __slots__ = ("_redis", "redis", "pool")
 
-    def __init__(self, redis_ip, redis_port, redis_password):
+    def __init__(self, loop, redis_ip, redis_port, redis_password):
         super().__init__()
+
+        self.pool = None
+        self.redis = None
+        self.loop = loop
 
         self.pool = self.make_pool(redis_ip, redis_port, redis_password, db=0)
         self.redis = redis.StrictRedis(connection_pool=self.pool)
 
+        self.verify_connection(redis_ip, redis_port, redis_password)
+
+    def verify_connection(self, redis_ip, redis_port, redis_password):
         try:
             self.redis.ping()
         except redis.ConnectionError:
-            raise ConnectionError("Could not connect to redis! Check settings.ini and your redis server")
+            log.error("Could not connect to redis! Check settings.ini and your redis server")
+            log.error("Retrying in 3 sec...")
+
+            # Must be blocking
+            time.sleep(3)
+            self.verify_connection(redis_ip, redis_port, redis_password)
+
 
         log.info("Connected to Redis database")
 
@@ -356,7 +370,7 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
 
     # PREFIX
     def get_prefix(self, server: Guild) -> str:
-        return str(decode(self.redis.hget("server:{}".format(server.id), "prefix")))
+        return decode(self.redis.hget("server:{}".format(server.id), "prefix"))
 
     @validate_input
     def change_prefix(self, server, prefix):

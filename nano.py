@@ -16,7 +16,7 @@ from core.confparser import get_settings_parser, PLUGINS_DIR
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '3.8dev'
+__version__ = '3.8'
 
 
 # EVENTS
@@ -81,8 +81,8 @@ client = discord.AutoShardedClient(loop=loop)
 log.info("Initializing ServerHandler and NanoStats...")
 
 # Setup the server data and stats
-handler = ServerHandler.get_handler()
-stats = NanoStats(*ServerHandler.get_redis_credentials())
+handler = ServerHandler.get_handler(loop)
+stats = NanoStats(loop, *ServerHandler.get_redis_credentials())
 trans = TranslationManager()
 
 

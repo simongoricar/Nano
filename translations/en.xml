@@ -230,7 +230,8 @@ Please keep in mind that this feature is not yet perfect and some translations m
     <string name="MSG_LANG_CURRENT">You're currently using `{}` ({}), but you probably knew that :stuck_out_tongue:
 Try `{}language list` to see all available languages.</string>
 
-    <string name="MSG_SETTINGS_WRONG_USAGE">Incorrect usage, see `{}help nano.settings`.</string>
+    <string name="MSG_SETTINGS_WRONG_USAGE">:warning: Incorrect usage, see `help nano.settings`.
+:crystal_ball: If you want to see your current settings, use `nano.displaysettings`.</string>
     <string name="MSG_SETTINGS_NOT_TEXT">Log channel cannot be a voice channel! Nice try :smile:</string>
     <string name="MSG_SETTINGS_LOGCHANNEL_SET">Log channel set to **{}** :smile:</string>
     <string name="MSG_SETTINGS_LOGCHANNEL_DISABLED">Log channel **disabled** :ok_hand:</string>
@@ -403,9 +404,12 @@ To give a user mod permissions, use _permission mod @mention (same applies here)
     <string name="MSG_PING_RESULT">:ping_pong: **Pong!** (lag: {} ms, reaction: {} ms)</string>
     <string name="MSG_LOGPOST_SAY">Executed {}say</string>
     <string name="MSG_LOGPOST_NUKE">Executed {}nuke</string>
+    <string name="MSG_LOGPOST_SELFROLE">Executed {}selfrole</string>
+    <string name="MSG_LOGPOST_SELFROLE_INFO">User self-assigned role: **{}**</string>
+    <string name="MSG_LOGPOST_SELFROLE_INFO2">User unassigned role: **{}**</string>
     <string name="MSG_UPTIME">I have been tirelessly answering people for **{} days, {} hours, {} minutes and {} seconds!** :open_mouth:</string>
     <string name="MSG_ROLL">{}, you rolled {}</string>
-    <string name="MSG_DICE">:game_die: {}, the dice shows... **{}**</string>
+    <string name="MSG_DICE">:game_die: {}, the die shows... **{}**</string>
     <string name="MSG_DICE_TOO_MANY">:eyes: Too many dice (max. is {})</string>
     <string name="MSG_DICE_TOO_BIG">:eyes: Dice expression is too big! (maximum sides and dice: {})</string>
     <string name="MSG_DICE_RESULTS">:game_die: **{}**, you rolled:
@@ -533,7 +537,10 @@ _mc name/id:meta - search for items and display their details```</string>
 Id: {}:{}```</string>
 
     <string name="MSG_MOD_MSG_DELETED">Message Deleted - {}</string>
-    <string name="MSG_MOD_SPAM">spam</string>
+    <string name="MSG_MOD_SPAM_G">spam (gibberish)</string>
+    <string name="MSG_MOD_SPAM_C">spam (caps)</string>
+    <string name="MSG_MOD_SPAM_R">spam (repeated messages)</string>
+    <string name="MSG_MOD_SPAM_M">spam (mention spam)</string>
     <string name="MSG_MOD_SWEARING">swearing</string>
     <string name="MSG_MOD_INVITE">invite link</string>
     <string name="MSG_OSU_ERROR">Something went wrong... :thinking:</string>
@@ -723,7 +730,7 @@ Direct link: http://steamcommunity.com/id/{}/</string>
     <string name="MSG_STEAM_ONLINE">Online</string>
     <string name="MSG_STEAM_OFFLINE">Offline</string>
     <string name="MSG_STEAM_HELP">**Steam commands:**
-`_steam user community_url`, `_steam friends community_url`, `_steam games community_url`</string>
+`!steam user community_url`, `!steam games community_url`</string>
 
     <string name="MSG_TF_UNAVAILABLE">This command is currently unavailable. Apologies.</string>
     <string name="MSG_TF_NO_PARAMS">:warning: Please specify an item to search for.</string>
@@ -732,9 +739,9 @@ Direct link: http://steamcommunity.com/id/{}/</string>
 
 {}</string>
 
-    <string name="MSG_VOTING_NO_PROGRESS">:warning: There is no vote in progress.</string>
-    <string name="MSG_VOTING_IN_PROGRESS">:warning: A vote is already in progress.</string>
-    <string name="MSG_VOTING_I_USAGE">Incorrect usage. Check `{}help vote start` for more info.</string>
+    <string name="MSG_VOTING_NO_PROGRESS">:warning: No vote in progress...</string>
+    <string name="MSG_VOTING_IN_PROGRESS">:warning: A vote is already in progress...</string>
+    <string name="MSG_VOTING_I_USAGE">Incorrect usage. Check `{}help poll start` for more info.</string>
     <string name="MSG_VOTING_NO_TITLE">Please include a title.</string>
     <string name="MSG_VOTING_NEED_OPTIONS">:warning: Please include at least two choices in your poll.</string>
     <string name="MSG_VOTING_EMPTY_ITEM">:x: One or more of your options are empty!</string>

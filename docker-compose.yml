@@ -1,0 +1,45 @@
+#######################################################
+# Nano with docker-compose
+#
+# Please use spaces when editing.
+# If you need any help, join our discord server at http://discord.nanobot.pw
+
+
+version: '3'
+services:
+  nano:
+    # ##########
+    # IMPORTANT: This should only be used for building an image from source, which you shouldn't do!
+    # ##########
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+
+    image: defaltsimon/nano:latest
+    ######
+    # Both nano and redis databases share the same directory - /data
+    ######
+    volumes:
+      - ./data:/data
+
+    depends_on:
+      - redis-data
+      - redis-cache
+
+  redis-data:
+    container_name: "redis-data"
+    image: redis
+
+    volumes:
+      - ./data:/data
+      - ./data/redis.conf:/usr/local/etc/redis/redis.conf
+    command: "redis-server /usr/local/etc/redis/redis.conf"
+
+  redis-cache:
+    container_name: "redis-cache"
+    image: redis
+
+    volumes:
+      - ./data:/data
+      - ./data/redisCache.conf:/usr/local/etc/redis/redis.conf
+    command: "redis-server /usr/local/etc/redis/redis.conf"

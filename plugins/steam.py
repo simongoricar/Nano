@@ -15,7 +15,7 @@ parser = get_config_parser()
 
 
 commands = {
-    "_steam": {"desc": "Searches for the specified steam id.\nSubcommands: 'steam user', 'steam games', 'steam friends'", "use": "[command] [end of user url/id]"},
+    "_steam": {"desc": "Searches for the specified steam id.\nSubcommands: 'steam user', 'steam games'", "use": "[command] [end of user url/id]"},
     "_steam user": {"desc": "Searches for general info about the user.", "use": "[command] [end of user url/id]"},
     "_steam games": {"desc": "Searches for all owned games in user's account.", "use": "[command] [end of user url/id]"},
     "_steam friends": {"desc": "Searches for all friends that the user has.", "use": "[command] [end of user url/id]"},
@@ -175,7 +175,7 @@ class Steam:
                     await message.channel.send(info)
 
             elif subcommand == "help":
-                await message.channel.send(trans.get("MSG_STEAM_HELP", lang).replace("_", prefix))
+                await message.channel.send(trans.get("MSG_STEAM_HELP", lang).replace("!", prefix))
 
 
 class NanoPlugin:

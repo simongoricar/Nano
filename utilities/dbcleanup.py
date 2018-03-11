@@ -1,6 +1,7 @@
 # coding=utf-8
 import time
 import logging
+import asyncio
 import sys
 import configparser
 
@@ -34,7 +35,7 @@ else:
 init = time.monotonic()
 
 print("Verifying server data...")
-red = ServerHandler.get_handler()
+red = ServerHandler.get_handler(asyncio.get_event_loop())
 
 config_keys = list(server_defaults.keys())
 

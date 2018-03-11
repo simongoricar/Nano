@@ -1,0 +1,19 @@
+# Python cache
+__pycache__/
+
+# PyCharm config
+.idea/
+
+# Git stuff
+.git/
+
+# Useless folders
+cache/
+backup/
+data/
+
+# Sensitive stuff
+*.ini
+*.conf
+*.rdb
+*.temp

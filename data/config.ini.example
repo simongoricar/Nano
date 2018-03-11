@@ -1,0 +1,39 @@
+[bots.discord.pw]
+token =
+
+[discordbots.org]
+token =
+
+[Servers]
+defaultprefix = !
+
+[backpack.tf]
+apikey = 
+
+[wiki]
+max-length = 900
+
+[urban]
+max-length = 900
+
+[steam]
+key = 
+
+[giphy]
+api-key =
+
+[osu]
+api-key = 
+
+[imgflip]
+username = 
+password = 
+
+[catapi]
+api-key =
+
+[tmdb]
+api-key =
+
+[igdb]
+api-key =
