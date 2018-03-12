@@ -307,6 +307,8 @@ class Commons:
         if server_commands:
             # According to tests, .startswith is faster than slicing, m8pls
             for k in server_commands:
+                k = str(k)
+
                 if message.content.startswith(k):
                     # raw_resp = self.handler.get_custom_command_by_key(message.guild.id, k)
                     # response = self.parser.parse(raw_resp, message)
