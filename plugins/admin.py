@@ -682,6 +682,17 @@ class Admin:
 
                 roles = self.handler.get_selfroles(message.guild.id)
 
+                # Remove selfroles that don't exist
+                for r in list(roles):
+                    is_valid = False
+                    for sr in message.guild.roles:
+                        if sr.name == r:
+                            is_valid = True
+
+                    if not is_valid:
+                        self.handler.remove_selfrole(message.guild.id, r)
+                        roles.remove(r)
+
                 if not roles:
                     await message.channel.send(trans.get("MSG_SELFROLE_NONE", lang))
                     return
