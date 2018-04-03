@@ -29,7 +29,7 @@
   <string name="PERM_ADMIN">:warning: Nimaš dovoljenja za uporabo tega ukaza (moraš biti admin).</string>
   <string name="PERM_MOD">:warning: Nimaš dovoljenja za uporabo tega ukaza (moraš biti moderator/ka).</string>
   <string name="PERM_OWNER">:warning: Nimaš dovoljenja za uporabo te funkcije. (samo za lastnika bota)</string>
-  <string name="INFO_PREFIX">Predpona za ta server je **{}**</string>
+  <string name="INFO_PREFIX">Predpona za ta strežnik je **{}**</string>
   <string name="INFO_PREFIX_LITERAL">predpona</string>
   <string name="INFO_DONE">Opravljeno</string>
   <string name="INFO_OK">V redu</string>
@@ -42,6 +42,8 @@
   <string name="INFO_USE">Uporabi</string>
   <string name="INFO_ALIASES">Psevdonim</string>
   <string name="INFO_DESCRIPTION">Opis</string>
+  <string name="INFO_ENABLED">Omogočeno</string>
+  <string name="INFO_UPDATED">Posodobljeno</string>
   <string name="INFO_DISABLED">Izklopljeno</string>
   <string name="INFO_DISABLED_A">Onemogoči</string>
   <string name="INFO_GENERAL">**Oj! Ime mi je Nano!** 
@@ -54,7 +56,7 @@
 
 Pa še to: komando `{p}gif` omogoča **Giphy**</string>
   <string name="INFO_GITHUB">Nanova koda je na voljo na **GitHubu**: https://github.com/DefaltSimon/Nano</string>
-  <string name="INFO_INVITE">Hočeš povabiti Nana na svoj server? Super!
+  <string name="INFO_INVITE">Hočeš povabiti Nana na svoj strežnik? Super!
 **Samo klikni na link:** &lt;link&gt;</string>
   <string name="INFO_REPORT">Prijavi</string>
   <string name="INFO_SUGGESTION">Predlog</string>
@@ -68,6 +70,7 @@ Pa še to: komando `{p}gif` omogoča **Giphy**</string>
   <string name="INFO_RANDOM">naključno</string>
   <string name="INFO_ERROR">napaka</string>
   <string name="INFO_ALL">vse</string>
+  <string name="TIME_YEARS">let</string>
   <string name="TIME_DAYS">dni</string>
   <string name="TIME_HOURS">ur</string>
   <string name="TIME_MINUTES">minut</string>
@@ -89,27 +92,38 @@ Pa še to: komando `{p}gif` omogoča **Giphy**</string>
   <string name="ERROR_NOT_NUMBER">Ni številka.</string>
   <string name="ERROR_INVALID_CMD_ARGUMENTS">Nekje se je zalomilo, preveri argumente v ukazu.</string>
   <string name="ERROR_SOMETHING">:warning: Nekaj se je zalomilo...</string>
+  <string name="ERROR_PERMS">:warning: Kaže, da Nano nima pooblastil, da bi lahko izvedel to dejanje. Prosim, da lastnika strežnika/admina/... pocukaš za rokav in ga lepo prosiš, naj zadevico uredi.</string>
   <string name="ERROR_NO_SUCH_ROLE">:warning: Vloga ne obstaja!</string>
   <string name="ERROR_MSG_TOO_LONG">:x: Sporočilo je bilo predolgo, da bi ga prikazal. Malo ga skrajšaj, prav?</string>
+  <string name="ERROR_SOMETHING_WENT_WRONG">:eyes: Šment, nekaj se je zalomilo! Problem je bil zabeležen.
+Če se ti zazdi, da si naletel/a na hroščka, lepo prosim, da obvestiš razvijalca na našem strežniku za podporo (glej _help za povabilo).</string>
   <string name="MSG_NUKE_PURGING">Brišem zadnjih {} sporočil (ali sporočila)... :boom:</string>
-  <string name="MSG_NUKE_PURGED">Pobrisal sem {} sporočil (ali sporočila) :ok_hand:.</string>
+  <string name="MSG_NUKE_AUDIT_REASON">**{}** je uničil {} sporočil.</string>
+  <string name="MSG_NUKE_AMOUNT">Uničenih {} sporočil.</string>
+  <string name="MSG_NUKE_PURGED">Pobrisal sem {} sporočil (ali sporočila) :ok_hand:</string>
   <string name="MSG_NUKE_OLD">(nekatera sporočila so starejša od 2 tednov, zato jih nisem zbrisal)</string>
   <string name="MSG_KICK_NANO">Ja, pa kaj še :smiley:</string>
-  <string name="MSG_BAN_USER">Res hočeš izključiti {}? Potrdi tako, da odgovoriš z/s \'{}\'.</string>
+  <string name="MSG_KICK">**{}** izgnan :eyes:</string>
+  <string name="MSG_KICK_CONFIRM">Res hočeš izgnati **{}**? Potrdi tako, da temu sporočilu dodaš emoji {}</string>
+  <string name="MSG_KICK_TIMEOUT">Nisem dobil potrditve, NE bom ga/je vrgel ven :upside_down:</string>
+  <string name="MSG_BAN_USER">Res hočeš izključiti **{}**? Potrdi tako, da temu sporočilu dodaš emoji {}</string>
+  <string name="MSG_BAN">**{}** izključen :eyes:</string>
   <string name="MSG_BAN_NANO">Ja, pa kaj še :smiley:</string>
   <string name="MSG_BAN_TIMEOUT">Nisem prejel potrdila. NE bom ga/je izključil :upside_down:</string>
-  <string name="MSG_UNBAN_SUCCESS">**{}** je bil/a izključen/a.</string>
+  <string name="MSG_UNBAN_SUCCESS">**{}** je lahko spet tukaj :ok_hand:</string>
   <string name="MSG_UNBAN_NO_BAN">:x: Ni izključene osebe z takim imenom.</string>
   <string name="MSG_UNBAN_WRONG_USAGE">Nepravilna uporaba. Poglej si `{}help unban`</string>
-  <string name="MSG_SOFTBAN_SUCCESS">{} je bil/a začasno izključen/a za: {}</string>
+  <string name="MSG_SOFTBAN_CONFIRM">Res hočeš začasno izključiti **{}** za {}? Potrdi tako, da temu sporočilu dodaš emoji {}</string>
+  <string name="MSG_SOFTBAN_TIMEOUT">Nisem prejel potrdila. NE bom ga/je začasno izključil :upside_down:</string>
+  <string name="MSG_SOFTBAN_SUCCESS">**{}** začasno izključen za {} :timer:</string>
   <string name="MSG_SOFTBAN_PLSMENTION">Prosim, omeni (@mention) člana, ki ga hočeš začasno izključiti. (samo enega)</string>
   <string name="MSG_SOFTBAN_DELIMIT">:no_entry_sign: Prosim, loči **čas** in **@mention** z `|`</string>
   <string name="MSG_SOFTBAN_NO_TIME">:warning: Prosim, navedi, za koliko časa izključim.</string>
   <string name="MSG_MUTE_LIST">**Utišani člani:** (stran **{}**/{}) 
 
 {}</string>
-  <string name="MSG_MUTE_NONE">Na tem serverju ni utišanih članov.</string>
-  <string name="MSG_MUTE_OWNER">:warning: Ne moreš utišati lastnika serverja.</string>
+  <string name="MSG_MUTE_NONE">Na tem strežniku ni utišanih članov.</string>
+  <string name="MSG_MUTE_OWNER">:warning: Ne moreš utišati lastnika strežnika.</string>
   <string name="MSG_MUTE_SELF">Hočeš utišati samega/o sebe? Malo morgen :rofl:</string>
   <string name="MSG_MUTE_SUCCESS">**{}** zdaj ne more govoriti tukaj. :zipper_mouth:</string>
   <string name="MSG_MUTE_TOO_MANY">Utišanih je preveč, da bi jih lahko izpisal...</string>
@@ -119,27 +133,35 @@ Pa še to: komando `{p}gif` omogoča **Giphy**</string>
   <string name="MSG_UNMUTE_MASS_DONE">Vsi prej utišani člani znova lahko govorijo.</string>
   <string name="MSG_JOIN">Sporočilo ob prihodu na server je bilo posodobljeno :smile:</string>
   <string name="MSG_JOIN_DISABLED">Sporočilo ob prihodu je bilo onemogočeno :white_check_mark:</string>
-  <string name="MSG_JOIN_IS_DISABLED">:information_source: Pozdravno sporočilo je izključeno.</string>
-  <string name="MSG_BAN">Sporočilo ob izključitvi je bilo posodobljeno :smile:</string>
-  <string name="MSG_BAN_DISABLED">Sporočilo ob izključitvi je bilo onemogočeno :white_check_mark:</string>
-  <string name="MSG_BAN_IS_DISABLED">:information_source: Izključitveno sporočilo je izključeno.</string>
-  <string name="MSG_KICK">Sporočilo ob zbrcanju s serverja je bilo posodobljeno :smile:</string>
-  <string name="MSG_KICK_DISABLED">Sporočilo ob prisilnem odhodu je bilo onemogočeno :white_check_mark:</string>
-  <string name="MSG_KICK_IS_DISABLED">:information_source: Sporočilo ob izgonu je trenutno izključeno.</string>
+  <string name="MSG_JOIN_IS_DISABLED">:information_source: Sporočilo ob prihodu je trenutno onemogočeno.
+
+Nastaviš ga lahko z `_joinmsg your_message`</string>
+  <string name="MSG_BANMSG">Sporočilo ob izključitvi je bilo posodobljeno :smile:</string>
+  <string name="MSG_BANMSG_DISABLED">Sporočilo ob izključitvi je bilo onemogočeno :white_check_mark:</string>
+  <string name="MSG_BANMSG_IS_DISABLED">:information_source: Sporočilo ob izključitvi je trenutno onemogočeno.
+
+Nastaviš ga lahko z `_banmsg your_message`</string>
+  <string name="MSG_KICKMSG">Sporočilo ob prisilnem odhodu je bilo posodobljeno :smile:</string>
+  <string name="MSG_KICKMSG_DISABLED">Sporočilo ob prisilnem odhodu je bilo onemogočeno :white_check_mark:</string>
+  <string name="MSG_KICKMSG_IS_DISABLED">:information_source: Sporočilo ob prisilnem odhodu je onemogočeno.
+
+Nastaviš ga lahko s `_kickmsg your_message`</string>
   <string name="MSG_LEAVE">Sporočilo po odhodu s serverja je bilo posodobljeno :smile:</string>
   <string name="MSG_LEAVE_DISABLED">Sporočilo ob odhodu je bilo onemogočeno :white_check_mark:</string>
-  <string name="MSG_LEAVE_IS_DISABLED">:information_source: Sporočilo ob odhodu je trenutno izključeno.</string>
+  <string name="MSG_LEAVE_IS_DISABLED">:information_source: Sporočilo ob odhodu je trenutno onemogočeno.
+
+Nastaviš ga lahko z `_leavemsg your_message`</string>
   <string name="MSG_NOTIF_TOO_LONG">:exclamation: Tvoje sporočilo je **predolgo!** (omejitev je {}, ti jih imaš {})</string>
   <string name="MSG_JOIN_CURRENT">:gear: Trenutno pozdravno sporočilo:
 
 ```{}```</string>
-  <string name="MSG_BAN_CURRENT">:gear: Trenutno sporočilo ob izključitvi:
+  <string name="MSG_BANMSG_CURRENT">:gear: Trenutno sporočilo ob izključitvi:
 
 ```{}```</string>
   <string name="MSG_LEAVE_CURRENT">:gear: Trenutno sporočilo ob odhodu:
 
 ```{}```</string>
-  <string name="MSG_KICK_CURRENT">:gear: Trenutno sporočilo ob izgonu:
+  <string name="MSG_KICK_CURRENT">:gear: Trenutno sporočilo ob prisilnem odhodu:
 
 ```{}```</string>
   <string name="MSG_USERINFO_STATUS">Status</string>
@@ -171,10 +193,10 @@ Podukazi: `add` `remove`</string>
   <string name="MSG_CMD_SEPARATE">:no_entry_sign: Napačni argumenti. Loči ukaz in odgovor s |</string>
   <string name="MSG_CMD_TIMEOUT">Nisi potrdil/a, zato ne bom prepisal trenutnega ukaza. :upside_down:</string>
   <string name="MSG_CMD_NO_SUCH_COMMAND">:warning: Nisem mogel odstraniti ukaza (ker ne obstaja)</string>
-  <string name="MSG_CMD_NO_CUSTOM">Na tem serverju ni ukazov po meri. Dodaš jih tako: `{}cmd dodaj sprožilo|odziv`!</string>
+  <string name="MSG_CMD_NO_CUSTOM">Na tem strežniku ni ukazov po meri. Dodaš jih tako: `{}cmd dodaj sprožilo|odziv`!</string>
   <string name="MSG_CMD_LIST">Ukazi po meri: (stran **{}**/{})
 ```{}```</string>
-  <string name="MSG_CMD_LIST_NO_PAGE">Ta stran ne obstaja! Zdaj je samo **{}** strani ukazov.</string>
+  <string name="MSG_CMD_LIST_NO_PAGE">:eyes: Take strani ni! Trenutno obstaja samo **{}** strani ukazov.</string>
   <string name="MSG_CMD_REMOVE_FAIL">:warning: Ni bilo mogoče odstraniti ukaza (ker ne obstaja)</string>
   <string name="MSG_CMD_REMOVE_PARAMS">:warning: Vpiši ukaz, ki ga moram odstraniti.</string>
   <string name="MSG_CMD_LIST_TOO_LONG">Tvoji ukazi so predolgi, da bi jih prikazal. Raje jih nekaj zbriši ali prosi lastnika bota, naj jih zbriše zate, če si ukaze pozabil/a.</string>
@@ -183,12 +205,13 @@ Podukazi: `add` `remove`</string>
 {}
 
 Prosim, imej v mislih, da ta funkcija še ni čisto tipi-topi in nekateri prevodi lahko manjkajo. Pa še to! Sporočila pri ukazu \"!help\" niso prevedena.</string>
-  <string name="MSG_LANG_NOT_AVAILABLE">Tega jezika pa žal ni. :cry:</string>
+  <string name="MSG_LANG_NOT_AVAILABLE">:eyes: Ta jezik žal ni na voljo. :cry:</string>
   <string name="MSG_LANG_SET">Jezik je bil nastavljen na **{}**. {}</string>
   <string name="MSG_LANG_TRANS">(prevajalci: {})</string>
   <string name="MSG_LANG_CURRENT">Trenutno uporabljaš `{}` ({}), ampak to ti je verjetno že jasno :stuck_out_tongue:
 Če hočeš pogledati seznam jezikov, vtipkaj `{}language list`.</string>
-  <string name="MSG_SETTINGS_WRONG_USAGE">Nepravilna uporaba, preberi `{}help nano.settings`.</string>
+  <string name="MSG_SETTINGS_WRONG_USAGE">:warning: Nepravilna uporaba, poglej `help nano.settings`.
+:crystal_ball: Če bi rad videl svoje trenutne nastavitve, uporabi `nano.displaysettings`.</string>
   <string name="MSG_SETTINGS_NOT_TEXT">Dnevniški kanal ne more biti glasovni kanal! Ne bo šlo, majster :smile:</string>
   <string name="MSG_SETTINGS_LOGCHANNEL_SET">Dnevniški kanal nastavljen na **{}** :smile:</string>
   <string name="MSG_SETTINGS_LOGCHANNEL_DISABLED">Dnevniški kanal **onemogočen** :ok_hand:</string>
@@ -197,16 +220,19 @@ Prosim, imej v mislih, da ta funkcija še ni čisto tipi-topi in nekateri prevod
   <string name="MSG_SELFROLE_ALR_EX">:warning: Ta lastna vloga že obstaja!</string>
   <string name="MSG_SELFROLE_INACCESSIBLE">:warning: **{}** je nedosegljiv (lahko je višje od Nanovih vlog ali pa Nano nima dovoljenja \'Upravljanje vlog\')</string>
   <string name="MSG_SELFROLE_REMOVE_NOT_PRESENT">:warning: Ni lastna vloga.</string>
-  <string name="MSG_SELFROLE_NOT_ANYMORE">:warning: Ni vloga na tem serverju.</string>
+  <string name="MSG_SELFROLE_NOT_ANYMORE">:warning: Ni vloga na tem strežniku.</string>
   <string name="MSG_SELFROLE_LIST">**Lastne vloge** (page **{}**/{}) 
 
 {}</string>
-  <string name="MSG_SELFROLE_NOT_PRESENT">:warning: Nisem mogel dodati vloge: **{}** ne obstaja na tem serverju</string>
+  <string name="MSG_SELFROLE_NOT_PRESENT">:warning: Nisem mogel dodati vloge: **{}** ne obstaja na tem strežniku</string>
   <string name="MSG_SELFROLE_REMOVED">:ok_hand: Odstranil sem **{}** s tvojega seznama vlog.</string>
   <string name="MSG_SELFROLE_ADDED">:ok_hand: Vloga dodana.</string>
-  <string name="MSG_SELFROLE_NONE">Na tem serverju trenutno ni lastnih vlog. Lahko pa kakšno dodaš z ukazom `nano.settings selfrole add [role]` !</string>
-  <string name="MSG_SELFROLE_NO_PAGE">Ta stran ne obstaja! Zdaj je samo **{}** strani.</string>
+  <string name="MSG_SELFROLE_NONE">Na tem strežniku trenutno ni lastnih vlog. Lahko pa kakšno dodaš z ukazom `nano.settings selfrole add [role]` !</string>
+  <string name="MSG_SELFROLE_NO_PAGE">:eyes: Ta stran ne obstaja! Zdaj je samo **{}** strani.</string>
   <string name="MSG_SELFROLE_TOO_MANY">:warning: Dosegel/la si omejitev lastnih vlog! Naenkrat lahko imaš samo **{}** lastnih vlog.</string>
+  <string name="MSG_SETTINGS_WF_OPTIONS">filter besed | besedni filter | filter besede | filtriraj besede | filtriraj besedo | filter beseda</string>
+  <string name="MSG_SETTINGS_SF_OPTIONS">filter spama | filter spamanja | spamfilter | spam filter | filter za spam</string>
+  <string name="MSG_SETTINGS_IF_OPTIONS">filter vabil | vabilni filter | vabila filter | filtriraj vabila</string>
   <string name="MSG_SETTINGS_DEFCHAN_SET">:ok: Privzeti kanal nastavljen na **{}**.</string>
   <string name="MSG_SETTINGS_DEFCHAN_RESET">:ok: Privzeti kanal nastavljen nazaj na privzeto - **{}**.</string>
   <string name="MSG_SETTINGS_WORD">Filter besed {}</string>
@@ -214,7 +240,7 @@ Prosim, imej v mislih, da ta funkcija še ni čisto tipi-topi in nekateri prevod
   <string name="MSG_SETTINGS_INVITE">Filter povabil {}</string>
   <string name="MSG_SETTINGS_NOT_A_SETTING">**{}** ni nastavitev. Na voljo imaš: logchannel, selfrole, invitefilter, wordfilter, spamfilter, defaultchannel.</string>
   <string name="MSG_SETTINGS_NO_BLACKLIST">Ni črnih list</string>
-  <string name="MSG_SETTINGS_DISPLAY">**Nastavitve serverja**
+  <string name="MSG_SETTINGS_DISPLAY">**Nastavitve strežnika**
 ```markdown
 ## Predpona
 {}
@@ -266,48 +292,96 @@ Prosim, imej v mislih, da ta funkcija še ni čisto tipi-topi in nekateri prevod
   <string name="MSG_BLACKLIST_LIST">Kanali na črni listi:
 
 {}</string>
-  <string name="MSG_BLACKLIST_NONE">Na tem serverju ni omejenih kanalov. :smile:</string>
-  <string name="MSG_RESET_CONFIRM">:warning: Res hočeš ponastaviti vse nastavitve serverja, povezane z Nanom? (to ne vključuje seznama utišanih, lastnih vlog in ukazov) Potrdi tako, da vpišeš \'{}\'.</string>
+  <string name="MSG_BLACKLIST_NONE">Na tem strežniku ni omejenih kanalov. :smile:</string>
+  <string name="MSG_RESET_CONFIRM">:warning: Res hočeš ponastaviti vse nastavitve strežnika, povezane z Nanom? (to ne vključuje seznama utišanih, lastnih vlog in ukazov) Potrdi tako, da vpišeš \'{}\'.</string>
   <string name="MSG_RESET_CONFIRM_TIMEOUT">Potrditve nisem sprejel, NE ponastavljam :upside_down:</string>
   <string name="MSG_RESET_DONE">Ponastavitev. :white_check_mark:</string>
   <string name="MSG_PREFIX_CHANGED">Predpona je zdaj **{}** :ok_hand:</string>
   <string name="MSG_PREFIX_PLS_ARGUMENTS">Ta ukaz potrebuje argument: predpono, ki jo hočeš nastaviti.</string>
-  <string name="MSG_SETUP_TIMEOUT">Zmanjkalo ti je časa :upside_down: (samo, da veš - časa imaš 35 sekund)</string>
-  <string name="MSG_SETUP_WELCOME">**NAMESTITEV SERVERJA**
-Začel/a si namestitev serverja. Sestavljena je iz nekaj korakov, pri katerih boš moral/a odgovarjati. Ker si ti začel/a namestitev, bodo veljali samo tvoji odgovori.
-**Pa začnimo, a ne?**</string>
-  <string name="MSG_SETUP_RESET">Si želel/a ponastaviti vse nastavitve na tem serverju, ki se tičejo bota?
-(Tudi zaščito pred spamom in preklinjanjem, seznam adminov, omejene kanale,
-dnevniški kanal, predpono, pozdrav in sporočilo ob izključitvi ter prisilnem odhodu). **{} / {}**</string>
-  <string name="MSG_SETUP_PREFIX">Katero predpono želiš uporabljati za vse ukaze?
-Napiši predpono.
-(en primer je: **!** \',torej nastane\' `!help`, `!ping`, ...)</string>
-  <string name="MSG_SETUP_JOINMSG">Kaj želiš, da rečem, ko se nekdo pridruži serverju?
-Odgovori s tem sporočilom, oz. napiši Nič, če nočeš, da se oglašam.
-(:user se bo spremenil v @ime novega uporabnika; recimo -&gt; :user, dobrodošel na server!)</string>
-  <string name="MSG_SETUP_SPAM">Hočeš, da filtriram spam? **{} / {}**</string>
-  <string name="MSG_SETUP_SWEARING">Hočeš, da filtriram kletvice? **{} / {}**</string>
-  <string name="MSG_SETUP_LOGCHANNEL">Kateri kanal naj uporabim za beleženje dnevnika? **#channel mention/{}**</string>
+  <string name="MSG_SETUP_TIMEOUT">Zmanjkalo ti je časa :upside_down: (samo, da veš - časa imaš {} sekund)</string>
+  <string name="MSG_SETUP_WELCOME">**NASTAVITEV STREŽNIKA**
+Začel/a si namestitev strežnika. Ker si ti začel/a namestitev, štejejo samo tvoji odgovori.
+**Pa začnimo!**</string>
+  <string name="MSG_SETUP_RESET">Si želel/a ponastaviti vse nastavitve na tem strežniku, ki se tičejo bota?
+(to vključuje vse standardne nastavitve, tudi omejene kanale, tvoj dnevniški kanal, predpono, pozdrav in sporočilo ob izključitvi ter prisilnem odhodu).
+
+```md
+[{yes}](Ponastavi vse nastavitve)
+[{no}](Obdrži vse nastavitve)```</string>
+  <string name="MSG_SETUP_PREFIX_TEXT">Predpona</string>
+  <string name="MSG_SETUP_PREFIX">Katero predpono bi želel/a uporabljati za vse ukaze?
+Primer: če imaš *!* za predpono, boš ukaze pisal/a tako: `!help`, `!ping`, itd.
+
+```md
+[{prefix}](Želena predpona)```</string>
+  <string name="MSG_SETUP_JOINMSG_TEXT">Tekst</string>
+  <string name="MSG_SETUP_JOINMSG">Kaj želiš, da rečem, ko se nekdo pridruži temu strežniku?
+
+Veljavno je tako formatiranje:
+*:user* -&gt; omemba osebe
+*:username* -&gt; ime osebe
+*:server* -&gt; ime strežnika
+
+```md
+[{text}](Tekst, ki ga želiš videti)
+[{none}](Onemogoči sporočilo ob prihodu)```</string>
+  <string name="MSG_SETUP_SPAM">Želiš, da filtriram spam?
+```md
+[{yes}](Omogoči filtriranje spama)
+[{no}](Onemogoči filtriranje spama)```</string>
+  <string name="MSG_SETUP_SWEARING">Želiš, da filtriram kletvica?
+```md
+[{yes}](Omogoči filtriranje kletvic)
+[{no}](Onemogoči filtriranje kletvic)```</string>
+  <string name="MSG_SETUP_LOGCHANNEL_MENTION">#omemba kanala</string>
+  <string name="MSG_SETUP_LOGCHANNEL">Kateri kanal bi rad uporabil za dnevnik?
+```md
+[{mention}](Uporabi omenjen kanal)
+[{none}](Onemogoči dnevnik)```</string>
   <string name="MSG_SETUP_LOGCHANNEL_DISABLED">Beleženje dnevnika izklopljeno.</string>
   <string name="MSG_SETUP_LOGCHANNEL_SET">Dnevniški kanal nastavljen na **{}**</string>
-  <string name="MSG_SETUP_LOGCHANNEL_INVALID">:x: Neveljaven dnevniški kanal.</string>
-  <string name="MSG_SETUP_COMPLETE">**S tem je zaključena osnovna namestitev serverja.**
+  <string name="MSG_SETUP_LOGCHANNEL_INVALID">:x: Neveljavni odgovor / dnevniški kanal.</string>
+  <string name="MSG_SETUP_COMPLETE">**No, pa sva zaključila osnovno namestitev.**
 Po potrebi lahko določiš še nekaj drugih nastavitev:
+
 ➤ črna lista kanalov - `nano.blacklist dodaj/odstrani ime_kanala`
-➤ sporočilo ob prihodu - `&gt;welcomemsg sporočilo`
-➤ sporočilo ob odhodu - `&gt;leavemsg sporočilo`
+➤ sporočilo ob odhodu - `&gt;leavemsg message`
+➤ sporočilo ob izključitvi - `&gt;banmsg message`
+Ampak čakaj.... To še ni vse! Za več nastavitev si preberi spodaj.
 
 Predpono lahko čisto lahko spremeniš z `nano.changeprefix prefix`.
 Ukazi za admine in moderatorje so dovoljeni samo osebam z vlogami \"Nano Admin\"/\"Nano Mod\".
 
 Ti in vsi admini lahko dodate/odstranite/razvrstite ukaze po meri s `&gt;cmd add/remove/list command|response`.
-Za seznam ukazov in njihove razlage uporabi `&gt;cmds`.</string>
+Za seznam adminovih ukazov in njihove razlage si preberi na &lt;http://nanobot.pw/commands.html#admin&gt;</string>
+  <string name="MSG_PERMISSION_NOARG">:warning: Manjkajo argumenti, poglej si ukaz za pomoč.</string>
+  <string name="MSG_PERMISSION_WRONGARG">:warning: Neveljaven pod-ukaz, preveri `_permission help`</string>
+  <string name="MSG_PERMISSION_CREATION_REASON">Dovoljenjski ukaz ni bil izvršen, ustvarjam vlogo z dovoljenji.</string>
+  <string name="MSG_PERMISSION_ASSIGN_REASON">Dovoljenjski ukaz je bil izvršen, dodeljujem to dovoljenje.</string>
+  <string name="MSG_PERMISSION_ADMIN_CONFIRM">:eyes: Res hočeš podariti **{}** dovoljenje za admina? Potrdi tako, da temu sporočilu dodaš emoji {}</string>
+  <string name="MSG_PERMISSION_MOD_CONFIRM">:eyes: Res hočeš podariti **{}** dovoljenje moderatorja? Potrdi tako, da sporočilu dodaš emoji {}</string>
+  <string name="MSG_PERMISSION_MISSINGPERM_M">:warning: Nimaš pravih dovoljenj, da bi lahko dodeljeval moderatorska dovoljenja (moraš biti admin ali lastnik)</string>
+  <string name="MSG_PERMISSION_MISSINGPERM_A">:warning: Nimaš pravih dovoljenj, da bi dodeljeval administratorska dovoljenja (moraš biti lastnik)</string>
+  <string name="MSG_PERMISSION_TIMEOUT">:eyes: Čas teče, nič ne reče - in tvoj čas za odziv je ravnokar potekel.</string>
+  <string name="MSG_PERMISSION_ADMIN_A">:ok_hand: **{}** ima zdaj administratorska dovoljenja</string>
+  <string name="MSG_PERMISSION_ADMIN_R">:ok_hand: **{}** brišem administratorska dovoljenja</string>
+  <string name="MSG_PERMISSION_MOD_A">:ok_hand: **{}** ima zdaj moderatorska dovoljenja</string>
+  <string name="MSG_PERMISSION_MOD_R">:ok_hand: **{}** brišem moderatorske pravice</string>
+  <string name="MSG_PERMISSION_HELP">**Ukaz _permission je namenjen temu, da ti pomaga hitro dodajati/odstranjevati admine in moderatorje.**
+Če hočeš uporabniku dati administratorske pravice, uporabi _permission admin @mention (če je uporabnik že admin, mu bom dovoljenje vzel, hehe)
+Če hočeš uporabniku dati moderatorske pravice, uporabi _permission mod @mention (ista fora kot prej)</string>
   <string name="MSG_PING_MEASURING">:ping_pong: Merim...</string>
   <string name="MSG_PING_RESULT">:ping_pong: **Pong!** (ribanje: {} ms, reakcija: {} ms)</string>
   <string name="MSG_LOGPOST_SAY">Izveden ukaz {}say</string>
+  <string name="MSG_LOGPOST_NUKE">Izveden ukaz {}nuke</string>
+  <string name="MSG_LOGPOST_SELFROLE">Izveden {}selfrole</string>
+  <string name="MSG_LOGPOST_SELFROLE_INFO">Uporabnik si je dodal blogo: **{}**</string>
+  <string name="MSG_LOGPOST_SELFROLE_INFO2">Uporabnik si je odstranil vlogo: **{}**</string>
   <string name="MSG_UPTIME">Neutrudno odgovarjam na vprašanja ljudi že **{} dni, {} ur, {} minut in {} sekund!** :open_mouth:</string>
   <string name="MSG_ROLL">{}, vrgel/la si {}</string>
   <string name="MSG_DICE">:game_die: {}, kocka kaže... **{}**</string>
+  <string name="MSG_DICE_TOO_MANY">:eyes: Preveč kock (meja je {})</string>
+  <string name="MSG_DICE_TOO_BIG">:eyes: Te številke so čisto prevelike! (največ stranic in kock: {})</string>
   <string name="MSG_DICE_RESULTS">:game_die: **{}**, tvoj rezultat je:
 
 ```markdown
@@ -331,30 +405,36 @@ Za seznam ukazov in njihove razlage uporabi `&gt;cmds`.</string>
   <string name="MSG_SAY_NOPERM">Ne morem poslati sporočil v *&lt;#{}&gt;**: nimam dovoljenja!</string>
   <string name="MSG_AYYLMAO">Moj navdih iz sveta memov.</string>
   <string name="MSG_WHOKNOWS">¯\_(ツ)_/¯</string>
+  <string name="MSG_GIPHY_TOOFAST">:shield: Alo, malo bolj počasi! Nano je presegel omejitev gifov (malo počakaj, potem pa nadaljuj).</string>
+  <string name="MSG_GIPHY_NOSUCHTAG">Ni gifa z oznako: {}, nadaljujem z naključnim gifom</string>
+  <string name="MSG_GIPHY_POWEREDBY">Omogoča Giphy</string>
   <string name="MSG_MEME_USAGE">Nepravilna uporaba. Za informacije si oglej _help caption/_help meme.</string>
   <string name="MSG_MEME_NONEXISTENT">Meme ne obstaja. RIPPERONI. (pst ... fante/deklič, tukaj maš eno fino povezav\'co do dobrih memov - https://imgflip.com/memetemplates )</string>
   <string name="MSG_MEME_FOOTER">Omogoča imgflip.com</string>
   <string name="MSG_RIP">Rest in pepperoni {}.
 
 `{}` *molitvic do zdaj*...</string>
+  <string name="MSG_ACHIEVMENT_NOTEXT">Prosim, vpiši tekst, ki bi ga rad/a dal/a v sliko.</string>
   <string name="MSG_HELP">**Živjo, jaz sem Nano!**
 
 Za seznam najbolj preprostih ukazov napiši `_help simple`.
 Če hočeš bolj podrobno informacijo o ukazu, napiši `_help [ime ukaza]`.
 
-Če si admin/lastnik/lastnica serverja in hočeš namestiti server za Nana, napiši `_setup`.
-Priporočljivo je, da se pridružiš \"uradnemu\" Nano serverju, kjer dobiš novice in pomoč: https://discord.gg/FZJB6UJ
-P.S.: Eni helperji so tudi Slovenci :wink:
+Če si admin/lastnik/lastnica strežnika in hočeš namestiti strežnik za Nana, napiši `_setup`.
+Priporočljivo je, da se pridružiš \"uradnemu\" Nano strežniku, kjer dobiš novice in pomoč: https://discord.gg/FZJB6UJ
+P.S.: Eni \"helperji\" (pomočniki) so tudi Slovenci :wink:
 
-S tem, ko uporabljaš Nana, dovoliš, da lahko shranjujemo nekatere uporabniške informacije, recimo imena uporabnikov, serverjev in kanalov, s čimer izboljšamo funkcionalnost. Za več informacij si preberi `_tos`.</string>
+S tem, ko uporabljaš Nana, dovoliš, da lahko shranjujemo nekatere uporabniške informacije, recimo imena uporabnikov, strežnikov in kanalov, s čimer izboljšamo funkcionalnost. Za več informacij si preberi `_tos`.</string>
   <string name="MSG_TOS">:shield: **Pogoji uporabe**
 
 20. avgusta 2017 je Discord posodobil pogoje uporabe. Lastniki botov morajo zdaj uporabnike obvestiti, katere podatke shranjujejo.
 
-S tem, ko uporabljate Nana, dovolite, da shranjujemo določene podatke, kot so ** imena uporabnikov, serverjev in kanalov**.
+(Zdaj pa grem v ultra resen pravniški način.)
+S tem, ko uporabljate Nana, dovolite, da shranjujemo določene podatke, kot so ** imena uporabnikov, strežnikov in kanalov**.
 
 Za več informacij si preberite
-&lt;http://nanobot.pw/tos.html&gt;</string>
+&lt;http://nanobot.pw/tos.html&gt;
+(No, to je vse.)</string>
   <string name="MSG_HELP_SIMPLE">`_hello` - Pozdravi tebe ali omenjeno osebo
 `_randomgif` - Objavi naključen gif s strani Giphy
 `_roll number` - Zarola naključno številko
@@ -366,6 +446,7 @@ Za več informacij si preberite
 
 To je samo nekaj preprostejših ukazov. Za več informacij o vsakem ukazu napiši `_help ukaz`ali `_cmds`, kar te odpelje na wiki stran vseh ukazov.</string>
   <string name="MSG_HELP_CMDWEB">Ukazi in njihove razlage lahko najdeš tukaj: http://nanobot.pw/commands.html</string>
+  <string name="MSG_HELP_CMD_SPEC">Več o teh ukazih si preberi tukaj: {}</string>
   <string name="MSG_HELP_CMDNOTFOUND">Ukazov nisem našel.
 **(Uporaba: `_help [ukaz]`)**</string>
   <string name="MSG_HELP_DESC">Opis</string>
@@ -376,12 +457,13 @@ Najdeš me tukaj: https://discord.gg/FZJB6UJ</string>
   <string name="MSG_REPORT_EMPTY">Ne moreš oddati praznega poročila.</string>
   <string name="MSG_REPORT_RATELIMIT">Imaš omejitev. Poskusi spet čez 5 minut.</string>
   <string name="MSG_REPORT_THANKS">**Hvala** za tvoj predlog.</string>
+  <string name="MSG_REPORT_EE_THX">\'Alooo! :wave:</string>
   <string name="MSG_IMDB_ERROR">Nekaj se je zalomilo, ko sem poskušal dobiti podatke o filmu.</string>
   <string name="MSG_IMDB_ERROR2">Nekaj ne štima... Poskusim ponovno?</string>
   <string name="MSG_IMDB_INVALID_USAGE">Neveljavna uporaba ukaza, poglej si `{}help imdb`</string>
   <string name="MSG_IMDB_NEED_TITLE">:warning: Najprej rabim naslov, da ga poiščem.</string>
   <string name="MSG_IMDB_ERROR_REPDEV">Nekaj se je zalomilo. Prosim, prijavi to razvijalcu, po možnosti skupaj s sliko zaslona. Hvala!</string>
-  <string name="MSG_IMDB_NORESULTS">Ni rezultatov.</string>
+  <string name="MSG_IMDB_NORESULTS">:eyes: Ni rezultatov.</string>
   <string name="MSG_IMDB_CANTPERSON">Ne moreš dobiti zgodbe za osebo :rofl:</string>
   <string name="MSG_IMDB_PLOT">Zgodba za **{}**
 ```{}```</string>
@@ -413,7 +495,6 @@ Ocene uporabnikov na TMDb: __**{}** od 10__</string>
   <string name="MSG_XKCD">XKCD številka {}:</string>
   <string name="MSG_XKCD_SOURCe">Vir: {}</string>
   <string name="MSG_XKCD_NO_SUCH">Taka XKCD številka ne obstaja.</string>
-  <string name="MSG_JOKE_FAILED">Nisem dobil pravega heca... :cry:</string>
   <string name="MSG_MC_HELP">**Minecraft**
 ```css
 _mc name/id:meta - išče artikle in prikaže njihove detajle```</string>
@@ -422,7 +503,10 @@ _mc name/id:meta - išče artikle in prikaže njihove detajle```</string>
   <string name="MSG_MC_DETAILS">**{}**```css
 Id: {}:{}```</string>
   <string name="MSG_MOD_MSG_DELETED">Sporočilo izbrisano - {}</string>
-  <string name="MSG_MOD_SPAM">spama</string>
+  <string name="MSG_MOD_SPAM_G">spam (brbljanje tja v tri dni)</string>
+  <string name="MSG_MOD_SPAM_C">spam (velike/male črke)</string>
+  <string name="MSG_MOD_SPAM_R">spam (ponovljena sporočila)</string>
+  <string name="MSG_MOD_SPAM_M">spam (spamanje omemb)</string>
   <string name="MSG_MOD_SWEARING">preklinjanja</string>
   <string name="MSG_MOD_INVITE">povezave za povabilo</string>
   <string name="MSG_OSU_ERROR">Nekaj se je zalomilo... :thinking:</string>
@@ -439,6 +523,7 @@ PP: **{}** (predvajanih {} skladb)</string>
   <string name="MSG_OSU_RANKED_SC">Rangirana uvrstitev</string>
   <string name="MSG_OSU_AVG_ACC">Povprečna natančnost</string>
   <string name="MSG_OSU_TIME">Iskanje je trajalo {} ms</string>
+  <string name="MSG_RATELIMIT">{} Krščenduš, še pregrel se bom! :fire: Prehiter/a si zame, prosim poskusi znova čez nekaj sekund.</string>
   <string name="MSG_NANO_SLEEP">Nočko! :sleeping:</string>
   <string name="MSG_NANO_WAKE">:wave:</string>
   <string name="MSG_NANO_WASNT_SLEEPING">Ni bil v stanju mirovanja.</string>
@@ -471,9 +556,11 @@ PP: **{}** (predvajanih {} skladb)</string>
   <string name="MSG_REMINDER_INVALID_FORMAT">:warning: Neveljaven časovni format, prosim uporabi \"sec\", \"min\", \"h\", \"d\" itd...</string>
   <string name="MSG_REMINDER_LIST_L">* {}
 &gt; {}</string>
+  <string name="MSG_STATUS_RATELIMIT">Ta ukaz je kar velik zalogaj za ves ta sistem, zatorej ga moreš uporabiti le vsakih 5 minut na cel shard.
+Prosim, poskusi pozneje.</string>
   <string name="MSG_STATUS_STATS">Statistika</string>
-  <string name="MSG_STATUS_SERVERS">Serverji</string>
-  <string name="MSG_STATUS_SERVERS_L">{} serverjev</string>
+  <string name="MSG_STATUS_SERVERS">Strežniki</string>
+  <string name="MSG_STATUS_SERVERS_L">{} strežnikov</string>
   <string name="MSG_STATUS_USERS">Uporabniki</string>
   <string name="MSG_STATUS_USERS_L">{} uporabnikov</string>
   <string name="MSG_STATUS_CHANNELS">Kanali</string>
@@ -537,8 +624,23 @@ PP: **{}** (predvajanih {} skladb)</string>
   <string name="MSG_STATS_SLEPT">Čas počitka</string>
   <string name="MSG_STATS_PONG">Št. (ping)pongov</string>
   <string name="MSG_STATS_INFO">**Statistika**</string>
+  <string name="MSG_ADVS_TITLE">:hammer: Napredna statistika (za piflarje) v{}</string>
+  <string name="MSG_ADVS_DESC">Skupno število uporabnikov: **{}**
+Skupno število cehov: **{}**
+*(Štete so samo uporabe ukazov)*</string>
+  <string name="MSG_ADVS_HISTORY">**Uporaba v zadnjem dnevu/tednu/mesecu**</string>
+  <string name="MSG_ADVS_HISTORY_BODY">```md
+* Danes
+[{day_u} uporabnikov]({day_g} cehov)
+
+* Ta teden
+[{week_u} uporabnikov]({week_g} cehov)
+
+* Ta mesec
+[{month_u} uporabnikov]({month_g} cehov)
+```</string>
   <string name="MSG_PREFIX_OHYEAH">Pa še res je!</string>
-  <string name="MSG_PREFIX">Predpona na tem serverju je **{}**</string>
+  <string name="MSG_PREFIX">Predpona na tem strežniku je **{}**</string>
   <string name="MSG_MEMBERS_LIST">*__Člani__*:
 
 {}
@@ -551,16 +653,16 @@ PP: **{}** (predvajanih {} skladb)</string>
   <string name="MSG_SERVER_VL_MEDIUM">Srednja</string>
   <string name="MSG_SERVER_VL_HIGH">Visoka (╯°□°）╯︵ ┻━┻</string>
   <string name="MSG_SERVER_ID">ID: *{}*</string>
-  <string name="MSG_SERVER_DATE_CREATED">Server je bil ustvarjen {}</string>
+  <string name="MSG_SERVER_DATE_CREATED">Strežnik je bil ustvarjen {}</string>
   <string name="MSG_SERVER_MEMBERS">Člani [{} skupaj]</string>
   <string name="MSG_SERVER_MEMBERS_L">{} prisotni(h)</string>
   <string name="MSG_SERVER_CHANNELS">Kanali [{} skupaj]</string>
   <string name="MSG_SERVER_CHANNELS_L">{} glasovni(h) | {} besedilni(h)</string>
   <string name="MSG_SERVER_ROLES">Vloge</string>
   <string name="MSG_SERVER_ROLES_L">{} po meri</string>
-  <string name="MSG_SERVER_OWNER">Lastnik serverja</string>
+  <string name="MSG_SERVER_OWNER">Lastnik strežnika</string>
   <string name="MSG_SERVER_OWNER_L">{}#{} ID:{}</string>
-  <string name="MSG_SERVER_INFO">:book: **Podatki o serverju:**</string>
+  <string name="MSG_SERVER_INFO">:book: **Podatki o strežniku:**</string>
   <string name="MSG_STEAM_INVALID_URL">Prosim, vnesi **konec** (\"skrajšanega\") URL naslova, ne pa *celega* URL-ja, za božjo voljo!</string>
   <string name="MSG_STEAM_INVALID_PARAMS">Neveljavna uporaba ukazov. Poglej si `{}help steam`</string>
   <string name="MSG_STEAM_NEED_URL">Prosim, vnesi URL-naslov ali ime.</string>
@@ -584,18 +686,19 @@ Prijatelji: {}```
 Neposredna povezava: http://steamcommunity.com/id/{}/</string>
   <string name="MSG_STEAM_ONLINE">Prisotni</string>
   <string name="MSG_STEAM_OFFLINE">Odsotni</string>
-  <string name="MSG_STEAM_HELP">**Ukazi za Steam:**
-`_steam user community_url`, `_steam friends community_url`, `_steam games community_url`</string>
+  <string name="MSG_STEAM_HELP">**Steamovi ukazi**
+`!steam user community_url`, `!steam games community_url`</string>
   <string name="MSG_TF_UNAVAILABLE">Ta ukaz trenutno ni na voljo. Sorči.</string>
   <string name="MSG_TF_NO_PARAMS">:warning: Prosim, navedi artikel, ki naj ga poiščem.</string>
   <string name="MSG_TF_NO_SUCH_ITEM">Trenutno ne najdem *nobenega artikla* s tem imenom.</string>
   <string name="MSG_TF_LIST">:scales: **{}** (na bp.tf)*
 
 {}</string>
-  <string name="MSG_VOTING_NO_PROGRESS">:warning: Trenutno ne poteka nobeno glasovanje.</string>
-  <string name="MSG_VOTING_IN_PROGRESS">:warning: Glasovanje že poteka.</string>
-  <string name="MSG_VOTING_I_USAGE">Nepravilna uporaba. Za več informacij si preberi `{}help vote start`.</string>
+  <string name="MSG_VOTING_NO_PROGRESS">:warning: Trenutno ne poteka nobeno glasovanje...</string>
+  <string name="MSG_VOTING_IN_PROGRESS">:warning: Glasovanje že poteka...</string>
+  <string name="MSG_VOTING_I_USAGE">Nepravilna uporaba. Za več informacij preveri `{}help poll start`.</string>
   <string name="MSG_VOTING_NO_TITLE">Prosim navedi naslov.</string>
+  <string name="MSG_VOTING_NEED_OPTIONS">:warning: Prosim, v glasovanje vključi vsaj dve možnosti izbire.</string>
   <string name="MSG_VOTING_EMPTY_ITEM">:x: Ena ali več tvojih možnosti je praznih!</string>
   <string name="MSG_VOTING_STARTED">:scroll: Glasovanje se je začelo:
 
@@ -606,6 +709,8 @@ Neposredna povezava: http://steamcommunity.com/id/{}/</string>
 {}```</string>
   <string name="MSG_VOTING_AMOUNT">Skupaj je glasovalo {} ljudi</string>
   <string name="MSG_VOTING_AMOUNT2">{} glasov</string>
+  <string name="MSG_VOTING_END_CONFIRMATION">Res želiš zaključiti to glasovanje? Prosim, napiši {}, če se strinjaš.</string>
+  <string name="MSG_VOTING_END_ABORT">Čas je potekel, ne bom zaključil glasovanja.</string>
   <string name="MSG_VOTING_ENDED">:dividers: **Glasovanje zaključeno:**</string>
   <string name="MSG_VOTING_ERROR">Nekaj se je zalomilo, ko sem poskusil zaključiti glasovanje.</string>
   <string name="MSG_VOTING_OPTIONS_TM">:warning: Preveč možnosti (dovolim največ **{}**, ti si jih dal/a pa kar *{}*)</string>
@@ -635,17 +740,25 @@ Neposredna povezava: http://steamcommunity.com/id/{}/</string>
 
 **{}**
 ```{}```</string>
+  <string name="MSG_IGDB_NONAME">:mag: Prosim, določi igro, ki naj jo iščem.</string>
+  <string name="MSG_IGDB_NO_RESULT">:eyes: Nič nisem našel.</string>
+  <string name="MSG_IGDB_GENRES">Žanri</string>
+  <string name="MSG_IGDB_PUBLISHERS">Založniki</string>
+  <string name="MSG_IGDB_RATING">Ocena</string>
+  <string name="MSG_IGDB_VIDEO">Napovednik/video</string>
   <string name="EVENT_JOIN">je prišel</string>
   <string name="EVENT_LEAVE">je odšel</string>
+  <string name="EVENT_KICK">je bil izgnan</string>
+  <string name="EVENT_SOFTBAN">je bil začasno izključen</string>
   <string name="EVENT_BAN">je bil izključen</string>
   <string name="EVENT_SERVER_JOIN">**Živjo!** Jaz sem Nano!
-Zdaj, ko me imaš na serverju, bi mogoče rad/a nastavil/a stvar ali dve. Trenutno lahko omejene ukaze uporablja samo lastnik serverja. Ampak brez panike, tudi drugim lahko omogočiš njihovo uporabo - samo dodaj jim vlogo **Nano Admin**!
+Zdaj, ko me imaš na strežniku, bi mogoče rad/a nastavil/a stvar ali dve. Trenutno lahko omejene ukaze uporablja samo lastnik strežnika. Ampak brez panike, tudi drugim lahko omogočiš njihovo uporabo - samo dodaj jim vlogo **Nano Admin**!
 
 Za najbolj osnovno namestitev napiši `!setup` (če si lastnik/ca serverja). Tako boš lahko nastavil/a nekaj lažjih reči.
 Ko si končal/a s tem, lahko napišeš `!commands` in si ogledaš vse moje ukaze.
 
 
-Priporočam še, da prideš na \"uraden\" Nanov server, kjer dobiš novice in pomoč: https://discord.gg/FZJB6UJ (Ne grizemo)
+Priporočam še, da prideš na \"uraden\" Nanov strežnik, kjer dobiš novice in pomoč: https://discord.gg/FZJB6UJ (Ne grizemo)
 
-S tem, ko uporabljaš Nana, dovoliš, da pobiramo nekatere podatke, kot so imena uporabnikov, serverjev in kanalov, kar pomaga pri funkcionalnosti. Za več informacij si preberi `!tos`.</string>
+S tem, ko uporabljaš Nana, dovoliš, da pobiramo nekatere podatke, kot so imena uporabnikov, strežnikov in kanalov, kar pomaga pri funkcionalnosti. Za več informacij si preberi `!tos`.</string>
 </resources>

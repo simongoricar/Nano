@@ -1420,16 +1420,17 @@ class Admin:
 
             # !language set [lang]
             elif cut.startswith("set"):
-                lang_code = cut[len("set "):].strip(" ").lower()
+                lang_code_raw = cut[len("set "):].strip(" ")
+                lang_code = lang_code_raw.lower()
 
-                if not self.trans.is_language_code(lang_code):
+                if not self.trans.is_language_code(lang_code_raw):
                     # Try to find the language by name
                     lang_code = self.trans.find_language_code(lang_code)
                     if not lang_code:
                         await message.channel.send(trans.get("MSG_LANG_NOT_AVAILABLE", lang))
                         return
 
-                self.handler.set_lang(message.guild.id, lang_code)
+                self.handler.set_lang(message.guild.id, lang_code_raw)
 
                 await message.channel.send(trans.get("MSG_LANG_SET", lang).format(
                                                                      lang_code, trans.get("INFO_HELLO", lang_code)))

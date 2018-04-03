@@ -1,5 +1,9 @@
 {
   "en": {"name": "English", "authors": ["DefaltSimon"]},
-  "sl": {"name": "Slovenian", "authors": ["Grimpy"]},
-  "pt-br": {"name": "Brazilian Portuguese", "authors": ["Yobil"]}
+  "sl_SI": {"name": "Slovenian", "authors": ["Grimpy"]},
+  "pt_BR": {"name": "Brazilian Portuguese", "authors": ["Yobil"]},
+  "ko_KR": {"name": "Korean", "authors": ["Let", "Tree"]},
+  "id_ID": {"name": "Indonesian", "authors": ["PixelPirate"]},
+  "sp_in": {"name": "Shitpost", "authors": ["JustAGuy"]},
+  "nl_NL": {"name": "Dutch", "authors": ["FrikandelSpeciaa", "Dutchassassin21"]}
 }

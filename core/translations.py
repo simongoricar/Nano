@@ -82,6 +82,7 @@ class TranslationManager(metaclass=Singleton):
 
     def load_languages(self):
         for lang in self.meta.keys():
+            log.info("Loading {}.xml".format(lang))
             etree = ElementTree.parse("translations/{}.xml".format(lang))
 
             xml_dict = self.parse_xml_to_dict(etree)
