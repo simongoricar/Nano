@@ -23,7 +23,7 @@
   <string name="CONV_SPARTA">이것은 SPARTA!</string>
   <string name="CONV_BEGINDATE">2015년 10월 말에 개인적인 봇으로 시작하였지만 곧 GitHub에 넣어 모든 사람에게 공개하고 사용할 수 있게 했어.</string>
   <string name="CONV_OWNER">난 DefaltSimon이 만들었어.</string>
-  <string name="CONV_LOVE">&It;3</string>
+  <string name="CONV_LOVE">:heart:</string>
   <string name="CONV_HI">그쪽 안녕!</string>
   <string name="PERM_HIERARCHY">:warning: 넌 이 역할을 망치도록 허락되지 않았어. (넌 \"계층\"에서 낮아) ¯\_(ツ)_/¯</string>
   <string name="PERM_ADMIN">:warning: 넌 이 명령을 사용할 권한이 없어 (무조건 관리자가 되어야 해).</string>
