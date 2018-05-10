@@ -5,33 +5,33 @@
   <string name="CONV_Q_SNOW">apa kamu ingin membuat manusia salju | apa kamu mau membuat manusia salju</string>
   <string name="CONV_Q_DIE">mati</string>
   <string name="CONV_Q_AYY">ayy lmao | pesolek</string>
-  <string name="CONV_Q_SLEEP">apa kamu pernah berhenti | apa kamu pernah merasa lelah | apa kamu bahkan tidur | apa kamu tidur</string>
+  <string name="CONV_Q_SLEEP">pernahkah kamu berhenti | apa kamu pernah merasa lelah | apa kamu bahkan tidur | apa kamu tidur</string>
   <string name="CONV_Q_RIP">rip | beristirahat dalam damai | beristirahat dengan damai</string>
   <string name="CONV_Q_MASTER">apa kamu memiliki guru | siapa gurumu?</string>
   <string name="CONV_Q_WHAT">apa ini</string>
   <string name="CONV_Q_BIRTH">kapan kamu lahir</string>
   <string name="CONV_Q_MAKER">siapa yang membuatmu | siapa pemilikmu | siapa pembuatmu</string>
-  <string name="CONV_Q_LOVE">akumencintaimu</string>
+  <string name="CONV_Q_LOVE">aku mencintaimu</string>
   <string name="CONV_Q_HELLO">hai | halo | pa kabar</string>
   <string name="CONV_MOOD_LIST">Aku mengagumkan! | Rasanya hebat. | Mengagumkan. Mengirimi mereka pesan seolah sedang natal sayaang! | Hari ini sudah sedemikian indahnya.</string>
-  <string name="CONV_SNOW">Ayo kita keluar dan mainkan!</string>
+  <string name="CONV_SNOW">Ayo keluar dan mainkan!</string>
   <string name="CONV_NAH">Ngga :wink:</string>
-  <string name="CONV_NOPE">Nggatuh.avi</string>
+  <string name="CONV_NOPE">Nope.avi</string>
   <string name="CONV_AYYLMAO">Ayy lmaooo</string>
   <string name="CONV_RIP">Beristirahat dengan damai pastinya **beri hormat**</string>
   <string name="CONV_MASTER">Dobby tidak punya guru.</string>
   <string name="CONV_SPARTA">INILAH SPARTA!</string>
-  <string name="CONV_BEGINDATE">Aku berawal sebagai robot pribadi pada akhir Oktober 2015, tapi segera diletakkan di GitHub dan dimassalkan agar digunakan setiap orang (akhir Desember 2015).</string>
-  <string name="CONV_OWNER">Aku dibuat oleh DefaltSimon.</string>
+  <string name="CONV_BEGINDATE">Saya berawal sebagai bot pribadi pada akhir Oktober 2015, tapi segera diletakkan di GitHub dan dimassalkan agar digunakan setiap orang (akhir Desember 2015).</string>
+  <string name="CONV_OWNER">Saya dibuat oleh DefaltSimon.</string>
   <string name="CONV_LOVE">&lt;3</string>
   <string name="CONV_HI">Hai kamu!</string>
-  <string name="PERM_HIERARCHY">:warning: Anda tidak diperkenankan berurusan dengan peran ini (Anda lebih rendah di \"hierarki\"). ¯\_(ツ)_/¯</string>
-  <string name="PERM_ADMIN">:warning: Anda tidak memiliki izin yang benar menggunakan perintah ini (harus seorang admin).</string>
-  <string name="PERM_MOD">:warning: Anda tidak memiliki izin yang benar menggunakan perintah ini (harus seorang mod).</string>
-  <string name="PERM_OWNER">:warning: Anda tidak diizinkan menggunakan fitur ini. (harus pemilik bot)</string>
+  <string name="PERM_HIERARCHY">:warning: Kamu tidak diizinkan berurusan dengan peran ini (\"hierarki\" kamu lebih rendah). ¯\_(ツ)_/¯</string>
+  <string name="PERM_ADMIN">:warning: Kamu tidak memiliki izin yang benar menggunakan perintah ini (harus seorang admin).</string>
+  <string name="PERM_MOD">:warning: Kamu tidak memiliki izin yang benar menggunakan perintah ini (harus seorang mod).</string>
+  <string name="PERM_OWNER">:warning: Kamu tidak diizinkan menggunakan fitur ini. (harus pemilik bot)</string>
   <string name="INFO_PREFIX">Server ini berawalan **{}**</string>
   <string name="INFO_PREFIX_LITERAL">awalan</string>
-  <string name="INFO_DONE">Selesai</string>
+  <string name="INFO_DONE">Beres</string>
   <string name="INFO_OK">Ok</string>
   <string name="INFO_ON">Menyala</string>
   <string name="INFO_YES">Ya</string>
@@ -46,7 +46,15 @@
   <string name="INFO_UPDATED">Terbarui</string>
   <string name="INFO_DISABLED">Dinonaktifkan</string>
   <string name="INFO_DISABLED_A">Padamkan</string>
-  <string name="INFO_GENERAL">**Hei! Namaku Nano!** Aku punya catatan GitHub, jika kamu ingin melihat kodeku: `{p}github` :inbox_tray: Versi terkini **{ver}**. :spy: Kodeku ditulis oleh **DefaltSimon**. Serta: perintah `{p}gif`didayai oleh **Giphy**</string>
+  <string name="INFO_GENERAL">**Hei! Nama saya Nano!**
+
+Saya punya repo GitHub, jika kamu ingin melihat kodeku: `{p}github`
+
+:inbox_tray: Versi terkini **{ver}**.
+
+:spy: Kodeku ditulis oleh **DefaltSimon**.
+
+Serta: perintah `{p}gif`didayai oleh **Giphy**</string>
   <string name="INFO_GITHUB">Kodenya Nano tersedia di **GitHub**: https://github.com/DefaltSimon/Nano</string>
   <string name="INFO_INVITE">Kamu ingin mengundang Nano ke servermu? Mantap! **Ikuti saja link ini:** &lt;link&gt;</string>
   <string name="INFO_REPORT">Laporan</string>
@@ -69,76 +77,82 @@
   <string name="INFO_HELP">bantuan</string>
   <string name="ERROR_MISSING_CHANNEL">Kanal tidak ditemukan.</string>
   <string name="ERROR_PREFIX_TOO_LONG">:warning: Awalan terlalu panjang! Panjang maksimum {} karakter.</string>
-  <string name="ERROR_NOT_MEMBER">Argumen harus menjadi anggota</string>
+  <string name="ERROR_NOT_MEMBER">Argumen harus seorang anggota</string>
   <string name="ERROR_NO_USER">:warning: Pengguna tidak ada.</string>
   <string name="ERROR_NO_USER2">:warning: Pengguna tidak ditemukan.</string>
-  <string name="ERROR_MENTION_ONE">Harap penyebutan orang hanya satu-persatu.</string>
-  <string name="ERROR_MENTION_ONE_ROLE">Harap penyebutan peran hanya satu-persatu.</string>
-  <string name="ERROR_MENTION_ONE_CH">Harap penyebutan kanal hanya satu-persatu.</string>
+  <string name="ERROR_MENTION_ONE">Harap hanya sebut orang satu-persatu.</string>
+  <string name="ERROR_MENTION_ONE_ROLE">Harap hanya sebut peran satu-persatu.</string>
+  <string name="ERROR_MENTION_ONE_CH">Harap hanya sebut kanal satu-persatu.</string>
   <string name="ERROR_NO_MENTION">Silahkan @mention seorang anggota.</string>
-  <string name="ERROR_NO_CHMENTION">Silahkan #sebut satu kanal.</string>
+  <string name="ERROR_NO_CHMENTION">Silahkan #mention satu kanal.</string>
   <string name="ERROR_NO_CHANNEL_MENTION">Silahkan sebut satu kanal.</string>
   <string name="ERROR_NOT_CHANNEL">Bukan sebuah kanal.</string>
   <string name="ERROR_INVALID_ROLE_NAME">:warning: Nama peran tidak valid!</string>
   <string name="ERROR_NOT_NUMBER">Bukan sebuah nomor.</string>
-  <string name="ERROR_INVALID_CMD_ARGUMENTS">Ada yang salah, harap periksa argumen perintah Anda.</string>
+  <string name="ERROR_INVALID_CMD_ARGUMENTS">Ada yang salah, harap periksa argumen perintahmu.</string>
   <string name="ERROR_SOMETHING">:warning: Ada yang salah...</string>
   <string name="ERROR_PERMS">:warning: Nano tampaknya kehilangan izin tindakan ini, silahkan bertanya kepada pemilik/admin/... untuk memperbaiki dan mencoba lagi.</string>
   <string name="ERROR_NO_SUCH_ROLE">:warning: Peran tidak ada!</string>
   <string name="ERROR_MSG_TOO_LONG">:x: Pesan ditampilkan terlalu panjang, pertimbangkan agar membuatnya lebih singkat.</string>
   <string name="ERROR_SOMETHING_WENT_WRONG">:eyes: Oh tidak, ada yang salah! Masalah ini sudah dicatatkan.
-Jika Anda duga menemukan masalah, silahkan beritahu pengembang di server layanan kami (lihat _help untuk mengundang).</string>
-  <string name="MSG_NUKE_PURGING">Menyingkirkan {} pesan terakhir... :boom:</string>
+Jika kamu duga menemukan masalah, silahkan beritahu pengembang di server layanan kami (lihat _help untuk mengundang).</string>
+  <string name="MSG_NUKE_PURGING">Membersihkan {} pesan terakhir... :boom:</string>
   <string name="MSG_NUKE_AUDIT_REASON">**{}** menghancurkan {} pesan.</string>
   <string name="MSG_NUKE_AMOUNT">Menghancurkan {} pesan.</string>
-  <string name="MSG_NUKE_PURGED">Menyingkirkan {} pesan :ok_hand:</string>
-  <string name="MSG_NUKE_OLD">(beberapa pesan lamanya lebih dari 2 minggu, sehingga tidak dihapus)</string>
+  <string name="MSG_NUKE_PURGED">Membersihkan {} pesan :ok_hand:</string>
+  <string name="MSG_NUKE_OLD">(beberapa pesan sudah lebih dari 2 minggu, sehingga tidak dihapus)</string>
   <string name="MSG_KICK_NANO">Usaha yang bagus :smiley:</string>
-  <string name="MSG_KICK">Sudah menendang **{}** :eyes:</string>
-  <string name="MSG_KICK_CONFIRM">Apa Anda yakin ingin menendang **{}**? Konfirmasi dengan memberi reaksi {}</string>
+  <string name="MSG_KICK">**{}** sudah ditendang :eyes:</string>
+  <string name="MSG_KICK_CONFIRM">Kamu yakin ingin menendang **{}**? Konfirmasi dengan memberi reaksi {}</string>
   <string name="MSG_KICK_TIMEOUT">Konfirmasi tidak diterima, BATAL menendang :upside_down:</string>
-  <string name="MSG_BAN_USER">Apa Anda yakin ingin menolak **{}**? Konfirmasi dengan memberi reaksi {}</string>
-  <string name="MSG_BAN">Sudah menolak **{}** :eyes:</string>
+  <string name="MSG_BAN_USER">Apa Anda yakin ingin melarang **{}**? Konfirmasi dengan memberi reaksi {}</string>
+  <string name="MSG_BAN">**{}** sudah ditolak :eyes:</string>
   <string name="MSG_BAN_NANO">Usaha yang bagus :smiley:</string>
-  <string name="MSG_BAN_TIMEOUT">Konfirmasi tidak diterima, BATAL menolak :upside_down:</string>
-  <string name="MSG_UNBAN_SUCCESS">Batal menolak **{}** :ok_hand:</string>
-  <string name="MSG_UNBAN_NO_BAN">:x: Tidak ada nama tersebut di daftar tertolak.</string>
+  <string name="MSG_BAN_TIMEOUT">Konfirmasi tidak diterima, BATAL melarang :upside_down:</string>
+  <string name="MSG_UNBAN_SUCCESS">Batal dilarang **{}** :ok_hand:</string>
+  <string name="MSG_UNBAN_NO_BAN">:x: Tidak ada nama tersebut di daftar larang.</string>
   <string name="MSG_UNBAN_WRONG_USAGE">Salah Penggunaan. Lihat `{}help unban`</string>
-  <string name="MSG_SOFTBAN_CONFIRM">Apa Anda yakin ingin softban **{}** {}? Konfirmasi dengan memberi reaksi {}</string>
-  <string name="MSG_SOFTBAN_TIMEOUT">Konfirmasi tidak diterima, BATALKAN soft-ban :upside_down:</string>
-  <string name="MSG_SOFTBAN_SUCCESS">Terkena soft-ban **{}** selama :timer: {}</string>
-  <string name="MSG_SOFTBAN_PLSMENTION">Silahkan sebut anggota yang ingin Anda kenakan softban. (hanya satu)</string>
-  <string name="MSG_SOFTBAN_DELIMIT">:no_entry_sign: Silahkan batasi **time** dan **@mention/username** dengan `|`</string>
-  <string name="MSG_SOFTBAN_NO_TIME">:warning: Silahkan tentukan waktu untuk ban.</string>
-  <string name="MSG_MUTE_LIST">**Anggota terkunci:** (laman **{}**/{}) {}</string>
-  <string name="MSG_MUTE_NONE">Tidak ada anggota terkena ban di server ini.</string>
-  <string name="MSG_MUTE_OWNER">:warning: Anda tidak bisa meredam pemilik server.</string>
+  <string name="MSG_SOFTBAN_CONFIRM">Kamu yakin ingin memberi larangan ringan **{}** bagi {}? Konfirmasi dengan memberi reaksi {}</string>
+  <string name="MSG_SOFTBAN_TIMEOUT">Konfirmasi tidak diterima, BATALKAN larangan ringan :upside_down:</string>
+  <string name="MSG_SOFTBAN_SUCCESS">**{}** dikenai larangan ringan selama {} :timer:</string>
+  <string name="MSG_SOFTBAN_PLSMENTION">Silahkan sebut anggota yang ingin kamu kenai larangan ringan. (hanya satu)</string>
+  <string name="MSG_SOFTBAN_DELIMIT">:no_entry_sign: Silahkan batasi **waktu** dan **@sebutan/namapengguna** dengan `|`</string>
+  <string name="MSG_SOFTBAN_NO_TIME">:warning: Harap tentukan waktu larangan.</string>
+  <string name="MSG_MUTE_LIST">**Anggota yang diredam:** (laman **{}**/{})</string>
+  <string name="MSG_MUTE_NONE">Tidak ada anggota diredam di server ini.</string>
+  <string name="MSG_MUTE_OWNER">:warning: Kamu tidak bisa meredam pemilik server.</string>
   <string name="MSG_MUTE_SELF">Mencoba meredam diri sendiri? Tidak akan berhasil :rofl:</string>
   <string name="MSG_MUTE_SUCCESS">**{}** kini tidak dapat berbicara di sini. :zipper_mouth:</string>
   <string name="MSG_MUTE_TOO_MANY">Terlalu banyak orang yang diredam untuk ditampilkan...</string>
   <string name="MSG_UNMUTE_SUCCESS">**{}** kini dapat kembali berbincang di sini :rofl:</string>
-  <string name="MSG_UNMUTE_ALL_CONFIRM">Apa Anda yakin ingin meredam setiap orang? Ketik \"{}\" untuk mengonfirmasi.</string>
-  <string name="MSG_UNMUTE_TIMEOUT">Konfirmasi tidak diterima, membatalkan bungkam. :upside_down:</string>
+  <string name="MSG_UNMUTE_ALL_CONFIRM">Kamu yakin ingin membuka redam setiap orang? Ketik \"{}\" untuk mengonfirmasi.</string>
+  <string name="MSG_UNMUTE_TIMEOUT">Konfirmasi tidak diterima, membatalkan buka redam. :upside_down:</string>
   <string name="MSG_UNMUTE_MASS_DONE">Anggota yang sebelumnya diredam sudah diaktifkan.</string>
   <string name="MSG_JOIN">Pesan bergabung sudah diperbarui :smile:</string>
   <string name="MSG_JOIN_DISABLED">Pesan bergabung sudah dinonaktifkan :white_check_mark:</string>
-  <string name="MSG_JOIN_IS_DISABLED">:information_source: Saat ini pesan bergabung dinonaktifkan. Buatlah pesan dengan `_joinmsg your_message`</string>
-  <string name="MSG_BANMSG">Pesan penolakan sudah diperbarui :smile:</string>
-  <string name="MSG_BANMSG_DISABLED">Pesan penolakan sudah dinonaktifkan :white_check_mark:</string>
-  <string name="MSG_BANMSG_IS_DISABLED">:information_source: Saat ini pesan penolakan dinonaktifkan</string>
+  <string name="MSG_JOIN_IS_DISABLED">:information_source: Saat ini pesan bergabung dinonaktifkan.
+
+Buatlah pesan dengan `_joinmsg your_message`</string>
+  <string name="MSG_BANMSG">Pesan larang sudah diperbarui :smile:</string>
+  <string name="MSG_BANMSG_DISABLED">Pesan larang sudah dinonaktifkan :white_check_mark:</string>
+  <string name="MSG_BANMSG_IS_DISABLED">:information_source: Saat ini pesan larang dinonaktifkan</string>
   <string name="MSG_KICKMSG">Pesan tendang sudah diperbarui :smile:</string>
   <string name="MSG_KICKMSG_DISABLED">Pesan tendang sudah dinonaktifkan :white_check_mark:</string>
   <string name="MSG_KICKMSG_IS_DISABLED">:information_source: Saat ini pesan tendang dinonaktifkan. Buat pesan dengan `kickmsg your_message`</string>
   <string name="MSG_LEAVE">Pesan pergi sudah diperbarui :smile:</string>
   <string name="MSG_LEAVE_DISABLED">Pesan pergi sudah dinonaktifkan :white_check_mark:</string>
   <string name="MSG_LEAVE_IS_DISABLED">:information_source: Pesan pergi saat ini dinonaktifkan. Buat pesan dengan `_leavemsg your_message`</string>
-  <string name="MSG_NOTIF_TOO_LONG">:exclamation: Pesan Anda **terlalu panjang!** (maksimum {}, pesan Anda {})</string>
-  <string name="MSG_JOIN_CURRENT">:gear: Pesan selamat datang saat ini: ```{}```</string>
-  <string name="MSG_BANMSG_CURRENT">:gear: Pesan penolakan saat ini: ```{}```</string>
-  <string name="MSG_LEAVE_CURRENT">:gear: Pesan pergi saat ini: ```{}```</string>
+  <string name="MSG_NOTIF_TOO_LONG">:exclamation: Pesanmu **terlalu panjang!** (maksimum {}, pesanmu {})</string>
+  <string name="MSG_JOIN_CURRENT">:gear: Pesan selamat datang saat ini: 
+
+```{}```</string>
+  <string name="MSG_BANMSG_CURRENT">:gear: Pesan larang saat ini: ```{}```</string>
+  <string name="MSG_LEAVE_CURRENT">:gear: Pesan pergi saat ini: 
+
+```{}```</string>
   <string name="MSG_KICK_CURRENT">:gear: Pesan tendang saat ini: ```{}```</string>
   <string name="MSG_USERINFO_STATUS">Status</string>
-  <string name="MSG_USERINFO_MENTION">Menyebut</string>
+  <string name="MSG_USERINFO_MENTION">Sebut</string>
   <string name="MSG_USERINFO_ID">Id</string>
   <string name="MSG_USERINFO_TYPE">Jenis akun</string>
   <string name="MSG_USERINFO_TOPROLE">Peran teratas</string>
@@ -147,53 +161,54 @@ Jika Anda duga menemukan masalah, silahkan beritahu pengembang di server layanan
   <string name="MSG_USERINFO_USER">**Info pengguna:**</string>
   <string name="MSG_USERINFO_PERSON">Sosok :cowboy:</string>
   <string name="MSG_USERINFO_BOT">Bot :robot:</string>
-  <string name="MSG_ROLE_TOO_MANY_MENTIONS">Terlalu banyak penyebutan! Penandaan ini (tanpa pemisah **|**) does not support more than one mention). Please use the notation with **|**.</string>
-  <string name="MSG_ROLE_HELP">Perintah ini membolehkan admin mengatur -peran-peran pengguna. Subcommands: `add` `remove`</string>
+  <string name="MSG_ROLE_TOO_MANY_MENTIONS">Penyebutan terlalu banyak! Penandaan ini (tanpa pemisah **|**) does not support more than one mention). Please use the notation with **|**.</string>
+  <string name="MSG_ROLE_HELP">Perintah ini mengizinkan admin mengatur peran-peran pengguna.
+Subperintah: `add` `remove`</string>
   <string name="MSG_ROLE_NEED_MENTION">Perlu penyebutan! Penandaan ini (tanpa pemisah **|**) does not support searching by name). Please use the notation with **|** atau satu @mention.</string>
-  <string name="MSG_ROLE_ALREADY_HAD">:information_source: Satu pengguna atau lebih sudah memiliki peran yang Anda ditentukan, tapi peran-peran tetap ditambahkan kepada yang tidak memilikinya.</string>
-  <string name="MSG_ROLE_REMOVE_SOME_DIDNT">:information_source: Satu pengguna atau lebih sudah tidak lagi memiliki peran yang Anda tentukan, tapi peran-peran tetap dihilangkan dari mereka yang sudah memilikinya.</string>
+  <string name="MSG_ROLE_ALREADY_HAD">:information_source: Satu pengguna atau lebih sudah memiliki peran yang kamu tentukan, tapi peran-peran tetap ditambahkan kepada yang tidak memilikinya.</string>
+  <string name="MSG_ROLE_REMOVE_SOME_DIDNT">:information_source: Satu pengguna atau lebih sudah tidak lagi memiliki peran yang kamu tentukan, tapi peran-peran tetap dihilangkan dari mereka yang sudah memilikinya.</string>
   <string name="MSG_ROLE_ADDED_MP">**{}** ditambahkan pada {} pengguna.</string>
   <string name="MSG_ROLE_REMOVED_MP">**{}** sudah dihapus dari {} pengguna.</string>
   <string name="MSG_CMD_WRONG_PARAMS">Parameter salah.
 `{}cmd add trigger| response`</string>
-  <string name="MSG_CMD_LIMIT_EXCEEDED">:warning: Anda mencapai batas maksimum perintah kustom ({}).</string>
+  <string name="MSG_CMD_LIMIT_EXCEEDED">:warning: Kamu sudah mencapai batas maksimum perintah kustom ({}).</string>
   <string name="MSG_CMD_EMPTY">:warning: Keduanya pemicu dan respon harus berisi teks.</string>
-  <string name="MSG_CMD_NAME_TOO_LONG">:warning: Perintah nama Anda terlalu panjang (maks. {}, milik Anda {})</string>
-  <string name="MSG_CMD_RESPONSE_TOO_LONG">:warning: Perintah respon Anda terlalu panjang (maks. {}, milik Anda {})</string>
-  <string name="MSG_CMD_ALREADY_EXISTS">Perintah ini sudah ada! Apa Anda ingin menimpanya? Ketik \'{}\' untuk menegaskan.</string>
+  <string name="MSG_CMD_NAME_TOO_LONG">:warning: Nama perintahmu terlalu panjang (maks. {}, milikmu {})</string>
+  <string name="MSG_CMD_RESPONSE_TOO_LONG">:warning: Perintah responmu terlalu panjang (maks. {}, milikmu {})</string>
+  <string name="MSG_CMD_ALREADY_EXISTS">Perintah ini sudah ada! Kamu ingin menimpanya? Ketik \'{}\' untuk menegaskan.</string>
   <string name="MSG_CMD_ADDED">Perintah \'{}\' ditambahkan.</string>
   <string name="MSG_CMD_SEPARATE">:no_entry_sign: Argumen-argumen salah, pisahkan perintah dan respon dengan |</string>
-  <string name="MSG_CMD_TIMEOUT">Penegasan tidak diterima, batal menimpa perintah saat ini. :upside_down:</string>
-  <string name="MSG_CMD_NO_SUCH_COMMAND">:warning: gagal menghapus perintah (tidak ada)</string>
+  <string name="MSG_CMD_TIMEOUT">Konfirmasi tidak diterima, batal menimpa perintah saat ini. :upside_down:</string>
+  <string name="MSG_CMD_NO_SUCH_COMMAND">:warning: Gagal menghapus perintah (tidak ada)</string>
   <string name="MSG_CMD_NO_CUSTOM">Tidak ada perintah kustom di server ini. Tambahkan dengan `{}cmd add trigger|response`!</string>
   <string name="MSG_CMD_LIST">Perintah kustom: (laman **{}**/{})
 ```{}```</string>
   <string name="MSG_CMD_LIST_NO_PAGE">:eyes: Laman tidak ada! Yang ada hanya laman perintah **{}**.</string>
   <string name="MSG_CMD_REMOVE_FAIL">:warning: Gagal menghapus perintah (tidak ada)</string>
-  <string name="MSG_CMD_REMOVE_PARAMS">:warning: Harap tentukan sebuah perintah menghapus.</string>
-  <string name="MSG_CMD_LIST_TOO_LONG">Perintah Anda ditampilkan terlalu panjang. Pertimbangkan membersihkan sebagiannya atau tanya kepada pemilik bot untuk melakukannya jika Anda tidak ingat perintahnya.</string>
-  <string name="MSG_CMD_STATUS">:information_source: Anda memiliki **{}** / {} perintah kustom</string>
+  <string name="MSG_CMD_REMOVE_PARAMS">:warning: Harap tentukan sebuah perintah untuk dihapus.</string>
+  <string name="MSG_CMD_LIST_TOO_LONG">Perintahmu ditampilkan terlalu panjang. Pertimbangkan membersihkan sebagiannya atau tanya kepada pemilik bot untuk melakukannya jika kamu tidak ingat perintahnya.</string>
+  <string name="MSG_CMD_STATUS">:information_source: Kamu memiliki **{}** / {} perintah kustom</string>
   <string name="MSG_LANG_LIST">Bahasa yang tersedia:
 {}
 
 Harap diingat bahwa fitur ini belum sempurna dan mungkin kehilangan beberapa terjemahan.
 Serta, perintah !help **tidak** diterjemahkan.</string>
   <string name="MSG_LANG_NOT_AVAILABLE">:eyes: Bahasa tersebut belum tersedia. :cry:</string>
-  <string name="MSG_LANG_SET">Bahasa sudah ditetapkan pada **{}**. {}</string>
-  <string name="MSG_LANG_TRANS">(para penerjemah: {})</string>
-  <string name="MSG_LANG_CURRENT">Anda menggunakan `{}` ({}), tapi mungkin Anda sudah mengetahuinya :stuck_out_tongue:
+  <string name="MSG_LANG_SET">Bahasa ditetapkan menjadi **{}**. {}</string>
+  <string name="MSG_LANG_TRANS">(penerjemah: {})</string>
+  <string name="MSG_LANG_CURRENT">Kamu menggunakan `{}` ({}), tapi mungkin kamu sudah mengetahuinya :stuck_out_tongue:
 Cobalah `{}daftar bahasa` guna melihat bahasa yang tersedia.</string>
   <string name="MSG_SETTINGS_WRONG_USAGE">:warning: Salah penggunaan, lihat `bantuan nano.settings`.
-:crystal_ball: Jika Anda ingin melihat pengaturan saat ini, gunakan`nano.displaysettings`.</string>
+:crystal_ball: Jika kamu ingin melihat pengaturan saat ini, gunakan`nano.displaysettings`.</string>
   <string name="MSG_SETTINGS_NOT_TEXT">Kanal log tidak boleh berupa kanal suara! Usaha yang bagus :smile:</string>
-  <string name="MSG_SETTINGS_LOGCHANNEL_SET">Kanal log ditetapkan pada **{}** :smile:</string>
+  <string name="MSG_SETTINGS_LOGCHANNEL_SET">Kanal log ditetapkan menjadi **{}** :smile:</string>
   <string name="MSG_SETTINGS_LOGCHANNEL_DISABLED">Kanal log **dinonaktifkan** :ok_hand:</string>
   <string name="MSG_SELFROLE_ADMIN_REMOVED">:ok: **{}** dihapus dari daftar peran diri.</string>
-  <string name="MSG_SELFROLE_ADMIN_ADDED">:ok: Peran diri sudah ditambahkan.</string>
+  <string name="MSG_SELFROLE_ADMIN_ADDED">:ok: Peran diri ditambahkan.</string>
   <string name="MSG_SELFROLE_ALR_EX">:warning: Peran diri sudah ada!</string>
   <string name="MSG_SELFROLE_INACCESSIBLE">:warning: **{}** tidak dapat diakses (mungkin lebih tinggi dari peran teratas Nano atau Nano tidak memiliki izin \'Kelola Peran\')</string>
   <string name="MSG_SELFROLE_REMOVE_NOT_PRESENT">:warning: Bukanlah peran diri.</string>
-  <string name="MSG_SELFROLE_NOT_ANYMORE">:warning: Bukanlah peran di server ini.</string>
+  <string name="MSG_SELFROLE_NOT_ANYMORE">:warning: Bukan peran di server ini.</string>
   <string name="MSG_SELFROLE_LIST">**Peran diri** (laman **{}**/{})
 
 {}</string>
@@ -202,17 +217,17 @@ Cobalah `{}daftar bahasa` guna melihat bahasa yang tersedia.</string>
   <string name="MSG_SELFROLE_ADDED">:ok_hand: Peran ditambahkan.</string>
   <string name="MSG_SELFROLE_NONE">Saat ini tidak ada peran diri di server ini. Tambahkan dengan `nano settings selfrole add [role]` !</string>
   <string name="MSG_SELFROLE_NO_PAGE">:eyes: Laman tidak ada! Yang ada hanya laman **{}**.</string>
-  <string name="MSG_SELFROLE_TOO_MANY">:warning: Batas peran diri tercapai! Anda hanya boleh memiliki **{}** peran diri sekali waktu.</string>
-  <string name="MSG_SETTINGS_WF_OPTIONS">penyaring kata | penyaring kekata | kekatapenyaring | kekatapenyaring</string>
-  <string name="MSG_SETTINGS_SF_OPTIONS">penyaring spam | penyaringspam |spampenyaring | spampenyaring</string>
-  <string name="MSG_SETTINGS_IF_OPTIONS">saring undangan | saring beberapa undangan | saring beberapa undangan</string>
-  <string name="MSG_SETTINGS_DEFCHAN_SET">:ok: Kanal default ditetapkan pada **{}**.</string>
+  <string name="MSG_SELFROLE_TOO_MANY">:warning: Batas peran diri tercapai! Kamu hanya boleh memiliki **{}** peran diri sekali waktu.</string>
+  <string name="MSG_SETTINGS_WF_OPTIONS">penyaring kata | penyaring kekata | kekata penyaring | kekatapenyaring</string>
+  <string name="MSG_SETTINGS_SF_OPTIONS">penyaring spam | penyaringspam |saring spam | spampenyaring</string>
+  <string name="MSG_SETTINGS_IF_OPTIONS">penyaring undangan | saring undangan | saring undangan</string>
+  <string name="MSG_SETTINGS_DEFCHAN_SET">:ok: Kanal default ditetapkan menjadi **{}**.</string>
   <string name="MSG_SETTINGS_DEFCHAN_RESET">:ok: Kanal default ditetapkan ke default kembali - **{}**.</string>
-  <string name="MSG_SETTINGS_WORD">Menyaring kata {}</string>
-  <string name="MSG_SETTINGS_SPAM">Menyaring spam {}</string>
-  <string name="MSG_SETTINGS_INVITE">Menyaring undangan {}</string>
-  <string name="MSG_SETTINGS_NOT_A_SETTING">**{}** bukan pengaturan. Harus salah satu dari: logchannelmselfrole, invitefilter, wordfilter, spamfilter, defaultchannel.</string>
-  <string name="MSG_SETTINGS_NO_BLACKLIST">Tak ada blacklist</string>
+  <string name="MSG_SETTINGS_WORD">Saring kata {}</string>
+  <string name="MSG_SETTINGS_SPAM">Saring spam {}</string>
+  <string name="MSG_SETTINGS_INVITE">Saring undang {}</string>
+  <string name="MSG_SETTINGS_NOT_A_SETTING">**{}** bukan pengaturan. Harus salah satu dari: logchannel, selfrole, invitefilter, wordfilter, spamfilter, defaultchannel.</string>
+  <string name="MSG_SETTINGS_NO_BLACKLIST">Tak ada daftar hitam</string>
   <string name="MSG_SETTINGS_DISPLAY">**PengaturanServer**
 ```markdown
 ## Awalan
@@ -242,7 +257,7 @@ Cobalah `{}daftar bahasa` guna melihat bahasa yang tersedia.</string>
 
 ===================
 ```</string>
-  <string name="MSG_SETTINGS_DISPLAY_2">**Messages**
+  <string name="MSG_SETTINGS_DISPLAY_2">**Pesan-pesan**
 ```markdown
 
 [1.]: Bergabung
@@ -254,109 +269,109 @@ Cobalah `{}daftar bahasa` guna melihat bahasa yang tersedia.</string>
 [3.]: Tendang
 {}
 
-[4.]: Tolak
+[4.]: Larang
 {}
 ``</string>
-  <string name="MSG_BLACKLIST_ADDED">Berhasil menambahkan &lt;#{}&gt; to the blacklist :ok_hand:</string>
-  <string name="MSG_BLACKLIST_REMOVED">Daftar hitam kanal untuk &lt;#{}&gt; removed :ok_hand:</string>
+  <string name="MSG_BLACKLIST_ADDED">Berhasil menambahkan &lt;#{}&gt; ke daftar hitam :ok_hand:</string>
+  <string name="MSG_BLACKLIST_REMOVED">Daftar hitam kanal bagi &lt;#{}&gt; sudah dihapus :ok_hand:</string>
   <string name="MSG_BLACKLIST_REMOVE_FAIL">Daftar hitam kanal tidak dapat dihapus, sebab tak ada kanal dengan nama tersebut.</string>
-  <string name="MSG_BLACKLIST_DOESNT_EXIST">&lt;#{}&gt; bukanlah kanal dalam daftar hitam.</string>
+  <string name="MSG_BLACKLIST_DOESNT_EXIST">&lt;#{}&gt; bukanlah kanal daftar hitam.</string>
   <string name="MSG_BLACKLIST_TOO_MANY">Terlalu banyak daftar hitam! Jumlah kanal berdaftar hitam yang dizinkan sebanyak **{}**.</string>
   <string name="MSG_BLACKLIST_LIST">Kanal berdaftar hitam:
 
 {}</string>
   <string name="MSG_BLACKLIST_NONE">Tidak ada kanal berdaftar hitam di server ini. :smile:</string>
-  <string name="MSG_RESET_CONFIRM">:warning: Apa Anda yakin ingin mengatur ulang seluruh pengaturan terkait Nano ke default? (tidak termasuk redam, peran diri dan perintah)
+  <string name="MSG_RESET_CONFIRM">:warning: Apa kamu yakin ingin mengatur ulang seluruh pengaturan terkait Nano ke default? (tidak termasuk redam, peran diri dan perintah)
 Konfirmasikan balasan menggunakan \'{}\'.</string>
   <string name="MSG_RESET_CONFIRM_TIMEOUT">Konfirmasi tidak diterima, BATALKAN pengaturan ulang :upside_down:</string>
   <string name="MSG_RESET_DONE">Atur ulang. :white_check_mark:</string>
   <string name="MSG_PREFIX_CHANGED">Awalan telah diubah menjadi **{}** :ok_hand:</string>
-  <string name="MSG_PREFIX_PLS_ARGUMENTS">Perintah ini butuh sebuah argumen: awalan yang ingin Anda tetapkan.</string>
+  <string name="MSG_PREFIX_PLS_ARGUMENTS">Perintah ini butuh sebuah argumen: awalan yang ingin kamu tetapkan.</string>
   <string name="MSG_SETUP_TIMEOUT">Anda kehabisan waktu :upside_down: (habis waktu {} detik)</string>
   <string name="MSG_SETUP_WELCOME">**PENGATURAN SERVER**
-Anda telah memulai pengaturan server. Karena Anda yang memulainya, hanya jawaban Anda yang akan disertakan pada akun.
+Kamu telah memulai pengaturan server. Karena kamu yang memulainya, hanya jawabanmu yang akan disertakan pada akun.
 **Mari kita mulai!**</string>
-  <string name="MSG_SETUP_RESET">Apa Anda ingin mengatur kembali semua yang terkait bot untuk server ini?
-(termasuk pengaturan standar beserta kanal di daftar hitam, kanal log Anda dan awalan serta selamat datang, pesan-pesan tolakan dan tendangan).
+  <string name="MSG_SETUP_RESET">Apa kamu ingin mengatur kembali semua yang terkait bot untuk server ini?
+(termasuk pengaturan standar beserta kanal di daftar hitam, kanal log Anda dan awalan serta selamat datang, pesan larang dan tendang).
 
 ```md
 [{yes}](Resets all settings)
 [{no}](Keeps all settings)```</string>
   <string name="MSG_SETUP_PREFIX_TEXT">Awalan</string>
-  <string name="MSG_SETUP_PREFIX">Awalan apa yang infin Anda gunakan untuk setiap perintah?
-Contoh: dengan *!* sebagai awalan diterjemahkan menjadi `!help`, `ping`, dsb.
+  <string name="MSG_SETUP_PREFIX">Awalan apa yang ingin kamu gunakan untuk semua perintah?
+Contoh: dengan *!* sebagai awalan diterjemahkan menjadi `!help`, `!ping`, dsb.
 
 ```md
 [{prefix}](Awalan yang Anda inginkan)```</string>
   <string name="MSG_SETUP_JOINMSG_TEXT">Teks</string>
-  <string name="MSG_SETUP_JOINMSG">Anda ingin saya mengatakan apa saat seseorang bergabung ke server Anda?
+  <string name="MSG_SETUP_JOINMSG">Kamu ingin saya mengatakan apa saat seseorang bergabung ke servermu?
 
 Berikut terapan pemformatan:
-*:user* -&gt; sebutan pengguna
+*:user* -&gt; sebut pengguna
 *:username* -&gt; nama pengguna
 *:server* -&gt; nama server
 
 ```md
 [{text}](Pesan yang ingin Anda lihat)
 [{none}](Nonaktifkan pesan bergabung)```</string>
-  <string name="MSG_SETUP_SPAM">Apa Anda ingin saya menyaring spam?
+  <string name="MSG_SETUP_SPAM">Apa kamu ingin saya menyaring spam?
 ```md
 [{yes}](Aktifkan penyaring spam)
 [{no}](Nonaktifkan penyaring spam)```</string>
-  <string name="MSG_SETUP_SWEARING">Apa Anda ingin saya menyaring sumpahan?
+  <string name="MSG_SETUP_SWEARING">Apa kamu ingin saya menyaring sumpahan?
 ```md
 [{yes}](Aktifkan penyaring sumpahan)
 [{no}](Nonaktifkan penyaring sumpahan)```</string>
   <string name="MSG_SETUP_LOGCHANNEL_MENTION">#kanal sebut</string>
-  <string name="MSG_SETUP_LOGCHANNEL">Kanal apa yang Anda ingin saya gunakan untuk logging?
+  <string name="MSG_SETUP_LOGCHANNEL">Kanal apa yang kamu ingin saya gunakan untuk logging?
 ```md
 [{mention}](Menggunakan kanal yang disebut)
 [{none}](Nonaktifkan logging)```</string>
-  <string name="MSG_SETUP_LOGCHANNEL_DISABLED">Log masuk dinonaktifkan.</string>
-  <string name="MSG_SETUP_LOGCHANNEL_SET">Kanal log ditetapkan ke **{}**</string>
-  <string name="MSG_SETUP_LOGCHANNEL_INVALID">:x: Jawaban / kanal log tidak sah.</string>
+  <string name="MSG_SETUP_LOGCHANNEL_DISABLED">Log dinonaktifkan.</string>
+  <string name="MSG_SETUP_LOGCHANNEL_SET">Kanal log ditetapkan menjadi **{}**</string>
+  <string name="MSG_SETUP_LOGCHANNEL_INVALID">:x: Salah jawaban / kanal log.</string>
   <string name="MSG_SETUP_COMPLETE">**Ini mengintisarikan dasar pengaturan server**
 Ada pengaturan lainnya jika Anda membutuhkan:
 
-➤ mendaftarhitamkan kanal - `nano.blacklist tambahkan/hapuskan #kanal`
-➤ meninggalkan pesan - `&gt;leavemsg pesan`
-➤ tolak pesan - `&gt;banmsg pesan`
+➤ mendaftarhitamkan kanal - `nano.blacklist tambahkan/hapuskan #channel`
+➤ pesan pergi- `&gt;leavemsg pesan`
+➤ pesan larang - `&gt;banmsg pesan`
 Ini bukan pengaturan keseluruhan. Untuk daftar yang lebih luas, lihat di bawah ini.
 
-Awalan dapat diubah lagi dengan mudah dengan `nano.changeprefix awalan`.
-Perintah admin dan mod hanya dapat digunakan pemilik peran bernama \"Nano Admind\"/\"Nano Mod\".
-Anda dan semua admin dapat juga tambahkan/hapuskan/daftarkan perintah dengan `&gt;cmd tambahkan/hapuskan/daftarkan perintah|respon`.
+Awalan dapat diubah lebih mudah lagi dengan `nano.changeprefix awalan`.
+Perintah admin dan mod hanya dapat digunakan pemilik peran bernama \"Nano Admin\"/\"Nano Mod\".
+Anda dan semua admin dapat juga tambah/hapus/daftarkan perintah dengan `&gt;cmd tambah/hapus/daftarkan perintah|respon`.
 Untuk daftar perintah admin dan penjelasannya, silahkan merujuk ke
 &lt;http://nanobot.pw/commands.html#admin&gt;</string>
   <string name="MSG_PERMISSION_NOARG">:warning: Membutuhkan argumen, lihatlah perintah bantuan.</string>
   <string name="MSG_PERMISSION_WRONGARG">:warning: subperintah tidak valid, lihat `_permission help`</string>
   <string name="MSG_PERMISSION_CREATION_REASON">Perintah izin sudah dilaksanakan, membuatkan peran izin.</string>
   <string name="MSG_PERMISSION_ASSIGN_REASON">Perintah izin sudah dilaksanakan, menetapkan izin tersebut.</string>
-  <string name="MSG_PERMISSION_ADMIN_CONFIRM">:eyes: Anda yakin ingin memberikan izin admin kepada **{}**? Tegaskan reaksi dengan {}</string>
-  <string name="MSG_PERMISSION_MOD_CONFIRM">:eyes: Anda yakin ingin memberikan izi mod kepada **{}**? Tegaskan reaksi dengan {}</string>
-  <string name="MSG_PERMISSION_MISSINGPERM_M">:warning: Anda tidak memiliki izin sah untuk menetapkan izin mod (Anda harus seorang admin atau pemilik)</string>
-  <string name="MSG_PERMISSION_MISSINGPERM_A">:warning: Anda tidak memiliki izin sah untuk menetapkan izin admin (Anda harus seorang pemilik)</string>
+  <string name="MSG_PERMISSION_ADMIN_CONFIRM">:eyes: Kamu yakin ingin memberikan izin admin kepada **{}**? Tegaskan reaksi dengan {}</string>
+  <string name="MSG_PERMISSION_MOD_CONFIRM">:eyes: Kamu yakin ingin memberikan izin mod kepada **{}**? Tegaskan reaksi dengan {}</string>
+  <string name="MSG_PERMISSION_MISSINGPERM_M">:warning: Kamu tidak memiliki izin sah untuk menetapkan izin mod (kamu harus seorang admin atau pemilik)</string>
+  <string name="MSG_PERMISSION_MISSINGPERM_A">:warning: Kamu tidak memiliki izin sah untuk menetapkan izin admin (kamu harus seorang pemilik)</string>
   <string name="MSG_PERMISSION_TIMEOUT">:eyes: Waktu menunggu respon habis.</string>
   <string name="MSG_PERMISSION_ADMIN_A">:ok_hand: **{}** sekarang memiliki izin admin</string>
-  <string name="MSG_PERMISSION_ADMIN_R">:ok_hand: Menghapus izin admin dari **{}**</string>
+  <string name="MSG_PERMISSION_ADMIN_R">:ok_hand: Izin admin dihapuskan dari **{}**</string>
   <string name="MSG_PERMISSION_MOD_A">:ok_hand: **{}** sekarang memiliki izin mod</string>
-  <string name="MSG_PERMISSION_MOD_R">:ok_hand: Menghapus izin mod dari **{}**</string>
-  <string name="MSG_PERMISSION_HELP">**Perintah _permission dirancang membantu Anda dengan segera tambahkan/hapuskan admin dan mod.**
+  <string name="MSG_PERMISSION_MOD_R">:ok_hand: Izin mod dihapuskan dari **{}**</string>
+  <string name="MSG_PERMISSION_HELP">**Perintah _permission dirancang membantumu dengan segera menambah/menghapus admin dan mod.**
 Memberi izin admin kepada pengguna, gunakan _permission admin @mention (jika pengguna tersebut seorang admin, akan menghapus izinnya)
 Memberi izin mod kepada pengguna, gunakan _permission mod @mention (berlaku hal yang sama)</string>
   <string name="MSG_PING_MEASURING">:ping_pong: Menentukan...</string>
   <string name="MSG_PING_RESULT">:ping_pong: **Pong!** (lag: {} ms, reaksi: {} ms)</string>
-  <string name="MSG_LOGPOST_SAY">{} say dilaksanakan</string>
-  <string name="MSG_LOGPOST_NUKE">{}nuke dilaksanakan</string>
-  <string name="MSG_LOGPOST_SELFROLE">{}selfrole dilaksanakan</string>
-  <string name="MSG_LOGPOST_SELFROLE_INFO">Peran pembubuhan-diri pengguna: **{}**</string>
+  <string name="MSG_LOGPOST_SAY">{}say ditetapkan</string>
+  <string name="MSG_LOGPOST_NUKE">{}nuke ditetapkan</string>
+  <string name="MSG_LOGPOST_SELFROLE">{}selfrole ditetapkan</string>
+  <string name="MSG_LOGPOST_SELFROLE_INFO">Peran penamaan pengguna: **{}**</string>
   <string name="MSG_LOGPOST_SELFROLE_INFO2">Peran pengguna yang belum dibubuhkan: **{}**</string>
   <string name="MSG_UPTIME">Saya tanpa lelah telah menjawab orang selama **{} hari, {} jam, {} menit dan {} detik!** :open_mouth:</string>
-  <string name="MSG_ROLL">{}, yang Anda putar {}</string>
+  <string name="MSG_ROLL">{}, yang kamu putar {}</string>
   <string name="MSG_DICE">:game_die: {}, dadu menunjukkan... **{}**</string>
   <string name="MSG_DICE_TOO_MANY">:eyes: Terlalu banyak dadu (maks. {})</string>
-  <string name="MSG_DICE_TOO_BIG">:eyes: Hitungan dadu terlalu besar! (sampingan dan dadu maksimum: {})</string>
-  <string name="MSG_DICE_RESULTS">:game_die: **{}**, yang Anda putar:
+  <string name="MSG_DICE_TOO_BIG">:eyes: Hitungan dadu terlalu besar! (sisi dan dadu maksimum: {})</string>
+  <string name="MSG_DICE_RESULTS">:game_die: **{}**, kamu putar:
 
 ```markdown
 {}
@@ -367,67 +382,67 @@ Memberi izin mod kepada pengguna, gunakan _permission mod @mention (berlaku hal 
 {} poin
 ```</string>
   <string name="MSG_DICE_ENTRY">## {}
-{} poin-(poin)</string>
+{} (poin)</string>
   <string name="MSG_DICE_INVALID">Hitungan tidak valid, lihat `_help dice`</string>
-  <string name="MSG_DECIDE_NORMAL">**drum roll**... Saya putuskan: {}</string>
+  <string name="MSG_DECIDE_NORMAL">**drum roll**... Sudah saya tentukan: {}</string>
   <string name="MSG_DECIDE_SPECIAL">Apa hayo? {}. **ba dum tss.**</string>
-  <string name="MSG_DECIDE_NO_ARGS">:grey_exclamation: Anda harus menyediakan paling sedikit dua sebagai pilihan.</string>
+  <string name="MSG_DECIDE_NO_ARGS">:grey_exclamation: Kamu harus menyediakan paling sedikit dua sebagai pilihannya.</string>
   <string name="MSG_8BALL">:8ball: {}</string>
-  <string name="MSG_8BALL_STRINGS">Tentu | Tentu begitu | Tanpa keraguan | Bisa Anda andalkan | Kemungkinan besar | Ya | Tanya kembali nanti | Tidak bisa diperkirakan sekarang | Pusatkan dan tanya kembali | Saya katakan iya |LAKUKAN SAJA | Jawabanku tidak | Tidak kata sumberku | Masukkan poin Ya</string>
+  <string name="MSG_8BALL_STRINGS">Tentunya | Tentu begitu | Tanpa keraguan | Dapat kamu andalkan | Kemungkinan besar | Ya | Tanya kembali nanti | Tidak bisa diperkirakan sekarang | Pusatkan dan tanya kembali | Saya katakan iya |LAKUKAN SAJA | Jawabanku tidak | Tidak kata sumberku | Masukkan poin Ya</string>
   <string name="MSG_AVATAR_OWNERSHIP">Avatarnya **{}**: {}</string>
   <string name="MSG_AVATAR_NONE">**{}** tidak memiliki avatar. :expressionless:</string>
-  <string name="MSG_SAY_NOPERM">Tidak dapat mengirim pesan ke **&lt;#{}&gt;**: memerlukan izin!</string>
+  <string name="MSG_SAY_NOPERM">Tidak dapat mengirim pesan ke **&lt;#{}&gt;**: tidak ada izin!</string>
   <string name="MSG_AYYLMAO">Inspirasi saya di dunia meme.</string>
   <string name="MSG_WHOKNOWS">¯\_(ツ)_/¯</string>
   <string name="MSG_GIPHY_TOOFAST">:shield: Waduh, terlalu cepat! Nano mencapai batas umum gif (tunggu sejenak lalu coba lagi).</string>
   <string name="MSG_GIPHY_NOSUCHTAG">Tak ada gif bertanda: {}, kembali ke gif acak</string>
   <string name="MSG_GIPHY_POWEREDBY">Diberdayakan oleh Giphy</string>
-  <string name="MSG_MEME_USAGE">Salah penggunaan, Lihat info _help caption/_help meme.</string>
+  <string name="MSG_MEME_USAGE">Salah penggunaan. Lihat info _help caption/_help meme.</string>
   <string name="MSG_MEME_NONEXISTENT">Meme tidak ada. rip (pssst, lihat meme teratas yang tersedia di sini
 https://imgflip.com/memetemplates )</string>
   <string name="MSG_MEME_FOOTER">Disediakan oleh imgflip.com</string>
   <string name="MSG_RIP">Beristirahat dalam damai{}.
 
 `{}` *ucapan doa sampai saat ini*...</string>
-  <string name="MSG_ACHIEVMENT_NOTEXT">Silahkan tentukan teks untuk gambar.</string>
+  <string name="MSG_ACHIEVMENT_NOTEXT">Harap tentukan teks untuk gambar.</string>
   <string name="MSG_HELP">**Hei, Saya Nano!**
 
 Supaya akrab dengan perintah sederhana, ketik `_help simple`.
-Jika Anda ingin info tertentu tentang perintah, ketiklah `_help [perintah di sini}`.
+Jika Anda ingin info tertentu tentang perintah, ketiklah `_help [perintah di sini]`.
 
-Atau mudahnya saja Anda dapat melihat di laman wiki: http://nanobot.pw/commands.html
-JIka Anda seorang admin/pemilik server dan ingin mengatur server untuk Nano, ketik `_setup`.
-Sangat disarankan Anda bergabung server \"resmi\" Nano untuk pengumuman dan bantuan : https://discord.gg/FZJB6UJ
+Atau mudahnya saja kamu dapat melihat di laman wiki: http://nanobot.pw/commands.html
+JIka kamu seorang admin/pemilik server dan ingin mengatur server untuk Nano, ketik `_setup`.
+Untuk penguman dan bantuan sangat disarankan kamu bergabung di server \"resmi\" Nano : https://discord.gg/FZJB6UJ
 
-Dengan menggunakan Nano Anda setuju kami dapat menyimpan data pengguna seperti nama pengguna, server-server dan kanal-kanal untuk membantu keberfungsian. Info lebih lanjut, lihat `_tos`.</string>
+Dengan menggunakan Nano kamu setuju kami dapat menyimpan data pengguna seperti nama pengguna, server-server dan kanal-kanal untuk membantu keberfungsian. Info lebih lanjut, lihat `_tos`.</string>
   <string name="MSG_TOS">:shield: **Ketentuan Layanan**
 
 Tanggal 20 Agustus 2017 Discord memperbarui Ketentuan Layanannya. Para pemilik bot sekarang harus memberitahu para penggunanya macam data pengguna yang mereka simpan.
 
-Dengan menggunakan Nano Anda setuju kami dapat menyimpan beberapa data pengguna, seperti **nama pengguna, server-server dan kanal-kanal**.
+Dengan menggunakan Nano kamu setuju kami dapat menyimpan beberapa data pengguna, seperti **nama pengguna, server-server dan kanal-kanal**.
 
 Informasi lebih lanjut, silahkan baca &lt;http://nanobot.pw.html&gt;</string>
   <string name="MSG_HELP_SIMPLE">Ini hanyalah sebagian dari beberapa perintah sederhana. Untuk info lebih lanjut tentang tiap perintah, gunakan `_help command` atau ketik `_cmds` untuk melihat laman wiki yang berisi seluruh perintah.</string>
   <string name="MSG_HELP_CMDWEB">Perintah-perintah dan penjelasannya bisa ditemukan di sini: http://nanobot.pw/commands.html</string>
   <string name="MSG_HELP_CMD_SPEC">Baca lebih lanjut tentang perintah-perintah ini di sini: {}</string>
   <string name="MSG_HELP_CMDNOTFOUND">Perintah tidak dapat diketemukan.
-**(Gunakan: `_help[command]`)**</string>
-  <string name="MSG_HELP_DESC">Penjelasan</string>
+**(Gunakan: `_help [command]`)**</string>
+  <string name="MSG_HELP_DESC">Keterangan</string>
   <string name="MSG_HELP_USE">Penggunaan</string>
   <string name="MSG_HELP_ALIASES">Alias</string>
   <string name="MSG_BUG">Menemukan masalah? Harap melaporkannya kepada saya, (**DefaltSimon**) di Discord.
 Anda bisa menemui saya di sini: https:discord.ggFZJB6UJ</string>
-  <string name="MSG_REPORT_EMPTY">Anda tidak bisa mengirimkan laporan kosong.</string>
-  <string name="MSG_REPORT_RATELIMIT">Anda dalam pembatasan umum. Cobalah kembali dalam 5 menit.</string>
-  <string name="MSG_REPORT_THANKS">**Terima kasih** atas saran Anda.</string>
+  <string name="MSG_REPORT_EMPTY">Kamu tidak bisa mengirimkan laporan kosong.</string>
+  <string name="MSG_REPORT_RATELIMIT">Kamu dalam pembatasan. Cobalah kembali dalam 5 menit.</string>
+  <string name="MSG_REPORT_THANKS">**Terima kasih** atas saranmu.</string>
   <string name="MSG_REPORT_EE_THX">Halooo :wave:</string>
-  <string name="MSG_IMDB_ERROR">Ada yang salah ketika mencoba mendapatkan info movie.</string>
+  <string name="MSG_IMDB_ERROR">Ada yang salah ketika mencoba mengambil info movie.</string>
   <string name="MSG_IMDB_ERROR2">Ada yang salah... Coba lagi?</string>
   <string name="MSG_IMDB_INVALID_USAGE">Penggunaan perintah tidak sah, lihat `{}help imdb`</string>
   <string name="MSG_IMDB_NEED_TITLE">:warning: Memerlukan judul pencarian.</string>
   <string name="MSG_IMDB_ERROR_REPDEV">Ada yang salah, harap laporkan kepada pengembang, utamakan beserta tangkap-layar. Terimakasih!</string>
   <string name="MSG_IMDB_NORESULTS">:eyes: Tidak ada hasil.</string>
-  <string name="MSG_IMDB_CANTPERSON">Anda tidak bisa mendapatkan alur seseorang :rofl:</string>
+  <string name="MSG_IMDB_CANTPERSON">Kamu tidak bisa mendapatkan alur seseorang :rofl:</string>
   <string name="MSG_IMDB_PLOT">ceritanya **{}**
 ```{}```</string>
   <string name="MSG_IMDB_SERIES">seri</string>
@@ -599,13 +614,13 @@ Total serikat khas: **{}**
 * Bulan ini
 [{month_u} users]({month_g} serikat khas)
 ```</string>
-  <string name="MSG_PREFIX_OHYEAH">Coba Anda terka!</string>
+  <string name="MSG_PREFIX_OHYEAH">Kamu tahu!</string>
   <string name="MSG_PREFIX">Awalan di server ini **{}**</string>
   <string name="MSG_MEMBERS_LIST">*__Members__*:
 
 {}
 </string>
-  <string name="MSG_MEMBERS_TOTAL">Toral: **{}** anggota</string>
+  <string name="MSG_MEMBERS_TOTAL">Total: **{}** anggota</string>
   <string name="MSG_MEMBERS_AMOUNT">Serikat ini memiliki jumlah total sebanyak **{}** pengguna</string>
   <string name="MSG_SERVER_VL">Taraf Pengesahan</string>
   <string name="MSG_SERVER_VL_NONE">Kosong</string>
@@ -623,10 +638,10 @@ Total serikat khas: **{}**
   <string name="MSG_SERVER_OWNER">Pemilik Server</string>
   <string name="MSG_SERVER_OWNER_L">{}#{} ID:{}</string>
   <string name="MSG_SERVER_INFO">:book: **Info server:**</string>
-  <string name="MSG_STEAM_INVALID_URL">Harap letakkan di **akhir** dari (\"vanity\") URL, bukan *seluruh* URL!</string>
+  <string name="MSG_STEAM_INVALID_URL">Harap letakkan di **akhir** (\"vanity\") URL, bukan *seluruh* URL!</string>
   <string name="MSG_STEAM_INVALID_PARAMS">Salah penggunaan perintah, periksa `{}help steam`</string>
   <string name="MSG_STEAM_NEED_URL">Harap sediakan url/nama.</string>
-  <string name="MSG_STEAM_PRIVATE">Ada yang salah. Pengguna dapat menggunakan profil pribadi.</string>
+  <string name="MSG_STEAM_PRIVATE">Ada yang salah. Pengguna mungkin menggunakan profil pribadi.</string>
   <string name="MSG_STEAM_PRIVATE_FRIENDS">Tidak dapat memanggil kawan (mungkin pengguna memiliki profil pribadi)</string>
   <string name="MSG_STEAM_PRIVATE_GAMES">Tidak dapat mengambil permainan (mungkin pengguna memiliki profil pribadi)</string>
   <string name="MSG_STEAM_FRIENDS">:video_game: **{}**
@@ -648,7 +663,8 @@ Tautan langsung: http://steamcommunity.com/id/{}/</string>
   <string name="MSG_STEAM_OFFLINE">Luring</string>
   <string name="MSG_STEAM_HELP">**Perintah-perintah Steam:**
 `!steam user community_url`, `!steam games community_url`</string>
-  <string name="MSG_TF_UNAVAILABLE">Saat ini perintah ini tidak tersedia. Maaf.</string>
+  <string name="MSG_TF_UNAVAILABLE">Saat ini perintah ini tidak tersedia.
+Maaf.</string>
   <string name="MSG_TF_NO_PARAMS">:warning: Harap tentukan barang pencarian.</string>
   <string name="MSG_TF_NO_SUCH_ITEM">**Tidak ada barang** dengan nama tersebut dapat diketemukan.</string>
   <string name="MSG_TF_LIST">:scales: **{}** *(on bp.tf)*
@@ -658,8 +674,8 @@ Tautan langsung: http://steamcommunity.com/id/{}/</string>
   <string name="MSG_VOTING_IN_PROGRESS">:warning: Sudah berlangsung satu pengambilan suara...</string>
   <string name="MSG_VOTING_I_USAGE">Salah penggunaan. Periksa `{}help poll start` untuk info lebih lanjut.</string>
   <string name="MSG_VOTING_NO_TITLE">Harap sertakan judul.</string>
-  <string name="MSG_VOTING_NEED_OPTIONS">:warning: Harap sertakan setidaknya dua pilihan di poll Anda.</string>
-  <string name="MSG_VOTING_EMPTY_ITEM">:x: Satu atau lebih dari pilihan Anda kosong!</string>
+  <string name="MSG_VOTING_NEED_OPTIONS">:warning: Harap sertakan setidaknya dua pilihan di poll kamu.</string>
+  <string name="MSG_VOTING_EMPTY_ITEM">:x: Satu atau lebih dari pilihanmu kosong!</string>
   <string name="MSG_VOTING_STARTED">:scroll: Ambil sura dimulai:
 
 **{}**
@@ -669,12 +685,12 @@ Tautan langsung: http://steamcommunity.com/id/{}/</string>
 {}```</string>
   <string name="MSG_VOTING_AMOUNT">Secara keseluruhan, {} orang telah mengambil suara</string>
   <string name="MSG_VOTING_AMOUNT2">{} suara</string>
-  <string name="MSG_VOTING_END_CONFIRMATION">Anda yakin ingin menutup poll ini? Beri reaksi dengan {} untuk menegaskan.</string>
+  <string name="MSG_VOTING_END_CONFIRMATION">Kamu yakin ingin menutup poll ini? Beri reaksi dengan {} untuk menegaskan.</string>
   <string name="MSG_VOTING_END_ABORT">Waktu habis, batal menutup poll.</string>
   <string name="MSG_VOTING_ENDED">:dividers: **pengambilan suara berakhir:**</string>
   <string name="MSG_VOTING_ERROR">Ada yang salah saat mencoba mengakhiri pengambilan suara.</string>
-  <string name="MSG_VOTING_OPTIONS_TM">:warning: Terlalu banyak pilihan (maks **{}**, Anda membuat {}*)</string>
-  <string name="MSG_VOTING_OPTIONS_TL">:warning: Keseluruhnnya terlalu panjang! (panjang maks {}, Anda memiliki {})</string>
+  <string name="MSG_VOTING_OPTIONS_TM">:warning: Terlalu banyak pilihan (maks **{}**, kamu membuat {}*)</string>
+  <string name="MSG_VOTING_OPTIONS_TL">:warning: Keseluruhnnya terlalu panjang! (panjang maks {}, kamu memiliki {})</string>
   <string name="MSG_VOTING_S_NONE">Sejauh ini, belum ada yang mengambil suara.</string>
   <string name="MSG_VOTING_S_ONE">Sejauh ini, hanya satu orang yang telah mengambil suara.</string>
   <string name="MSG_VOTING_S_MULTI">Sejauh ini, {} orang telah mengambil suara.</string>
@@ -684,17 +700,17 @@ Tautan langsung: http://steamcommunity.com/id/{}/</string>
 ```{}```</string>
   <string name="MSG_VOTING_NOT_NUMBER">Argumen pengambilan suara harus sebuah nomor.</string>
   <string name="MSG_VOTING_INVALID_NUMBER">Pilihan tidak sah.</string>
-  <string name="MSG_VOTING_CHEATER">Anda curang :smiley: (Anda tidak boleh mengambil suara di pilihan berangkai)</string>
+  <string name="MSG_VOTING_CHEATER">Penipu :smiley: (kamu tidak boleh mengambil suara di pilihan berangkai)</string>
   <string name="MSG_VOTING_SOMETHING_WRONG">Ada yang salah... :frowning2:</string>
-  <string name="MSG_WIKI_QUERY_TOO_LONG">:warning: Isi pencarian terlalu panjang (maks. {}, pencarian Anda {})</string>
+  <string name="MSG_WIKI_QUERY_TOO_LONG">:warning: Isi pencarian terlalu panjang (maks. {}, pencarianmu {})</string>
   <string name="MSG_WIKI_DEFINITION">:newspaper: Definisi:
 
 **{}**
 ```{}```</string>
-  <string name="MSG_WIKI_NO_QUERY">:exclamation: Harap sertakan sebuah kata yang ingin Anda cari.</string>
+  <string name="MSG_WIKI_NO_QUERY">:exclamation: Harap sertakan sebuah kata yang ingin kamu cari.</string>
   <string name="MSG_WIKI_NO_DEF">:open_file_folder: Definisi Tidak ditemukan.</string>
   <string name="MSG_URBAN_DEF_TOO_LONG">Definisi terlalu panjang!</string>
-  <string name="MSG_URBAN_NO_QUERY">:exclamation: Harap sertakan sebuah kata yang ingin Anda cari.</string>
+  <string name="MSG_URBAN_NO_QUERY">:exclamation: Harap sertakan sebuah kata yang ingin kamu cari.</string>
   <string name="MSG_URBAN_NO_DEF">:open_file_folder: Definisi tidak ditemukan.</string>
   <string name="MSG_URBAN_DEFINITION">:space_invader: Definisi Kamus Urban:
 
@@ -705,20 +721,20 @@ Tautan langsung: http://steamcommunity.com/id/{}/</string>
   <string name="MSG_IGDB_GENRES">Genre</string>
   <string name="MSG_IGDB_PUBLISHERS">Penerbit</string>
   <string name="MSG_IGDB_RATING">Peringkat</string>
-  <string name="MSG_IGDB_VIDEO">Tralier/video</string>
+  <string name="MSG_IGDB_VIDEO">Trailer/video</string>
   <string name="EVENT_JOIN">telah bergabung</string>
   <string name="EVENT_LEAVE">telah pergi</string>
   <string name="EVENT_KICK">ditendang</string>
-  <string name="EVENT_SOFTBAN">ditolak halus</string>
-  <string name="EVENT_BAN">telah ditolak</string>
+  <string name="EVENT_SOFTBAN">dikenai larangan ringan</string>
+  <string name="EVENT_BAN">telah dilarang</string>
   <string name="EVENT_SERVER_JOIN">**Hai! Saya Nano!
-Karena Anda telah mengundang saya ke server, Anda mungkin harus menetapkan beberapa hal. Saat ini hanya pemilik server yang dapat menggunakan perintah terbatas saya. Namun, jangan khawatir, Anda bisa menambahkan izin admin kepada orang lain dengan menetapkan kepada mereka peran dengan nama **Nano Admin**!
+Karena kamu telah mengundang saya ke server, mungkin kamu harus menetapkan beberapa hal. Saat ini hanya pemilik server yang dapat menggunakan perintah terbatas saya. Namun, jangan khawatir, kamu bisa menambahkan izin admin kepada orang lain dengan menetapkan kepada mereka peran dengan nama **Nano Admin**!
 
-Untuk memulai pengaturan awal, ketik `!setup` sebagai pemilik server. Hal tersebut akan membantu Anda menetapkan beberapa hal sederhana.
-Setelahnya, Anda mungkin ingin melihat `!commands` supaya akrab dengan ragam perintah.
+Untuk memulai pengaturan awal, ketik `!setup` sebagai pemilik server. Hal tersebut akan membantumu menetapkan beberapa hal sederhana.
+Setelahnya, kamu mungkin ingin melihat `!commands` supaya akrab dengan ragam perintah.
 
 
-Serta, Saya sarankan Anda bergabung di server \"resmi\" Nano untuk pengumuman dan bantuan : https://discord.gg/FZJB6UJ
+Serta, saya sarankan kamu bergabung di server \"resmi\" Nano untuk pengumuman dan bantuan : https://discord.gg/FZJB6UJ
 
-Dengan menggunakan Nano Anda setuju kami dapat menyimpan beberapa pengguna seperti nama pengguna, server-server dan kanal-kanal untuk membantu kebefungsian. Info lebih lanjut, lihat `!tos`.</string>
+Dengan menggunakan Nano kamu setuju kami dapat menyimpan beberapa data pengguna seperti nama pengguna, server-server dan kanal-kanal untuk membantu keberfungsian. Info lebih lanjut, lihat `!tos`.</string>
 </resources>
