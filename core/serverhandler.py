@@ -286,7 +286,7 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
 
     @validate_input
     def update_moderation_settings(self, server_id: int, key: str, value: bool) -> bool:
-        if key not in mod_settings_map.values():
+        if key not in mod_settings_map.keys():
             raise TypeError("invalid moderation setting: {}".format(key))
 
         return bin2bool(self.redis.hset("server:{}".format(server_id), mod_settings_map.get(key), value))

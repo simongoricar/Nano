@@ -68,7 +68,7 @@ class Reporter:
             traceback.print_exc()
             log_to_file(exc, "bug")
 
-            log.warning("Something went wrong, see bugs.txt")
+            log.warning("Something went wrong, logged to bugs.txt")
 
 
 class NanoPlugin:

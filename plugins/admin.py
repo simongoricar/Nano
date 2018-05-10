@@ -1753,7 +1753,7 @@ class Admin:
 
         # !setup, nano.setup
         elif startswith(prefix + "setup", "nano.setup"):
-            MSG_TIMEOUT = 60
+            MSG_TIMEOUT = 90
 
             YES = trans.get("INFO_YES", lang)
             YES_L = YES.lower()
@@ -1780,8 +1780,8 @@ class Admin:
             def must_be_author(c):
                 return c.author == message.author
 
-            await message.channel.send(trans.get("MSG_SETUP_WELCOME", lang))
-            await asyncio.sleep(3)
+            await message.channel.send(trans.get("MSG_SETUP_WELCOME", lang).format(message.author.mention))
+            await asyncio.sleep(8)
 
 
             # FIRST MESSAGE
@@ -1912,13 +1912,12 @@ class Admin:
                 await five.edit(content=edit)
 
 
-            # SIXTH (LAST) MESSAGE
-            # Q: What channel would you like to use for logging?
-            CHANNEL_PD, NONE_PD1 = apply_string_padding((trans.get("MSG_SETUP_LOGCHANNEL_MENTION", lang), NONE))
-
-            msg_six = trans.get("MSG_SETUP_LOGCHANNEL", lang).format(mention=CHANNEL_PD, none=NONE_PD1)
+            # SIXTH MESSAGE
+            # Q: invite filter
+            msg_six = trans.get("MSG_SETUP_INVITES", lang).format(yes=YES_PD, no=NO_PD)
             six = await message.channel.send(msg_six)
 
+            # Wait for response
             try:
                 ch6 = await client.wait_for("message", check=must_be_author, timeout=MSG_TIMEOUT)
             except asyncio.TimeoutError:
@@ -1926,30 +1925,55 @@ class Admin:
                 return
 
             else:
+                if ch6.content.lower().strip(" ") == YES_L:
+                    handler.update_moderation_settings(message.guild.id, "filterinvite", True)
+                    edit = msg_four + "\n\n " + EN_EXPR
+                else:
+                    handler.update_moderation_settings(message.guild.id, "filterinvite", False)
+                    edit = msg_four + "\n\n " + DIS_EXPR
+
+                # Edit to show that filtering is changed
+                await six.edit(content=edit)
+
+
+            # SEVENTH (LAST) MESSAGE
+            # Q: What channel would you like to use for logging?
+            CHANNEL_PD, NONE_PD1 = apply_string_padding((trans.get("MSG_SETUP_LOGCHANNEL_MENTION", lang), NONE))
+
+            msg_seven = trans.get("MSG_SETUP_LOGCHANNEL", lang).format(mention=CHANNEL_PD, none=NONE_PD1)
+            seven = await message.channel.send(msg_seven)
+
+            try:
+                ch7 = await client.wait_for("message", check=must_be_author, timeout=MSG_TIMEOUT)
+            except asyncio.TimeoutError:
+                await timeout()
+                return
+
+            else:
                 # Parses channel
-                channel = ch6.content.strip(" ")
+                channel = ch7.content.strip(" ")
 
                 # Disabling works in both languages
                 if channel.lower() == NONE or is_disabled(channel.lower()):
                     handler.set_custom_channel(message.guild.id, "logchannel", None)
 
                     # Edit to show that filtering is changed
-                    edit = msg_six + "\n\n{} {}".format(StandardEmoji.OK_BLUE, trans.get("MSG_SETUP_LOGCHANNEL_DISABLED", lang))
-                    await six.edit(content=edit)
+                    edit = msg_seven + "\n\n{} {}".format(StandardEmoji.OK_BLUE, trans.get("MSG_SETUP_LOGCHANNEL_DISABLED", lang))
+                    await seven.edit(content=edit)
 
                 else:
-                    if len(ch6.channel_mentions) != 0:
-                        handler.set_custom_channel(message.guild.id, "logchannel", ch6.channel_mentions[0].id)
+                    if len(ch7.channel_mentions) != 0:
+                        handler.set_custom_channel(message.guild.id, "logchannel", ch7.channel_mentions[0].id)
                     else:
                         await message.channel.send(trans.get("MSG_SETUP_LOGCHANNEL_INVALID", lang))
                         return
 
                     # Edit to show that filtering is changed
-                    edit = msg_six + "\n\n{} {}".format(StandardEmoji.OK_BLUE, trans.get("MSG_SETUP_LOGCHANNEL_SET", lang).format(ch6.channel_mentions[0].name))
-                    await six.edit(content=edit)
+                    edit = msg_seven + "\n\n{} {}".format(StandardEmoji.OK_BLUE, trans.get("MSG_SETUP_LOGCHANNEL_SET", lang).format(ch7.channel_mentions[0].name))
+                    await seven.edit(content=edit)
 
             # FINAL MESSAGE, formats with new prefix
-            msg_final = trans.get("MSG_SETUP_COMPLETE", lang).replace("_", str(ch2.content))
+            msg_final = trans.get("MSG_SETUP_COMPLETE", lang).replace("_", pref)
             await message.channel.send(msg_final)
 
         # !permission
