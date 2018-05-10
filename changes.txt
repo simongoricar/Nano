@@ -1,3 +1,7 @@
+3.8.1
+- Bug fixes (!setup)
+- New step for !setup - invite filtering
+
 3.8
 - Transitioned to two redis dbs: one for data and one as a cache
 - Simplified !imdb usage
