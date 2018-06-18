@@ -96,7 +96,7 @@ class Observer:
         if pref is None:
             pref = str(DEFAULT_PREFIX)
         else:
-            pref = pref
+            pref = str(pref)
 
         # Parse language
         lang = self.handler.get_lang(message.guild.id)
