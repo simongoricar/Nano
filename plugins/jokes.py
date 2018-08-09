@@ -7,7 +7,10 @@ import os
 import traceback
 
 from random import randint
-from ujson import loads, load
+try:
+    from rapidjson import loads, load
+except ImportError:
+    from json import loads, load
 from bs4 import BeautifulSoup
 from typing import Union
 

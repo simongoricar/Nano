@@ -5,7 +5,11 @@ import logging
 import os
 import time
 
-from ujson import load, dump
+try:
+    from rapidjson import load, dump
+except ImportError:
+    from json import load, dump
+
 from json import JSONDecodeError
 
 import aiohttp

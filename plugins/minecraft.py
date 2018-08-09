@@ -2,7 +2,13 @@
 import logging
 import os
 import time
-from json import loads, JSONDecodeError
+
+try:
+    from rapidjson import loads
+except ImportError:
+    from json import loads
+
+from json import JSONDecodeError
 
 import aiohttp
 from discord import File

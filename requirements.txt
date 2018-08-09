@@ -1,4 +1,4 @@
-ujson
+python-rapidjson
 aiohttp
 giphypop
 psutil

@@ -6,7 +6,7 @@ from typing import Union
 from discord import Message
 
 try:
-    from ujson import loads
+    from rapidjson import loads
 except ImportError:
     from json import loads
 

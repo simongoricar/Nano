@@ -3,7 +3,7 @@ import logging
 import time
 
 try:
-    from ujson import loads, dumps
+    from rapidjson import loads, dumps
 except ImportError:
     from json import loads, dumps
 from discord import Embed, Colour

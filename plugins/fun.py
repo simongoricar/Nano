@@ -8,7 +8,7 @@ from copy import copy
 from io import BytesIO
 
 try:
-    from ujson import loads
+    from rapidjson import loads
 except ImportError:
     from json import loads
 

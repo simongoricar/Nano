@@ -3,7 +3,7 @@ import asyncio
 import logging
 
 try:
-    from ujson import loads, dumps
+    from rapidjson import loads, dumps
 except ImportError:
     from json import loads, dumps
 
