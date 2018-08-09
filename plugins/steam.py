@@ -5,7 +5,7 @@ import steamapi
 from discord import HTTPException
 
 from core.stats import MESSAGE, WRONG_ARG
-from core.utils import is_valid_command
+from core.utils import is_valid_command, filter_text
 from core.confparser import get_config_parser
 
 logger = logging.getLogger(__name__)
@@ -136,7 +136,7 @@ class Steam:
                 games = ["`{}`".format(game) for game in games]
 
                 try:
-                    await message.channel.send(trans.get("MSG_STEAM_GAMES", lang).format(username, ", ".join(games)))
+                    await message.channel.send(trans.get("MSG_STEAM_GAMES", lang).format(username, filter_text(", ".join(games))))
                 except HTTPException:
                     await message.channel.send(trans.get("MSG_STEAM_GAMES_TOO_MANY", lang))
 
@@ -172,7 +172,7 @@ class Steam:
                     await message.channel.send(trans.get("MSG_STEAM_FRIENDS_TOO_MANY", lang))
 
                 else:
-                    await message.channel.send(info)
+                    await message.channel.send(filter_text(info))
 
             elif subcommand == "help":
                 await message.channel.send(trans.get("MSG_STEAM_HELP", lang).replace("!", prefix))

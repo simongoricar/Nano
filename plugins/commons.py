@@ -9,7 +9,7 @@ from random import randint
 from discord import Embed, Forbidden, utils
 
 from core.stats import MESSAGE, PING
-from core.utils import is_valid_command, add_dots, DynamicResponse, CmdResponseTypes, IgnoredException
+from core.utils import is_valid_command, add_dots, DynamicResponse, CmdResponseTypes, IgnoredException, filter_text
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -289,10 +289,9 @@ class Commons:
     def at_everyone_filter(content, author, force_remove=False):
         # See if the user is allowed to do @everyone
         # Removes mentions if user doesn't have the permission to mention
-        if not author.guild_permissions.mention_everyone or force_remove is True:
-            content = str(content).replace("@everyone", "").replace("@here", "")
+        filter_stuff = not (author.guild_permissions.mention_everyone or force_remove)
 
-        return content
+        return filter_text(content, filter_mass_mentions=filter_stuff, filter_user_mention=filter_stuff)
 
     async def on_message(self, message, **kwargs):
         client = self.client

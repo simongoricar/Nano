@@ -11,7 +11,7 @@ except ImportError:
     from json import loads
 
 from core.stats import MESSAGE
-from core.utils import is_valid_command, add_dots
+from core.utils import is_valid_command, add_dots, filter_text
 from core.confparser import get_config_parser
 
 logger = logging.getLogger(__name__)
@@ -44,6 +44,7 @@ class WikipediaParser:
     def __init__(self, loop):
         self.session = aiohttp.ClientSession(loop=loop)
         self.endpoint = "https://en.wikipedia.org/w/api.php"
+
     async def get_definition(self, query: str) -> Union[str, None]:
         data = await self._get_definition(query)
 
@@ -151,7 +152,7 @@ class Definitions:
                 await message.channel.send(trans.get("MSG_WIKI_NO_QUERY", lang))
                 return
 
-            summary = await self.wiki.get_definition(search)
+            summary = filter_text(await self.wiki.get_definition(search))
 
             if not summary:
                 await message.channel.send(trans.get("MSG_WIKI_NO_DEF", lang))
@@ -167,7 +168,7 @@ class Definitions:
                 await message.channel.send(trans.get("MSG_URBAN_NO_QUERY", lang))
                 return
 
-            description = await self.urban.urban_dictionary(search)
+            description = filter_text(await self.urban.urban_dictionary(search))
 
             if not description:
                 await message.channel.send(trans.get("MSG_URBAN_NO_DEF", lang))

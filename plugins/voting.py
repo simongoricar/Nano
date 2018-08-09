@@ -10,7 +10,7 @@ except ImportError:
 from discord import Embed, Colour, errors
 
 from core.stats import MESSAGE, VOTE, WRONG_PERMS
-from core.utils import is_valid_command, log_to_file, decode, add_dots
+from core.utils import is_valid_command, log_to_file, decode, add_dots, filter_text
 
 __author__ = "DefaltSimon"
 # Voting plugin
@@ -227,6 +227,9 @@ class Vote:
                 await message.channel.send(trans.get("MSG_VOTING_EMPTY_ITEM", lang))
                 return
 
+            # Filter text (remove @ everyone, etc)
+            title, items = filter_text(title), [filter_text(i) for i in items]
+
             self.vote.start_vote(message.author.id, message.guild.id, title, items)
 
             # Generates a list of options to show
@@ -288,7 +291,7 @@ class Vote:
                 await message.channel.send(trans.get("MSG_VOTING_NO_PROGRESS", lang))
                 return
 
-            header = self.vote.get_title(message.guild.id)
+            header = filter_text(self.vote.get_title(message.guild.id))
             votes = sum(self.vote.get_votes(message.guild.id).values())
 
             if votes == 0:

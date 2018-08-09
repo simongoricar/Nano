@@ -17,7 +17,7 @@ from typing import Union
 from discord import Embed, Colour
 
 from core.stats import MESSAGE, IMAGE_SENT
-from core.utils import is_valid_command, is_number, log_to_file
+from core.utils import is_valid_command, is_number, log_to_file, filter_text
 from core.confparser import get_config_parser, PLUGINS_DIR
 
 commands = {
@@ -342,15 +342,15 @@ class Joke:
 
             xkcd_link = self.xkcd.make_link(xkcd["num"])
 
-            embed = Embed(title=trans.get("MSG_XKCD", lang).format(xkcd["num"]), description=xkcd["safe_title"])
+            embed = Embed(title=trans.get("MSG_XKCD", lang).format(xkcd["num"]), description=filter_text(xkcd["safe_title"]))
             embed.set_image(url=xkcd["img"])
-            embed.set_footer(text=trans.get("MSG_XKCD_SOURCe", lang).format(xkcd_link))
+            embed.set_footer(text=trans.get("MSG_XKCD_SOURCE", lang).format(xkcd_link))
 
             await message.channel.send(embed=embed)
 
         # !joke (yo mama/chuck norris)
         elif startswith(prefix + "joke"):
-            content = self.joke.random_joke()
+            content = filter_text(self.joke.random_joke())
 
             embed = Embed(description=content)
             await message.channel.send(embed=embed)

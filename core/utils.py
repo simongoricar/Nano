@@ -1,4 +1,5 @@
 # coding=utf-8
+import re
 import uuid
 import os
 from datetime import datetime
@@ -520,3 +521,25 @@ def get_valid_commands(plugin):
         return list(plugin.commands.keys())
     except AttributeError:
         return None
+
+
+USER_MENTION_REGEX = re.compile(r"<@[0-9]{18}>", re.MULTILINE)
+
+
+def filter_text(text: str, filter_mass_mentions: bool= True, filter_user_mention: bool=True) -> str:
+    """
+    Removes all mentions in text
+    """
+    text = str(text)
+
+    if filter_mass_mentions:
+        text = text.replace("@everyone", "@ everyone").replace("@here", "@ here")
+
+    if filter_user_mention:
+        text = re.sub(
+            USER_MENTION_REGEX,
+            "==REDACTED MENTION==",
+            text
+        )
+
+    return text

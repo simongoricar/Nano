@@ -9,7 +9,7 @@ from discord import errors
 from typing import Union
 
 from core.stats import MESSAGE
-from core.utils import is_valid_command, IgnoredException
+from core.utils import is_valid_command, IgnoredException, filter_text
 from core.confparser import get_config_parser
 
 log = logging.getLogger(__name__)
@@ -209,7 +209,7 @@ class TMDb:
                 try:
                     info = trans.get("MSG_IMDB_PLOT", lang).format(data.title, data.overview)
 
-                    await message.channel.send(info)
+                    await message.channel.send(filter_text(info))
                 except AttributeError:
                     await message.channel.send(trans.get("MSG_IMDB_PLOT_MISSING", lang))
 
@@ -219,7 +219,8 @@ class TMDb:
                 data = await self._imdb_search(argument, message, lang)
 
                 try:
-                    await message.channel.send(trans.get("MSG_IMDB_TRAILER", lang).format(data.title, data.trailer))
+                    title, trailer = filter_text(data.title), filter_text(data.trailer)
+                    await message.channel.send(trans.get("MSG_IMDB_TRAILER", lang).format(title, trailer))
                 except (AttributeError, KeyError):
                     await message.channel.send(trans.get("MSG_IMDB_TRAILER_MISSING", lang))
 
@@ -228,7 +229,8 @@ class TMDb:
                 data = await self._imdb_search(argument, message, lang)
 
                 try:
-                    content = trans.get("MSG_IMDB_RATINGS", lang).format(data.title, data.vote_average)
+                    title, vote_avg = filter_text(data.title), filter_text(data.vote_average)
+                    content = trans.get("MSG_IMDB_RATINGS", lang).format(title, vote_avg)
                     await message.channel.send(content)
                 except AttributeError:
                     await message.channel.send(trans.get("MSG_IMDB_RATINGS_MISSING", lang))
@@ -290,7 +292,7 @@ class TMDb:
                         pass
 
                     # Compile together info that is available
-                    media_info = "\n".join(info)
+                    media_info = filter_text("\n".join(info))
 
                 else:
                     await message.channel.send(trans.get("MSG_IMDB_PERSON_NOT_SUPPORTED", lang))
