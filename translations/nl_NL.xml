@@ -296,9 +296,12 @@ Confirm by replying with \'{}\'.</string>
   <string name="MSG_PREFIX_CHANGED">Prefix has been changed to **{}** :ok_hand:</string>
   <string name="MSG_PREFIX_PLS_ARGUMENTS">This command needs an argument: the prefix you want to set.</string>
   <string name="MSG_SETUP_TIMEOUT">You ran out of time :upside_down: (timeout is {} seconds)</string>
-  <string name="MSG_SETUP_WELCOME">**SERVER SETUP**
-You have started the server setup. Because you started the setup, only your answers will be taken into account.
-**Let\'s get started!**</string>
+  <string name="MSG_SETUP_WELCOME">{} welcome to the **SERVER SETUP**!
+This setup will guide you through some of the basic settings to help you set everything up quickly. You will be able to set things such as the prefix, spam and swearing filters and other settings.
+
+Let\'s begin, shall we?
+
+:notepad_spiral: Note: *You started the setup and only your answers are taken into account, so do not worry about others answering in this setup.*</string>
   <string name="MSG_SETUP_RESET">Do you want to reset all bot-related settings for this server?
 (this includes all standard settings along with blacklisted channels, your log channel and prefix and welcome, ban and kick messages).
 
@@ -330,6 +333,10 @@ The following formatting applies:
 ```md
 [{yes}](Enables the swearing filter)
 [{no}](Disables the swearing filter)```</string>
+  <string name="MSG_SETUP_INVITES">Would you like me to filter invite links?
+```md
+[{yes}](Enables the invite filter)
+[{no}](Disables the invite filter)```</string>
   <string name="MSG_SETUP_LOGCHANNEL_MENTION">#channel mention</string>
   <string name="MSG_SETUP_LOGCHANNEL">What channel would you like to use for logging?
 ```md
@@ -339,17 +346,18 @@ The following formatting applies:
   <string name="MSG_SETUP_LOGCHANNEL_SET">Log channel set to **{}**</string>
   <string name="MSG_SETUP_LOGCHANNEL_INVALID">:x: Invalid answer / log channel.</string>
   <string name="MSG_SETUP_COMPLETE">**This concludes the basic server setup.**
-There are more settings if you need them:
+There are more server settings if you need them:
 
 ➤ channel blacklisting - `nano.blacklist add/remove #channel`
-➤ leave message - `&gt;leavemsg message`
-➤ ban message - `&gt;banmsg message`
+➤ leave message - `_leavemsg message`
+➤ ban message - `_banmsg message`
 This are not all settings. For an extensive list, see below.
 
-The prefix can simply be changed again with `nano.changeprefix prefix`.
-Admin and mod commands can only be used by people with a role named \"Nano Admin\"/\"Nano Mod\".
+Admin and mod commands can only be used by people with a role named **\"Nano Admin/Mod\"**.
+If you\'re *stuck and don\'t know how to proceed* check out our **FAQ** at &lt;https://nanobot.pw/faq.html&gt;
+or join us on our **support server** over at &lt;https://discord.nanobot.pw&gt;.
 
-You and all admins can also add/remove/list custom commands with `&gt;cmd add/remove/list command|response`.
+You and all admins can also add and remove custom commands with `_cmd add/remove/list trigger|response`.
 For a list of admin commands and their explanations, please refer to &lt;http://nanobot.pw/commands.html#admin&gt;</string>
   <string name="MSG_PERMISSION_NOARG">:warning: Missing arguments, check the help command.</string>
   <string name="MSG_PERMISSION_WRONGARG">:warning: Invalid subcommand, check `_permission help`</string>

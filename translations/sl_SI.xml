@@ -57,7 +57,7 @@
 Pa še to: komando `{p}gif` omogoča **Giphy**</string>
   <string name="INFO_GITHUB">Nanova koda je na voljo na **GitHubu**: https://github.com/DefaltSimon/Nano</string>
   <string name="INFO_INVITE">Hočeš povabiti Nana na svoj strežnik? Super!
-**Samo klikni na link:** &lt;link&gt;</string>
+**Samo klikni na povezavo:** &lt;link&gt;</string>
   <string name="INFO_REPORT">Prijavi</string>
   <string name="INFO_SUGGESTION">Predlog</string>
   <string name="INFO_SERIES">Serija</string>
@@ -299,9 +299,12 @@ Prosim, imej v mislih, da ta funkcija še ni čisto tipi-topi in nekateri prevod
   <string name="MSG_PREFIX_CHANGED">Predpona je zdaj **{}** :ok_hand:</string>
   <string name="MSG_PREFIX_PLS_ARGUMENTS">Ta ukaz potrebuje argument: predpono, ki jo hočeš nastaviti.</string>
   <string name="MSG_SETUP_TIMEOUT">Zmanjkalo ti je časa :upside_down: (samo, da veš - časa imaš {} sekund)</string>
-  <string name="MSG_SETUP_WELCOME">**NASTAVITEV STREŽNIKA**
-Začel/a si namestitev strežnika. Ker si ti začel/a namestitev, štejejo samo tvoji odgovori.
-**Pa začnimo!**</string>
+  <string name="MSG_SETUP_WELCOME">{}, dobrodošel/a v **STREŽNIŠKI NAMESTITVI**!
+Vodil te bom skozi nekaj osnovnih nastavitev, da bova hitro opravila in bo vse normalno delovalo. Nastavila bova predpono, filtra spama in kletvic in še kako drugo nastavitev ali dve.
+
+Pa začniva, prav?
+
+:notepad_spiral: Opozorilce: *Ti si zagnal/a nastavitev, zato bom upošteval samo tvoje odgovore, tako da se ne sekiraj, če bo kdo drug odgovarjal med samo namestitvijo in ti poskušal predpono spremeniti v kaj neokusnega.*</string>
   <string name="MSG_SETUP_RESET">Si želel/a ponastaviti vse nastavitve na tem strežniku, ki se tičejo bota?
 (to vključuje vse standardne nastavitve, tudi omejene kanale, tvoj dnevniški kanal, predpono, pozdrav in sporočilo ob izključitvi ter prisilnem odhodu).
 
@@ -333,6 +336,10 @@ Veljavno je tako formatiranje:
 ```md
 [{yes}](Omogoči filtriranje kletvic)
 [{no}](Onemogoči filtriranje kletvic)```</string>
+  <string name="MSG_SETUP_INVITES">Naj brišem povabila na druge strežnike?
+```md
+[{yes}](Omogoči to opcijo)
+[{no}](Onemogoči to opcijo)```</string>
   <string name="MSG_SETUP_LOGCHANNEL_MENTION">#omemba kanala</string>
   <string name="MSG_SETUP_LOGCHANNEL">Kateri kanal bi rad uporabil za dnevnik?
 ```md
@@ -341,19 +348,19 @@ Veljavno je tako formatiranje:
   <string name="MSG_SETUP_LOGCHANNEL_DISABLED">Beleženje dnevnika izklopljeno.</string>
   <string name="MSG_SETUP_LOGCHANNEL_SET">Dnevniški kanal nastavljen na **{}**</string>
   <string name="MSG_SETUP_LOGCHANNEL_INVALID">:x: Neveljavni odgovor / dnevniški kanal.</string>
-  <string name="MSG_SETUP_COMPLETE">**No, pa sva zaključila osnovno namestitev.**
-Po potrebi lahko določiš še nekaj drugih nastavitev:
+  <string name="MSG_SETUP_COMPLETE">**Osnovne namestitve je konec.**
+Če bi rad/a še malo šaril/a po nastavitvah, je tukajle še nekaj možnosti:
 
-➤ črna lista kanalov - `nano.blacklist dodaj/odstrani ime_kanala`
-➤ sporočilo ob odhodu - `&gt;leavemsg message`
-➤ sporočilo ob izključitvi - `&gt;banmsg message`
-Ampak čakaj.... To še ni vse! Za več nastavitev si preberi spodaj.
+➤ dodajanje kanalov na črno listo - `nano.blacklist add/remove #channel`
+➤ sporočilo ob odhodu - `_leavemsg message`
+➤ sporočilo ob izključitvi - `_banmsg message`
+Ampak čakaj, to še ni vse! Za izčrpen seznam VSEH nastavitev beri dalje.
 
-Predpono lahko čisto lahko spremeniš z `nano.changeprefix prefix`.
-Ukazi za admine in moderatorje so dovoljeni samo osebam z vlogami \"Nano Admin\"/\"Nano Mod\".
+Ukaze za administratorje in moderatorje lahko uporabljajo samo bitja z vlogo **\"Nano Admin/Mod\"**.
+Če si *obtičal/a in ne moreš več ne naprej ne nazaj, ne gor ne dol,* pokukaj v naš **FAQ** (pogosta vprašanja) na spletni strani &lt;https://nanobot.pw/faq.html&gt; ali obišči naš **strežnik za podporo uporabnikom** na &lt;https://discord.nanobot.pw&gt;.
 
-Ti in vsi admini lahko dodate/odstranite/razvrstite ukaze po meri s `&gt;cmd add/remove/list command|response`.
-Za seznam adminovih ukazov in njihove razlage si preberi na &lt;http://nanobot.pw/commands.html#admin&gt;</string>
+Ti in vsi administratoji lahko takisto dodate ali odstranite ukaze po meri s pomočjo `_cmd add/remove/list sprožilec|odziv`.
+Seznam vseh administratorskih ukazov in njihovih razlag obišči spletno stran &lt;http://nanobot.pw/commands.html#admin&gt;</string>
   <string name="MSG_PERMISSION_NOARG">:warning: Manjkajo argumenti, poglej si ukaz za pomoč.</string>
   <string name="MSG_PERMISSION_WRONGARG">:warning: Neveljaven pod-ukaz, preveri `_permission help`</string>
   <string name="MSG_PERMISSION_CREATION_REASON">Dovoljenjski ukaz ni bil izvršen, ustvarjam vlogo z dovoljenji.</string>

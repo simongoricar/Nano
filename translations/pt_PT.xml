@@ -171,7 +171,7 @@ Subcommands: `add` `remove`</string>
   <string name="MSG_ROLE_NEED_MENTION">Need a mention! This notation (without separator **|**) does not support searching by name). Please use the notation with **|** or a @mention.</string>
   <string name="MSG_ROLE_ALREADY_HAD">:information_source: One or more users already had the role you specified, but roles were still added to those who didn\'t have them.</string>
   <string name="MSG_ROLE_REMOVE_SOME_DIDNT">:information_source: One or more users already didn\'t have the role you specified, but roles were still removed from those who had them.</string>
-  <string name="MSG_ROLE_ADDED_MP">Added **{}** to {} users.</string>
+  <string name="MSG_ROLE_ADDED_MP">Adicionado **{}** a {} utilizadores.</string>
   <string name="MSG_ROLE_REMOVED_MP">Removed **{}** from {} users.</string>
   <string name="MSG_CMD_WRONG_PARAMS">Incorrect parameters.
 `{}cmd add trigger|response`</string>
@@ -196,7 +196,7 @@ Subcommands: `add` `remove`</string>
 {}
 
 Please keep in mind that this feature is not yet perfect and some translations might be missing. Also, !help messages are **not** translated.</string>
-  <string name="MSG_LANG_NOT_AVAILABLE">:eyes: No such language available. :cry:</string>
+  <string name="MSG_LANG_NOT_AVAILABLE">:eyes: Essa linguagem não está disponível. :cry:</string>
   <string name="MSG_LANG_SET">Language has been set to **{}**. {}</string>
   <string name="MSG_LANG_TRANS">(tradutores: {})</string>
   <string name="MSG_LANG_CURRENT">You\'re currently using `{}` ({}), but you probably knew that :stuck_out_tongue:
@@ -207,8 +207,8 @@ Try `{}language list` to see all available languages.</string>
   <string name="MSG_SETTINGS_LOGCHANNEL_SET">Log channel set to **{}** :smile:</string>
   <string name="MSG_SETTINGS_LOGCHANNEL_DISABLED">Log channel **disabled** :ok_hand:</string>
   <string name="MSG_SELFROLE_ADMIN_REMOVED">:ok: **{}** removed from list of selfroles.</string>
-  <string name="MSG_SELFROLE_ADMIN_ADDED">:ok: Selfrole added.</string>
-  <string name="MSG_SELFROLE_ALR_EX">:warning: This selfrole already exists!</string>
+  <string name="MSG_SELFROLE_ADMIN_ADDED">:ok: Cargo adicionado.</string>
+  <string name="MSG_SELFROLE_ALR_EX">:warning: Este cargo já existe!</string>
   <string name="MSG_SELFROLE_INACCESSIBLE">:warning:  **{}** is inaccessible (could be higher than Nano\'s top role or Nano does not have the permission \'Manage Roles\')</string>
   <string name="MSG_SELFROLE_REMOVE_NOT_PRESENT">:warning: não é um selfrole.</string>
   <string name="MSG_SELFROLE_NOT_ANYMORE">:warning: Not a role in this server.</string>
@@ -230,7 +230,7 @@ Try `{}language list` to see all available languages.</string>
   <string name="MSG_SETTINGS_SPAM">Filtro de spam {}</string>
   <string name="MSG_SETTINGS_INVITE">Filtro de convite {}</string>
   <string name="MSG_SETTINGS_NOT_A_SETTING">**{}** is not a setting. Should be one of: logchannel, selfrole, invitefilter, wordfilter, spamfilter, defaultchannel.</string>
-  <string name="MSG_SETTINGS_NO_BLACKLIST">No blacklists</string>
+  <string name="MSG_SETTINGS_NO_BLACKLIST">Não há listas negras</string>
   <string name="MSG_SETTINGS_DISPLAY">**Server Settings**
 ```markdown
 ## Prefix
@@ -291,7 +291,12 @@ Confirm by replying with \'{}\'.</string>
   <string name="MSG_PREFIX_CHANGED">Prefixo foi alterado para * * {} * * :ok_hand:</string>
   <string name="MSG_PREFIX_PLS_ARGUMENTS">This command needs an argument: the prefix you want to set.</string>
   <string name="MSG_SETUP_TIMEOUT">You ran out of time :upside_down: (timeout is {} seconds)</string>
-  <string name="MSG_SETUP_WELCOME">* * SERVER SETUP * * você ter começado a configuração do servidor. Porque você começou a instalação, apenas suas respostas irão ter em conta. * * Vamos começar! * *</string>
+  <string name="MSG_SETUP_WELCOME">{} welcome to the **SERVER SETUP**!
+This setup will guide you through some of the basic settings to help you set everything up quickly. You will be able to set things such as the prefix, spam and swearing filters and other settings.
+
+Let\'s begin, shall we?
+
+:notepad_spiral: Note: *You started the setup and only your answers are taken into account, so do not worry about others answering in this setup.*</string>
   <string name="MSG_SETUP_RESET">Você quer redefinir todas as configurações relacionadas com bot para este servidor? (isso inclui todas as configurações padrão, juntamente com canais na lista negra, seu canal de log e o prefixo e bem-vindo, banir e chutar as mensagens). \' \' md [{yes}](Resets all settings) [{no}](Keeps all settings) \' \'</string>
   <string name="MSG_SETUP_PREFIX_TEXT">Prefixo</string>
   <string name="MSG_SETUP_PREFIX">What prefix would you like to use for all commands?
@@ -318,26 +323,31 @@ The following formatting applies:
 ```md
 [{yes}](Enables the swearing filter)
 [{no}](Disables the swearing filter)```</string>
+  <string name="MSG_SETUP_INVITES">Would you like me to filter invite links?
+```md
+[{yes}](Enables the invite filter)
+[{no}](Disables the invite filter)```</string>
   <string name="MSG_SETUP_LOGCHANNEL_MENTION">#channel mention</string>
   <string name="MSG_SETUP_LOGCHANNEL">What channel would you like to use for logging?
 ```md
 [{mention}](Uses the mentioned channel)
 [{none}](Disables logging)```</string>
   <string name="MSG_SETUP_LOGCHANNEL_DISABLED">Registos desativados.</string>
-  <string name="MSG_SETUP_LOGCHANNEL_SET">Log channel set to **{}**</string>
-  <string name="MSG_SETUP_LOGCHANNEL_INVALID">:x: Invalid answer / log channel.</string>
+  <string name="MSG_SETUP_LOGCHANNEL_SET">Log de canal definido para **{}**</string>
+  <string name="MSG_SETUP_LOGCHANNEL_INVALID">:x: resposta inválida / log de canal.</string>
   <string name="MSG_SETUP_COMPLETE">**This concludes the basic server setup.**
-There are more settings if you need them:
+There are more server settings if you need them:
 
 ➤ channel blacklisting - `nano.blacklist add/remove #channel`
-➤ leave message - `&gt;leavemsg message`
-➤ ban message - `&gt;banmsg message`
+➤ leave message - `_leavemsg message`
+➤ ban message - `_banmsg message`
 This are not all settings. For an extensive list, see below.
 
-The prefix can simply be changed again with `nano.changeprefix prefix`.
-Admin and mod commands can only be used by people with a role named \"Nano Admin\"/\"Nano Mod\".
+Admin and mod commands can only be used by people with a role named **\"Nano Admin/Mod\"**.
+If you\'re *stuck and don\'t know how to proceed* check out our **FAQ** at &lt;https://nanobot.pw/faq.html&gt;
+or join us on our **support server** over at &lt;https://discord.nanobot.pw&gt;.
 
-You and all admins can also add/remove/list custom commands with `&gt;cmd add/remove/list command|response`.
+You and all admins can also add and remove custom commands with `_cmd add/remove/list trigger|response`.
 For a list of admin commands and their explanations, please refer to &lt;http://nanobot.pw/commands.html#admin&gt;</string>
   <string name="MSG_PERMISSION_NOARG">:warning: Missing arguments, check the help command.</string>
   <string name="MSG_PERMISSION_WRONGARG">:warning: Invalid subcommand, check `_permission help`</string>
@@ -357,9 +367,9 @@ To give a user admin permissions, use _permission admin @mention (if that user i
 To give a user mod permissions, use _permission mod @mention (same applies here)</string>
   <string name="MSG_PING_MEASURING">:ping_pong: Measuring...</string>
   <string name="MSG_PING_RESULT">:ping_pong: **Pong!** (lag: {} ms, reaction: {} ms)</string>
-  <string name="MSG_LOGPOST_SAY">Executed {}say</string>
-  <string name="MSG_LOGPOST_NUKE">Executed {}nuke</string>
-  <string name="MSG_LOGPOST_SELFROLE">Executed {}selfrole</string>
+  <string name="MSG_LOGPOST_SAY">Executado {}say</string>
+  <string name="MSG_LOGPOST_NUKE">Executado {}nuke</string>
+  <string name="MSG_LOGPOST_SELFROLE">Executado {}selfrole</string>
   <string name="MSG_LOGPOST_SELFROLE_INFO">User self-assigned role: **{}**</string>
   <string name="MSG_LOGPOST_SELFROLE_INFO2">User unassigned role: **{}**</string>
   <string name="MSG_UPTIME">Tem sido incansavelmente atender pessoas para * * dias {}, {} horas, minutos {} e {} segundos! * * :open_mouth:</string>
@@ -378,7 +388,7 @@ To give a user mod permissions, use _permission mod @mention (same applies here)
 {} points
 ```</string>
   <string name="MSG_DICE_ENTRY">## {}
-{} point(s)</string>
+{} ponto(s)</string>
   <string name="MSG_DICE_INVALID">Invalid expression, see `_help dice`</string>
   <string name="MSG_DECIDE_NORMAL">**drum roll**... I have decided: {}</string>
   <string name="MSG_DECIDE_SPECIAL">Guess what? It\'s {}. **ba dum tss.**</string>
@@ -421,7 +431,7 @@ These are just a few of some of the simpler commands. For more info about each c
   <string name="MSG_HELP_CMD_SPEC">Read more about these commands here: {}</string>
   <string name="MSG_HELP_CMDNOTFOUND">Command could not be found.
 **(Use: `_help [command]`)**</string>
-  <string name="MSG_HELP_DESC">Description</string>
+  <string name="MSG_HELP_DESC">Descrição</string>
   <string name="MSG_HELP_USE">Usar</string>
   <string name="MSG_HELP_ALIASES">Sinónimos</string>
   <string name="MSG_BUG">Encontrou um bug? Faça reporte a ele ao (**DefaltSimon**) no Discord
@@ -491,7 +501,7 @@ PP: **{}** (played {} songs)</string>
   <string name="MSG_OSU_AVG_ACC">Average accuracy</string>
   <string name="MSG_OSU_TIME">Search took {} ms</string>
   <string name="MSG_RATELIMIT">{} Woah, chill! :snowflake: You\'re going too fast, please try again in a few seconds.</string>
-  <string name="MSG_NANO_SLEEP">G\'night! :sleeping:</string>
+  <string name="MSG_NANO_SLEEP">Boa noite! :sleeping:</string>
   <string name="MSG_NANO_WAKE">:wave:</string>
   <string name="MSG_NANO_WASNT_SLEEPING">Was not in sleep mode.</string>
   <string name="MSG_REMINDER_PRIVATE">:alarm_clock: You asked me to remind you:
@@ -506,11 +516,11 @@ PP: **{}** (played {} songs)</string>
   <string name="MSG_REMINDER_WU_HERE">Incorrect command use. See `{}help remind here in`</string>
   <string name="MSG_REMINDER_NO_BRACKETS">Do not use **[** and **]** ! Try again without them.</string>
   <string name="MSG_REMINDER_INVALID_RANGE">Not a valid time range (**{}** seconds to **{}** days)</string>
-  <string name="MSG_REMINDER_TO_LITERAL">to</string>
+  <string name="MSG_REMINDER_TO_LITERAL">para</string>
   <string name="MSG_REMINDER_SET">Reminder set :smile:</string>
   <string name="MSG_REMINDER_NO_PARTIALS">Please do not use partial minutes/hours/days etc.. (such as 1.7 days) - use `1d 16h 48min` instead :wink:</string>
-  <string name="MSG_REMINDER_SOON">soon™</string>
-  <string name="MSG_REMINDER_TIME_LEFT">in **{}**</string>
+  <string name="MSG_REMINDER_SOON">brevemente™</string>
+  <string name="MSG_REMINDER_TIME_LEFT">em **{}**</string>
   <string name="MSG_REMINDER_LIST_NONE">You don\'t have any reminders.</string>
   <string name="MSG_REMINDER_TOO_LONG_CONTENT">Your reminder content is too long! (maximum is {})</string>
   <string name="MSG_REMINDER_LIST">Your reminders:
@@ -623,7 +633,7 @@ Clãs únicos: **{}**
   <string name="MSG_SERVER_MEMBERS_L">{} online</string>
   <string name="MSG_SERVER_CHANNELS">Channels [{} total]</string>
   <string name="MSG_SERVER_CHANNELS_L">{} voice | {} text</string>
-  <string name="MSG_SERVER_ROLES">Roles</string>
+  <string name="MSG_SERVER_ROLES">Cargos</string>
   <string name="MSG_SERVER_ROLES_L">{} custom</string>
   <string name="MSG_SERVER_OWNER">Dono do servidor</string>
   <string name="MSG_SERVER_OWNER_L">{}#{} Id:{}</string>
@@ -649,8 +659,8 @@ Level: {}
 Games: {} owned (including free games)
 Friends: {}```
 Direct link: http://steamcommunity.com/id/{}/</string>
-  <string name="MSG_STEAM_ONLINE">Online</string>
-  <string name="MSG_STEAM_OFFLINE">Offline</string>
+  <string name="MSG_STEAM_ONLINE">Ligado</string>
+  <string name="MSG_STEAM_OFFLINE">Desligado</string>
   <string name="MSG_STEAM_HELP">**Steam commands:**
 `!steam user community_url`, `!steam games community_url`</string>
   <string name="MSG_TF_UNAVAILABLE">This command is currently unavailable. Apologies.</string>
@@ -690,7 +700,7 @@ Direct link: http://steamcommunity.com/id/{}/</string>
   <string name="MSG_VOTING_NOT_NUMBER">Argumento de voto deve ser um número.</string>
   <string name="MSG_VOTING_INVALID_NUMBER">Escolha inválida.</string>
   <string name="MSG_VOTING_CHEATER">Cheater :smiley: (you can\'t vote on multiple options)</string>
-  <string name="MSG_VOTING_SOMETHING_WRONG">Something went wrong... :frowning2:</string>
+  <string name="MSG_VOTING_SOMETHING_WRONG">Algo correu mal... :frowning2:</string>
   <string name="MSG_WIKI_QUERY_TOO_LONG">:warning: Search query is too long (max. is {}, you searched with {})</string>
   <string name="MSG_WIKI_DEFINITION">:newspaper: Definition:
 
@@ -700,7 +710,7 @@ Direct link: http://steamcommunity.com/id/{}/</string>
   <string name="MSG_WIKI_NO_DEF">:open_file_folder: Nenhuma definição encontrada.</string>
   <string name="MSG_URBAN_DEF_TOO_LONG">Definição é demasiado longa!</string>
   <string name="MSG_URBAN_NO_QUERY">:exclamation: Please include a word you want to search for.</string>
-  <string name="MSG_URBAN_NO_DEF">:open_file_folder: No definition found.</string>
+  <string name="MSG_URBAN_NO_DEF">:open_file_folder: Nenhuma definição encontrada.</string>
   <string name="MSG_URBAN_DEFINITION">:space_invader: definição de dicionário urbano: * * {} * * \' \' {} \' \'</string>
   <string name="MSG_IGDB_NONAME">:mag: Favor especificar o jogo a pesquisar.</string>
   <string name="MSG_IGDB_NO_RESULT">:eyes: Sem resultados.</string>
