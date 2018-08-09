@@ -6,6 +6,7 @@ __pycache__/
 
 # PyCharm config
 .idea/
+venv/
 
 # Folders generated on the fly
 backup/
