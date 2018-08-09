@@ -104,7 +104,8 @@ class UrbanDictionary:
                 raise ConnectionError("UrbanDictionary status code: {}".format(resp.status))
 
             # Converts to json format
-            return await resp.json(loads=loads)
+            return await resp.json(loads=loads, content_type=None)
+
 
 class Definitions:
     def __init__(self, **kwargs):

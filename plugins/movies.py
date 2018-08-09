@@ -220,7 +220,7 @@ class TMDb:
 
                 try:
                     await message.channel.send(trans.get("MSG_IMDB_TRAILER", lang).format(data.title, data.trailer))
-                except AttributeError:
+                except (AttributeError, KeyError):
                     await message.channel.send(trans.get("MSG_IMDB_TRAILER_MISSING", lang))
 
             # !imdb rating

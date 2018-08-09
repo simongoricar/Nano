@@ -32,8 +32,8 @@ class Game:
 
         self.summary = fields.get("summary")
         # Optimized for parsing
-        self.genres = "|".join([a["name"] for a in fields.get("genres")])
-        self.publishers = "|".join([a["name"] for a in fields.get("publishers")])
+        self.genres = "|".join([a["name"] for a in fields.get("genres", [])]) or None
+        self.publishers = "|".join([a["name"] for a in fields.get("publishers", [])]) or None
 
         self.rating = int(fields.get("total_rating")) if fields.get("total_rating") else None
 
@@ -57,8 +57,11 @@ class GameCompat:
         self._fields = fields
 
         # Parse strings split by |
-        self._fields["genres"] = fields.get("genres").split("|")
-        self._fields["publishers"] = fields.get("publishers").split("|")
+        if fields.get("genres"):
+            self._fields["genres"] = fields.get("genres").split("|")
+
+        if fields.get("publishers"):
+            self._fields["publishers"] = fields.get("publishers").split("|")
 
     def __getattr__(self, item):
         return self._fields[item]
@@ -233,14 +236,21 @@ class GameDB:
                 await message.channel.send(trans.get("MSG_IGDB_NO_RESULT", lang))
                 return
 
-            embed = Embed(description=game.summary)
-            embed.set_image(url=game.cover_image)
+            if game.summary:
+                embed = Embed(description=game.summary)
+            else:
+                embed = Embed(description=trans.get("MSG_IGDB_NO_SUMMARY", lang))
+
+            if game.cover_image:
+                embed.set_image(url=game.cover_image)
             embed.set_author(name=game.name, url=game.url)
 
-            genres = " ".join(["`{}`".format(a) for a in game.genres])
-            embed.add_field(name=trans.get("MSG_IGDB_GENRES", lang), value=genres)
-            publishers = " ".join(["`{}`".format(a) for a in game.publishers])
-            embed.add_field(name=trans.get("MSG_IGDB_PUBLISHERS", lang), value=publishers, inline=False)
+            if game.genres:
+                genres = " ".join(["`{}`".format(a) for a in game.genres])
+                embed.add_field(name=trans.get("MSG_IGDB_GENRES", lang), value=genres)
+            if game.publishers:
+                publishers = " ".join(["`{}`".format(a) for a in game.publishers])
+                embed.add_field(name=trans.get("MSG_IGDB_PUBLISHERS", lang), value=publishers, inline=False)
 
             if game.rating:
                 rating = "{} / 100".format(int(game.rating))
