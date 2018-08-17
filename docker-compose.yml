@@ -15,7 +15,7 @@ services:
     #   context: .
     #   dockerfile: Dockerfile
 
-    image: defaltsimon/nano:latest
+    image: defaltsimon/nano:dev
     ######
     # Both nano and redis databases share the same directory - /data
     ######
