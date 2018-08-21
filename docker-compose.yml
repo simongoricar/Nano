@@ -9,7 +9,8 @@ version: '3'
 services:
   nano:
     # ##########
-    # IMPORTANT: This should only be used for building an image from source, which you shouldn't do!
+    # IMPORTANT: This should only be used for building an image from source or for testing!
+    # tl;dr: Don't uncomment this if you don't know what you are doing.
     # ##########
     # build:
     #   context: .
@@ -18,6 +19,8 @@ services:
     image: defaltsimon/nano:dev
     ######
     # Both nano and redis databases share the same directory - /data
+    # This mounts the data directory (in your current directory) to data/ inside the container
+    # so your configuration is modified outside of the container
     ######
     volumes:
       - ./data:/data
