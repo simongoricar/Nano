@@ -1,6 +1,7 @@
 #######################################################
 # Nano with docker-compose
 #
+# Please edit only if you know what you are doing.
 # Please use spaces when editing.
 # If you need any help, join our discord server at http://discord.nanobot.pw
 
@@ -25,23 +26,34 @@ services:
     volumes:
       - ./data:/data
 
+    # This makes sure redis-data and redis-cache are started first.
     depends_on:
       - redis-data
       - redis-cache
 
+  #########################
+  # REDIS-DATA instance
+  # Contains all data, related to the user
+  #########################
   redis-data:
     container_name: "redis-data"
     image: redis
 
+    # Mounts all database files into your data/ directory
     volumes:
       - ./data:/data
       - ./data/redis.conf:/usr/local/etc/redis/redis.conf
     command: "redis-server /usr/local/etc/redis/redis.conf"
 
+  #########################
+  # REDIS-CACHE instance
+  # As the name suggests, this db contains cached data such as tf2 items, jokes, etc...
+  #########################
   redis-cache:
     container_name: "redis-cache"
     image: redis
 
+    # Mounts all database files into your data/ directory
     volumes:
       - ./data:/data
       - ./data/redisCache.conf:/usr/local/etc/redis/redis.conf
