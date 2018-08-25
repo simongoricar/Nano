@@ -38,11 +38,10 @@ COPY docker/directories.json $NANO/core/
 COPY docker/dockerautorun.sh $HOME
 RUN chmod +x $HOME/dockerautorun.sh
 
-# Remove old folders
-RUN rm -r docker/ \
-    && pip install -r $NANO/requirements.txt
+# Install dependencies
+RUN pip install -r $NANO/requirements.txt
 
-# Uninstall dependencies after installing python modules
+# Uninstall python and compile dependencies after installing python modules to make the container smaller
 RUN apt-get remove $BUILD_DEPS -y \
 	&& apt-get purge -y --autoremove
 
