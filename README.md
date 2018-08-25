@@ -1,12 +1,10 @@
 # Nano
 
-[![Version](https://img.shields.io/badge/live%20version-3.7.1-green.svg)](https://defaltsimon.github.io/Nano/)
-[![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/DefaltSimon/Nano/blob/master/LICENSE)  
+[![Version](https://img.shields.io/badge/live%20version-3.8.2-green.svg)](https://defaltsimon.github.io/Nano/)
+[![license](https://img.shields.io/badge/license-CC%20BY--NC--SA%204.0-green.svg)](https://github.com/DefaltSimon/Nano/blob/master/LICENSE)  
 
 [![Crowdin](https://d322cqt584bo4o.cloudfront.net/nano-discord-bot/localized.svg)](https://crowdin.com/project/nano-discord-bot)  
 [![Discord](https://img.shields.io/discord/132905482271719424.svg?label=discord)](http://discord.nanobot.pw)  
-
-by DefaltSimon, made in python with [discord.py api](https://github.com/Rapptz/discord.py) .
 
   
 ### A list of all available commands is available [here](http://nanobot.pw/commands.html)  
@@ -15,12 +13,12 @@ by DefaltSimon, made in python with [discord.py api](https://github.com/Rapptz/d
 * Moderation features (word, spam, invite filtering)  
 * Fun and useful commands like !roll or !vote with the ability to add custom ones  
 * Game-related commands for TF2, Minecraft, Steam, osu!...  
-* IMDB search  
-* xkcd comics, random cat pics  
+* Movie and game search  
+* Xkcd comics, random cat pics  
 * Multi-level permissions  
 * Logging  
 * Reminders and voting
-* per-server setings  
+* Per-server settings  
   
 ---
 
