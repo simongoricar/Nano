@@ -32,10 +32,11 @@ ENV NANO /home/Nano
 
 COPY . $HOME/Nano
 
-# Copy necessary files
-RUN cp docker/directories.json $NANO/core/ \
-    && cp docker/dockerautorun.sh $HOME \
-    && chmod +x $HOME/dockerautorun.sh
+# Overwrite certain files
+COPY docker/directories.json $NANO/core/
+# Docker configuration
+COPY docker/dockerautorun.sh $HOME
+RUN chmod +x $HOME/dockerautorun.sh
 
 # Remove old folders
 RUN rm -r docker/ \
