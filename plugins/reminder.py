@@ -8,7 +8,7 @@ from typing import Union
 from discord import DiscordException
 
 from core.stats import MESSAGE, WRONG_ARG
-from core.utils import resolve_time, convert_to_seconds, is_valid_command, gen_id, IgnoredException, log_to_file
+from core.utils import resolve_time, convert_to_seconds, is_valid_command, gen_id, IgnoredException, log_to_file, filter_text
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -67,10 +67,10 @@ class RedisReminderHandler:
         return len(self.get_all_reminders())
 
     def _prepare_private(self, content, lang):
-        return self.trans.get("MSG_REMINDER_PRIVATE", lang).format(content)
+        return self.trans.get("MSG_REMINDER_PRIVATE", lang).format(filter_text(content, user_mention=False))
 
     def _prepare_channel(self, content, lang):
-        return self.trans.get("MSG_REMINDER_CHANNEL", lang).format(content)
+        return self.trans.get("MSG_REMINDER_CHANNEL", lang).format(filter_text(content, user_mention=False))
 
     def get_reminders(self, user_id) -> dict:
         keys = [a for a in self.redis.scan_iter("{}:*".format(user_id))]

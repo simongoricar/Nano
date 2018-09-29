@@ -526,16 +526,16 @@ def get_valid_commands(plugin):
 USER_MENTION_REGEX = re.compile(r"<@[0-9]{18}>", re.MULTILINE)
 
 
-def filter_text(text: str, filter_mass_mentions: bool= True, filter_user_mention: bool=True) -> str:
+def filter_text(text: str, mass_mentions: bool= True, user_mention: bool=True) -> str:
     """
     Removes all mentions in text
     """
     text = str(text)
 
-    if filter_mass_mentions:
+    if mass_mentions:
         text = text.replace("@everyone", "@ everyone").replace("@here", "@ here")
 
-    if filter_user_mention:
+    if user_mention:
         text = re.sub(
             USER_MENTION_REGEX,
             "==REDACTED MENTION==",

@@ -207,7 +207,7 @@ class TMDb:
 
                 # Try to send
                 try:
-                    info = trans.get("MSG_IMDB_PLOT", lang).format(data.title, data.overview)
+                    info = trans.get("MSG_IMDB_PLOT", lang).format(filter_text(data.title), filter_text(data.overview))
 
                     await message.channel.send(filter_text(info))
                 except AttributeError:
