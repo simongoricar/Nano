@@ -218,7 +218,7 @@ class Minecraft:
 
             # !mc help
             if argument == "help":
-                await message.channel.send(trans.get("MSG_MC_HELP", lang).replace("_", prefix))
+                await message.channel.send(trans.get("MSG_MC_HELP", lang).format(prefix=prefix))
                 return
 
             # Argument is name

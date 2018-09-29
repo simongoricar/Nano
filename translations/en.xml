@@ -105,7 +105,7 @@ Also: `{p}gif` command powered by **Giphy**</string>
     <string name="ERROR_MSG_TOO_LONG">:x: Message was too long to display, consider making whatever it was a little shorter.</string>
 
     <string name="ERROR_SOMETHING_WENT_WRONG">:eyes: Oh no, something went wrong! This issue has been logged.
-If you think you've encountered a bug, please send notify the developer on our support server (see _help for invite).</string>
+If you think you've encountered a bug, please send notify the developer on our support server (see {prefix}help for invite).</string>
 
     <string name="MSG_NUKE_PURGING">Purging last {} messages... :boom:</string>
     <string name="MSG_NUKE_AUDIT_REASON">**{}** nuked {} messages.</string>
@@ -223,7 +223,7 @@ Subcommands: `add` `remove`</string>
     <string name="MSG_LANG_LIST">Available languages:
 {}
 
-Please keep in mind that this feature is not yet perfect and some translations might be missing. Also, !help messages are **not** translated.</string>
+Please keep in mind that this feature is not yet perfect and some translations might be missing. Also, **{prefix}help messages are not translated!**</string>
     <string name="MSG_LANG_NOT_AVAILABLE">:eyes: No such language available. :cry:</string>
     <string name="MSG_LANG_SET">Language has been set to **{}**. {}</string>
     <string name="MSG_LANG_TRANS">(translators: {})</string>
@@ -379,19 +379,19 @@ The following formatting applies:
 There are more server settings if you need them:
 
 ➤ channel blacklisting - `nano.blacklist add/remove #channel`
-➤ leave message - `_leavemsg message`
-➤ ban message - `_banmsg message`
+➤ leave message - `{prefix}leavemsg message`
+➤ ban message - `{prefix}banmsg message`
 This are not all settings. For an extensive list, see below.
 
 Admin and mod commands can only be used by people with a role named **"Nano Admin/Mod"**.
 If you're *stuck and don't know how to proceed* check out our **FAQ** at &lt;https://nanobot.pw/faq.html>
 or join us on our **support server** over at &lt;https://discord.nanobot.pw>.
 
-You and all admins can also add and remove custom commands with `_cmd add/remove/list trigger|response`.
+You and all admins can also add and remove custom commands with `{prefix}cmd add/remove/list trigger|response`.
 For a list of admin commands and their explanations, please refer to &lt;http://nanobot.pw/commands.html#admin></string>
 
     <string name="MSG_PERMISSION_NOARG">:warning: Missing arguments, check the help command.</string>
-    <string name="MSG_PERMISSION_WRONGARG">:warning: Invalid subcommand, check `_permission help`</string>
+    <string name="MSG_PERMISSION_WRONGARG">:warning: Invalid subcommand, check `{prefix}permission help`</string>
     <string name="MSG_PERMISSION_CREATION_REASON">The permission command has been executed, creating permission role.</string>
     <string name="MSG_PERMISSION_ASSIGN_REASON">The permission command has been executed, assigned that permission.</string>
     <string name="MSG_PERMISSION_ADMIN_CONFIRM">:eyes: Are you sure you want to give **{}** admin permissions? Confirm by reacting with {}</string>
@@ -404,15 +404,15 @@ For a list of admin commands and their explanations, please refer to &lt;http://
     <string name="MSG_PERMISSION_ADMIN_R">:ok_hand: Removed admin permissions from **{}**</string>
     <string name="MSG_PERMISSION_MOD_A">:ok_hand: **{}** now has mod permissions</string>
     <string name="MSG_PERMISSION_MOD_R">:ok_hand: Removed mod permissions from **{}**</string>
-    <string name="MSG_PERMISSION_HELP">**The _permission command is designed to help you quickly add/remove admins and mods.**
-To give a user admin permissions, use _permission admin @mention (if that user is already an admin, it will remove the permission)
-To give a user mod permissions, use _permission mod @mention (same applies here)</string>
+    <string name="MSG_PERMISSION_HELP">**The {prefix}permission command is designed to help you quickly add/remove admins and mods.**
+To give a user admin permissions, use {prefix}permission admin @mention (if that user is already an admin, it will remove the permission)
+To give a user mod permissions, use {prefix}permission mod @mention (same applies here)</string>
 
     <string name="MSG_PING_MEASURING">:ping_pong: Measuring...</string>
     <string name="MSG_PING_RESULT">:ping_pong: **Pong!** (lag: {} ms, reaction: {} ms)</string>
-    <string name="MSG_LOGPOST_SAY">Executed {}say</string>
-    <string name="MSG_LOGPOST_NUKE">Executed {}nuke</string>
-    <string name="MSG_LOGPOST_SELFROLE">Executed {}selfrole</string>
+    <string name="MSG_LOGPOST_SAY">Executed {prefix}say</string>
+    <string name="MSG_LOGPOST_NUKE">Executed {prefix}nuke</string>
+    <string name="MSG_LOGPOST_SELFROLE">Executed {prefix}selfrole</string>
     <string name="MSG_LOGPOST_SELFROLE_INFO">User self-assigned role: **{}**</string>
     <string name="MSG_LOGPOST_SELFROLE_INFO2">User unassigned role: **{}**</string>
     <string name="MSG_UPTIME">I have been tirelessly answering people for **{} days, {} hours, {} minutes and {} seconds!** :open_mouth:</string>
@@ -432,7 +432,7 @@ To give a user mod permissions, use _permission mod @mention (same applies here)
 ```</string>
     <string name="MSG_DICE_ENTRY">## {}
 {} point(s)</string>
-    <string name="MSG_DICE_INVALID">Invalid expression, see `_help dice`</string>
+    <string name="MSG_DICE_INVALID">Invalid expression, see `{prefix}help dice`</string>
     <string name="MSG_DECIDE_NORMAL">**drum roll**... I have decided: {}</string>
     <string name="MSG_DECIDE_SPECIAL">Guess what? It's {}. **ba dum tss.**</string>
     <string name="MSG_DECIDE_NO_ARGS">:grey_exclamation: You have to provide at least two options to choose from.</string>
@@ -447,7 +447,7 @@ To give a user mod permissions, use _permission mod @mention (same applies here)
     <string name="MSG_GIPHY_TOOFAST">:shield: Woah, too fast! Nano reached the rate-limit for gifs (just wait a bit and try again).</string>
     <string name="MSG_GIPHY_NOSUCHTAG">No gif with tag: {}, falling back to random gif</string>
     <string name="MSG_GIPHY_POWEREDBY">Powered by Giphy</string>
-    <string name="MSG_MEME_USAGE">Incorrect usage. See _help caption/_help meme for info.</string>
+    <string name="MSG_MEME_USAGE">Incorrect usage. See {prefix}help caption/{prefix}help meme for info.</string>
     <string name="MSG_MEME_NONEXISTENT">Meme is non-existent. rip (pssst, check top memes that are available here https://imgflip.com/memetemplates )</string>
     <string name="MSG_MEME_FOOTER">Provided by imgflip.com</string>
     <string name="MSG_RIP">Rest in pepperoni{}.
@@ -457,14 +457,14 @@ To give a user mod permissions, use _permission mod @mention (same applies here)
 
     <string name="MSG_HELP">**Hey, I'm Nano!**
 
-To get familiar with simple commands, type `_help simple`.
-If you want specific info about a command, do `_help [command here]`.
+To get familiar with simple commands, type `{prefix}help simple`.
+If you want specific info about a command, do `{prefix}help [command here]`.
 
 Or you could just simply take a look at the wiki page: http://nanobot.pw/commands.html
-If you are an admin/server owner and want to set up your server for Nano, type `_setup`.
+If you are an admin/server owner and want to set up your server for Nano, type `{prefix}setup`.
 It is highly recommended that you join the "official" Nano server for announcements and help : https://discord.gg/FZJB6UJ
 
-By using Nano you agree that we may store some user data such as names of users, servers and channels to aid functionality. For more info, see `_tos`.</string>
+By using Nano you agree that we may store some user data such as names of users, servers and channels to aid functionality. For more info, see `{prefix}tos`.</string>
     <string name="MSG_TOS">:shield: **Terms of Service**
 
 On August 20th, 2017 Discord updated their Terms of Service. Bot owners must now notify their users what kind of user data they store.
@@ -472,20 +472,20 @@ On August 20th, 2017 Discord updated their Terms of Service. Bot owners must now
 By using Nano you agree that we may store some user data, such as **names of users, servers and channels**.
 
 For more information, read &lt;http://nanobot.pw/tos.html></string>
-    <string name="MSG_HELP_SIMPLE">`_hello` - Welcomes you or the mentioned person.
-`_randomgif` - Posts a random gif from Giphy
-`_roll number` - rolls a random number
-`_wiki term` - gives you a description of a term from Wikipedia
-`_urban term` - gives you a description of a term from Urban Dictionary
-`_decide option|option...` - decides between your options so you don't have to
-`_tf item-name` - item prices from backpack.tf
-`_steam user-id` - search users on Steam
+    <string name="MSG_HELP_SIMPLE">`{prefix}hello` - Welcomes you or the mentioned person.
+`{prefix}randomgif` - Posts a random gif from Giphy
+`{prefix}roll number` - rolls a random number
+`{prefix}wiki term` - gives you a description of a term from Wikipedia
+`{prefix}urban term` - gives you a description of a term from Urban Dictionary
+`{prefix}decide option|option...` - decides between your options so you don't have to
+`{prefix}tf item-name` - item prices from backpack.tf
+`{prefix}steam user-id` - search users on Steam
 
-These are just a few of some of the simpler commands. For more info about each command, use `_help command` or type `_cmds` to look at the wiki page with all the commands.</string>
+These are just a few of some of the simpler commands. For more info about each command, use `{prefix}help command` or type `{prefix}cmds` to look at the wiki page with all the commands.</string>
     <string name="MSG_HELP_CMDWEB">Commands and their explanations can be found here: http://nanobot.pw/commands.html</string>
     <string name="MSG_HELP_CMD_SPEC">Read more about these commands here: {}</string>
     <string name="MSG_HELP_CMDNOTFOUND">Command could not be found.
-**(Use: `_help [command]`)**</string>
+**(Use: `{prefix}help [command]`)**</string>
     <string name="MSG_HELP_DESC">Description</string>
     <string name="MSG_HELP_USE">Use</string>
     <string name="MSG_HELP_ALIASES">Aliases</string>
@@ -499,7 +499,7 @@ You can find me here: https://discord.gg/FZJB6UJ</string>
 
     <string name="MSG_IMDB_ERROR">Something went wrong while trying to get movie info.</string>
     <string name="MSG_IMDB_ERROR2">Something went wrong... Try again?</string>
-    <string name="MSG_IMDB_INVALID_USAGE">Invalid command usage, see `{}help imdb`</string>
+    <string name="MSG_IMDB_INVALID_USAGE">Invalid command usage, see `{prefix}help imdb`</string>
     <string name="MSG_IMDB_NEED_TITLE">:warning: Need a title to search for.</string>
     <string name="MSG_IMDB_ERROR_REPDEV">Something went wrong, please report it to the dev, preferably with a screenshot. Thanks!</string>
     <string name="MSG_IMDB_NORESULTS">:eyes: No results.</string>
@@ -527,7 +527,7 @@ User ratings on TMDb: __**{}** out of 10__</string>
     <string name="MSG_IMDB_RATINGS_MISSING">It appears that this title does not have any ratings. Weird.</string>
     <string name="MSG_IMDB_HELP">**TMDb/IMDb help**
 
-`_imdb search [name or title]`, `_imdb plot [title]`, `_imdb trailer [title]`, `_imdb rating [title]`</string>
+`{prefix}imdb search [name or title]`, `{prefix}imdb plot [title]`, `{prefix}imdb trailer [title]`, `{prefix}imdb rating [title]`</string>
 
     <string name="MSG_CAT_FAILED">Could not get a random cat picture... :cry:</string>
     <string name="MSG_CAT_FOOTER">Provided by thecatapi.com</string>
@@ -538,7 +538,7 @@ User ratings on TMDb: __**{}** out of 10__</string>
 
     <string name="MSG_MC_HELP">**Minecraft**
 ```css
-_mc name/id:meta - search for items and display their details```</string>
+{prefix}mc name/id:meta - search for items and display their details```</string>
     <string name="MSG_MC_NO_ITEMS">**No item with that name/id**</string>
     <string name="MSG_MC_PLSARUGMENTS">Please specify an item name/id.</string>
     <string name="MSG_MC_DETAILS">**{}**```css
@@ -571,16 +571,14 @@ PP: **{}** (played {} songs)</string>
     <string name="MSG_NANO_WAKE">:wave:</string>
     <string name="MSG_NANO_WASNT_SLEEPING">Was not in sleep mode.</string>
 
-    <string name="MSG_REMINDER_PRIVATE">:alarm_clock: You asked me to remind you:
-```{}```</string>
-    <string name="MSG_REMINDER_CHANNEL">:alarm_clock: Timer is up!
-```{}```</string>
+    <string name="MSG_REMINDER_PRIVATE">:alarm_clock: You asked me to remind you: {}</string>
+    <string name="MSG_REMINDER_CHANNEL">:alarm_clock: Reminder: {}</string>
     <string name="MSG_REMINDER_HELP">**Remind help**
 
-`_remind me in [sometime]: [message]` - reminds you in your DM
-`_remind here in [sometime]: [message]` - reminds everyone in current channel</string>
-    <string name="MSG_REMINDER_WU_ME">Incorrect command use. See `{}help remind me in`</string>
-    <string name="MSG_REMINDER_WU_HERE">Incorrect command use. See `{}help remind here in`</string>
+`{prefix}remind me in [sometime]: [message]` - reminds you in your DM
+`{prefix}remind here in [sometime]: [message]` - reminds everyone in current channel</string>
+    <string name="MSG_REMINDER_WU_ME">Incorrect command use. See `{prefix}help remind me in`</string>
+    <string name="MSG_REMINDER_WU_HERE">Incorrect command use. See `{prefix}help remind here in`</string>
     <string name="MSG_REMINDER_NO_BRACKETS">Do not use **[** and **]** ! Try again without them.</string>
     <string name="MSG_REMINDER_INVALID_RANGE">Not a valid time range (**{}** seconds to **{}** days)</string>
     <string name="MSG_REMINDER_TO_LITERAL">to</string>

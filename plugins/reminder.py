@@ -305,7 +305,7 @@ class Reminder:
         if startswith(prefix + "remind me in"):
             try:
                 r_time, text = await self.parse_parameters(message, len(prefix) + 13,
-                                                           lang, trans.get("MSG_REMINDER_WU_ME", lang).format(prefix))
+                                                           lang, trans.get("MSG_REMINDER_WU_ME", lang).format(prefix=prefix))
             # Raised when reminder content is too long
             except ValueError:
                 await message.channel.send(trans.get("MSG_REMINDER_TOO_LONG_CONTENT", lang).format(REM_MAX_CONTENT))
@@ -329,7 +329,7 @@ class Reminder:
         elif startswith(prefix + "remind here in"):
             try:
                 r_time, text = await self.parse_parameters(message, len(prefix) + 13,
-                                                           lang, trans.get("MSG_REMINDER_WU_HERE", lang).format(prefix))
+                                                           lang, trans.get("MSG_REMINDER_WU_HERE", lang).format(prefix=prefix))
             # Raised when reminder content is too long
             except ValueError:
                 await message.channel.send(trans.get("MSG_REMINDER_TOO_LONG_CONTENT", lang).format(REM_MAX_CONTENT))
@@ -398,7 +398,7 @@ class Reminder:
 
         # !remind help
         elif startswith(prefix + "remind"):
-            await message.channel.send(trans.get("MSG_REMINDER_HELP", lang).replace("_", prefix))
+            await message.channel.send(trans.get("MSG_REMINDER_HELP", lang).format(prefix=prefix))
 
 
 class NanoPlugin:

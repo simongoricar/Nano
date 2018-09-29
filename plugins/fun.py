@@ -268,11 +268,6 @@ class Fun:
 
         self.achievement = Achievement()
 
-        self.everyone_filter = None
-
-    async def on_plugins_loaded(self):
-        self.everyone_filter = self.nano.get_plugin("commons").instance.at_everyone_filter
-
     async def on_message(self, message, **kwargs):
         trans = self.trans
 
@@ -356,7 +351,7 @@ class Fun:
 
             # 0, 1 or more than 3 arguments - error
             elif len(middle) < 2 or len(middle) > 3:
-                await message.channel.send(trans.get("MSG_MEME_USAGE", lang).replace("_", prefix))
+                await message.channel.send(trans.get("MSG_MEME_USAGE", lang).format(prefix=prefix))
                 return
 
             # Normal

@@ -279,7 +279,7 @@ class Commons:
         if not log_channel:
             return
 
-        embed = Embed(title=self.trans.get("MSG_LOGPOST_SAY", lang).format(prefix), description=add_dots(content, 350))
+        embed = Embed(title=self.trans.get("MSG_LOGPOST_SAY", lang).format(prefix=prefix), description=add_dots(content, 350))
         embed.set_author(name="{} ({})".format(message.author.name, message.author.id), icon_url=message.author.avatar_url)
         embed.add_field(name=self.trans.get("INFO_CHANNEL", lang), value=message.channel.mention)
 
@@ -412,7 +412,7 @@ class Commons:
                         raise ValueError("can't roll 0 sides/times")
 
                 except ValueError:
-                    await message.channel.send(trans.get("MSG_DICE_INVALID", lang).replace("_", prefix))
+                    await message.channel.send(trans.get("MSG_DICE_INVALID", lang).format(prefix=prefix))
                     return
 
                 if times > MAX_DICE or sides > MAX_DICE:

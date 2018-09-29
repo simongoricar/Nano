@@ -581,7 +581,7 @@ class Admin:
         if not log_channel:
             return
 
-        embed = Embed(title=self.trans.get("MSG_LOGPOST_NUKE", lang).format(prefix),
+        embed = Embed(title=self.trans.get("MSG_LOGPOST_NUKE", lang).format(prefix=prefix),
                       description=self.trans.get("MSG_NUKE_AMOUNT", lang).format(amount))
 
         embed.set_author(name="{} ({})".format(message.author.name, message.author.id), icon_url=message.author.avatar_url)
@@ -1416,7 +1416,7 @@ class Admin:
                         entry = "`{}` - **{}** {}".format(l_code, l_details.get("name"), trans.get("MSG_LANG_TRANS", lang).format(contribs))
                         lang_list.append(entry)
 
-                await message.channel.send(trans.get("MSG_LANG_LIST", lang).format("\n".join(lang_list)))
+                await message.channel.send(trans.get("MSG_LANG_LIST", lang).format("\n".join(lang_list), prefix=prefix))
 
             # !language set [lang]
             elif cut.startswith("set"):
@@ -1973,7 +1973,7 @@ class Admin:
                     await seven.edit(content=edit)
 
             # FINAL MESSAGE, formats with new prefix
-            msg_final = trans.get("MSG_SETUP_COMPLETE", lang).replace("_", pref)
+            msg_final = trans.get("MSG_SETUP_COMPLETE", lang).format(prefix=prefix)
             await message.channel.send(msg_final)
 
         # !permission
@@ -2060,10 +2060,10 @@ class Admin:
 
             # !permission/!permission help
             elif setting == "help":
-                await message.channel.send(trans.get("MSG_PERMISSION_HELP", lang).replace("_", prefix))
+                await message.channel.send(trans.get("MSG_PERMISSION_HELP", lang).replace(prefix=prefix))
 
             else:
-                await message.channel.send(trans.get("MSG_PERMISSION_WRONGARG", lang).replace("_", prefix))
+                await message.channel.send(trans.get("MSG_PERMISSION_WRONGARG", lang).format(prefix=prefix))
 
     async def on_member_remove(self, member, **_):
         # check for softban
