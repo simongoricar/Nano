@@ -21,6 +21,7 @@ valid_commands = commands.keys()
 
 parser = get_config_parser()
 log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 class StatisticsParser:
@@ -65,7 +66,7 @@ class StatisticsParser:
             # Update data and reset buffer
             self._update_data()
             self.buffer = []
-            log.info("Buffered update took {}s".format(time.clock()-t))
+            log.debug("Buffered update took {}s".format(time.clock()-t))
 
 
     def _update_data(self):
