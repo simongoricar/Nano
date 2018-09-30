@@ -337,13 +337,15 @@ Let's begin, shall we?
 
 ```md
 [{yes}](Resets all settings)
-[{no}](Keeps all settings)```</string>
+[{no}](Keeps all settings)
+```</string>
     <string name="MSG_SETUP_PREFIX_TEXT">Prefix</string>
     <string name="MSG_SETUP_PREFIX">What prefix would you like to use for all commands?
 Example: having *!* as your prefix translates to `!help`, `!ping`, etc.
 
 ```md
-[{prefix}](The prefix you want)```</string>
+[{prefix}](The prefix you want)
+```</string>
     <string name="MSG_SETUP_JOINMSG_TEXT">Text</string>
     <string name="MSG_SETUP_JOINMSG">What would you like me to say when a person joins your server?
 
@@ -354,24 +356,29 @@ The following formatting applies:
 
 ```md
 [{text}](Text you want to see)
-[{none}](Disables join messagse)```</string>
+[{none}](Disables join messagse)
+```</string>
     <string name="MSG_SETUP_SPAM">Would you like me to filter spam?
 ```md
 [{yes}](Enables the spam filter)
-[{no}](Disables the spam filter)```</string>
+[{no}](Disables the spam filter)
+```</string>
     <string name="MSG_SETUP_SWEARING">Would you like me to filter swearing?
 ```md
 [{yes}](Enables the swearing filter)
-[{no}](Disables the swearing filter)```</string>
+[{no}](Disables the swearing filter)
+```</string>
     <string name="MSG_SETUP_INVITES">Would you like me to filter invite links?
 ```md
 [{yes}](Enables the invite filter)
-[{no}](Disables the invite filter)```</string>
+[{no}](Disables the invite filter)
+```</string>
     <string name="MSG_SETUP_LOGCHANNEL_MENTION">#channel mention</string>
     <string name="MSG_SETUP_LOGCHANNEL">What channel would you like to use for logging?
 ```md
 [{mention}](Uses the mentioned channel)
-[{none}](Disables logging)```</string>
+[{none}](Disables logging)
+```</string>
     <string name="MSG_SETUP_LOGCHANNEL_DISABLED">Logging disabled.</string>
     <string name="MSG_SETUP_LOGCHANNEL_SET">Log channel set to **{}**</string>
     <string name="MSG_SETUP_LOGCHANNEL_INVALID">:x: Invalid answer / log channel.</string>
@@ -516,7 +523,7 @@ Summary:
 ```{}```
 </string>
     <string name="MSG_IMDB_POSTER">Poster: {}</string>
-    <string name="MSG_IMDB_PERSON_NOT_SUPPORTED">Person search is not yet supported.</string>
+    <string name="MSG_IMDB_PERSON_NOT_SUPPORTED">People search is not yet supported.</string>
     <string name="MSG_IMDB_TRAILER">**{}**'s trailers on IMDB:
 
 {}</string>
@@ -538,11 +545,14 @@ User ratings on TMDb: __**{}** out of 10__</string>
 
     <string name="MSG_MC_HELP">**Minecraft**
 ```css
-{prefix}mc name/id:meta - search for items and display their details```</string>
+{prefix}mc name/id:meta - search for items and display their details
+```</string>
     <string name="MSG_MC_NO_ITEMS">**No item with that name/id**</string>
     <string name="MSG_MC_PLSARUGMENTS">Please specify an item name/id.</string>
-    <string name="MSG_MC_DETAILS">**{}**```css
-Id: {}:{}```</string>
+    <string name="MSG_MC_DETAILS">**{}**
+```css
+Id: {}:{}
+```</string>
 
     <string name="MSG_MOD_MSG_DELETED">Message Deleted - {}</string>
     <string name="MSG_MOD_SPAM_G">spam (gibberish)</string>
@@ -590,7 +600,8 @@ PP: **{}** (played {} songs)</string>
     <string name="MSG_REMINDER_TOO_LONG_CONTENT">Your reminder content is too long! (maximum is {})</string>
     <string name="MSG_REMINDER_LIST">Your reminders:
 ```md
-{}```</string>
+{}
+```</string>
     <string name="MSG_REMINDER_DELETE_ALL">All reminders have been deleted.</string>
     <string name="MSG_REMINDER_DELETE_NONE">No reminder with such content.</string>
     <string name="MSG_REMINDER_DELETE_SUCCESS">Reminder removed.</string>
@@ -653,7 +664,8 @@ Please try again later.</string>
 {}
 
 ## Keys
-{}```
+{}
+```
 </string>
     <string name="MSG_DEBUG_MULTI_2">**Shard info:**
 
@@ -731,7 +743,8 @@ Total unique guilds: **{}**
 Status: {}
 Level: {}
 Games: {} owned (including free games)
-Friends: {}```
+Friends: {}
+```
 Direct link: http://steamcommunity.com/id/{}/</string>
     <string name="MSG_STEAM_ONLINE">Online</string>
     <string name="MSG_STEAM_OFFLINE">Offline</string>
@@ -757,7 +770,8 @@ Direct link: http://steamcommunity.com/id/{}/</string>
 ```ini
 # Choices
 
-{}```</string>
+{}
+```</string>
     <string name="MSG_VOTING_AMOUNT">In total, {} people voted</string>
     <string name="MSG_VOTING_AMOUNT2">{} votes</string>
     <string name="MSG_VOTING_END_CONFIRMATION">Are you sure you want to close this poll? React with {} to confirm.</string>

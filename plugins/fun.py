@@ -408,6 +408,5 @@ class NanoPlugin:
     handler = Fun
     events = {
         "on_message": 10,
-        "on_plugins_loaded": 5,
         # type : importance
     }
