@@ -1,6 +1,6 @@
 # coding=utf-8
 import re
-import os, sys
+import os
 
 ########
 # This script finds the current version

@@ -2,8 +2,11 @@
 import time
 import logging
 import asyncio
+import os
 import sys
 import configparser
+
+os.chdir("..")
 
 from core.serverhandler import ServerHandler, server_defaults
 from core.utils import decode
