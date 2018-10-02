@@ -8,7 +8,7 @@ from typing import Union
 from discord import DiscordException
 
 from core.stats import MESSAGE, WRONG_ARG
-from core.utils import resolve_time, convert_to_seconds, is_valid_command, gen_id, IgnoredException, log_to_file
+from core.utils import resolve_time, convert_to_seconds, is_valid_command, gen_id, IgnoredException, log_to_file, filter_text
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -67,10 +67,10 @@ class RedisReminderHandler:
         return len(self.get_all_reminders())
 
     def _prepare_private(self, content, lang):
-        return self.trans.get("MSG_REMINDER_PRIVATE", lang).format(content)
+        return self.trans.get("MSG_REMINDER_PRIVATE", lang).format(filter_text(content, user_mention=False))
 
     def _prepare_channel(self, content, lang):
-        return self.trans.get("MSG_REMINDER_CHANNEL", lang).format(content)
+        return self.trans.get("MSG_REMINDER_CHANNEL", lang).format(filter_text(content, user_mention=False))
 
     def get_reminders(self, user_id) -> dict:
         keys = [a for a in self.redis.scan_iter("{}:*".format(user_id))]
@@ -305,7 +305,7 @@ class Reminder:
         if startswith(prefix + "remind me in"):
             try:
                 r_time, text = await self.parse_parameters(message, len(prefix) + 13,
-                                                           lang, trans.get("MSG_REMINDER_WU_ME", lang).format(prefix))
+                                                           lang, trans.get("MSG_REMINDER_WU_ME", lang).format(prefix=prefix))
             # Raised when reminder content is too long
             except ValueError:
                 await message.channel.send(trans.get("MSG_REMINDER_TOO_LONG_CONTENT", lang).format(REM_MAX_CONTENT))
@@ -329,7 +329,7 @@ class Reminder:
         elif startswith(prefix + "remind here in"):
             try:
                 r_time, text = await self.parse_parameters(message, len(prefix) + 13,
-                                                           lang, trans.get("MSG_REMINDER_WU_HERE", lang).format(prefix))
+                                                           lang, trans.get("MSG_REMINDER_WU_HERE", lang).format(prefix=prefix))
             # Raised when reminder content is too long
             except ValueError:
                 await message.channel.send(trans.get("MSG_REMINDER_TOO_LONG_CONTENT", lang).format(REM_MAX_CONTENT))
@@ -398,7 +398,7 @@ class Reminder:
 
         # !remind help
         elif startswith(prefix + "remind"):
-            await message.channel.send(trans.get("MSG_REMINDER_HELP", lang).replace("_", prefix))
+            await message.channel.send(trans.get("MSG_REMINDER_HELP", lang).format(prefix=prefix))
 
 
 class NanoPlugin:

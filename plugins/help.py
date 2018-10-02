@@ -129,7 +129,7 @@ class Help:
 
         # Bare !help
         if message.content.strip(" ") == (prefix + "help"):
-            await message.channel.send(trans.get("MSG_HELP", lang).replace("_", prefix))
+            await message.channel.send(trans.get("MSG_HELP", lang).format(prefix=prefix))
 
             self.stats.add(HELP)
 
@@ -153,7 +153,7 @@ class Help:
 
         # !help simple
         elif startswith(prefix + "help simple"):
-            await message.channel.send(trans.get("MSG_HELP_SIMPLE", lang).replace("_", prefix))
+            await message.channel.send(trans.get("MSG_HELP_SIMPLE", lang).format(prefix=prefix))
 
             self.stats.add(HELP)
 
@@ -168,7 +168,7 @@ class Help:
                 if name:
                     await message.channel.send(name, embed=embed)
                 else:
-                    await message.channel.send(trans.get("MSG_HELP_CMDNOTFOUND", lang).replace("_", prefix))
+                    await message.channel.send(trans.get("MSG_HELP_CMDNOTFOUND", lang).format(prefix=prefix))
 
             else:
                 name, embed = self.get_command_info(prefix + search, prefix, lang)
@@ -176,7 +176,7 @@ class Help:
                 if name:
                     await message.channel.send(name, embed=embed)
                 else:
-                    await message.channel.send(trans.get("MSG_HELP_CMDNOTFOUND", lang).replace("_", prefix))
+                    await message.channel.send(trans.get("MSG_HELP_CMDNOTFOUND", lang).format(prefix=prefix))
 
                 self.stats.add(HELP)
 

@@ -54,7 +54,7 @@ class Conversation:
 
         # If it is just a raw mention, send the help message
         if extracted == "":
-            await message.channel.send(trans.get("MSG_HELP", lang).replace("_", prefix))
+            await message.channel.send(trans.get("MSG_HELP", lang).format(prefix=prefix))
 
         elif has(trans.get("INFO_PREFIX_LITERAL", lang)):
             await message.channel.send(trans.get("INFO_PREFIX", lang).format(prefix))
@@ -89,7 +89,7 @@ class Conversation:
             await reply(trans.get("CONV_SPARTA", lang))
 
         elif self.matches(extracted, trans.get("INFO_HELP", lang)):
-            await reply(trans.get("MSG_HELP", lang).replace("_", prefix))
+            await reply(trans.get("MSG_HELP", lang).format(prefix=prefix))
 
         elif self.matches(extracted, trans.get("CONV_Q_LOVE", lang)):
             await reply(trans.get("CONV_LOVE", lang))

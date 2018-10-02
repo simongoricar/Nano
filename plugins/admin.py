@@ -11,7 +11,7 @@ from discord import utils, Client, Embed, TextChannel, Colour, DiscordException,
 from core.serverhandler import INVITEFILTER_SETTING, SPAMFILTER_SETTING, WORDFILTER_SETTING
 from core.utils import convert_to_seconds, matches_iterable, is_valid_command, StandardEmoji, \
                        resolve_time, log_to_file, is_disabled, IgnoredException, parse_special_chars, \
-                       apply_string_padding
+                       apply_string_padding, filter_text
 
 from core.stats import MESSAGE
 
@@ -581,7 +581,7 @@ class Admin:
         if not log_channel:
             return
 
-        embed = Embed(title=self.trans.get("MSG_LOGPOST_NUKE", lang).format(prefix),
+        embed = Embed(title=self.trans.get("MSG_LOGPOST_NUKE", lang).format(prefix=prefix),
                       description=self.trans.get("MSG_NUKE_AMOUNT", lang).format(amount))
 
         embed.set_author(name="{} ({})".format(message.author.name, message.author.id), icon_url=message.author.avatar_url)
@@ -595,8 +595,8 @@ class Admin:
         if not log_channel:
             return
 
-        embed = Embed(title=self.trans.get("MSG_LOGPOST_SELFROLE", lang).format(prefix),
-                      description=self.trans.get(type_, lang).format(role_name))
+        embed = Embed(title=self.trans.get("MSG_LOGPOST_SELFROLE", lang).format(prefix=prefix),
+                      description=self.trans.get(type_, lang).format(filter_text(role_name)))
 
         embed.set_author(name="{} ({})".format(message.author.name, message.author.id),
                          icon_url=message.author.avatar_url)
@@ -791,7 +791,7 @@ class Admin:
                 await message.channel.send(trans.get("MSG_KICK_NANO", lang))
                 return
 
-            target = await message.channel.send(trans.get("MSG_KICK_CONFIRM", lang).format(user.name, CHECK_EMOJI))
+            target = await message.channel.send(trans.get("MSG_KICK_CONFIRM", lang).format(filter_text(user.name), CHECK_EMOJI))
             await target.add_reaction(CHECK_EMOJI)
 
             def check(reaction, usr):
@@ -814,7 +814,7 @@ class Admin:
                     self.modp.delete("{}:{}".format(message.guild.id, user.id))
                     return
 
-            await message.channel.send(trans.get("MSG_KICK", lang).format(user.name))
+            await message.channel.send(trans.get("MSG_KICK", lang).format(filter_text(user.name)))
 
             return
 
@@ -831,7 +831,7 @@ class Admin:
                 await message.channel.send(trans.get("MSG_BAN_NANO", lang))
                 return
 
-            target = await message.channel.send(trans.get("MSG_BAN_USER", lang).format(user.name, CHECK_EMOJI))
+            target = await message.channel.send(trans.get("MSG_BAN_USER", lang).format(filter_text(user.name), CHECK_EMOJI))
             await target.add_reaction(CHECK_EMOJI)
 
             def check(reaction, usr):
@@ -854,7 +854,7 @@ class Admin:
                     self.modp.delete("{}:{}".format(message.guild.id, user.id))
                     return
 
-                await message.channel.send(trans.get("MSG_BAN", lang).format(user.name))
+                await message.channel.send(trans.get("MSG_BAN", lang).format(filter_text(user.name)))
 
             return
 
@@ -888,7 +888,7 @@ class Admin:
                 return
 
             await message.guild.unban(user)
-            await message.channel.send(trans.get("MSG_UNBAN_SUCCESS", lang).format(user.name))
+            await message.channel.send(trans.get("MSG_UNBAN_SUCCESS", lang).format(filter_text(user.name)))
 
             return
 
@@ -933,7 +933,7 @@ class Admin:
             pretty_time = resolve_time(total_seconds, lang)
 
             # Wait for confirmation
-            target = await message.channel.send(trans.get("MSG_SOFTBAN_CONFIRM", lang).format(user.name, pretty_time, CHECK_EMOJI))
+            target = await message.channel.send(trans.get("MSG_SOFTBAN_CONFIRM", lang).format(filter_text(user.name), pretty_time, CHECK_EMOJI))
             await target.add_reaction(CHECK_EMOJI)
 
             def check(reaction, usr):
@@ -956,7 +956,7 @@ class Admin:
                 self.modp.delete("{}:{}".format(message.guild.id, user.id))
                 return
 
-            await message.channel.send(trans.get("MSG_SOFTBAN_SUCCESS", lang).format(user.name, resolve_time(total_seconds, lang)))
+            await message.channel.send(trans.get("MSG_SOFTBAN_SUCCESS", lang).format(filter_text(user.name), resolve_time(total_seconds, lang)))
 
             return
 
@@ -1015,7 +1015,7 @@ class Admin:
                 return
 
             handler.mute(message.guild, user.id)
-            await message.channel.send(trans.get("MSG_MUTE_SUCCESS", lang).format(user.name))
+            await message.channel.send(trans.get("MSG_MUTE_SUCCESS", lang).format(filter_text(user.name)))
 
             return
 
@@ -1053,7 +1053,7 @@ class Admin:
             user = await self.resolve_user(name, message, lang)
             handler.unmute(user.id, message.guild.id)
 
-            await message.channel.send(trans.get("MSG_UNMUTE_SUCCESS", lang).format(user.name))
+            await message.channel.send(trans.get("MSG_UNMUTE_SUCCESS", lang).format(filter_text(user.name)))
 
             return
 
@@ -1078,7 +1078,7 @@ class Admin:
                 if is_disabled(joinmsg):
                     await message.channel.send(trans.get("MSG_JOIN_IS_DISABLED", lang))
                 else:
-                    await message.channel.send(trans.get("MSG_JOIN_CURRENT", lang).format(joinmsg))
+                    await message.channel.send(trans.get("MSG_JOIN_CURRENT", lang).format(filter_text(joinmsg)))
 
             elif is_disabled(change):
                 handler.set_custom_event_message(message.guild.id, "welcomemsg", None)
@@ -1102,7 +1102,7 @@ class Admin:
                 if is_disabled(joinmsg):
                     await message.channel.send(trans.get("MSG_JOIN_IS_DISABLED", lang))
                 else:
-                    await message.channel.send(trans.get("MSG_JOIN_CURRENT", lang).format(joinmsg))
+                    await message.channel.send(trans.get("MSG_JOIN_CURRENT", lang).format(filter_text(joinmsg)))
 
             elif is_disabled(change):
                 handler.set_custom_event_message(message.guild.id, "welcomemsg", None)
@@ -1126,7 +1126,7 @@ class Admin:
                 if is_disabled(banmsg):
                     await message.channel.send(trans.get("MSG_BANMSG_IS_DISABLED", lang))
                 else:
-                    await message.channel.send(trans.get("MSG_BANMSG_CURRENT", lang).format(banmsg))
+                    await message.channel.send(trans.get("MSG_BANMSG_CURRENT", lang).format(filter_text(banmsg)))
 
             elif is_disabled(change):
                 handler.set_custom_event_message(message.guild.id, "banmsg", None)
@@ -1150,7 +1150,7 @@ class Admin:
                 if is_disabled(kickmsg):
                     await message.channel.send(trans.get("MSG_KICKMSG_IS_DISABLED", lang))
                 else:
-                    await message.channel.send(trans.get("MSG_KICKMSG_CURRENT", lang).format(kickmsg))
+                    await message.channel.send(trans.get("MSG_KICKMSG_CURRENT", lang).format(filter_text(kickmsg)))
 
             elif is_disabled(change):
                 handler.set_custom_event_message(message.guild.id, "kickmsg", None)
@@ -1416,7 +1416,7 @@ class Admin:
                         entry = "`{}` - **{}** {}".format(l_code, l_details.get("name"), trans.get("MSG_LANG_TRANS", lang).format(contribs))
                         lang_list.append(entry)
 
-                await message.channel.send(trans.get("MSG_LANG_LIST", lang).format("\n".join(lang_list)))
+                await message.channel.send(trans.get("MSG_LANG_LIST", lang).format("\n".join(lang_list), prefix=prefix))
 
             # !language set [lang]
             elif cut.startswith("set"):
@@ -1973,7 +1973,7 @@ class Admin:
                     await seven.edit(content=edit)
 
             # FINAL MESSAGE, formats with new prefix
-            msg_final = trans.get("MSG_SETUP_COMPLETE", lang).replace("_", pref)
+            msg_final = trans.get("MSG_SETUP_COMPLETE", lang).format(prefix=prefix)
             await message.channel.send(msg_final)
 
         # !permission
@@ -2007,7 +2007,7 @@ class Admin:
 
                 user = await self.resolve_user(arg, message, lang)
 
-                target = await message.channel.send(trans.get("MSG_PERMISSION_ADMIN_CONFIRM", lang).format(user.name, CHECK_EMOJI))
+                target = await message.channel.send(trans.get("MSG_PERMISSION_ADMIN_CONFIRM", lang).format(filter_text(user.name), CHECK_EMOJI))
                 await target.add_reaction(CHECK_EMOJI)
 
                 def check(reaction, usr):
@@ -2025,17 +2025,17 @@ class Admin:
                 resp = await self.handle_permission_command(user, "Nano Admin", lang)
                 # Permission added
                 if resp:
-                    await message.channel.send(trans.get("MSG_PERMISSION_ADMIN_A", lang).format(user.name))
+                    await message.channel.send(trans.get("MSG_PERMISSION_ADMIN_A", lang).format(filter_text(user.name)))
                 # Permission removed
                 else:
-                    await message.channel.send(trans.get("MSG_PERMISSION_ADMIN_R", lang).format(user.name))
+                    await message.channel.send(trans.get("MSG_PERMISSION_ADMIN_R", lang).format(filter_text(user.name)))
 
             # !permission mod @mention
             elif setting == "mod":
                 # No need to check admin permissions, mods cant reach this
                 user = await self.resolve_user(arg, message, lang)
 
-                target = await message.channel.send(trans.get("MSG_PERMISSION_MOD_CONFIRM", lang).format(user.name, CHECK_EMOJI))
+                target = await message.channel.send(trans.get("MSG_PERMISSION_MOD_CONFIRM", lang).format(filter_text(user.name), CHECK_EMOJI))
                 await target.add_reaction(CHECK_EMOJI)
 
                 def check(reaction, usr):
@@ -2053,17 +2053,17 @@ class Admin:
                 resp = await self.handle_permission_command(user, "Nano Mod", lang)
                 # Permission added
                 if resp:
-                    await message.channel.send(trans.get("MSG_PERMISSION_MOD_A", lang).format(user.name))
+                    await message.channel.send(trans.get("MSG_PERMISSION_MOD_A", lang).format(filter_text(user.name)))
                 # Permission removed
                 else:
-                    await message.channel.send(trans.get("MSG_PERMISSION_MOD_R", lang).format(user.name))
+                    await message.channel.send(trans.get("MSG_PERMISSION_MOD_R", lang).format(filter_text(user.name)))
 
             # !permission/!permission help
             elif setting == "help":
-                await message.channel.send(trans.get("MSG_PERMISSION_HELP", lang).replace("_", prefix))
+                await message.channel.send(trans.get("MSG_PERMISSION_HELP", lang).replace(prefix=prefix))
 
             else:
-                await message.channel.send(trans.get("MSG_PERMISSION_WRONGARG", lang).replace("_", prefix))
+                await message.channel.send(trans.get("MSG_PERMISSION_WRONGARG", lang).format(prefix=prefix))
 
     async def on_member_remove(self, member, **_):
         # check for softban

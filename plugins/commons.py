@@ -279,7 +279,7 @@ class Commons:
         if not log_channel:
             return
 
-        embed = Embed(title=self.trans.get("MSG_LOGPOST_SAY", lang).format(prefix), description=add_dots(content, 350))
+        embed = Embed(title=self.trans.get("MSG_LOGPOST_SAY", lang).format(prefix=prefix), description=add_dots(content, 350))
         embed.set_author(name="{} ({})".format(message.author.name, message.author.id), icon_url=message.author.avatar_url)
         embed.add_field(name=self.trans.get("INFO_CHANNEL", lang), value=message.channel.mention)
 
@@ -291,7 +291,7 @@ class Commons:
         # Removes mentions if user doesn't have the permission to mention
         filter_stuff = not (author.guild_permissions.mention_everyone or force_remove)
 
-        return filter_text(content, filter_mass_mentions=filter_stuff, filter_user_mention=filter_stuff)
+        return filter_text(content, mass_mentions=filter_stuff, user_mention=filter_stuff)
 
     async def on_message(self, message, **kwargs):
         client = self.client
@@ -412,7 +412,7 @@ class Commons:
                         raise ValueError("can't roll 0 sides/times")
 
                 except ValueError:
-                    await message.channel.send(trans.get("MSG_DICE_INVALID", lang).replace("_", prefix))
+                    await message.channel.send(trans.get("MSG_DICE_INVALID", lang).format(prefix=prefix))
                     return
 
                 if times > MAX_DICE or sides > MAX_DICE:
@@ -504,9 +504,9 @@ class Commons:
             url = member.avatar_url
 
             if url:
-                await message.channel.send(trans.get("MSG_AVATAR_OWNERSHIP", lang).format(member.name, url))
+                await message.channel.send(trans.get("MSG_AVATAR_OWNERSHIP", lang).format(filter_text(member.name), url))
             else:
-                await message.channel.send(trans.get("MSG_AVATAR_NONE", lang).format(member.name))
+                await message.channel.send(trans.get("MSG_AVATAR_NONE", lang).format(filter_text(member.name)))
 
         # !say (#channel) [message]
         elif startswith(prefix + "say"):

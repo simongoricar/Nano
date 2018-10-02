@@ -190,7 +190,7 @@ class TMDb:
                 # Check if no subcommand - valid
                 # If there's a subcommand, but no argument, fail
                 if not cut.strip(" "):
-                    await message.channel.send(trans.get("MSG_IMDB_INVALID_USAGE", lang).format(prefix))
+                    await message.channel.send(trans.get("MSG_IMDB_INVALID_USAGE", lang).format(prefix=prefix))
                     return
 
                 else:
@@ -207,7 +207,7 @@ class TMDb:
 
                 # Try to send
                 try:
-                    info = trans.get("MSG_IMDB_PLOT", lang).format(data.title, data.overview)
+                    info = trans.get("MSG_IMDB_PLOT", lang).format(filter_text(data.title), filter_text(data.overview))
 
                     await message.channel.send(filter_text(info))
                 except AttributeError:
@@ -237,7 +237,7 @@ class TMDb:
 
             # !imdb help
             elif subcommand == "help":
-                await message.channel.send(trans.get("MSG_IMDB_HELP", lang).replace("_", prefix))
+                await message.channel.send(trans.get("MSG_IMDB_HELP", lang).format(prefix=prefix))
 
             # !imdb search
             else:

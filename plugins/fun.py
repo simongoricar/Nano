@@ -16,7 +16,7 @@ from discord import Embed, Colour, File
 from PIL import Image, ImageDraw, ImageFont
 
 from core.stats import PRAYER, MESSAGE, IMAGE_SENT
-from core.utils import is_valid_command, build_url, add_dots, gen_id
+from core.utils import is_valid_command, build_url, add_dots, gen_id, filter_text
 from core.confparser import get_config_parser, DATA_DIR, PLUGINS_DIR
 
 # plugins/config.ini
@@ -268,11 +268,6 @@ class Fun:
 
         self.achievement = Achievement()
 
-        self.everyone_filter = None
-
-    async def on_plugins_loaded(self):
-        self.everyone_filter = self.nano.get_plugin("commons").instance.at_everyone_filter
-
     async def on_message(self, message, **kwargs):
         trans = self.trans
 
@@ -356,7 +351,7 @@ class Fun:
 
             # 0, 1 or more than 3 arguments - error
             elif len(middle) < 2 or len(middle) > 3:
-                await message.channel.send(trans.get("MSG_MEME_USAGE", lang).replace("_", prefix))
+                await message.channel.send(trans.get("MSG_MEME_USAGE", lang).format(prefix=prefix))
                 return
 
             # Normal
@@ -378,18 +373,16 @@ class Fun:
 
         elif startswith(prefix + "rip"):
             if len(message.mentions) == 1:
-                ripperoni = " " + message.mentions[0].name
-
+                rip_text = " " + message.mentions[0].name
             elif len(message.mentions) == 0:
-                ripperoni = " " + message.content[len(prefix + "rip "):]
-
+                rip_text = " " + message.content[len(prefix + "rip "):]
             else:
-                ripperoni = ""
+                rip_text = ""
 
-            ripperoni = self.everyone_filter(ripperoni, message.author, force_remove=True)
+            rip_text = filter_text(rip_text)
 
             prays = self.stats.get_amount(PRAYER)
-            await message.channel.send(trans.get("MSG_RIP", lang).format(ripperoni, prays))
+            await message.channel.send(trans.get("MSG_RIP", lang).format(rip_text, prays))
 
             self.stats.add(PRAYER)
 
@@ -415,6 +408,5 @@ class NanoPlugin:
     handler = Fun
     events = {
         "on_message": 10,
-        "on_plugins_loaded": 5,
         # type : importance
     }

@@ -6,13 +6,14 @@ import os
 import configparser
 from discord import AutoShardedClient
 
+os.chdir("..")
 
 loop = asyncio.get_event_loop()
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 parser = configparser.ConfigParser()
-parser.read("../data/settings.ini")
+parser.read("data/settings.ini")
 
 client = AutoShardedClient(loop=loop)
 

@@ -145,21 +145,25 @@ class Definitions:
             elif startswith(prefix + "define"):
                 search = str(message.content)[len(prefix + "define "):].strip(" ")
             else:
-                # Not possible, but k
-                return
+                # Shouldn't happen, RuntimeError means startswith() is not working properly
+                raise RuntimeError
+
+            # filter mentions
+            search = filter_text(search)
 
             if not search:
                 await message.channel.send(trans.get("MSG_WIKI_NO_QUERY", lang))
                 return
 
-            summary = filter_text(await self.wiki.get_definition(search))
+            summary = await self.wiki.get_definition(search)
 
             if not summary:
                 await message.channel.send(trans.get("MSG_WIKI_NO_DEF", lang))
                 return
 
-            await message.channel.send(trans.get("MSG_WIKI_DEFINITION", lang).format(search,
-                                                                                     add_dots(summary, max_len=MAX_WIKI_LENGTH)))
+            await message.channel.send(trans.get("MSG_WIKI_DEFINITION", lang)
+                                       .format(search,
+                                               add_dots(filter_text(summary), max_len=MAX_WIKI_LENGTH)))
 
         elif startswith(prefix + "urban"):
             search = str(message.content)[len(prefix + "urban "):].strip(" ")
@@ -168,14 +172,18 @@ class Definitions:
                 await message.channel.send(trans.get("MSG_URBAN_NO_QUERY", lang))
                 return
 
-            description = filter_text(await self.urban.urban_dictionary(search))
+            # filter mentions
+            search = filter_text(search)
+
+            description = await self.urban.urban_dictionary(search)
 
             if not description:
                 await message.channel.send(trans.get("MSG_URBAN_NO_DEF", lang))
                 return
 
-            await message.channel.send(trans.get("MSG_URBAN_DEFINITION", lang).format(search,
-                                                                                      add_dots(description, max_len=MAX_URBAN_LENGTH)))
+            await message.channel.send(trans.get("MSG_URBAN_DEFINITION", lang)
+                                       .format(search,
+                                               add_dots(filter_text(description), max_len=MAX_URBAN_LENGTH)))
 
 
 class NanoPlugin:

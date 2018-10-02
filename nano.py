@@ -16,7 +16,7 @@ from core.confparser import get_settings_parser, PLUGINS_DIR
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
-__version__ = '3.8.2'
+__version__ = '3.8.3'
 
 
 # EVENTS
@@ -68,6 +68,10 @@ log = logging.getLogger(__name__)
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("discord").setLevel(logging.INFO)
 logging.getLogger("websockets.protocol").setLevel(logging.INFO)
+
+# Disable redis debug messages
+logging.getLogger("core.stats").setLevel(logging.INFO)
+logging.getLogger("plugins.statistics").setLevel(logging.INFO)
 
 # Config parser setup
 parser = get_settings_parser()

@@ -8,5 +8,7 @@
   "sp_in": {"name": "Shitpost", "authors": ["JustAGuy"]},
   "nl_NL": {"name": "Dutch", "authors": ["FrikandelSpeciaal", "Dutchassassin21"]},
   "fr_FR": {"name": "French", "authors": ["jadziajan", "Vitus34", "JSBM", "wescoast"]},
-  "ru_RU": {"name": "Russian", "authors": ["BoldOne"]}
+  "ru_RU": {"name": "Russian", "authors": ["Polonium"]},
+  "sv_SE": {"name": "Swedish", "authors": ["SpaceRainbow"]},
+  "es_ES": {"name": "Spanish", "authors": ["Aimarekin", "Silene", "Mega Tutoriales"]}
 }
