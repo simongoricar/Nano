@@ -18,7 +18,7 @@ class GuildCounter:
         self.loop = kwargs.get("loop")
 
         try:
-            self.botspw_token = parser.get("bots.discord.pw", "token")
+            self.botspw_token = parser.get("discord.bots.gg", "token")
             self.botsorg_token = parser.get("discordbots.org", "token")
         except (configparser.NoOptionError, configparser.NoSectionError):
             log.critical("Missing api key(s), disabling plugin...")
@@ -44,7 +44,7 @@ class GuildCounter:
 
     async def upload(self, amount):
         a = await self.upload_discordbots_org(amount)
-        b = await self.upload_discordbots_pw(amount)
+        b = await self.upload_discordbots_gg(amount)
 
         return a and b
 
@@ -58,12 +58,12 @@ class GuildCounter:
 
         return True if status_code == 200 else status_code
 
-    async def upload_discordbots_pw(self, num, token=None):
+    async def upload_discordbots_gg(self, num, token=None):
         if not token:
             token = self.botspw_token
 
-        url = "https://bots.discord.pw/api/bots/{}/stats/".format(self.client.user.id)
-        payload = {"server_count": num}
+        url = "https://discord.bots.gg/api/v1/bots/{}/stats/".format(self.client.user.id)
+        payload = {"guildCount": num}
         head = {
             "Content-Type": "application/json",
             "Authorization": str(token)
@@ -91,7 +91,7 @@ class GuildCounter:
 
 class NanoPlugin:
     name = "Server count updater"
-    version = "10"
+    version = "11"
 
     handler = GuildCounter
     events = {
