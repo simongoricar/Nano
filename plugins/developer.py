@@ -323,6 +323,32 @@ class DevFeatures:
 
             await message.channel.send("Sent to {} servers".format(len(s)))
 
+        # nano.dev.logannounce
+        elif startswith("nano.dev.logannounce"):
+            # Careful, this can take A LOT of time, TODO make a separate utility for stuff like this
+            await message.channel.send("Sending...")
+            ann = message.content[len("nano.dev.logannounce "):]
+
+            embed = Embed(title="Announcement", description=ann)
+
+            c = 0
+            for g in self.client.guilds:
+                try:
+                    try:
+                        chan_id = int(self.handler.get_log_channel(g))
+                        channel = message.guild.get_channel(chan_id)
+                    except:
+                        channel = await self.default_channel(g)
+
+                    log.info("Sending to {}".format(channel.name, channel.guild.name))
+
+                    await channel.send(embed=embed)
+                    c += 1
+                except:
+                    log_to_file("Couldn't send dev.logannounce for {}".format(g.name))
+
+            await message.channel.send("Done, {} servers".format(c))
+
         # nano.dev.userdetective
 
         elif startswith("nano.dev.userdetective"):
