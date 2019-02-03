@@ -446,7 +446,7 @@ https://discord.gg/FZJB6UJ 여기서 제보해주시면 감사하겠습니다.</
     <string name="MSG_REPORT_EMPTY">빈 문서를 제출할 수 없습니다.</string>
     <string name="MSG_REPORT_RATELIMIT">당신의 속도가 제한되고 있습니다. 5분후에 다시 시도하여주세요.</string>
     <string name="MSG_REPORT_THANKS">문의해 주셔서 감사합니다. 더 나은 나노의 모습으로 오겠습니다 :)</string>
-    <string name="MSG_REPORT_EE_THX">Helloooo :wave:</string>
+    <string name="MSG_REPORT_EE_THX">안녀어어어엉 :wave:</string>
     <string name="MSG_IMDB_ERROR">Something went wrong while trying to get movie info.</string>
     <string name="MSG_IMDB_ERROR2">Something went wrong... Try again?</string>
     <string name="MSG_IMDB_INVALID_USAGE">Invalid command usage, see `{prefix}help imdb`</string>
@@ -454,9 +454,9 @@ https://discord.gg/FZJB6UJ 여기서 제보해주시면 감사하겠습니다.</
     <string name="MSG_IMDB_ERROR_REPDEV">Something went wrong, please report it to the dev, preferably with a screenshot. Thanks!</string>
     <string name="MSG_IMDB_NORESULTS">:eyes: No results.</string>
     <string name="MSG_IMDB_CANTPERSON">You can\'t get the plot of a person :rofl:</string>
-    <string name="MSG_IMDB_PLOT">**{}**\'s story
+    <string name="MSG_IMDB_PLOT">**{}** 의 스토리
 ```{}```</string>
-    <string name="MSG_IMDB_SERIES">series</string>
+    <string name="MSG_IMDB_SERIES">시리즈</string>
     <string name="MSG_IMDB_PLOT_MISSING">This title seems to have a missing plot description.</string>
     <string name="MSG_IMDB_GENRES">Genres: {}</string>
     <string name="MSG_IMDB_AVGRATING">Average rating: **{}/10**</string>
