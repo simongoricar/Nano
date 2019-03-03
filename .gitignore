@@ -1,0 +1,13 @@
+# Python cache
+__pycache__/
+
+# Intellij stuff
+.idea/
+
+
+# Sensitive files
+*.ini
+!*.ini.example
+
+*.conf
+!*.conf.example
