@@ -1,5 +1,5 @@
 # Nano
-
+[![Run on Repl.it](https://repl.it/badge/github/DefaultSimon/Nano)](https://repl.it/github/DefaultSimon/Nano)
 [![Version](https://img.shields.io/badge/live%20version-3.8.3-green.svg)](https://discord.nanobot.pw/) 
 [![Version](https://img.shields.io/badge/GitHub%20version-3.8.3-green.svg)](https://nanobot.pw/) 
 
