@@ -7,7 +7,7 @@ import time
 import psutil
 
 from discord import utils, Embed, Colour, __version__ as d_version, HTTPException
-from discord import Member, Guild
+from discord import Member, Guild, Status
 
 from core.stats import MESSAGE
 from core.utils import is_valid_command, log_to_file, is_disabled, IgnoredException
@@ -229,7 +229,7 @@ class ServerManagement:
         # !server
         elif startswith(prefix + "server"):
             user_count = message.guild.member_count
-            users_online = len([user.id for user in message.guild.members if user.status == user.status.online])
+            users_online = len([True for user in message.guild.members if user.status == Status.online])
 
             v_level = message.guild.verification_level
             if v_level == v_level.none:

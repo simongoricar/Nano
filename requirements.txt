@@ -8,8 +8,8 @@ fuzzywuzzy
 python-Levenshtein
 Pillow
 lxml
+discord.py
 
 git+https://github.com/DefaltSimon/TMDbie.git#egg=TMDbie
 git+https://github.com/DefaltSimon/osu-ds#egg=osu-ds
 git+https://github.com/smiley/steamapi#egg=steamapi
-git+https://github.com/Rapptz/discord.py@rewrite
