@@ -7,7 +7,7 @@ import time
 import psutil
 
 from discord import utils, Embed, Colour, __version__ as d_version, HTTPException
-from discord import Member, Guild, Status
+from discord import Member, Guild, Status, VerificationLevel
 
 from core.stats import MESSAGE
 from core.utils import is_valid_command, log_to_file, is_disabled, IgnoredException
@@ -232,11 +232,11 @@ class ServerManagement:
             users_online = len([True for user in message.guild.members if user.status == Status.online])
 
             v_level = message.guild.verification_level
-            if v_level == v_level.none:
+            if v_level == VerificationLevel.none:
                 v_level = trans.get("MSG_SERVER_VL_NONE", lang)
-            elif v_level == v_level.low:
+            elif v_level == VerificationLevel.low:
                 v_level = trans.get("MSG_SERVER_VL_LOW", lang)
-            elif v_level == v_level.medium:
+            elif v_level == VerificationLevel.medium:
                 v_level = trans.get("MSG_SERVER_VL_MEDIUM", lang)
             else:
                 v_level = trans.get("MSG_SERVER_VL_HIGH", lang)
