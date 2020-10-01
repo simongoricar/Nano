@@ -347,6 +347,9 @@ class Commons:
                         mention = message.author.mention
                     else:
                         mention = usr.mention
+
+                # Remove @ everyone mentions
+                mention = filter_text(mention, user_mention=False)
             else:
                 mention = message.author.mention
 
@@ -443,7 +446,7 @@ class Commons:
 
         # !decide [item1]|[item2]|etc...
         elif startswith(prefix + "decide"):
-            cut = str(message.content)[len(prefix + "decide "):].strip(" ")
+            cut = filter_text(str(message.content)[len(prefix + "decide "):].strip(" "))
 
             if not cut:
                 await message.channel.send(trans.get("MSG_DECIDE_NO_ARGS", lang))

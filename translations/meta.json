@@ -1,14 +1,14 @@
 {
-  "en": {"name": "English", "authors": ["DefaltSimon"]},
+  "en": {"name": "English", "authors": ["DefaultSimon"]},
   "sl_SI": {"name": "Slovenian", "authors": ["Grimpy"]},
-  "pt_BR": {"name": "Portuguese, Brazilian", "authors": ["Vacastro", "Pedro Fracassi"]},
+  "pt_BR": {"name": "Portuguese, Brazilian", "authors": ["Vascastro", "Pedro Fracassi"]},
   "pt_PT": {"name": "Portuguese", "authors": ["MMgamer", "DrJoker64"]},
   "ko_KR": {"name": "Korean", "authors": ["WorldMoat", "Tree", "Equalise"]},
   "id_ID": {"name": "Indonesian", "authors": ["PixelPirate"]},
   "sp_in": {"name": "Shitpost", "authors": ["JustAGuy"]},
-  "nl_NL": {"name": "Dutch", "authors": ["FrikandelSpeciaal", "Dutchassassin21"]},
+  "nl_NL": {"name": "Dutch", "authors": ["FrikandelSpeciaal", "Dutchassassin21", "Rienknr1"]},
   "fr_FR": {"name": "French", "authors": ["jadziajan", "Vitus34", "JSBM", "wescoast"]},
   "ru_RU": {"name": "Russian", "authors": ["lamebot"]},
   "sv_SE": {"name": "Swedish", "authors": ["SpaceRainbow"]},
-  "es_ES": {"name": "Spanish", "authors": ["Aimarekin", "Silene", "Mega Tutoriales"]}
+  "es_ES": {"name": "Spanish", "authors": ["Aimarekin", "Silene", "Mega Tutoriales", "MyNameItzOZMQ"]}
 }

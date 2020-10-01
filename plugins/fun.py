@@ -274,16 +274,16 @@ class Fun:
         prefix = kwargs.get("prefix")
         lang = kwargs.get("lang")
 
-        simple_commands = {
-            "( ͡° ͜ʖ ͡°)": trans.get("MSG_WHOKNOWS", lang)
-        }
-
-        # Loop over simple commands
-        for k, v in simple_commands.items():
-            if message.content.startswith(k):
-                await message.channel.send(v)
-                self.stats.add(MESSAGE)
-                return
+        # simple_commands = {
+        #     "( ͡° ͜ʖ ͡°)": trans.get("MSG_WHOKNOWS", lang)
+        # }
+        #
+        # # Loop over simple commands
+        # for k, v in simple_commands.items():
+        #     if message.content.startswith(k):
+        #         await message.channel.send(v)
+        #         self.stats.add(MESSAGE)
+        #         return
 
         # Check if this is a valid command
         if not is_valid_command(message.content, commands, prefix):
