@@ -80,7 +80,13 @@ parser = get_settings_parser()
 loop = asyncio.get_event_loop()
 
 # NOW USES AUTOSHARDING
-client = discord.AutoShardedClient(loop=loop)
+custom_intents = discord.Intents.default()
+custom_intents.members = True
+
+client = discord.AutoShardedClient(
+    loop=loop,
+    intents=custom_intents,
+)
 
 log.info("Initializing ServerHandler and NanoStats...")
 
