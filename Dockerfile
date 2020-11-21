@@ -1,19 +1,20 @@
-# Basic info
-FROM ubuntu:16.04
-LABEL maintainer="DefaltSimon"
-EXPOSE 80
+FROM ubuntu:20.04
+LABEL maintainer="DefaultSimon"
 
-# Install dependencies
+##
+# Install dependencies with apt
+##
 ENV BUILD_DEPS "zlibc libxml2 libxml2-dev libssl-dev libxslt1-dev libjpeg8-dev zlib1g-dev libfreetype6-dev libssl-dev tk-dev libc6-dev build-essential libreadline-gplv2-dev libncursesw5-dev libsqlite3-dev libgdbm-dev libbz2-dev"
 RUN apt-get update \
     && apt-get install wget python3-dev git $BUILD_DEPS -y
 
+##
 # Install python
-ENV PYTHON_VERSION "3.6.6"
-ENV PYTHON_SOURCE "https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz"
+##
+ENV PYTHON_VERSION "3.8.6"
 
-# Download and compile from source
-RUN wget $PYTHON_SOURCE \
+# Download and compile Python from source, with optimizations enabled
+RUN wget "https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz" \
     && tar xzf "Python-${PYTHON_VERSION}.tgz" \
     && rm "Python-${PYTHON_VERSION}.tgz" \
     # Compile and install
@@ -22,11 +23,15 @@ RUN wget $PYTHON_SOURCE \
     # Clean up
     && cd .. && rm -r "Python-${PYTHON_VERSION}/"
 
+# Install pip
+# TODO doesn't Python install pip?
 RUN wget -O get-pip.py "https://bootstrap.pypa.io/get-pip.py" \
-	&& python3.6 get-pip.py \
+	&& python3.8 get-pip.py \
 	&& rm get-pip.py
 
+##
 # Copy files
+##
 ENV HOME /home
 ENV NANO /home/Nano
 
@@ -48,4 +53,4 @@ RUN apt-get remove $BUILD_DEPS -y \
 # Set version and entrypoint
 ARG VERSION=unknown
 LABEL version=$VERSION
-ENTRYPOINT ["/home/dockerautorun.sh"]
+ENTRYPOINT ["/bin/bash", "/home/dockerautorun.sh"]

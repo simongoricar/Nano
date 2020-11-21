@@ -3,9 +3,14 @@
 # Go to the "main" directory
 cd ..
 
-# Find bot version
-VERSION=$(python ./utilities/find_version.py)
+# Update the requirements.txt file
+./scripts/generate_requirements.sh
 
+# Find Nano version
+VERSION=$(python ./scripts/find_version.py)
+
+# If ran with additional argument, use that as tag
+# Otherwise use current Nano version
 if [[ $1 ]];
 then
   TAG=$1
@@ -17,5 +22,5 @@ else
 fi
 
 echo "Building..."
-docker build -t nano:${TAG} . --build-arg VERSION=${VERSION}
+docker build -t nano:"${TAG}" . --build-arg VERSION="${VERSION}"
 echo "DONE!"

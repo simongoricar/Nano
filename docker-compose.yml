@@ -21,40 +21,38 @@ services:
     ######
     # Both nano and redis databases share the same directory - /data
     # This mounts the data directory (in your current directory) to data/ inside the container
-    # so your configuration is modified outside of the container
+    # so your configuration is saved and can be modified outside of the container
     ######
     volumes:
       - ./data:/data
 
     # This makes sure redis-data and redis-cache are started first.
     depends_on:
-      - redis-data
-      - redis-cache
+      - redis_data
+      - redis_cache
 
   #########################
-  # REDIS-DATA instance
+  # REDIS DATA instance
   # Contains all data, related to the user
   #########################
-  redis-data:
-    container_name: "redis-data"
-    image: redis
+  redis_data:
+    container_name: "redis_data"
+    image: redis:6.0
 
     # Mounts all database files into your data/ directory
     volumes:
       - ./data:/data
-      - ./data/redis.conf:/usr/local/etc/redis/redis.conf
-    command: "redis-server /usr/local/etc/redis/redis.conf"
+    command: "redis-server /data/redis.conf"
 
   #########################
-  # REDIS-CACHE instance
+  # REDIS CACHE instance
   # As the name suggests, this db contains cached data such as tf2 items, jokes, etc...
   #########################
-  redis-cache:
-    container_name: "redis-cache"
-    image: redis
+  redis_cache:
+    container_name: "redis_cache"
+    image: redis:6.0
 
     # Mounts all database files into your data/ directory
     volumes:
       - ./data:/data
-      - ./data/redisCache.conf:/usr/local/etc/redis/redis.conf
-    command: "redis-server /usr/local/etc/redis/redis.conf"
+    command: "redis-server /data/redisCache.conf"
