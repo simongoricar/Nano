@@ -2,7 +2,7 @@
 
 # Change current directory to the root
 import os
-os.chdir("../..")
+os.chdir("..")
 
 import time
 import logging
