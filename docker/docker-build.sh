@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-# Go to the "main" directory
-cd ..
-
 # Update the requirements.txt file
 ./scripts/generate_requirements.sh
 

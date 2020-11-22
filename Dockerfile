@@ -2,55 +2,41 @@ FROM ubuntu:20.04
 LABEL maintainer="DefaultSimon"
 
 ##
-# Install dependencies with apt
-##
-ENV BUILD_DEPS "zlibc libxml2 libxml2-dev libssl-dev libxslt1-dev libjpeg8-dev zlib1g-dev libfreetype6-dev libssl-dev tk-dev libc6-dev build-essential libreadline-gplv2-dev libncursesw5-dev libsqlite3-dev libgdbm-dev libbz2-dev"
-RUN apt-get update \
-    && apt-get install wget python3-dev git $BUILD_DEPS -y
-
-##
 # Install python
 ##
-ENV PYTHON_VERSION "3.8.6"
+ENV BUILD_DEPS "gcc python3-dev"
 
-# Download and compile Python from source, with optimizations enabled
-RUN wget "https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz" \
-    && tar xzf "Python-${PYTHON_VERSION}.tgz" \
-    && rm "Python-${PYTHON_VERSION}.tgz" \
-    # Compile and install
-    && cd "Python-${PYTHON_VERSION}" && ./configure --enable-optimizations \
-    && make && make install \
-    # Clean up
-    && cd .. && rm -r "Python-${PYTHON_VERSION}/"
-
-# Install pip
-# TODO doesn't Python install pip?
-RUN wget -O get-pip.py "https://bootstrap.pypa.io/get-pip.py" \
-	&& python3.8 get-pip.py \
-	&& rm get-pip.py
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install software-properties-common git curl -y  \
+    && add-apt-repository ppa:deadsnakes/ppa \
+    && apt-get update \
+    && apt-get install python3.8 python3.8-distutils $BUILD_DEPS -y
 
 ##
 # Copy files
 ##
-ENV HOME /home
-ENV NANO /home/Nano
+ENV HOMEDIR /home
+ENV NANODIR /home/Nano
 
-COPY . $HOME/Nano
+COPY . $HOMEDIR/Nano
 
-# Overwrite certain files
-COPY docker/directories.json $NANO/core/
-# Docker configuration
-COPY docker/dockerautorun.sh $HOME
-RUN chmod +x $HOME/dockerautorun.sh
+# Copy docker-specific files
+COPY docker/directories.json $NANODIR/core/
+COPY docker/nano-entrypoint.sh $HOMEDIR
+RUN chmod +x $HOMEDIR/nano-entrypoint.sh
 
 # Install dependencies
-RUN pip install -r $NANO/requirements.txt
+RUN chmod +x $HOMEDIR/nano-entrypoint.sh \
+    && curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py \
+    && python3.8 get-pip.py \
+    && python3.8 -m pip install -r $NANODIR/requirements.txt
 
 # Uninstall python and compile dependencies after installing python modules to make the container smaller
 RUN apt-get remove $BUILD_DEPS -y \
 	&& apt-get purge -y --autoremove
 
 # Set version and entrypoint
+# TODO what does this arg do?
 ARG VERSION=unknown
 LABEL version=$VERSION
-ENTRYPOINT ["/bin/bash", "/home/dockerautorun.sh"]
+ENTRYPOINT ["/bin/bash", "/home/nano-entrypoint.sh"]

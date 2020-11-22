@@ -1,18 +1,27 @@
+##
 # REDIS CONFIGURATION
-# You MUST personalize the paths or not use this config at all!
+# (redis data)
+##
 
-# Saving settings
+##### NETWORK #####
+
+bind localhost
+port 6382
+
+##### SNAPSHOTTING #####
+
 save ""
 save 900 1
 save 300 5
 save 60 35
 save 30 50
 
-# Sets filename
+rdbcompression yes
+rdbchecksum yes
+
 dbfilename data.rdb
 
-# Sets directory
-# Personalize this to your needs
-# For example: C:/Users/SomeGuy/Nano/data/
-
-# dir path-to-nano-dir/data/
+##
+# Modify this value!
+##
+dir path-to-nano-dir/data/

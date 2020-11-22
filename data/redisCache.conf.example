@@ -1,18 +1,27 @@
+##
 # REDIS CONFIGURATION
-# You MUST personalize the paths or not use this config at all!
+# (redis cache)
+##
 
-# Saving settings
+##### NETWORK #####
+
+bind localhost
+port 6383
+
+##### SNAPSHOTTING #####
+
 save ""
 save 900 1
 save 500 5
 save 120 35
 save 60 50
 
-# Sets filename
+rdbcompression yes
+rdbchecksum yes
+
 dbfilename cache.rdb
 
-# Sets directory
-# Personalize this to your needs
-# For example: C:/Users/SomeGuy/Nano/cache/
-
-# dir path-to-nano-dir/cache/
+##
+# Modify this value!
+##
+dir path-to-nano-dir/data/
