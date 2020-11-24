@@ -10,13 +10,17 @@ server =
 [Redis]
 # Setup types:
 # manual = uses values below or defaults if empty
-# environment = uses REDIS_HOST, REDIS_PORT and REDIS_PASS from the system variables
+# environment = uses environment variables REDIS_HOST, REDIS_PORT and REDIS_PASS
 setup = manual
 ip = localhost
 port = 6379
-password = 
+password =
 
 [RedisCache]
-ip = localhost
-port = 6379
+# Setup types:
+# manual = uses values below or defaults if empty
+# environment = uses environment variables REDIS_CACHE_HOST, REDIS_CACHE_PORT and REDIS_CACHE_PASSs
+setup = manual
+ip =
+port =
 password =

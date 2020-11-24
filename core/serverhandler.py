@@ -76,13 +76,10 @@ def validate_input(fn):
 class ServerHandler:
     @staticmethod
     def get_redis_data_credentials() -> tuple:
-        setup_type = 1 if par.get("Redis", "setup") == "environment" else 2
-
-        if setup_type == 1:
+        if par.get("Redis", "setup") == "environment":
             redis_ip = os.environ["REDIS_HOST"]
             redis_port = os.environ["REDIS_PORT"]
             redis_pass = os.environ["REDIS_PASS"]
-
         else:
             redis_ip = par.get("Redis", "ip", fallback="localhost")
             redis_port = par.get("Redis", "port", fallback=6379)
@@ -92,9 +89,14 @@ class ServerHandler:
 
     @staticmethod
     def get_redis_cache_credentials() -> tuple:
-        redis_ip = par.get("RedisCache", "ip", fallback="localhost")
-        redis_port = par.get("RedisCache", "port", fallback=6380)
-        redis_pass = par.get("RedisCache", "password", fallback=None)
+        if par.get("RedisCache", "setup") == "environment":
+            redis_ip = os.environ["REDIS_CACHE_HOST"]
+            redis_port = os.environ["REDIS_CACHE_PORT"]
+            redis_pass = os.environ["REDIS_CACHE_PASS"]
+        else:
+            redis_ip = par.get("RedisCache", "ip", fallback="localhost")
+            redis_port = par.get("RedisCache", "port", fallback=6380)
+            redis_pass = par.get("RedisCache", "password", fallback=None)
 
         return redis_ip, redis_port, redis_pass
 
