@@ -5,7 +5,8 @@ import traceback
 
 from discord import errors, Message, Member, User, Guild
 
-from core.utils import log_to_file, IgnoredException
+from core.utils import log_to_file
+from core.exceptions import IgnoredException
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)

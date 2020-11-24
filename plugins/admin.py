@@ -10,9 +10,9 @@ from discord import utils, Client, Embed, TextChannel, Colour, DiscordException,
 
 from core.serverhandler import INVITEFILTER_SETTING, SPAMFILTER_SETTING, WORDFILTER_SETTING
 from core.utils import convert_to_seconds, matches_iterable, is_valid_command, StandardEmoji, \
-                       resolve_time, log_to_file, is_disabled, IgnoredException, parse_special_chars, \
+                       resolve_time, log_to_file, is_disabled, parse_special_chars, \
                        apply_string_padding, filter_text
-
+from core.exceptions import IgnoredException
 from core.stats import MESSAGE
 
 

@@ -9,8 +9,9 @@ from discord import errors
 from typing import Union
 
 from core.stats import MESSAGE
-from core.utils import is_valid_command, IgnoredException, filter_text
+from core.utils import is_valid_command, filter_text
 from core.confparser import get_config_parser
+from core.exceptions import PluginDisabledException, IgnoredException
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -135,8 +136,7 @@ class TMDb:
             redis_cache = RedisMovieCache(self.handler)
             self.tmdb = tmdbie.Client(api_key=parser.get("tmdb", "api-key"), cache_manager=redis_cache)
         except (configparser.NoSectionError, configparser.NoOptionError):
-            log.critical("Missing api key for tmdb, disabling plugin...")
-            raise RuntimeError
+            raise PluginDisabledException("Missing TMDb API key")
 
     async def _imdb_search(self, name, message, lang) -> Union[tmdbie.Movie, tmdbie.TVShow, tmdbie.Person]:
         if not name:

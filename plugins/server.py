@@ -10,7 +10,8 @@ from discord import utils, Embed, Colour, __version__ as d_version, HTTPExceptio
 from discord import Member, Guild, Status, VerificationLevel
 
 from core.stats import MESSAGE
-from core.utils import is_valid_command, log_to_file, is_disabled, IgnoredException
+from core.utils import is_valid_command, log_to_file, is_disabled
+from core.exceptions import IgnoredException
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)

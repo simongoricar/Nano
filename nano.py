@@ -12,6 +12,7 @@ from core.serverhandler import ServerHandler
 from core.stats import NanoStats
 from core.translations import TranslationManager
 from core.utils import log_to_file
+from core.exceptions import PluginDisabledException
 from core.confparser import get_settings_parser, PLUGINS_DIR
 
 __title__ = "Nano"
@@ -92,7 +93,7 @@ log.info("Initializing ServerHandler and NanoStats...")
 
 # Setup the server data and stats
 handler = ServerHandler.get_handler(loop)
-stats = NanoStats(loop, *ServerHandler.get_redis_credentials())
+stats = NanoStats(loop, *ServerHandler.get_redis_data_credentials())
 trans = TranslationManager()
 
 
@@ -152,47 +153,50 @@ class Nano(metaclass=Singleton):
 
         PLUGINS_NAMESPACE = PLUGINS_DIR.replace("/", "").replace("\\", "")
 
+        # Try to import every plugin
         for plug_name in list(names):
-            # Import the plugin
+            # Use importlib
             try:
                 plugin = importlib.import_module("{}.{}".format(PLUGINS_NAMESPACE, plug_name))
             except ImportError:
-                log.warning("Couldn't import {}".format(plug_name))
+                log.warning("Failed to import plugin: {}".format(plug_name))
                 log.critical(traceback.format_exc())
-                failed.append(plug_name)
 
+                failed.append(plug_name)
                 continue
 
             # Plugin loaded, check validity
             # Plugin must have a class NanoPlugin, see examples in plugins/
             if not hasattr(plugin, "NanoPlugin"):
-                log.warning("Plugin {} does not have the required NanoPlugin class".format(plug_name))
+                log.error("Plugin {} does not have the required NanoPlugin class".format(plug_name))
                 failed.append(plug_name)
 
                 del plugin
                 continue
 
             info = getattr(plugin, "NanoPlugin")
-
             handler_cls = info.handler
 
             # Make an instance
             try:
-                inst = handler_cls(client=client,
-                                   loop=loop,
-                                   handler=handler,
-                                   nano=self,
-                                   stats=stats,
-                                   trans=trans)
-            # A plugin can raise RuntimeError to indicate it doesn't want to be loaded
-            except RuntimeError:
+                inst = handler_cls(
+                    client=client,
+                    loop=loop,
+                    handler=handler,
+                    nano=self,
+                    stats=stats,
+                    trans=trans
+                )
+            # A plugin can raise PluginDisabledException to indicate it shouldn't be loaded
+            except PluginDisabledException as e:
+                log.warning("Plugin disabled: {} (reason: \"{}\")".format(plug_name, e))
                 disabled.append(plug_name)
 
                 del plugin
                 continue
-            # Other exceptions make it fail
+            # Any other exception is logged
             except Exception:
-                log.warning("Failed to instantiate {}".format(plug_name))
+                log.warning("Exception while creating plugin instance: {}".format(plug_name))
                 log.critical(traceback.format_exc())
 
                 del plugin
@@ -203,14 +207,15 @@ class Nano(metaclass=Singleton):
 
         self.plugin_names = loaded
 
-        log.debug("Plugins: {}".format(self.plugin_names))
+        log.info("=== Plugin load complete ===")
+        log.info("{} loaded plugins: {}".format(len(self.plugin_names), ", ".join(self.plugin_names)))
 
-        # Warn if any plugins failed to load
+        # Log if any plugins failed to load
         if disabled:
-            log.warning("Disabled plugins: {}".format(", ".join(disabled)))
+            log.warning("{} disabled plugins: {}".format(len(disabled), ", ".join(disabled)))
 
         if failed:
-            log.warning("Failed plugins: {}".format(", ".join(failed)))
+            log.warning("{} failed plugins: {}".format(len(failed), ", ".join(failed)))
 
         self._parse_priorities()
 

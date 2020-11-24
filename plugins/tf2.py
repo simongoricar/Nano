@@ -17,6 +17,7 @@ import aiohttp
 from core.stats import MESSAGE, WRONG_ARG
 from core.utils import is_valid_command
 from core.confparser import get_config_parser, CACHE_DIR
+from core.exceptions import PluginDisabledException
 
 #####
 # TF2 plugin
@@ -331,12 +332,12 @@ class TeamFortress:
         try:
             key = parser.get("backpack.tf", "apikey")
             if not key:
-                raise configparser.NoOptionError
+                raise PluginDisabledException("Mising backpack.tf API key")
 
             self.tf = CommunityPrices(self.loop, api_key=key)
         except (configparser.NoSectionError, configparser.NoOptionError):
             logger.critical("No api key for bp.tf, disabling")
-            raise RuntimeError
+            raise PluginDisabledException("Mising backpack.tf API key")
 
     async def on_message(self, message, **kwargs):
         trans = self.trans

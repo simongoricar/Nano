@@ -5,7 +5,8 @@ import time
 import os
 
 from discord import Member, Guild
-from .utils import Singleton, decode, bin2bool, SecurityError
+from .utils import Singleton, decode, bin2bool
+from .exceptions import SecurityError
 from .confparser import get_settings_parser, get_config_parser
 
 __author__ = "DefaltSimon"
@@ -22,20 +23,28 @@ par = get_settings_parser()
 
 MAX_INPUT_LENGTH = 1100
 
-server_defaults = {
+GUILD_SETTINGS_DEFAULT = {
+    # Guild name
     "name": "",
+    # Owner ID
     "owner": "",
-    "filterwords": False,
-    "filterspam": False,
-    "filterinvite": False,
-    "sleeping": False,
+    # Booleans (0/1) for filter settings and sleep state
+    "filterwords": 0,
+    "filterspam": 0,
+    "filterinvite": 0,
+    "sleeping": 0,
+    # Notification settings
     "welcomemsg": None,
     "kickmsg": None,
     "banmsg": None,
     "leavemsg": None,
+    # Log channel ID
     "logchannel": None,
+    # Guild prefix
     "prefix": str(parser.get("Servers", "defaultprefix")),
+    # Default channel ID
     "dchan": None,
+    # Current language
     "lang": "en",
 }
 
@@ -66,7 +75,7 @@ def validate_input(fn):
 
 class ServerHandler:
     @staticmethod
-    def get_redis_credentials() -> tuple:
+    def get_redis_data_credentials() -> tuple:
         setup_type = 1 if par.get("Redis", "setup") == "environment" else 2
 
         if setup_type == 1:
@@ -75,40 +84,24 @@ class ServerHandler:
             redis_pass = os.environ["REDIS_PASS"]
 
         else:
-            redis_ip = par.get("Redis", "ip", fallback=None)
-            redis_port = par.get("Redis", "port", fallback=None)
+            redis_ip = par.get("Redis", "ip", fallback="localhost")
+            redis_port = par.get("Redis", "port", fallback=6379)
             redis_pass = par.get("Redis", "password", fallback=None)
-
-            # Fallback to defaults
-            if not redis_ip:
-                redis_ip = "127.0.0.1"
-            if not redis_port:
-                redis_port = 6379
-            if not redis_pass:
-                redis_pass = None
 
         return redis_ip, redis_port, redis_pass
 
     @staticmethod
-    def get_cache_credentials() -> tuple:
-        redis_ip = par.get("RedisCache", "ip")
-        redis_port = par.get("RedisCache", "port")
-        redis_pass = par.get("RedisCache", "password")
-
-        # Fallback to defaults
-        if not redis_ip:
-            redis_ip = "127.0.0.1"
-        if not redis_port:
-            redis_port = 6379
-        if not redis_pass:
-            redis_pass = None
+    def get_redis_cache_credentials() -> tuple:
+        redis_ip = par.get("RedisCache", "ip", fallback="localhost")
+        redis_port = par.get("RedisCache", "port", fallback=6380)
+        redis_pass = par.get("RedisCache", "password", fallback=None)
 
         return redis_ip, redis_port, redis_pass
 
     @classmethod
     def get_handler(cls, loop) -> "RedisServerHandler":
         # Factory method
-        redis_ip, redis_port, redis_pass = cls.get_redis_credentials()
+        redis_ip, redis_port, redis_pass = cls.get_redis_data_credentials()
         return RedisServerHandler(loop, redis_ip, redis_port, redis_pass)
 
     @staticmethod
@@ -225,7 +218,7 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
     @staticmethod
     def _default_guild_data(guild):
         # These are server defaults
-        s_data = server_defaults.copy()
+        s_data = GUILD_SETTINGS_DEFAULT.copy()
         s_data["owner"] = guild.owner.id
         s_data["name"] = guild.name
 
@@ -577,7 +570,7 @@ class RedisPluginDataManager:
 
 class RedisCacheHandler(RedisPluginDataManager, ServerHandler, metaclass=Singleton):
     def __init__(self):
-        redis_ip, redis_port, redis_pass = self.get_cache_credentials()
+        redis_ip, redis_port, redis_pass = self.get_redis_cache_credentials()
         self.pool = self.make_pool(redis_ip, redis_port, redis_pass, db=0)
 
         super().__init__(self.pool)

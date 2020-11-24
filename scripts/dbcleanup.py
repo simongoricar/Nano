@@ -8,7 +8,7 @@ import configparser
 
 os.chdir("..")
 
-from core.serverhandler import ServerHandler, server_defaults
+from core.serverhandler import ServerHandler, GUILD_SETTINGS_DEFAULT
 from core.utils import decode
 
 #########################################
@@ -40,7 +40,7 @@ init = time.monotonic()
 print("Verifying server data...")
 red = ServerHandler.get_handler(asyncio.get_event_loop())
 
-config_keys = list(server_defaults.keys())
+config_keys = list(GUILD_SETTINGS_DEFAULT.keys())
 
 c = 0
 

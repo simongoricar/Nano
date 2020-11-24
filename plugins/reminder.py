@@ -8,7 +8,8 @@ from typing import Union
 from discord import DiscordException
 
 from core.stats import MESSAGE, WRONG_ARG
-from core.utils import resolve_time, convert_to_seconds, is_valid_command, gen_id, IgnoredException, log_to_file, filter_text
+from core.utils import resolve_time, convert_to_seconds, is_valid_command, gen_id, log_to_file, filter_text
+from core.exceptions import IgnoredException
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)

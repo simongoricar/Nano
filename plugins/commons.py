@@ -9,7 +9,8 @@ from random import randint
 from discord import Embed, Forbidden, utils
 
 from core.stats import MESSAGE, PING
-from core.utils import is_valid_command, add_dots, DynamicResponse, CmdResponseTypes, IgnoredException, filter_text
+from core.utils import is_valid_command, add_dots, DynamicResponse, CmdResponseTypes, filter_text
+from core.exceptions import IgnoredException
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
