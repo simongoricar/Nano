@@ -204,7 +204,7 @@ class DevFeatures:
             srv = utils.find(lambda b: b.id == s_id, client.guilds)
 
             if not srv:
-                await message.channel.send("No such guild. " + StandardEmoji.CROSS)
+                await message.channel.send("No such guild. " + StandardEmoji.CROSS_RED)
                 return
 
             nano_data = self.handler.get_server_data(srv)
@@ -227,7 +227,7 @@ class DevFeatures:
         # nano.dev.backup
         elif startswith("nano.dev.backup"):
             self.backup.manual_backup()
-            await message.channel.send("Backup completed " + StandardEmoji.PERFECT)
+            await message.channel.send("Backup completed " + StandardEmoji.OK_HAND)
 
         # nano.dev.leave_server
         elif startswith("nano.dev.leave_server"):
@@ -293,7 +293,7 @@ class DevFeatures:
         elif startswith("nano.dev.translations.reload"):
             self.trans.reload_translations()
 
-            await message.channel.send(StandardEmoji.PERFECT)
+            await message.channel.send(StandardEmoji.OK_HAND)
 
         # nano.dev.test_default_channel
         elif startswith("nano.dev.test_default_channel"):

@@ -40,15 +40,24 @@ class Singleton(type):
 
 class StandardEmoji:
     """
-    Includes standard emojis to use
+    Standard (:emoji:) emojis.
     """
-    # Success indicators
-    OK = ":white_check_mark:"
-    OK_BLUE = ":ballot_box_with_check:"
-    GREEN_FAIL = ":negative_squared_cross_mark:"
-    CROSS = ":x:"
+    # Symbols
+    CHECKMARK_GREEN = ":white_check_mark:"
+    CHECKMARK_BLUE = ":ballot_box_with_check:"
+    CROSS_GREEN = ":negative_squared_cross_mark:"
+    CROSS_RED = ":x:"
     WARNING = ":warning:"
-    PERFECT = ":ok_hand:"
+    EXCLAMATION = ":exclamation:"
+    EXCLAMATION_GREY = ":grey_exclamation:"
+    NO_ENTRY = ":no_entry_sign:"
+    ARROW_BACKWARD = ":arrow_backward:"
+    ARROW_FORWARD = ":arrow_forward:"
+
+    # Hands
+    OK_HAND = ":ok_hand:"
+    THUMBS_UP = ":+1:"
+    MUSCLE = ":muscle:"
 
     # Face emojis
     SMILEY = ":smiley:"
@@ -58,60 +67,100 @@ class StandardEmoji:
     SCREAM = ":scream:"
     CRY = ":sob:"
     EXPRESSIONLESS = ":expressionless:"
-    FROWN = ":frowning:"
-    FROWN2 = ":frowning2:"
-    SLEEP = ":sleeping:"
-
-    ZIP_MOUTH = ":zipper_mouth:"
+    FROWNING = ":frowning:"
+    FROWNING_2 = ":frowning2:"
+    SLEEPING = ":sleeping:"
+    ZIPPER_MOUTH = ":zipper_mouth:"
     ROFL = ":rofl:"
-
-    # Other
-    THUMBS_UP = ":+1:"
-    MUSCLE = ":muscle:"
-    BOT = ":robot:"
-    ALIEN = ":alien:"
-    SPY = ":spy:"
-    ALARM = ":alarm_clock:"
-    NO_ENTRY = ":no_entry_sign:"
     WINK = ":wink:"
 
-
-# Special emojis that are available to Nano
-class BotEmoji:
-    BOT_TAG = "<:botTag:230105988211015680>"
-
-    ONLINE = "<:online:313956277808005120>"
-    OFFLINE = "<:offline:313956277237710868>"
-    AWAY = "<:away:313956277220802560>"
-    DND = "<:dnd:313956276893646850>"
-    STREAMING = "<:streaming:313956277132853248>"
-    INVISIBLE = "<:invisible:313956277107556352>"
-
-    DISCORD = "<:discord:314003252830011395>"
-    UPDATE = "<:update:264184209617321984>"
-    PARTNER = "<:partner:314068430556758017>"
-    HYPE_SQUAD = "<:hypesquad:314068430854684672>"
-    NITRO = "<:nitro:314068430611415041>"
-    STAFF = "<:staff:314068430787706880>"
-    GIF = "<:gif:314068430624129039>"
-    STAFF_TOOLS = "<:stafftools:314348604095594498>"
-
-    YOUTUBE = "<:youtube:314349922885566475>"
-    YT_GAMING = "<:ytgaming:314349923132899338>"
-    TWITTER = "<:twitter:314349922877046786>"
-    REDDIT = "<:reddit:314349923103670272>"
-    SKYPE = "<:skype:314349923107602432>"
-    STEAM = "<:steam:314349923044687872>"
-    TWITCH = "<:twitch:314349922755411970>"
-    LEAGUE_OF_LEGENDS = "<:league:314349922902343681>"
-    BATTLE_NET = "<:battlenet:314349923006939136>"
-    SOUNDCLOUD = "<:soundcloud:314349923090825216>"
-    CHECK = "<:check:314349398811475968>"
-    MARK_X = "<:xmark:314349398824058880>"
-    EMPTY = "<:empty:314349398723264512>"
+    # Other
+    ROBOT = ":robot:"
+    ALIEN = ":alien:"
+    SPY = ":detective:"
+    PING_PONG = ":ping_pong:"
+    ALARM = ":alarm_clock:"
+    TIMER = ":timer:"
+    CLIPBOARD = ":clipboard:"
+    PAPERCLIP = ":paperclip:"
+    SCROLL = ":scroll:"
+    COOKIE = ":cookie:"
+    CHART_UP = ":chart_with_upwards_trend:"
+    CHART_DOWN = ":chart_with_downwards_trend:"
+    BAR_CHART = ":bar_chart:"
+    ENVELOPE = ":envelope:"
+    ENVELOPE_BLUE_ARROW = ":envelope_with_arrow:"
+    ENVELOPE_INCOMING = ":incoming_envelope:"
+    NOTEPAD_SPIRAL = ":notepad_spiral:"
+    INFORMATION_SOURCE = ":information_source:"
+    PENCIL = ":pencil:"
+    PENCIL_2 = ":pencil2:"
+    CALENDAR = ":calendar:"
+    CALENDAR_SPIRAL = ":calendar_spiral:"
 
 
-# Singleton, so it doesn't matter
+class UnicodeEmojis:
+    """
+    Unicode versions of StandardEmoji emojis.
+    """
+    # Symbols
+    CHECKMARK_GREEN = "✅"
+    CHECKMARK_BLUE = "☑"
+    CROSS_GREEN = "❎"
+    CROSS_RED = "❌"
+    WARNING = "⚠"
+    EXCLAMATION = "❗"
+    EXCLAMATION_GREY = "❕"
+    NO_ENTRY = "⛔"
+    ARROW_BACKWARD = "◀"
+    ARROW_FORWARD = "▶"
+
+    # Hands
+    OK_HAND = "👌"
+    THUMBS_UP = "👍"
+    MUSCLE = "💪"
+
+    # Face emojis
+    SMILEY = "😃"
+    SMILE = "😄"
+    TONGUE = "😛"
+    THINKING = "🤔"
+    SCREAM = "😱"
+    CRY = "😭"
+    EXPRESSIONLESS = "😑"
+    FROWNING = "😦"
+    FROWNING_2 = "☹"
+    SLEEPING = "😴"
+    ZIPPER_MOUTH = "🤐"
+    ROFL = "🤣"
+    WINK = "😉"
+
+    # Other
+    ROBOT = "🤖"
+    ALIEN = "👽"
+    SPY = "🕵️"
+    PING_PONG = "🏓"
+    ALARM = "⏰"
+    TIMER = "⏲"
+    CLIPBOARD = "📋"
+    PAPERCLIP = "📎"
+    SCROLL = "📜"
+    COOKIE = "🍪"
+    CHART_UP = "📈"
+    CHART_DOWN = "📉"
+    BAR_CHART = "📊"
+    ENVELOPE = "✉"
+    ENVELOPE_BLUE_ARROW = "📩"
+    ENVELOPE_INCOMING = "📨"
+    NOTEPAD_SPIRAL = "🗒️"
+    INFORMATION_SOURCE = "ℹ"
+    PENCIL = "📝"
+    PENCIL_2 = "✏"
+    CALENDAR = "📅"
+    CALENDAR_SPIRAL = "🗓️"
+
+
+# Singleton, which is why we instantiate is here
 tr = TranslationManager()
 
 

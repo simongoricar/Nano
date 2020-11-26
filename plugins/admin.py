@@ -16,36 +16,57 @@ from core.exceptions import IgnoredException
 from core.stats import MESSAGE
 
 
-#####
-# Administration plugin
-# Mostly Nano settings
-#####
+class NanoPlugin:
+    name = "Admin"
+    description = "Manages various per-guild settings and moderation commands."
+    version = "33"
+
+    handler = "Admin"
+    events = {
+        "on_message": 10,
+        "on_member_remove": 4,
+        "on_reaction_add": 10,
+        "on_plugins_loaded": 5,
+        # type : importance
+    }
+
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-# CONSTANTS
+##
+# Constants
+##
+
+# Per-guild custom command limit
 CMD_LIMIT = 40
+# Trigger length limit
 CMD_LIMIT_T = 40
-CMD_LIMIT_A = 1000
+# Trigger answer limit
+CMD_LIMIT_A = 1800
+
+# Max amount of selfroles
 SELFROLE_MAX = 35
+# Max prefix length
 PREFIX_MAX = 50
+# Max blacklisted channels
 BLACKLIST_MAX = 35
+# Reminder tick
 TICK_DURATION = 15
 
 # Threshold for when to make a new command page
 NEW_PAGE_BEFORE = 2000 - (CMD_LIMIT_T + CMD_LIMIT_A + 150)
 
-# 15 seconds
+# Minimum reminder length in seconds
 REMINDER_MIN = 15
-# 5 Days
+# Maximum reminder length in seconds
 REMINDER_MAX = 5 * 24 * 60 * 60
 
 # Maximum age (in seconds) of a message that should be kept in cache
 MAX_MSG_AGE = 60 * 3
 
 # Maximum join/leave/kick/ban message length
-MAX_NOTIF_LENGTH = 800
+MAX_NOTIF_LENGTH = 1800
 
 
 CHECK_EMOJI = "✅"
@@ -1267,7 +1288,7 @@ class Admin:
                     await message.channel.send(trans.get("MSG_ROLE_ALREADY_HAD", lang))
                 else:
                     if len(users) == 1:
-                        await message.channel.send(trans.get("INFO_DONE", lang) + " " + StandardEmoji.OK)
+                        await message.channel.send(trans.get("INFO_DONE", lang) + " " + StandardEmoji.CHECKMARK_GREEN)
                     else:
                         await message.channel.send(trans.get("MSG_ROLE_ADDED_MP", lang).format(role.name, len(users)))
 
@@ -1292,7 +1313,7 @@ class Admin:
 
                 else:
                     if len(users) == 1:
-                        await message.channel.send(trans.get("INFO_DONE", lang) + " " + StandardEmoji.OK)
+                        await message.channel.send(trans.get("INFO_DONE", lang) + " " + StandardEmoji.CHECKMARK_GREEN)
                     else:
                         await message.channel.send(trans.get("MSG_ROLE_REMOVED_MP", lang).format(role.name, len(users)))
 
@@ -1357,7 +1378,7 @@ class Admin:
 
             success = handler.remove_command(message.guild, cut)
             if success:
-                await message.channel.send(trans.get("INFO_OK", lang) + " " + StandardEmoji.OK)
+                await message.channel.send(trans.get("INFO_OK", lang) + " " + StandardEmoji.CHECKMARK_GREEN)
             else:
                 await message.channel.send(trans.get("MSG_CMD_REMOVE_FAIL", lang))
 
@@ -1562,19 +1583,19 @@ class Admin:
                     decision = matches_iterable(arg)
                     handler.update_moderation_settings(message.guild.id, setting, decision)
 
-                    await message.channel.send(trans.get("MSG_SETTINGS_WORD", lang).format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
+                    await message.channel.send(trans.get("MSG_SETTINGS_WORD", lang).format(StandardEmoji.CHECKMARK_GREEN if decision else StandardEmoji.CROSS_GREEN))
 
                 elif matches_iterable(setting, trans.get("MSG_SETTINGS_SF_OPTIONS", lang)):
                     decision = matches_iterable(arg)
                     handler.update_moderation_settings(message.guild.id, setting, decision)
 
-                    await message.channel.send(trans.get("MSG_SETTINGS_SPAM", lang).format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
+                    await message.channel.send(trans.get("MSG_SETTINGS_SPAM", lang).format(StandardEmoji.CHECKMARK_GREEN if decision else StandardEmoji.CROSS_GREEN))
 
                 elif matches_iterable(setting, trans.get("MSG_SETTINGS_IF_OPTIONS", lang)):
                     decision = matches_iterable(arg)
                     handler.update_moderation_settings(message.guild.id, setting, decision)
 
-                    await message.channel.send(trans.get("MSG_SETTINGS_INVITE", lang).format(StandardEmoji.OK if decision else StandardEmoji.GREEN_FAIL))
+                    await message.channel.send(trans.get("MSG_SETTINGS_INVITE", lang).format(StandardEmoji.CHECKMARK_GREEN if decision else StandardEmoji.CROSS_GREEN))
 
                 else:
                     await message.channel.send(trans.get("MSG_SETTINGS_NOT_A_SETTING", lang).format(setting))
@@ -1769,10 +1790,10 @@ class Admin:
             # Padded strings
             YES_PD, NO_PD = apply_string_padding((YES, NO))
 
-            DONE_EXPR = StandardEmoji.OK + " " + DONE
-            IGNORED_EXPR = StandardEmoji.GREEN_FAIL + " " + OK
-            EN_EXPR = StandardEmoji.OK + " " + ENABLED
-            DIS_EXPR = StandardEmoji.GREEN_FAIL + " " + DISABLED
+            DONE_EXPR = StandardEmoji.CHECKMARK_GREEN + " " + DONE
+            IGNORED_EXPR = StandardEmoji.CROSS_GREEN + " " + OK
+            EN_EXPR = StandardEmoji.CHECKMARK_GREEN + " " + ENABLED
+            DIS_EXPR = StandardEmoji.CROSS_GREEN + " " + DISABLED
 
             async def timeout():
                 await message.channel.send(trans.get("MSG_SETUP_TIMEOUT", lang).format(MSG_TIMEOUT))
@@ -1858,7 +1879,7 @@ class Admin:
                     edit = msg_three + "\n\n " + DIS_EXPR
                 else:
                     handler.set_custom_event_message(message.guild.id, "welcomemsg", welcome_msg)
-                    edit = "{}\n\n{} {}".format(msg_three, StandardEmoji.OK, trans.get("INFO_UPDATED", lang))
+                    edit = "{}\n\n{} {}".format(msg_three, StandardEmoji.CHECKMARK_GREEN, trans.get("INFO_UPDATED", lang))
 
                 # Again: edit to show that the welcome msg has been changed
                 await three.edit(content=edit)
@@ -1958,7 +1979,7 @@ class Admin:
                     handler.set_custom_channel(message.guild.id, "logchannel", None)
 
                     # Edit to show that filtering is changed
-                    edit = msg_seven + "\n\n{} {}".format(StandardEmoji.OK_BLUE, trans.get("MSG_SETUP_LOGCHANNEL_DISABLED", lang))
+                    edit = msg_seven + "\n\n{} {}".format(StandardEmoji.CHECKMARK_BLUE, trans.get("MSG_SETUP_LOGCHANNEL_DISABLED", lang))
                     await seven.edit(content=edit)
 
                 else:
@@ -1969,7 +1990,7 @@ class Admin:
                         return
 
                     # Edit to show that filtering is changed
-                    edit = msg_seven + "\n\n{} {}".format(StandardEmoji.OK_BLUE, trans.get("MSG_SETUP_LOGCHANNEL_SET", lang).format(ch7.channel_mentions[0].name))
+                    edit = msg_seven + "\n\n{} {}".format(StandardEmoji.CHECKMARK_BLUE, trans.get("MSG_SETUP_LOGCHANNEL_SET", lang).format(ch7.channel_mentions[0].name))
                     await seven.edit(content=edit)
 
             # FINAL MESSAGE, formats with new prefix
@@ -2072,17 +2093,3 @@ class Admin:
 
     async def on_reaction_add(self, reaction, user, **kwargs):
         await self.list.handle_reaction(reaction, user, **kwargs)
-
-
-class NanoPlugin:
-    name = "Admin Commands"
-    version = "33"
-
-    handler = Admin
-    events = {
-        "on_message": 10,
-        "on_member_remove": 4,
-        "on_reaction_add": 10,
-        "on_plugins_loaded": 5,
-        # type : importance
-    }
