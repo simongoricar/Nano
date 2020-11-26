@@ -10,7 +10,7 @@ from shutil import copy2
 from discord import Game, utils, Embed, Colour, DiscordException
 
 from core.stats import MESSAGE
-from core.utils import is_valid_command, log_to_file, StandardEmoji, human_time
+from core.utils import is_valid_command, log_to_file, StandardEmoji, seconds_to_human_time
 from core.confparser import get_settings_parser, BACKUP_DIR, DATA_DIR
 
 #######################
@@ -383,7 +383,7 @@ class DevFeatures:
 
 
             join_time_ago = int((datetime.now() - user.created_at).total_seconds())
-            join_time_ago = human_time(join_time_ago, "en")
+            join_time_ago = seconds_to_human_time(join_time_ago, "en")
 
             embed = Embed(title="{}#{}{}".format(user.name, user.discriminator, ":robot:" if user.bot else ""), description="ID: {}".format(user.id))
             embed.add_field(name="Joined Discord", value="**{}** ago\nISO time: {}".format(join_time_ago, user.created_at))

@@ -8,7 +8,7 @@ from typing import Union
 from discord import DiscordException
 
 from core.stats import MESSAGE, WRONG_ARG
-from core.utils import human_time, convert_to_seconds, is_valid_command, gen_id, log_to_file, filter_text
+from core.utils import seconds_to_human_time, human_time_to_seconds, is_valid_command, gen_id, log_to_file, filter_text
 from core.exceptions import IgnoredException
 
 log = logging.getLogger(__name__)
@@ -269,7 +269,7 @@ class Reminder:
                 raise IgnoredException
 
             try:
-                r_time = convert_to_seconds(r_time)
+                r_time = human_time_to_seconds(r_time)
             except ValueError:
                 await message.channel.send(self.trans.get("MSG_REMINDER_INVALID_FORMAT", lang))
                 raise IgnoredException
@@ -368,7 +368,7 @@ class Reminder:
                 if ttl <= 0:
                     when = trans.get("MSG_REMINDER_SOON", lang)
                 else:
-                    when = human_time(ttl, lang)
+                    when = seconds_to_human_time(ttl, lang)
 
                 rem.append(rem_literal.format(cont, when))
 

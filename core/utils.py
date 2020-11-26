@@ -164,7 +164,7 @@ class UnicodeEmojis:
 tr = TranslationManager()
 
 
-def human_time(time_in_sec: int, language: str) -> str:
+def seconds_to_human_time(time_in_sec: int, language: str) -> str:
     """
     Converts time in seconds to a human-friendly representation.
 
@@ -204,82 +204,47 @@ def human_time(time_in_sec: int, language: str) -> str:
     return ", ".join(fields)
 
 
-possibilities = [
-    "s", "sec", "seconds",
-    "m", "min", "minutes",
-    "h", "hr", "hours",
-    "d", "day", "days"
-]
+HUMAN_TIME_TO_UNIT = {
+    "d": 60 * 60 * 24,
+    "h": 60 * 60,
+    "m": 60,
+    "s": 1,
+}
 
 
-def convert_to_seconds(string: str) -> int:
+def human_time_to_seconds(string: str) -> int:
     """
-    Converts a text representation of time into a number
-    Opposite of resolve_time
-    :param string: text representation of time (1h 3min, ...)
-    :return: int
+    Converts a human time representation to seconds.
+    Supported format: [<num>d] [<num>h] [<num>m] [<num>s]
+
+    Args:
+        string: Text to convert.
+
+    Returns:
+        Time representation converted to seconds.
     """
-    # If it's already a number, just return it
+    # If already a number (assumed to be seconds), simply return the value as seconds
     if string.isnumeric():
         return int(string)
 
-    # Groups expressions together
-    cp = str(string).split(" ")
+    # Process each unit
+    group = string.split(" ")
 
-    for c, el in enumerate(cp):
-        try:
-            if cp[c + 1] in possibilities:
-                cp[c] = str(el + cp.pop(c + 1))
-        except IndexError:
-            pass
-
-    # Counts seconds
     total_seconds = 0
-    for el in cp:
-        el = str(el).replace(" ", "").replace("\n", "")
 
-        if el.endswith("seconds"):
-            total_seconds += int(el[:-7])
+    for element in group:
+        try:
+            value, unit = int(element[0:-1]), element[-1]
+        except (IndexError, ValueError):
+            # Conversion error
             continue
-        elif el.endswith("minutes"):
-            total_seconds += int(el[:-7]) * 60
-            continue
-        elif el.endswith("hours"):
-            total_seconds += int(el[:-5]) * 60 * 60
-            continue
-        elif el.endswith("days"):
-            total_seconds += int(el[:-4]) * 60 * 60 * 24
-            continue
+        else:
+            # Use predefined conversion
+            # (for example, minutes has the conversion 60)
+            conversion = HUMAN_TIME_TO_UNIT.get(unit)
+            if conversion:
+                total_seconds += conversion * value
 
-        elif el.endswith("secs"):
-            total_seconds += int(el[:-4])
-
-        elif el.endswith("sec"):
-            total_seconds += int(el[:-3])
-
-        elif el.endswith("m"):
-            total_seconds += int(el[:-1]) * 60
-        elif el.endswith("min"):
-            total_seconds += int(el[:-3]) * 60
-        elif el.endswith("mins"):
-            total_seconds += int(el[:-4]) * 60
-
-        elif el.endswith("hr"):
-            total_seconds += int(el[:-2]) * 60 * 60
-        elif el.endswith("h"):
-            total_seconds += int(el[:-1]) * 60 * 60
-        elif el.endswith("hrs"):
-            total_seconds += int(el[:-3]) * 60 * 60
-
-        elif el.endswith("d"):
-            total_seconds += int(el[:-1]) * 60 * 60 * 24
-        elif el.endswith("day"):
-            total_seconds += int(el[:-3]) * 60 * 60 * 24
-
-        elif el.endswith("s"):
-            total_seconds += int(el[:-1])
-
-    # Seconds
     return total_seconds
 
 
