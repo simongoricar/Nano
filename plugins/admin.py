@@ -10,7 +10,7 @@ from discord import utils, Client, Embed, TextChannel, Colour, DiscordException,
 
 from core.serverhandler import INVITEFILTER_SETTING, SPAMFILTER_SETTING, WORDFILTER_SETTING
 from core.utils import convert_to_seconds, matches_iterable, is_valid_command, StandardEmoji, \
-                       resolve_time, log_to_file, is_disabled, parse_special_chars, \
+                       human_time, log_to_file, is_disabled, parse_special_chars, \
                        apply_string_padding, filter_text
 from core.exceptions import IgnoredException
 from core.stats import MESSAGE
@@ -951,7 +951,7 @@ class Admin:
             user = await self.resolve_user(name, message, lang)
             total_seconds = convert_to_seconds(tim)
             # Makes it pretty
-            pretty_time = resolve_time(total_seconds, lang)
+            pretty_time = human_time(total_seconds, lang)
 
             # Wait for confirmation
             target = await message.channel.send(trans.get("MSG_SOFTBAN_CONFIRM", lang).format(filter_text(user.name), pretty_time, CHECK_EMOJI))
@@ -977,7 +977,7 @@ class Admin:
                 self.modp.delete("{}:{}".format(message.guild.id, user.id))
                 return
 
-            await message.channel.send(trans.get("MSG_SOFTBAN_SUCCESS", lang).format(filter_text(user.name), resolve_time(total_seconds, lang)))
+            await message.channel.send(trans.get("MSG_SOFTBAN_SUCCESS", lang).format(filter_text(user.name), human_time(total_seconds, lang)))
 
             return
 

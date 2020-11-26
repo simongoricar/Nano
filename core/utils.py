@@ -164,54 +164,44 @@ class UnicodeEmojis:
 tr = TranslationManager()
 
 
-def resolve_time(tm: int, lang: str) -> str:
+def human_time(time_in_sec: int, language: str) -> str:
     """
-    Converts an int to its human-friendly representation
-    :param tm: time in seconds
-    :param lang: language to use
-    :return: string
+    Converts time in seconds to a human-friendly representation.
+
+    Args:
+        time_in_sec: Time in seconds to convert.
+        language: Language to use in the human-friendly representation.
+
+    Returns:
+        Human friendly-representation (string) of the time.
+
     """
-    tm = int(tm)
+    years = time_in_sec // (60 * 60 * 24 * 365)
+    time_in_sec -= years * (60 * 60 * 24 * 365)
 
-    years = 0
-    days = 0
-    hours = 0
-    minutes = 0
+    days = time_in_sec // (60 * 60 * 24)
+    time_in_sec -= days * (60 * 60 * 24)
 
-    while True:
-        if tm >= 31556926:  # 1 Year
-            years += 1
-            tm -= 31556926
+    hours = time_in_sec // (60 * 60)
+    time_in_sec -= hours * (60 * 60)
 
-        if tm >= 86400:  # 1 Day
-            days += 1
-            tm -= 86400
-
-        elif tm >= 3600:  # 1 hour
-            hours += 1
-            tm -= 3600
-
-        elif tm >= 60:  # 1 minute
-            minutes += 1
-            tm -= 60
-
-        else:
-            break
+    minutes = time_in_sec // 60
+    time_in_sec -= minutes * 60
 
     fields = []
     if years:
-        fields.append("{} {}".format(years, tr.get("TIME_YEARS", lang)))
+        fields.append(f"{years} {tr.get('TIME_YEARS', language)}")
     if days:
-        fields.append("{} {}".format(days, tr.get("TIME_DAYS", lang)))
+        fields.append(f"{days} {tr.get('TIME_DAYS', language)}")
     if hours:
-        fields.append("{} {}".format(hours, tr.get("TIME_HOURS", lang)))
+        fields.append(f"{hours} {tr.get('TIME_HOURS', language)}")
     if minutes:
-        fields.append("{} {}".format(minutes, tr.get("TIME_MINUTES", lang)))
+        fields.append(f"{minutes} {tr.get('TIME_MINUTES', language)}")
 
-    last = "{} {}".format(int(tm), tr.get("TIME_SECONDS", lang))
+    # Remainder
+    fields.append(f"{time_in_sec} {tr.get('TIME_SECONDS', language)}")
 
-    # If tm is less than a minute, do not add "and".
-    return ", ".join(fields) + (" and " if fields else "") + last
+    return ", ".join(fields)
 
 
 possibilities = [
