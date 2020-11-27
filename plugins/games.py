@@ -1,4 +1,3 @@
-# coding=utf-8
 import configparser
 import aiohttp
 import logging
