@@ -7,7 +7,7 @@ from discord import Embed, Colour
 
 from core.stats import MESSAGE, HELP, WRONG_ARG
 from core.utils import is_valid_command
-from core.confparser import get_settings_parser, DATA_DIR
+from core.configuration import DIR_DATA, PARSER_SETTINGS
 
 # Template: {"desc": ""},
 
@@ -23,10 +23,8 @@ commands = {
 
 valid_commands = commands.keys()
 
-parser = get_settings_parser()
-
-OWNER_ID = parser.get("Settings", "ownerid")
-DEVSERVER_ID = parser.get("Dev", "server")
+OWNER_ID = PARSER_SETTINGS.get("Settings", "ownerid")
+DEVSERVER_ID = PARSER_SETTINGS.get("Dev", "server")
 
 BASE_CMDS_LINK = "http://nanobot.pw/commands.html"
 cmd_links = {
@@ -43,7 +41,7 @@ cmd_links = {
     "admin": "#admin"
 }
 
-SUBMISSION_LOC = os.path.join(DATA_DIR, "submissions.txt")
+SUBMISSION_LOC = os.path.join(DIR_DATA, "submissions.txt")
 
 
 def save_submission(sub):

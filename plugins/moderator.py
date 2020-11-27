@@ -8,7 +8,7 @@ from discord import Message, Embed, TextChannel
 
 from core.stats import SUPPRESS
 from core.utils import add_dots, get_valid_commands
-from core.confparser import PLUGINS_DIR
+from core.configuration import DIR_PLUGINS
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -84,7 +84,7 @@ class GibberishDetector:
 
     def __init__(self):
         # Gibberish detector
-        with open("{}/spam_model.pki".format(PLUGINS_DIR), "rb") as spam_model:
+        with open("{}/spam_model.pki".format(DIR_PLUGINS), "rb") as spam_model:
             spam_model = load(spam_model)
 
         self.data = spam_model["data"]
@@ -130,7 +130,7 @@ class SwearingDetector:
             dict(a="@"),
         ]
 
-        with open("{}/banned_words.txt".format(PLUGINS_DIR)) as banned:
+        with open("{}/banned_words.txt".format(DIR_PLUGINS)) as banned:
             self.word_list = [line.strip("\n") for line in banned.readlines()]
 
         # Builds a more sophisticated list

@@ -9,7 +9,6 @@ except ImportError:
 from discord import Embed, Colour
 
 from core.utils import is_valid_command, get_valid_commands
-from core.confparser import get_config_parser
 from core.stats import MESSAGE
 
 commands = {
@@ -19,7 +18,6 @@ commands = {
 
 valid_commands = commands.keys()
 
-parser = get_config_parser()
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 

@@ -11,7 +11,7 @@ from discord import Game, utils, Embed, Colour, DiscordException
 
 from core.stats import MESSAGE
 from core.utils import is_valid_command, log_to_file, StandardEmoji, seconds_to_human_time
-from core.confparser import get_settings_parser, BACKUP_DIR, DATA_DIR
+from core.configuration import DIR_BACKUP, DIR_DATA
 
 #######################
 # NOT TRANSLATED
@@ -19,9 +19,6 @@ from core.confparser import get_settings_parser, BACKUP_DIR, DATA_DIR
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
-
-# settings.ini
-parser = get_settings_parser()
 
 
 game_list = [
@@ -90,11 +87,11 @@ class BackupManager:
     def __init__(self, time=86400, keep_backup_every=3):  # 86400 seconds = one day (backup is executed once a day)
         log.info("Backup enabled")
 
-        self.s_path = os.path.join(DATA_DIR, "data.rdb")
-        self.s_path_d = os.path.join(BACKUP_DIR, "data.rdb.bak")
+        self.s_path = os.path.join(DIR_DATA, "data.rdb")
+        self.s_path_d = os.path.join(DIR_BACKUP, "data.rdb.bak")
 
-        if not os.path.isdir(BACKUP_DIR):
-            os.mkdir(BACKUP_DIR)
+        if not os.path.isdir(DIR_BACKUP):
+            os.mkdir(DIR_BACKUP)
 
         self.time = int(time)
         self.keep_every = int(keep_backup_every)
@@ -109,19 +106,19 @@ class BackupManager:
         if not self.enabled:
             return
 
-        if not os.path.isdir(BACKUP_DIR):
-            os.mkdir(BACKUP_DIR)
+        if not os.path.isdir(DIR_BACKUP):
+            os.mkdir(DIR_BACKUP)
 
         # Make a dated backup if needed
         # Dated backups are located in a directory named "full"
         if make_dated_backup:
-            path_full = os.path.join(BACKUP_DIR, "full")
+            path_full = os.path.join(DIR_BACKUP, "full")
 
             if not os.path.isdir(path_full):
                 os.mkdir(path_full)
 
             bkp_name = "data{}.rdb".format(str(datetime.now().strftime("%d-%B-%Y_%H-%M-%S")))
-            bkp_path = os.path.join(BACKUP_DIR, "full", bkp_name)
+            bkp_path = os.path.join(DIR_BACKUP, "full", bkp_name)
             copy2(self.s_path, bkp_path)
             log.info("Created a dated backup.")
 

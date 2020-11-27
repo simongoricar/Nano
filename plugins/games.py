@@ -11,16 +11,14 @@ except ImportError:
 from discord import Embed
 
 from core.utils import is_valid_command, build_url
-from core.confparser import get_config_parser
+from core.configuration import PARSER_CONFIG
 from core.stats import MESSAGE
 
 commands = {
     "_gamedb": {"desc": "Looks up information on all kinds of video games.\nUses https://www.igdb.com"},
 }
-
 valid_commands = commands.keys()
 
-parser = get_config_parser()
 log = logging.getLogger(__name__)
 
 
@@ -197,7 +195,7 @@ class GameDB:
         self.loop = kwargs.get("loop")
 
         try:
-            gamedb_key = parser.get("igdb", "api-key")
+            gamedb_key = PARSER_CONFIG.get("igdb", "api-key")
         except (configparser.NoSectionError, configparser.NoOptionError):
             log.critical("Missing api key for Igdb, disabling plugin...")
             raise RuntimeError

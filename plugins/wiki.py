@@ -12,15 +12,13 @@ except ImportError:
 
 from core.stats import MESSAGE
 from core.utils import is_valid_command, add_dots, filter_text
-from core.confparser import get_config_parser
+from core.configuration import PARSER_CONFIG
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-parser = get_config_parser()
-
-MAX_WIKI_LENGTH = parser.getint("wiki", "max-length")
-MAX_URBAN_LENGTH = parser.getint("urban", "max-length")
+MAX_WIKI_LENGTH = PARSER_CONFIG.getint("wiki", "max-length")
+MAX_URBAN_LENGTH = PARSER_CONFIG.getint("urban", "max-length")
 
 
 commands = {

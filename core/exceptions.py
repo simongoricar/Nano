@@ -18,6 +18,13 @@ class SecurityError(NanoException):
     pass
 
 
+class MissingConfigurationException(NanoException):
+    """
+    Raised when part of Nano's configuration is missing.
+    """
+    pass
+
+
 class PluginDisabledException(NanoException):
     """
     Raised by a plugin on disable (e.g. on missing configuration)

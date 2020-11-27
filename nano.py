@@ -13,7 +13,7 @@ from core.stats import NanoStats
 from core.translations import TranslationManager
 from core.utils import log_to_file
 from core.exceptions import PluginDisabledException
-from core.confparser import get_settings_parser, PLUGINS_DIR
+from core.configuration import PARSER_SETTINGS, DIR_PLUGINS
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
@@ -74,9 +74,6 @@ logging.getLogger("websockets.protocol").setLevel(logging.INFO)
 logging.getLogger("core.stats").setLevel(logging.INFO)
 logging.getLogger("plugins.statistics").setLevel(logging.INFO)
 
-# Config parser setup
-parser = get_settings_parser()
-
 # Loop, discord.py and Nano core modules initialization
 loop = asyncio.get_event_loop()
 
@@ -122,8 +119,8 @@ class Nano(metaclass=Singleton):
         self.boot_time = time.time()
         self.version = __version__
 
-        self.owner_id = parser.getint("Settings", "ownerid")
-        self.dev_server = parser.getint("Dev", "server")
+        self.owner_id = PARSER_SETTINGS.getint("Settings", "ownerid")
+        self.dev_server = PARSER_SETTINGS.getint("Dev", "server")
 
         # Plugin-related
         self.plugin_names = []
@@ -136,8 +133,8 @@ class Nano(metaclass=Singleton):
 
     def update_plugins(self):
         started = time.monotonic()
-        plugin_names = [pl[:-3] for pl in os.listdir(PLUGINS_DIR)
-                        if os.path.isfile(os.path.join(PLUGINS_DIR, pl))
+        plugin_names = [pl[:-3] for pl in os.listdir(DIR_PLUGINS)
+                        if os.path.isfile(os.path.join(DIR_PLUGINS, pl))
                         and pl.endswith(".py")]
 
         self._update_plugins(plugin_names)
@@ -151,7 +148,7 @@ class Nano(metaclass=Singleton):
         failed = []
         disabled = []
 
-        PLUGINS_NAMESPACE = PLUGINS_DIR.replace("/", "").replace("\\", "")
+        PLUGINS_NAMESPACE = DIR_PLUGINS.replace("/", "").replace("\\", "")
 
         # Try to import every plugin
         for plug_name in list(names):
@@ -485,12 +482,12 @@ async def on_ready():
 
 
 async def start():
-    if not parser.has_option("Credentials", "token"):
+    if not PARSER_SETTINGS.has_option("Credentials", "token"):
         log.critical("Token not found. Check your settings.ini")
         log_to_file("Could not start: Token not specified")
         return
 
-    token = parser.get("Credentials", "token")
+    token = PARSER_SETTINGS.get("Credentials", "token")
 
     await client.login(token)
     await client.connect()

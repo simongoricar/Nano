@@ -18,7 +18,7 @@ from discord import Embed, Colour
 
 from core.stats import MESSAGE, IMAGE_SENT
 from core.utils import is_valid_command, is_number, log_to_file, filter_text
-from core.confparser import get_config_parser, PLUGINS_DIR
+from core.configuration import PARSER_CONFIG, DIR_PLUGINS
 
 commands = {
     "_xkcd": {"desc": "Fetches XKCD comics (defaults to random).", "use": "[command] (random/number/latest)"},
@@ -27,8 +27,6 @@ commands = {
 }
 
 valid_commands = commands.keys()
-
-parser = get_config_parser()
 
 log = logging.getLogger(__name__)
 
@@ -69,7 +67,7 @@ class Connector:
 class CatGenerator:
     def __init__(self, loop):
         try:
-            self.key = parser.get("catapi", "api-key")
+            self.key = PARSER_CONFIG.get("catapi", "api-key")
         except (configparser.NoOptionError, configparser.NoSectionError):
             log.critical("Cat Api key not found, disabling")
             raise RuntimeError
@@ -222,7 +220,7 @@ class JokeList:
 
         log.info("Jokes not yet in redis db, adding...")
 
-        with open(os.path.join(PLUGINS_DIR, "jokes", "stupidstuff.json")) as j:
+        with open(os.path.join(DIR_PLUGINS, "jokes", "stupidstuff.json")) as j:
             jokes = load(j)
 
         for joke in jokes:

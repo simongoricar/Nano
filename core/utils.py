@@ -5,7 +5,7 @@ import os
 from datetime import datetime
 from typing import Iterable
 
-from .confparser import DATA_DIR
+from .configuration import DIR_DATA
 from .translations import TranslationManager, DEFAULT_LANGUAGE
 
 
@@ -271,18 +271,18 @@ def is_valid_command(msg: str, commands: Iterable, prefix: str):
     return False
 
 
-BUG_FILE = os.path.join(DATA_DIR, "bugs.txt")
-LOG_FILE = os.path.join(DATA_DIR, "log.txt")
-
-# Verify the files exist so we can append to them
-if not os.path.isfile(BUG_FILE):
-    # Creates an empty file
-    with open(BUG_FILE, "w") as c:
-        pass
-
-if not os.path.isfile(LOG_FILE):
-    with open(LOG_FILE, "w") as c:
-        pass
+# BUG_FILE = os.path.join(DATA_DIR, "bugs.txt")
+# LOG_FILE = os.path.join(DATA_DIR, "log.txt")
+#
+# # Verify the files exist so we can append to them
+# if not os.path.isfile(BUG_FILE):
+#     # Creates an empty file
+#     with open(BUG_FILE, "w") as c:
+#         pass
+#
+# if not os.path.isfile(LOG_FILE):
+#     with open(LOG_FILE, "w") as c:
+#        pass
 
 
 def log_to_file(content, type_="log"):

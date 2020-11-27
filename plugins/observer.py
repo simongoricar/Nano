@@ -5,18 +5,15 @@ import time
 from discord import TextChannel
 
 from core.stats import SLEPT
-from core.confparser import get_config_parser
+from core.configuration import PARSER_CONFIG
 from core.utils import get_valid_commands
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
-parser = get_config_parser()
-
-DEFAULT_PREFIX = parser.get("Servers", "defaultprefix")
+DEFAULT_PREFIX = PARSER_CONFIG.get("Servers", "defaultprefix")
 
 # Prefix getter plugin
-
 commands = {
     "nano.sleep": {"desc": "Puts Nano to sleep. (per-server basis)"},
     "nano.wake": {"desc": "Wakes Nano up. (per-server basis)"},

@@ -10,13 +10,11 @@ from typing import Union
 
 from core.stats import MESSAGE
 from core.utils import is_valid_command, filter_text
-from core.confparser import get_config_parser
+from core.configuration import PARSER_CONFIG
 from core.exceptions import PluginDisabledException, IgnoredException
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
-
-parser = get_config_parser()
 
 commands = {
     "_imdb search": {"desc": "Searches for films/tv series and displays things such as release year, summary, ratings, ...", "use": "[command] [film/series title]"},
@@ -134,7 +132,7 @@ class TMDb:
 
         try:
             redis_cache = RedisMovieCache(self.handler)
-            self.tmdb = tmdbie.Client(api_key=parser.get("tmdb", "api-key"), cache_manager=redis_cache)
+            self.tmdb = tmdbie.Client(api_key=PARSER_CONFIG.get("tmdb", "api-key"), cache_manager=redis_cache)
         except (configparser.NoSectionError, configparser.NoOptionError):
             raise PluginDisabledException("Missing TMDb API key")
 

@@ -17,17 +17,14 @@ from PIL import Image, ImageDraw, ImageFont
 
 from core.stats import PRAYER, MESSAGE, IMAGE_SENT
 from core.utils import is_valid_command, build_url, add_dots, gen_id, filter_text
-from core.confparser import get_config_parser, DATA_DIR, PLUGINS_DIR
-
-# plugins/config.ini
-parser = get_config_parser()
+from core.configuration import DIR_DATA, DIR_PLUGINS, PARSER_CONFIG
 
 log = logging.getLogger(__name__)
 
 # Giphy's green color thingie
 GIPHY_GREEN = 0x00C073
 
-KAPPA_LOCATION = os.path.join(DATA_DIR, "images/kappasmall.png")
+KAPPA_LOCATION = os.path.join(DIR_DATA, "images/kappasmall.png")
 
 
 commands = {
@@ -62,11 +59,11 @@ class Achievement:
         self.COLOR_WHITE = (255, 255, 255)
         self.FONT_SIZE = 18 * upscale
 
-        self.FONT_PATH = os.path.join(PLUGINS_DIR, "achievement", "Minecraft.ttf")
+        self.FONT_PATH = os.path.join(DIR_PLUGINS, "achievement", "Minecraft.ttf")
         self.font_mc = ImageFont.truetype(self.FONT_PATH, self.FONT_SIZE)
 
         # Load all images
-        temp_path = os.path.join(PLUGINS_DIR, "achievement")
+        temp_path = os.path.join(DIR_PLUGINS, "achievement")
 
         self._image_sizes = []
         # Find valid image sizes
@@ -250,7 +247,7 @@ class Fun:
 
         # Giphy
         try:
-            api_key = parser.get("giphy", "api-key")
+            api_key = PARSER_CONFIG.get("giphy", "api-key")
             self.gif = GiphyApi(api_key, self.loop)
         except configparser.Error:
             log.critical("Missing api key for giphy, disabling command...")
@@ -258,8 +255,8 @@ class Fun:
 
         # Meme generator
         try:
-            username = parser.get("imgflip", "username")
-            password = parser.get("imgflip", "password")
+            username = PARSER_CONFIG.get("imgflip", "username")
+            password = PARSER_CONFIG.get("imgflip", "password")
             self.generator = MemeGenerator(username, password, self.loop)
             self.imgflip_enabled = True
         except configparser.Error:

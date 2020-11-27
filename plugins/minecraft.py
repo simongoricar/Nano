@@ -15,7 +15,7 @@ from discord import File
 
 from core.stats import MESSAGE, WRONG_ARG, IMAGE_SENT
 from core.utils import is_valid_command, is_number
-from core.confparser import PLUGINS_DIR
+from core.configuration import DIR_PLUGINS
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -108,7 +108,7 @@ class McItems:
 
     @staticmethod
     def get_picture_path_by_item(item):
-        path = "{}/mc/{}-{}.png".format(PLUGINS_DIR, item.get("type"), item.get("meta"))
+        path = "{}/mc/{}-{}.png".format(DIR_PLUGINS, item.get("type"), item.get("meta"))
         if not os.path.isfile(path):
             return None
         else:

@@ -6,12 +6,10 @@ from discord import HTTPException
 
 from core.stats import MESSAGE, WRONG_ARG
 from core.utils import is_valid_command, filter_text
-from core.confparser import get_config_parser
+from core.configuration import PARSER_CONFIG
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
-
-parser = get_config_parser()
 
 
 commands = {
@@ -69,7 +67,7 @@ class Steam:
         self.stats = kwargs.get("stats")
         self.trans = kwargs.get("trans")
 
-        key = parser.get("steam", "key")
+        key = PARSER_CONFIG.get("steam", "key")
         self.steam = SteamSearch(key)
 
     async def on_message(self, message, **kwargs):

@@ -16,7 +16,7 @@ import aiohttp
 
 from core.stats import MESSAGE, WRONG_ARG
 from core.utils import is_valid_command
-from core.confparser import get_config_parser, CACHE_DIR
+from core.configuration import PARSER_CONFIG, DIR_CACHE
 from core.exceptions import PluginDisabledException
 
 #####
@@ -24,11 +24,9 @@ from core.exceptions import PluginDisabledException
 # Uses API by backpack.tf
 #####
 
-TF2_CACHE = os.path.join(CACHE_DIR, "tf2_cache.temp")
+TF2_CACHE = os.path.join(DIR_CACHE, "tf2_cache.temp")
 
 logger = logging.getLogger(__name__)
-
-parser = get_config_parser()
 
 # Constants
 
@@ -330,7 +328,7 @@ class TeamFortress:
         self.trans = kwargs.get("trans")
 
         try:
-            key = parser.get("backpack.tf", "apikey")
+            key = PARSER_CONFIG.get("backpack.tf", "apikey")
             if not key:
                 raise PluginDisabledException("Mising backpack.tf API key")
 

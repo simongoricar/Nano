@@ -4,9 +4,7 @@ import json
 import logging
 import aiohttp
 
-from core.confparser import get_config_parser
-
-parser = get_config_parser()
+from core.configuration import PARSER_CONFIG
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -18,8 +16,8 @@ class GuildCounter:
         self.loop = kwargs.get("loop")
 
         try:
-            self.botspw_token = parser.get("discord.bots.gg", "token")
-            self.botsorg_token = parser.get("discordbots.org", "token")
+            self.botspw_token = PARSER_CONFIG.get("discord.bots.gg", "token")
+            self.botsorg_token = PARSER_CONFIG.get("discordbots.org", "token")
         except (configparser.NoOptionError, configparser.NoSectionError):
             log.critical("Missing api key(s), disabling plugin...")
             raise RuntimeError

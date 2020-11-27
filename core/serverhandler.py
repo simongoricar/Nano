@@ -7,20 +7,14 @@ import os
 from discord import Member, Guild
 from .utils import Singleton, decode, bin2bool
 from .exceptions import SecurityError
-from .confparser import get_settings_parser, get_config_parser
+from .configuration import PARSER_SETTINGS, PARSER_CONFIG
 
 __author__ = "DefaltSimon"
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
-# plugins/config.ini
-parser = get_config_parser()
-# settings.ini
-par = get_settings_parser()
-
 # CONSTANTS
-
 MAX_INPUT_LENGTH = 1100
 
 GUILD_SETTINGS_DEFAULT = {
@@ -41,7 +35,7 @@ GUILD_SETTINGS_DEFAULT = {
     # Log channel ID
     "logchannel": None,
     # Guild prefix
-    "prefix": str(parser.get("Servers", "defaultprefix")),
+    "prefix": str(PARSER_CONFIG.get("Servers", "defaultprefix")),
     # Default channel ID
     "dchan": None,
     # Current language
@@ -76,27 +70,27 @@ def validate_input(fn):
 class ServerHandler:
     @staticmethod
     def get_redis_data_credentials() -> tuple:
-        if par.get("Redis", "setup") == "environment":
+        if PARSER_SETTINGS.get("Redis", "setup") == "environment":
             redis_ip = os.environ["REDIS_HOST"]
             redis_port = os.environ["REDIS_PORT"]
             redis_pass = os.environ["REDIS_PASS"]
         else:
-            redis_ip = par.get("Redis", "ip", fallback="localhost")
-            redis_port = par.get("Redis", "port", fallback=6379)
-            redis_pass = par.get("Redis", "password", fallback=None)
+            redis_ip = PARSER_SETTINGS.get("Redis", "ip", fallback="localhost")
+            redis_port = PARSER_SETTINGS.get("Redis", "port", fallback=6379)
+            redis_pass = PARSER_SETTINGS.get("Redis", "password", fallback=None)
 
         return redis_ip, redis_port, redis_pass
 
     @staticmethod
     def get_redis_cache_credentials() -> tuple:
-        if par.get("RedisCache", "setup") == "environment":
+        if PARSER_SETTINGS.get("RedisCache", "setup") == "environment":
             redis_ip = os.environ["REDIS_CACHE_HOST"]
             redis_port = os.environ["REDIS_CACHE_PORT"]
             redis_pass = os.environ["REDIS_CACHE_PASS"]
         else:
-            redis_ip = par.get("RedisCache", "ip", fallback="localhost")
-            redis_port = par.get("RedisCache", "port", fallback=6380)
-            redis_pass = par.get("RedisCache", "password", fallback=None)
+            redis_ip = PARSER_SETTINGS.get("RedisCache", "ip", fallback="localhost")
+            redis_port = PARSER_SETTINGS.get("RedisCache", "port", fallback=6380)
+            redis_pass = PARSER_SETTINGS.get("RedisCache", "password", fallback=None)
 
         return redis_ip, redis_port, redis_pass
 
@@ -129,7 +123,7 @@ class ServerHandler:
 
     @staticmethod
     def is_bot_owner(user_id: int):
-        return user_id == int(par.get("Settings", "ownerid"))
+        return user_id == int(PARSER_SETTINGS.get("Settings", "ownerid"))
 
     @staticmethod
     def is_server_owner(user_id: int, server: Guild):

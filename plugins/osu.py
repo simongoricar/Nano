@@ -8,15 +8,13 @@ from discord import Embed, Colour, errors
 
 from core.stats import MESSAGE
 from core.utils import is_valid_command, invert_num, invert_str, split_every
-from core.confparser import get_config_parser
+from core.configuration import PARSER_CONFIG
 
 #####
 # osu! plugin
 #####
 
 logger = logging.getLogger(__name__)
-
-parser = get_config_parser()
 
 commands = {
     "_osu": {"desc": "Displays stats for that osu! user.", "use": "[command] [username/id]"},
@@ -43,7 +41,7 @@ class Osu:
         self.trans = kwargs.get("trans")
 
         try:
-            key = parser.get("osu", "api-key")
+            key = PARSER_CONFIG.get("osu", "api-key")
             self.osu = osu_ds.OsuApi(api_key=key)
         except (configparser.NoSectionError, configparser.NoOptionError):
             logger.critical("Missing api key for osu!, disabling plugin...")
