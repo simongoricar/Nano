@@ -16,21 +16,6 @@ from core.exceptions import IgnoredException
 from core.stats import MESSAGE
 
 
-class NanoPlugin:
-    name = "Admin"
-    description = "Manages various per-guild settings and moderation commands."
-    version = "33"
-
-    handler = "Admin"
-    events = {
-        "on_message": 10,
-        "on_member_remove": 4,
-        "on_reaction_add": 10,
-        "on_plugins_loaded": 5,
-        # type : importance
-    }
-
-
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
@@ -2093,3 +2078,18 @@ class Admin:
 
     async def on_reaction_add(self, reaction, user, **kwargs):
         await self.list.handle_reaction(reaction, user, **kwargs)
+
+
+class NanoPlugin:
+    name = "Admin"
+    description = "Manages various per-guild settings and moderation commands."
+    version = "33"
+
+    handler = Admin
+    events = {
+        "on_message": 10,
+        "on_member_remove": 4,
+        "on_reaction_add": 10,
+        "on_plugins_loaded": 5,
+        # type : importance
+    }

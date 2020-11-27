@@ -1,13 +1,13 @@
-# coding=utf-8
+import logging
 import re
 import uuid
-import os
 from datetime import datetime
 from typing import Iterable
 
-from .configuration import DIR_DATA
+from .configuration import BUG_FILE_PATH, LOG_FILE_PATH
 from .translations import TranslationManager, DEFAULT_LANGUAGE
 
+log = logging.getLogger(__name__)
 
 class CmdResponseTypes:
     REGISTER_ON_FAIL = "reg_on_fail"
@@ -286,15 +286,15 @@ def is_valid_command(msg: str, commands: Iterable, prefix: str):
 
 
 def log_to_file(content, type_="log"):
-    fn = BUG_FILE if type_ == "bug" else LOG_FILE
+    fn = BUG_FILE_PATH if type_ == "bug" else LOG_FILE_PATH
 
     with open(fn, "a") as file:
         cn = datetime.now().strftime("%d-%m-%Y %H:%M:%S") + " - " + str(content)
 
         try:
             file.write(cn + "\n")
-        except UnicodeEncodeError:
-            pass
+        except UnicodeEncodeError as e:
+            log.warning(f"UnicodeEncodeError while saving log/bug file: \"{e}\"")
 
 
 def alternate_log(content: str, filename: str, append=True):

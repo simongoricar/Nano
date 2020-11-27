@@ -13,7 +13,7 @@ from core.stats import NanoStats
 from core.translations import TranslationManager
 from core.utils import log_to_file
 from core.exceptions import PluginDisabledException
-from core.configuration import PARSER_SETTINGS, DIR_PLUGINS
+from core.configuration import PARSER_SETTINGS, DIR_PLUGINS_RELATIVE
 
 __title__ = "Nano"
 __author__ = 'DefaltSimon'
@@ -133,8 +133,8 @@ class Nano(metaclass=Singleton):
 
     def update_plugins(self):
         started = time.monotonic()
-        plugin_names = [pl[:-3] for pl in os.listdir(DIR_PLUGINS)
-                        if os.path.isfile(os.path.join(DIR_PLUGINS, pl))
+        plugin_names = [pl[:-3] for pl in os.listdir(DIR_PLUGINS_RELATIVE)
+                        if os.path.isfile(os.path.join(DIR_PLUGINS_RELATIVE, pl))
                         and pl.endswith(".py")]
 
         self._update_plugins(plugin_names)
@@ -148,7 +148,7 @@ class Nano(metaclass=Singleton):
         failed = []
         disabled = []
 
-        PLUGINS_NAMESPACE = DIR_PLUGINS.replace("/", "").replace("\\", "")
+        PLUGINS_NAMESPACE = DIR_PLUGINS_RELATIVE.lstrip(".").replace("/", "").replace("\\", "")
 
         # Try to import every plugin
         for plug_name in list(names):

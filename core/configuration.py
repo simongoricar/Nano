@@ -17,10 +17,11 @@ except FileNotFoundError:
     raise MissingConfigurationException("Missing directories.json file! Are you sure your install is correct?")
 
 # Directories
-DIR_DATA = os.path.abspath(dir_locations.get("data", default="./data/"))
-DIR_PLUGINS = os.path.abspath(dir_locations.get("plugins", default="./data/plugins/"))
-DIR_CACHE = os.path.abspath(dir_locations.get("cache", default="./data/cache/"))
-DIR_BACKUP = os.path.abspath(dir_locations.get("backup", default="./data/backup/"))
+DIR_DATA = os.path.abspath(dir_locations.get("data", "./data/"))
+DIR_PLUGINS_RELATIVE = dir_locations.get("plugins", "./plugins")
+DIR_PLUGINS = os.path.abspath(dir_locations.get("plugins", "./plugins"))
+DIR_CACHE = os.path.abspath(dir_locations.get("cache", "./data/cache/"))
+DIR_BACKUP = os.path.abspath(dir_locations.get("backup", "./data/backup/"))
 
 # Configuration files
 # TODO merge settings.ini and config.ini, or make them per-plugin
