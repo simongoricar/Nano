@@ -132,7 +132,7 @@ class Observer:
 
         # Set up the server if it is not present in redis db
         if not self.handler.server_exists(message.guild.id):
-            self.handler.server_setup(message.guild)
+            await self.handler.server_setup(message.guild)
 
         # Ah, the shortcuts
         def startswith(*matches):
@@ -145,7 +145,7 @@ class Observer:
         # SLEEP/WAKE Commands!
         # nano.sleep
         if startswith("nano.sleep"):
-            if not self.handler.is_admin(message.author, message.guild):
+            if not await self.handler.is_admin(message.author, message.guild):
                 await message.channel.send(trans.get("PERM_ADMIN", lang))
                 return "return"
 
@@ -155,7 +155,7 @@ class Observer:
 
         # nano.wake
         elif startswith("nano.wake"):
-            if not self.handler.is_admin(message.author, message.guild):
+            if not await self.handler.is_admin(message.author, message.guild):
                 await message.channel.send(trans.get("PERM_ADMIN", lang))
                 return "return"
 

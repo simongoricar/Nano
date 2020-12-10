@@ -137,22 +137,23 @@ class ServerHandler:
         return user_id == int(par.get("Settings", "ownerid"))
 
     @staticmethod
-    def is_server_owner(user_id: int, server: Guild):
-        return user_id == server.owner.id
+    async def is_server_owner(user_id: int, server: Guild):
+        owner = await server.fetch_member(server.owner_id)
+        return user_id == owner.id
 
-    def is_admin(self, member: Member, guild: Guild):
+    async def is_admin(self, member: Member, guild: Guild):
         # Changed in 3.7
         # Having Nano Admin allows access to Nano Mod commands as well
         bo = self.is_bot_owner(member.id)
-        so = self.is_server_owner(member.id, guild)
+        so = await self.is_server_owner(member.id, guild)
         im = self.has_role(member, "Nano Mod")
         ia = self.has_role(member, "Nano Admin")
 
         return bo or so or ia or im
 
-    def is_mod(self, member: Member, guild: Guild):
+    async def is_mod(self, member: Member, guild: Guild):
         bo = self.is_bot_owner(member.id)
-        so = self.is_server_owner(member.id, guild)
+        so = await self.is_server_owner(member.id, guild)
         im = self.has_role(member, "Nano Mod")
 
         return bo or so or im
@@ -223,18 +224,19 @@ class RedisServerHandler(ServerHandler, metaclass=Singleton):
 
     # SERVER SETUPS
     @staticmethod
-    def _default_guild_data(guild):
+    async def _default_guild_data(guild):
         # These are server defaults
         s_data = server_defaults.copy()
-        s_data["owner"] = guild.owner.id
+        owner = await guild.fetch_member(guild.owner_id)
+        s_data["owner"] = owner.id
         s_data["name"] = guild.name
 
         # Remove entries with None
         return {a: b for a, b in s_data.items() if b is not None}
 
-    def server_setup(self, guild: Guild):
+    async def server_setup(self, guild: Guild):
         # These are server defaults
-        s_data = self._default_guild_data(guild)
+        s_data = await self._default_guild_data(guild)
 
         sid = "server:{}".format(guild.id)
 

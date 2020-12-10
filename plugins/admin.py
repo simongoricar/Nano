@@ -748,7 +748,7 @@ class Admin:
 
         # !nuke
         elif startswith(prefix + "nuke"):
-            if not handler.is_mod(message.author, message.guild):
+            if not await handler.is_mod(message.author, message.guild):
                 await message.channel.send(trans.get("PERM_MOD", lang))
                 return "return"
 
@@ -780,7 +780,7 @@ class Admin:
 
         # !kick
         elif startswith(prefix + "kick") and not startswith(prefix + "kickmsg"):
-            if not handler.is_mod(message.author, message.guild):
+            if not await handler.is_mod(message.author, message.guild):
                 await message.channel.send(trans.get("PERM_MOD", lang))
                 return
 
@@ -820,7 +820,7 @@ class Admin:
 
         # !ban
         elif startswith(prefix + "ban") and not startswith(prefix + "banmsg"):
-            if not handler.is_mod(message.author, message.guild):
+            if not await handler.is_mod(message.author, message.guild):
                 await message.channel.send(trans.get("PERM_MOD", lang))
                 return "return"
 
@@ -860,7 +860,7 @@ class Admin:
 
         # !unban
         elif startswith(prefix + "unban"):
-            if not handler.is_mod(message.author, message.guild):
+            if not await handler.is_mod(message.author, message.guild):
                 await message.channel.send(trans.get("PERM_MOD", lang))
                 return "return"
 
@@ -894,7 +894,7 @@ class Admin:
 
         # !softban @mention/username | [time]
         elif startswith(prefix + "softban"):
-            if not handler.is_mod(message.author, message.guild):
+            if not await handler.is_mod(message.author, message.guild):
                 await message.channel.send(trans.get("PERM_MOD", lang))
                 return "return"
 
@@ -962,7 +962,7 @@ class Admin:
 
         # !mute list
         elif startswith(prefix + "mute list"):
-            if not handler.is_mod(message.author, message.guild):
+            if not await handler.is_mod(message.author, message.guild):
                 await message.channel.send(trans.get("PERM_MOD", lang))
                 return "return"
 
@@ -999,7 +999,7 @@ class Admin:
 
         # !mute
         elif startswith(prefix + "mute"):
-            if not handler.is_mod(message.author, message.guild):
+            if not await handler.is_mod(message.author, message.guild):
                 await message.channel.send(trans.get("PERM_MOD", lang))
                 return "return"
 
@@ -1021,7 +1021,7 @@ class Admin:
 
         # !unmute
         elif startswith(prefix + "unmute"):
-            if not handler.is_mod(message.author, message.guild):
+            if not await handler.is_mod(message.author, message.guild):
                 await message.channel.send(trans.get("PERM_MOD", lang))
                 return "return"
 
@@ -1062,7 +1062,7 @@ class Admin:
         ################################
         # PERMISSION CHECK (only admins)
         ################################
-        if not handler.is_admin(message.author, message.guild):
+        if not await handler.is_admin(message.author, message.guild):
             await message.channel.send(trans.get("PERM_ADMIN", lang))
             return
 

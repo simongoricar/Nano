@@ -171,7 +171,7 @@ class Vote:
         # Arguments: "[title]" [option1]|(option2)|...
         # OR       : "[title]" [option1],(option2),...
         if startswith(prefix + "poll start"):
-            if not self.handler.is_admin(message.author, message.guild):
+            if not await self.handler.is_admin(message.author, message.guild):
                 await message.channel.send(trans.get("PERM_ADMIN", lang))
                 self.stats.add(WRONG_PERMS)
                 return
@@ -240,7 +240,7 @@ class Vote:
 
         # !poll end
         elif startswith(prefix + "poll end"):
-            if not self.handler.is_admin(message.author, message.guild):
+            if not await self.handler.is_admin(message.author, message.guild):
                 await message.channel.send(trans.get("PERM_ADMIN", lang))
                 self.stats.add(WRONG_PERMS)
                 return

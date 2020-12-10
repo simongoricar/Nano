@@ -86,6 +86,9 @@ custom_intents.members = True
 client = discord.AutoShardedClient(
     loop=loop,
     intents=custom_intents,
+    chunk_guilds_at_startup=True,
+    guild_ready_timeout=2,
+    guild_subscriptions=True
 )
 
 log.info("Initializing ServerHandler and NanoStats...")
@@ -463,6 +466,8 @@ async def on_error(event, *args, **kwargs):
 
 @client.event
 async def on_ready():
+    await client.wait_until_ready()
+
     # Just prints "Resumed connection" if that's the way it is
     global IS_RESUME
     if IS_RESUME:
@@ -471,7 +476,7 @@ async def on_ready():
         return
     IS_RESUME = True
 
-    print("connected!")
+    print("Bot connected!")
     print("BOT name: {} ({})".format(client.user.name, client.user.id))
 
     log_to_file("Connected as {} ({})".format(client.user.name, client.user.id))

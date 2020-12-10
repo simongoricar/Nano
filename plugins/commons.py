@@ -513,7 +513,7 @@ class Commons:
 
         # !say (#channel) [message]
         elif startswith(prefix + "say"):
-            if not self.handler.is_mod(message.author, message.guild):
+            if not await self.handler.is_mod(message.author, message.guild):
                 await message.channel.send(trans.get("PERM_MOD", lang))
                 return "return"
 
