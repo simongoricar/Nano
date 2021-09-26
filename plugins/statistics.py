@@ -62,11 +62,11 @@ class StatisticsParser:
 
         # Buffer data together
         if len(self.buffer) >= 5:
-            t = time.clock()
+            t = time.time()
             # Update data and reset buffer
             self._update_data()
             self.buffer = []
-            log.debug("Buffered update took {}s".format(time.clock()-t))
+            log.debug("Buffered update took {}s".format(time.time() - t))
 
 
     def _update_data(self):
